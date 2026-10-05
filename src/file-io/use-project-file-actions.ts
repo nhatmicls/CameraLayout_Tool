@@ -3,6 +3,7 @@ import { cameraModels } from '../catalog/camera-catalog-loader'
 import { useEditorUiStore } from '../state/editor-ui-store'
 import { useProjectStore } from '../state/project-store'
 import { loadProjectFromFile, saveProjectToFile } from './project-file-save-and-load'
+import { summariseProjectLoadWarnings } from './summarise-project-load-warnings'
 
 const REPLACE_PROJECT_CONFIRM_MESSAGE = 'Opening a project discards your unsaved changes. Continue?'
 
@@ -41,7 +42,7 @@ export function useProjectFileActions() {
     const current = useProjectStore.getState()
     if (!current.image) return
     try {
-      saveProjectToFile({ image: current.image, scale: current.scale, cameras: current.cameras })
+      saveProjectToFile({ image: current.image, scale: current.scale, cameras: current.cameras, walls: current.walls })
       setHasUnsavedChanges(false)
     } catch (err) {
       pushNotification('error', err instanceof Error ? err.message : 'Failed to save the project.')
@@ -62,7 +63,7 @@ export function useProjectFileActions() {
       setDecodedImage(outcome.decodedImage)
       setHasUnsavedChanges(false)
       if (outcome.warnings.length > 0) {
-        pushNotification('warning', `${outcome.warnings.length} camera(s) dropped: their model is not in the current catalog.`)
+        pushNotification('warning', summariseProjectLoadWarnings(outcome.warnings))
       }
     },
     [hasUnsavedChanges, replaceProject, setDecodedImage, setHasUnsavedChanges, pushNotification],

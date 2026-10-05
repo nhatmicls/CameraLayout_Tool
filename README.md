@@ -31,6 +31,22 @@ calls once the page has loaded.
   Approximations: DORI floor distances use the slant distance from the lens
   (`sqrt(d² - h²)`), blind spot and far edge are centre-line values drawn as arcs (the true
   footprint is a trapezoid), and tilt is ignored for fisheye lenses (HFOV >= 180°).
+- **Walls**: click "Draw walls" and click points on the plan to draw wall segments, opaque or
+  glass; leave gaps for doors. Every camera's cone is clipped live to what the camera can see
+  past the opaque walls, also while you drag it. Walls can be selected, switched between
+  opaque and glass, deleted and undone, and are saved with the project and drawn in the PNG.
+  Outside drawing mode every wall end shows a dot you can drag to reshape the wall: walls
+  joined at that point move together, the dot snaps onto other wall ends, and cones update
+  when you drop it.
+  Drawing: points snap to existing wall endpoints (endpoint to endpoint only - no angle or grid
+  snap); double-click or Esc ends a chain; drag to pan while drawing. Walls are expected to
+  meet at endpoints - a wall that crosses another is kept but flagged with a warning, also
+  when you open a file that contains crossings.
+  Limits: the model is 2D only. An opaque wall is treated as infinitely tall and with no
+  thickness, so mounting height never lets a camera see over one. Glass never blocks. There
+  are no low obstacles and no furniture. Walls are drawn by hand, not detected from the image.
+  A wall within 0.3 m of a camera is treated as the wall it is mounted on and ignored for that
+  camera - so a camera aimed back through its mounting wall is shown seeing into the next room.
 - **Bill of materials**: grouped by model + lens, with quantity, camera numbers, unit price,
   line total and an estimated grand total.
 - **Export**: PNG at image resolution with a legend + BOM strip (downscaled with a notice above
@@ -77,8 +93,8 @@ is still running - stop it first.
 | Path | Contents |
 |---|---|
 | `src/catalog/` | Zod schema, loader, and the three brand JSON data files |
-| `src/domain/` | Pure logic: FOV geometry, DORI distances, mounted-camera floor coverage, scale, BOM grouping, CSV, project file schema (no React/Konva imports) |
-| `src/canvas/` | Konva stage, pan/zoom, camera markers, cones, calibration overlay |
+| `src/domain/` | Pure logic: FOV geometry, DORI distances, mounted-camera floor coverage, wall visibility geometry (occlusion polygon, endpoint snap, crossing detection), scale, BOM grouping, CSV, project file schema (no React/Konva imports) |
+| `src/canvas/` | Konva stage, pan/zoom, camera markers, cones, walls + wall drawing tool, calibration overlay |
 | `src/panels/` | Toolbar, catalog sidebar, properties panel, BOM panel |
 | `src/export/` | PNG and CSV export |
 | `src/file-io/`, `src/state/` | Project save/load, zustand stores, undo/redo |
@@ -91,7 +107,7 @@ is still running - stop it first.
 ## Status
 
 v1 in progress. Working: image load, calibration, catalog, placement, DORI cones, properties,
-BOM with prices, mounting height + tilt floor coverage, save/load, PNG + CSV export (verified
-in Chromium). Project files are saved as schema version 2: files from earlier versions still
-open, but a file saved by this version needs this version or newer. Not done yet: Playwright
+BOM with prices, mounting height + tilt floor coverage, walls with cone occlusion, save/load,
+PNG + CSV export (verified in Chromium). Project files are saved as schema version 3: files
+from earlier versions still open, but a file saved by this version needs this version or newer. Not done yet: Playwright
 end-to-end suite, Firefox/Safari export checks, full documentation set.

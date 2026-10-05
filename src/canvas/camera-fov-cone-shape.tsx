@@ -6,12 +6,14 @@ import { computeDoriDistancesM } from '../domain/dori-zone-distance-calculator'
 import { coneSweepShape, sectorStartDeg } from '../domain/fov-cone-sector-geometry'
 import { computeMountedGroundCoverage } from '../domain/mounted-camera-ground-coverage-calculator'
 import { metersToPlanPx } from '../domain/scale-calibration-calculator'
+import type { WallSegment } from '../domain/wall-segment-geometry'
+import { computeConeClipFunc, type ConeLiveHandle } from './wall-occlusion-cone-clip'
 import { DORI_BAND_COLORS, DORI_BAND_FILL_OPACITY, DORI_BAND_FILL_OPACITY_SELECTED } from './brand-and-dori-color-palette'
 
 export interface CameraFovConeShapeProps {
   cameraId: string
-  /** Shared registry this cone registers its Konva node into, so a sibling marker's drag/rotate can move it imperatively (see `plan-scene-layers.tsx`) with zero React re-renders and zero store writes mid-gesture. */
-  nodeRegistry: RefObject<Map<string, Konva.Group | null>>
+  /** Shared registry this cone registers a live handle into, so a sibling marker's drag/rotate can move (and re-clip) it imperatively (see `plan-scene-layers.tsx`) with zero React re-renders and zero store writes mid-gesture. */
+  nodeRegistry: RefObject<Map<string, ConeLiveHandle>>
   x: number
   y: number
   rotationDeg: number
@@ -25,7 +27,14 @@ export interface CameraFovConeShapeProps {
   vfovDeg: number | null
   planPxPerMeter: number
   selected: boolean
+  /** Opaque walls, image px. Must keep its array identity while the walls are unchanged (it is a memo key here). */
+  opaqueWalls: readonly WallSegment[]
+  /** Walls nearer than this to the camera do not block it (its mounting wall), image px. */
+  wallClearancePx: number
 }
+
+/** The clip reaches this far past the outermost band so the band's own outline is never shaved. */
+const CONE_CLIP_STROKE_PAD_PX = 2
 
 /**
  * One camera's FOV cone: bands from the domain's `computeDoriBands` (or,
@@ -35,11 +44,18 @@ export interface CameraFovConeShapeProps {
  * always pass through to the marker icon below/above it - see
  * `plan-scene-layers.tsx` for the two-layer z-order).
  *
+ * Two nested Groups: the outer one sits at the camera, unrotated, and
+ * carries the wall-occlusion clip (the visibility polygon is in unrotated
+ * image axes); the inner one carries the bearing and the bands. Rotating
+ * the camera therefore never touches the clip. With no opaque wall in range
+ * there is no clip at all and the cone draws exactly as before walls existed.
+ *
  * Takes primitive inputs (`pixelWidth`/`hfovDeg`/`rangeM`/mounting), not a
  * pre-computed `bands` array, specifically so `React.memo` + the internal
  * `useMemo`s below can actually skip work for every camera except the one
  * that changed - an array literal recomputed by the parent every render
- * would defeat memoisation by always looking "new".
+ * would defeat memoisation by always looking "new". `opaqueWalls` is the
+ * exception: an array, but one whose identity only changes when a wall does.
  */
 export const CameraFovConeShape = memo(function CameraFovConeShape({
   cameraId,
@@ -55,16 +71,11 @@ export const CameraFovConeShape = memo(function CameraFovConeShape({
   vfovDeg,
   planPxPerMeter,
   selected,
+  opaqueWalls,
+  wallClearancePx,
 }: CameraFovConeShapeProps) {
-  const nodeRef = useRef<Konva.Group>(null)
-
-  useEffect(() => {
-    const registry = nodeRegistry.current
-    registry.set(cameraId, nodeRef.current)
-    return () => {
-      registry.delete(cameraId)
-    }
-  }, [nodeRegistry, cameraId])
+  const outerRef = useRef<Konva.Group>(null)
+  const innerRef = useRef<Konva.Group>(null)
 
   const distances = useMemo(() => computeDoriDistancesM(pixelWidth, hfovDeg), [pixelWidth, hfovDeg])
   const bands = useMemo(
@@ -82,7 +93,42 @@ export const CameraFovConeShape = memo(function CameraFovConeShape({
     [distances, rangeM, mountHeightM, tiltDeg, vfovDeg, hfovDeg],
   )
   const sweepShape = useMemo(() => coneSweepShape(hfovDeg), [hfovDeg])
-  // The camera's own bearing lives on this Group's `rotation` (updated
+
+  const clipRadiusPx =
+    bands.length === 0
+      ? 0
+      : metersToPlanPx(Math.max(...bands.map((band) => band.outerM)), planPxPerMeter) + CONE_CLIP_STROKE_PAD_PX
+  const occlusionInputs = useMemo(
+    () => ({ clipRadiusPx, opaqueWalls, clearancePx: wallClearancePx }),
+    [clipRadiusPx, opaqueWalls, wallClearancePx],
+  )
+  const clipFunc = useMemo(() => computeConeClipFunc(x, y, occlusionInputs), [x, y, occlusionInputs])
+  // Mirror for the live handle below, so a drag always clips against the current walls / range.
+  const occlusionInputsRef = useRef(occlusionInputs)
+  useEffect(() => {
+    occlusionInputsRef.current = occlusionInputs
+  }, [occlusionInputs])
+
+  useEffect(() => {
+    const registry = nodeRegistry.current
+    registry.set(cameraId, {
+      moveTo: (pos) => {
+        const outer = outerRef.current
+        if (!outer) return
+        outer.position(pos)
+        // Same function as the memo above: after dragend the React prop and this imperative value agree.
+        outer.setAttr('clipFunc', computeConeClipFunc(pos.x, pos.y, occlusionInputsRef.current))
+      },
+      rotateTo: (deg) => {
+        innerRef.current?.rotation(deg)
+      },
+    })
+    return () => {
+      registry.delete(cameraId)
+    }
+  }, [nodeRegistry, cameraId])
+
+  // The camera's own bearing lives on the inner Group's `rotation` (updated
   // imperatively during a rotation-handle drag); each band's *local*
   // rotation is the static half-HFOV offset only, independent of bearing.
   const localRotationDeg = useMemo(() => sectorStartDeg(0, hfovDeg), [hfovDeg])
@@ -91,41 +137,43 @@ export const CameraFovConeShape = memo(function CameraFovConeShape({
   const strokeWidth = selected ? 1.5 : 1
 
   return (
-    <Group ref={nodeRef} x={x} y={y} rotation={rotationDeg} listening={false}>
-      {bands.map((band) => {
-        const color = DORI_BAND_COLORS[band.zone]
-        const innerRadius = metersToPlanPx(band.innerM, planPxPerMeter)
-        const outerRadius = metersToPlanPx(band.outerM, planPxPerMeter)
-        const shared = {
-          fill: color,
-          opacity: fillOpacity,
-          stroke: color,
-          strokeWidth,
-          // Perf (phase-05 step 11): large scenes with many cameras stay interactive.
-          perfectDrawEnabled: false,
-          shadowForStrokeEnabled: false,
-        }
+    <Group ref={outerRef} x={x} y={y} clipFunc={clipFunc} listening={false}>
+      <Group ref={innerRef} rotation={rotationDeg}>
+        {bands.map((band) => {
+          const color = DORI_BAND_COLORS[band.zone]
+          const innerRadius = metersToPlanPx(band.innerM, planPxPerMeter)
+          const outerRadius = metersToPlanPx(band.outerM, planPxPerMeter)
+          const shared = {
+            fill: color,
+            opacity: fillOpacity,
+            stroke: color,
+            strokeWidth,
+            // Perf (phase-05 step 11): large scenes with many cameras stay interactive.
+            perfectDrawEnabled: false,
+            shadowForStrokeEnabled: false,
+          }
 
-        if (sweepShape === 'full-circle') {
-          return innerRadius === 0 ? (
-            <Circle key={band.zone} radius={outerRadius} {...shared} />
-          ) : (
-            <Ring key={band.zone} innerRadius={innerRadius} outerRadius={outerRadius} {...shared} />
+          if (sweepShape === 'full-circle') {
+            return innerRadius === 0 ? (
+              <Circle key={band.zone} radius={outerRadius} {...shared} />
+            ) : (
+              <Ring key={band.zone} innerRadius={innerRadius} outerRadius={outerRadius} {...shared} />
+            )
+          }
+
+          // 'sector' and 'half-disc' both render as an Arc - half-disc is simply the angle=180 case.
+          return (
+            <Arc
+              key={band.zone}
+              innerRadius={innerRadius}
+              outerRadius={outerRadius}
+              angle={hfovDeg}
+              rotation={localRotationDeg}
+              {...shared}
+            />
           )
-        }
-
-        // 'sector' and 'half-disc' both render as an Arc - half-disc is simply the angle=180 case.
-        return (
-          <Arc
-            key={band.zone}
-            innerRadius={innerRadius}
-            outerRadius={outerRadius}
-            angle={hfovDeg}
-            rotation={localRotationDeg}
-            {...shared}
-          />
-        )
-      })}
+        })}
+      </Group>
     </Group>
   )
 })

@@ -1,6 +1,6 @@
 /**
  * Core domain types for a saved project: the floor-plan image, its scale
- * calibration, and the placed cameras. Pure data shapes only - no behaviour,
+ * calibration, the placed cameras and the drawn walls. Pure data shapes only - no behaviour,
  * no React/Konva imports. Phase 4 builds the zustand store on top of these.
  */
 
@@ -45,10 +45,24 @@ export interface PlanImage {
   fileName: string
 }
 
+export type WallKind = 'opaque' | 'glass'
+
+/** One straight wall segment in image px. Opaque blocks camera view; glass is reference only. */
+export interface Wall {
+  id: string
+  kind: WallKind
+  x1: number
+  y1: number
+  x2: number
+  y2: number
+}
+
 export interface Project {
   image: PlanImage
   scale: ScaleCalibration | null
   cameras: PlacedCamera[]
+  /** Always present in memory; optional in the file (older files have none). */
+  walls: Wall[]
 }
 
 /**

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type RefObject } from 'react'
 import type Konva from 'konva'
-import { Circle, Layer, Line, Text } from 'react-konva'
+import { Circle, Group, Line, Text } from 'react-konva'
 import { useProjectStore } from '../state/project-store'
 import { useEditorUiStore } from '../state/editor-ui-store'
 import type { RefLine } from '../domain/scale-calibration-calculator'
@@ -15,7 +15,7 @@ interface ScaleCalibrationOverlayProps {
 }
 
 /**
- * Konva layer for the "set scale" tool: click point A, click point B (with a
+ * Konva group (mounted in the stage's one editor-overlay Layer) for the "set scale" tool: click point A, click point B (with a
  * live rubber-band preview between them), then hand the finished line to the
  * parent to open the length dialog. Also draws the persisted calibration
  * line (if any) so the user can see what is currently calibrated.
@@ -86,7 +86,7 @@ export function ScaleCalibrationOverlay({ stageRef, viewportScale, dialogOpen, o
   const markerRadius = 5 / viewportScale
 
   return (
-    <Layer>
+    <Group>
       {showCalibrationLine && scale && (
         <>
           <Line
@@ -119,6 +119,6 @@ export function ScaleCalibrationOverlay({ stageRef, viewportScale, dialogOpen, o
           )}
         </>
       )}
-    </Layer>
+    </Group>
   )
 }

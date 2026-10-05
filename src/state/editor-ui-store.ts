@@ -1,10 +1,11 @@
 import { create } from 'zustand'
 import type { Brand, FormFactor } from '../catalog/camera-catalog-schema'
 import type { CatalogFeatureFilterKey } from '../catalog/camera-catalog-feature-filters'
+import type { WallKind } from '../domain/project-types'
 import { useProjectStore } from './project-store'
 
-/** `select`: default, drag/pan/select cameras. `calibrate`: next two clicks on the stage draw a reference line. */
-export type ToolMode = 'select' | 'calibrate'
+/** `select`: default, drag/pan/select cameras and walls. `calibrate`: next two clicks on the stage draw a reference line. `wall`: clicks draw a chain of wall segments. */
+export type ToolMode = 'select' | 'calibrate' | 'wall'
 
 /** Stage transform. Lives here, never in `project-store`, so pan/zoom never touches undo history or the save payload. */
 export interface Viewport {
@@ -25,6 +26,10 @@ export interface EditorUiState {
   toolMode: ToolMode
   viewport: Viewport
   selectedCameraId: string | null
+  /** At most one of `selectedCameraId` / `selectedWallId` is set: the setters clear each other, so Delete only ever removes one thing. */
+  selectedWallId: string | null
+  /** Kind given to walls drawn next. */
+  wallDrawKind: WallKind
   /** The decoded `HTMLImageElement` for the current plan, reused by the on-screen layer and export (phase 7). Not persisted. */
   decodedImage: HTMLImageElement | null
   /** Whether the persisted calibration reference line is drawn on top of the plan. */
@@ -52,6 +57,8 @@ export interface EditorUiActions {
   setToolMode: (mode: ToolMode) => void
   setViewport: (viewport: Viewport) => void
   setSelectedCameraId: (id: string | null) => void
+  setSelectedWallId: (id: string | null) => void
+  setWallDrawKind: (kind: WallKind) => void
   setDecodedImage: (image: HTMLImageElement | null) => void
   setShowCalibrationLine: (show: boolean) => void
   setStageSize: (size: { width: number; height: number }) => void
@@ -73,6 +80,8 @@ export const useEditorUiStore = create<EditorUiStore>((set) => ({
   toolMode: 'select',
   viewport: DEFAULT_VIEWPORT,
   selectedCameraId: null,
+  selectedWallId: null,
+  wallDrawKind: 'opaque',
   decodedImage: null,
   showCalibrationLine: true,
   stageSize: { width: 0, height: 0 },
@@ -87,7 +96,11 @@ export const useEditorUiStore = create<EditorUiStore>((set) => ({
 
   setViewport: (viewport) => set({ viewport }),
 
-  setSelectedCameraId: (selectedCameraId) => set({ selectedCameraId }),
+  setSelectedCameraId: (id) => set(id ? { selectedCameraId: id, selectedWallId: null } : { selectedCameraId: null }),
+
+  setSelectedWallId: (id) => set(id ? { selectedWallId: id, selectedCameraId: null } : { selectedWallId: null }),
+
+  setWallDrawKind: (wallDrawKind) => set({ wallDrawKind }),
 
   setDecodedImage: (decodedImage) => set({ decodedImage }),
 

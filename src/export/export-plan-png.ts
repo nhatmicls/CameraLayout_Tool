@@ -2,7 +2,7 @@ import { groupCamerasIntoBom } from '../domain/bill-of-materials-grouping'
 import { computeBomStripLayout, computeExportScale } from '../domain/export-image-layout-calculator'
 import { resolveEffectiveHfovDeg } from '../domain/camera-coverage-resolver'
 import { isApproximateDoriModel } from '../domain/dori-zone-distance-calculator'
-import type { PlacedCamera, PlanImage, ScaleCalibration } from '../domain/project-types'
+import type { PlacedCamera, PlanImage, ScaleCalibration, Wall } from '../domain/project-types'
 import { triggerBrowserFileDownload } from '../file-io/trigger-browser-file-download'
 import { buildCameraModelByIdRecord } from './camera-model-by-id-record'
 import { canAllocateCanvas, SAFARI_SAFE_MAX_CANVAS_PIXELS, SAFARI_SAFE_MAX_CANVAS_SIDE_PX } from './probe-max-canvas-size'
@@ -15,6 +15,7 @@ export interface ExportPlanPngOptions {
   decodedImage: HTMLImageElement
   image: PlanImage
   cameras: PlacedCamera[]
+  walls: Wall[]
   /** Null is valid (e.g. exporting before calibrating) - the plan still renders at a 1:1 pixel/unit fallback, matching `floor-plan-stage.tsx`'s own `scale?.planPxPerMeter ?? 1`. */
   scale: ScaleCalibration | null
   /** Injectable for deterministic tests; defaults to "now". */
@@ -25,6 +26,9 @@ export interface ExportPlanPngOptions {
   /** Called only when the output was actually downscaled, so the caller can show a notification. */
   onDownscaled?: (outputWidthPx: number, outputHeightPx: number, scaleFactor: number) => void
 }
+
+/** Appended to the strip's scale note when the plan has an opaque wall. Short on purpose: the note is right-aligned and never truncated. */
+const WALL_OCCLUSION_NOTE_SUFFIX = '  ·  Walls: 2D'
 
 function formatIsoDate(date: Date): string {
   return date.toISOString().slice(0, 10)
@@ -56,7 +60,7 @@ function sampleCanvasPixels(ctx: CanvasRenderingContext2D, widthPx: number, heig
 
 /**
  * Exports the floor plan (image-native resolution, cameras/cones/DORI
- * bands exactly as on screen, no selection UI) plus a BOM strip beneath it
+ * bands and walls exactly as on screen, no selection UI) plus a BOM strip beneath it
  * as a single PNG download. Downscales uniformly (plan and strip together)
  * when the combined canvas would exceed the browser-safe size, and reports
  * that back via `onDownscaled` rather than failing or silently cropping.
@@ -90,6 +94,7 @@ export async function exportPlanPng(options: ExportPlanPngOptions): Promise<void
       imageWidthPx: options.image.widthPx,
       imageHeightPx: options.image.heightPx,
       cameras: options.cameras,
+      walls: options.walls,
       planPxPerMeter: options.scale?.planPxPerMeter ?? 1,
       pixelRatio: scale,
     })
@@ -111,9 +116,12 @@ export async function exportPlanPng(options: ExportPlanPngOptions): Promise<void
       return isApproximateDoriModel(resolveEffectiveHfovDeg(model.lens, camera.hfovDeg))
     })
 
+    const scaleNote = options.scale ? `1 m = ${options.scale.planPxPerMeter.toFixed(1)} px` : 'Scale not set'
+    const hasOpaqueWall = options.walls.some((wall) => wall.kind === 'opaque')
+
     drawBomTableAndLegendStrip(ctx, options.image.heightPx * scale, outputWidthPx, layout, scale, {
       rows,
-      scaleNoteText: options.scale ? `1 m = ${options.scale.planPxPerMeter.toFixed(1)} px` : 'Scale not set',
+      scaleNoteText: hasOpaqueWall ? `${scaleNote}${WALL_OCCLUSION_NOTE_SUFFIX}` : scaleNote,
       dateText: `Exported ${formatIsoDate(options.now ?? new Date())}`,
       hasApproximateDoriModel,
     })

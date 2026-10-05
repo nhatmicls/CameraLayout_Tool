@@ -10,6 +10,7 @@ const baseProject: Project = {
   image: { dataUrl: TINY_PNG_DATA_URL, widthPx: 1000, heightPx: 800, fileName: 'floor-plan.png' },
   scale: { planPxPerMeter: 100, refLine: { x1: 0, y1: 0, x2: 500, y2: 0 }, refLengthM: 5 },
   cameras: [{ id: 'cam-1', modelId: 'model-a', x: 10, y: 20, rotationDeg: 45, rangeM: 15 }],
+  walls: [],
 }
 
 const KNOWN_MODEL_IDS = new Set(['model-a', 'model-b'])
@@ -25,7 +26,7 @@ describe('serializeProject + parseProjectFile round trip', () => {
   })
 
   it('round-trips a project with scale: null and no cameras', () => {
-    const project: Project = { image: baseProject.image, scale: null, cameras: [] }
+    const project: Project = { image: baseProject.image, scale: null, cameras: [], walls: [] }
     const result = parseProjectFile(serializeProject(project), KNOWN_MODEL_IDS)
     expect(result.ok).toBe(true)
     if (!result.ok) throw new Error('expected ok')
@@ -34,8 +35,8 @@ describe('serializeProject + parseProjectFile round trip', () => {
 })
 
 describe('schema version', () => {
-  it('writes schemaVersion 2', () => {
-    expect(JSON.parse(serializeProject(baseProject)).schemaVersion).toBe(2)
+  it('writes schemaVersion 3', () => {
+    expect(JSON.parse(serializeProject(baseProject)).schemaVersion).toBe(3)
   })
 
   it('still reads a version 1 file, leaving cameras without mounting keys', () => {
@@ -124,7 +125,7 @@ describe('parseProjectFile rejection cases', () => {
 
   it('rejects an unknown/future schemaVersion', () => {
     const raw = JSON.parse(serializeProject(baseProject))
-    raw.schemaVersion = 3
+    raw.schemaVersion = 4
     const result = parseProjectFile(JSON.stringify(raw), KNOWN_MODEL_IDS)
     expect(result.ok).toBe(false)
   })

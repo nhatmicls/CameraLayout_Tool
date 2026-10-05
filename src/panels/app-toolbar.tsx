@@ -1,5 +1,6 @@
 import type { ScaleCalibration } from '../domain/project-types'
 import type { ToolMode } from '../state/editor-ui-store'
+import { WallToolControls } from './wall-tool-controls'
 
 interface AppToolbarProps {
   hasImage: boolean
@@ -30,7 +31,7 @@ interface AppToolbarProps {
 const buttonClass =
   'rounded px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:text-neutral-400 disabled:hover:bg-transparent focus:outline focus:outline-2 focus:outline-blue-600'
 
-/** Top toolbar: open image, calibration tool + status, zoom controls. Phases 6/7 add their own buttons here later. */
+/** Top toolbar: open image, project save/load, calibration tool + status, wall tool, export, undo/redo, zoom controls. */
 export function AppToolbar({
   hasImage,
   scale,
@@ -102,6 +103,10 @@ export function AppToolbar({
       <span data-testid="scale-status" className={`text-sm ${scale ? 'text-neutral-600' : 'font-medium text-amber-600'}`}>
         {scale ? `1 m = ${scale.planPxPerMeter.toFixed(1)} px` : 'Scale not set'}
       </span>
+
+      <div className="h-6 w-px bg-neutral-200" />
+
+      <WallToolControls hasImage={hasImage} buttonClass={buttonClass} />
 
       <div className="h-6 w-px bg-neutral-200" />
 

@@ -1,8 +1,9 @@
 /**
  * Pure 2D geometry for drawing a camera's field-of-view cone. Returns
  * angles/points for Konva's `Arc` shape (innerRadius, outerRadius, angle,
- * rotation) to consume directly - this module never produces polygon
- * vertices (would be dead code, YAGNI).
+ * rotation) to consume directly - this module returns Arc parameters only.
+ * Polygon vertices exist in one place, for wall occlusion:
+ * `wall-occlusion-visibility-polygon.ts`.
  *
  * Convention: `rotationDeg` is the bearing of the optical axis, 0 = +x,
  * clockwise positive. This matches both the canvas's y-down coordinate

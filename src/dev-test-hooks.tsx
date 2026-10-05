@@ -4,7 +4,7 @@ import { Stage } from 'react-konva'
 import { useProjectStore } from './state/project-store'
 import { useEditorUiStore, type UiNotification, type Viewport } from './state/editor-ui-store'
 import { PlanSceneLayers } from './canvas/plan-scene-layers'
-import type { PlacedCamera, ScaleCalibration } from './domain/project-types'
+import type { PlacedCamera, ScaleCalibration, Wall } from './domain/project-types'
 
 declare global {
   interface Window {
@@ -13,9 +13,11 @@ declare global {
       getViewport: () => Viewport
       getScale: () => ScaleCalibration | null
       getCameras: () => PlacedCamera[]
+      getWalls: () => Wall[]
       getSelectedCameraId: () => string | null
       pushNotification: (kind: UiNotification['kind'], message: string) => void
       seedCamera: (camera: Omit<PlacedCamera, 'id'>) => void
+      seedWall: (wall: Omit<Wall, 'id'>) => void
       runExportSpike: () => Promise<{ dataUrlLength: number; widthPx: number; heightPx: number }>
     }
   }
@@ -35,7 +37,7 @@ declare global {
  */
 function runExportSpike(): Promise<{ dataUrlLength: number; widthPx: number; heightPx: number }> {
   return new Promise((resolve, reject) => {
-    const { image, scale, cameras } = useProjectStore.getState()
+    const { image, scale, cameras, walls } = useProjectStore.getState()
     const decodedImage = useEditorUiStore.getState().decodedImage
     if (!image || !scale || !decodedImage) {
       reject(new Error('runExportSpike: no calibrated project to export'))
@@ -61,11 +63,16 @@ function runExportSpike(): Promise<{ dataUrlLength: number; widthPx: number; hei
           imageWidthPx={image.widthPx}
           imageHeightPx={image.heightPx}
           cameras={cameras}
+          walls={walls}
           planPxPerMeter={scale.planPxPerMeter}
           interactive={false}
           selectedCameraId={null}
+          selectedWallId={null}
+          wallsSelectable={false}
           viewportScale={1}
           onSelectCamera={() => {}}
+          onSelectWall={() => {}}
+          onMoveWallNode={() => {}}
           onCameraDragEnd={() => {}}
           onCameraRotateEnd={() => {}}
         />
@@ -112,9 +119,11 @@ export function installDevTestHooks(): void {
     getViewport: () => useEditorUiStore.getState().viewport,
     getScale: () => useProjectStore.getState().scale,
     getCameras: () => useProjectStore.getState().cameras,
+    getWalls: () => useProjectStore.getState().walls,
     getSelectedCameraId: () => useEditorUiStore.getState().selectedCameraId,
     pushNotification: (kind, message) => useEditorUiStore.getState().pushNotification(kind, message),
     seedCamera: (camera) => useProjectStore.getState().addCamera({ id: crypto.randomUUID(), ...camera }),
+    seedWall: (wall) => useProjectStore.getState().addWall({ id: crypto.randomUUID(), ...wall }),
     runExportSpike,
   }
 }

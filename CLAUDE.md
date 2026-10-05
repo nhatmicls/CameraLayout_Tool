@@ -30,7 +30,13 @@ Project rules:
   and both-or-neither. Unset must draw and save exactly like the flat cone. Floor-coverage math
   lives in `src/domain/mounted-camera-ground-coverage-calculator.ts` (metres only; slant model,
   centre-line arcs, fisheye HFOV >= 180 ignores tilt) - keep it out of components.
-- Project files: `PROJECT_SCHEMA_VERSION` is 2; the reader accepts 1 and 2, the writer emits 2.
+- Project files: `PROJECT_SCHEMA_VERSION` is 3; the reader accepts 1, 2 and 3, the writer emits 3.
+- Walls are single segments in image px (`opaque` blocks, `glass` never does). Occlusion is a
+  full-disc visibility polygon in unrotated image axes
+  (`src/domain/wall-occlusion-visibility-polygon.ts`), applied as a Konva `clipFunc` on the
+  cone's outer, unrotated Group - so rotation / HFOV changes never recompute it, and no opaque
+  wall in range means no clip at all. Keep wall math in image px; convert metres only at the
+  canvas edge.
 - Konva drag events bubble: a draggable child's drag reaches its parent's drag handlers, so
   parent handlers must check `e.target === e.currentTarget`.
 - Windows: a leftover dev server locks `node_modules` and breaks `npm ci` (EPERM). Kill the

@@ -1,22 +1,25 @@
 import { useCallback, useEffect, useRef, useState, type DragEvent } from 'react'
 import type Konva from 'konva'
 import type { KonvaEventObject } from 'konva/lib/Node'
-import { Stage } from 'react-konva'
+import { Layer, Stage } from 'react-konva'
 import { useProjectStore } from '../state/project-store'
 import { useEditorUiStore } from '../state/editor-ui-store'
 import { useStagePanZoom } from './use-stage-pan-zoom'
 import { ScaleCalibrationOverlay } from './scale-calibration-overlay'
+import { WallDrawingOverlay } from './wall-drawing-overlay'
 import { ScaleCalibrationLengthDialog } from '../panels/scale-calibration-length-dialog'
 import { PlanSceneLayers } from './plan-scene-layers'
 import { CameraDebugList } from './camera-debug-list'
 import { useCameraDragDropTarget } from './use-camera-drag-drop-target'
 import { useCameraSelectionKeyboardShortcuts } from './use-camera-selection-keyboard-shortcuts'
+import { useWallSelectionKeyboardShortcuts } from './use-wall-selection-keyboard-shortcuts'
+import { useWallNodeMoveHandler } from './use-wall-node-move-handler'
 import { computePlanPxPerMeter, type RefLine } from '../domain/scale-calibration-calculator'
 
 /**
  * The centre canvas: a Konva Stage sized to its container, with the plan
- * scene (image + cones + markers - `plan-scene-layers.tsx`) and the
- * calibration overlay on top. Pan/zoom is purely a stage transform -
+ * scene (image + cones + walls + markers - `plan-scene-layers.tsx`) and the
+ * editor-only calibration and wall-drawing overlays on top. Pan/zoom is purely a stage transform -
  * positions painted here are always in image pixels (see `project-types.ts`).
  */
 export function FloorPlanStage() {
@@ -25,12 +28,16 @@ export function FloorPlanStage() {
   const setScale = useProjectStore((s) => s.setScale)
   const cameras = useProjectStore((s) => s.cameras)
   const updateCamera = useProjectStore((s) => s.updateCamera)
+  const walls = useProjectStore((s) => s.walls)
   const decodedImage = useEditorUiStore((s) => s.decodedImage)
+  const toolMode = useEditorUiStore((s) => s.toolMode)
   const setToolMode = useEditorUiStore((s) => s.setToolMode)
   const pushNotification = useEditorUiStore((s) => s.pushNotification)
   const setStageSize = useEditorUiStore((s) => s.setStageSize)
   const selectedCameraId = useEditorUiStore((s) => s.selectedCameraId)
   const setSelectedCameraId = useEditorUiStore((s) => s.setSelectedCameraId)
+  const selectedWallId = useEditorUiStore((s) => s.selectedWallId)
+  const setSelectedWallId = useEditorUiStore((s) => s.setSelectedWallId)
 
   const containerRef = useRef<HTMLDivElement>(null)
   const stageRef = useRef<Konva.Stage>(null)
@@ -39,6 +46,8 @@ export function FloorPlanStage() {
   const { viewport, draggable, stageSize, handleWheel, handleDragEnd, fitToView } = useStagePanZoom()
   const { handleDragOver, handleDrop } = useCameraDragDropTarget(stageRef)
   useCameraSelectionKeyboardShortcuts()
+  useWallSelectionKeyboardShortcuts()
+  const handleMoveWallNode = useWallNodeMoveHandler()
 
   // Keep the stage sized to its flex container (the container, not the window, since side panels resize it too).
   // Written to editor-ui-store (not local state) so the toolbar's zoom/fit buttons can use the same size.
@@ -76,12 +85,14 @@ export function FloorPlanStage() {
     [pendingLine, setScale, setToolMode, pushNotification],
   )
 
-  // Clicking empty canvas (the Stage itself, not a camera marker) deselects.
+  // Clicking empty canvas (the Stage itself, not a camera marker or a wall) deselects both.
   const handleStageClick = useCallback(
     (e: KonvaEventObject<MouseEvent | TouchEvent>) => {
-      if (e.target === e.target.getStage()) setSelectedCameraId(null)
+      if (e.target !== e.target.getStage()) return
+      setSelectedCameraId(null)
+      setSelectedWallId(null)
     },
-    [setSelectedCameraId],
+    [setSelectedCameraId, setSelectedWallId],
   )
 
   const handleDropOnStage = useCallback(
@@ -105,7 +116,7 @@ export function FloorPlanStage() {
     <div
       ref={containerRef}
       data-testid="stage-container"
-      className="relative h-full w-full overflow-hidden bg-neutral-200"
+      className={`relative h-full w-full overflow-hidden bg-neutral-200 ${toolMode === 'wall' ? 'cursor-crosshair' : ''}`}
       onDragOver={handleDragOver}
       onDrop={handleDropOnStage}
     >
@@ -129,20 +140,35 @@ export function FloorPlanStage() {
             imageWidthPx={image.widthPx}
             imageHeightPx={image.heightPx}
             cameras={cameras}
+            walls={walls}
             planPxPerMeter={scale?.planPxPerMeter ?? 1}
             interactive
             selectedCameraId={selectedCameraId}
+            selectedWallId={selectedWallId}
+            wallsSelectable={toolMode === 'select'}
+            markersListening={toolMode !== 'wall'}
             viewportScale={viewport.scale}
             onSelectCamera={setSelectedCameraId}
+            onSelectWall={setSelectedWallId}
+            onMoveWallNode={handleMoveWallNode}
             onCameraDragEnd={handleCameraDragEnd}
             onCameraRotateEnd={handleCameraRotateEnd}
           />
-          <ScaleCalibrationOverlay
-            stageRef={stageRef}
-            viewportScale={viewport.scale}
-            dialogOpen={pendingLine !== null}
-            onLineDrawn={handleLineDrawn}
-          />
+          {/* One Layer for both editor overlays: with the scene's four that makes five, Konva's recommended maximum. */}
+          <Layer>
+            <ScaleCalibrationOverlay
+              stageRef={stageRef}
+              viewportScale={viewport.scale}
+              dialogOpen={pendingLine !== null}
+              onLineDrawn={handleLineDrawn}
+            />
+            <WallDrawingOverlay
+              stageRef={stageRef}
+              viewportScale={viewport.scale}
+              imageWidthPx={image.widthPx}
+              imageHeightPx={image.heightPx}
+            />
+          </Layer>
         </Stage>
       )}
 

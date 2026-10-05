@@ -33,6 +33,16 @@ export const DORI_BAND_COLORS: Record<DoriBandZone, string> = {
 export const DORI_BAND_FILL_OPACITY = 0.25
 export const DORI_BAND_FILL_OPACITY_SELECTED = 0.4
 
+/** Wall line colours, shared by the canvas and the legend. Selected overrides either kind. */
+export const WALL_OPAQUE_COLOR = '#111827' // gray-900
+export const WALL_GLASS_COLOR = '#0ea5e9' // sky-500
+export const WALL_SELECTED_COLOR = '#2563eb' // blue-600
+
+/** Wall line width in *image* pixels (plan content, like the marker icon), from the icon radius. */
+export function computeWallStrokeWidthPx(iconRadiusPx: number): number {
+  return Math.max(2, iconRadiusPx * 0.15)
+}
+
 /**
  * Marker icon radius, in *image* pixels - it must stay legible in a
  * native-resolution PNG export (phase 7), so it is never divided by the
@@ -52,3 +62,5 @@ export const ROTATION_HANDLE_DISTANCE_PX = 40
 export const ROTATION_HANDLE_RADIUS_PX = 5
 /** Screen-constant selection-ring padding beyond the icon radius, in CSS px before dividing by viewport scale. */
 export const SELECTION_RING_PADDING_PX = 4
+/** While drawing walls, a point this close to a wall endpoint snaps onto it. CSS px before dividing by viewport scale. */
+export const WALL_SNAP_TOLERANCE_SCREEN_PX = 10

@@ -22,9 +22,12 @@ export function useStagePanZoom() {
   const setViewport = useEditorUiStore((s) => s.setViewport)
   const image = useProjectStore((s) => s.image)
 
-  // Pan by dragging is only safe outside calibrate mode: calibrate wants
-  // every click interpreted as a reference-line point, not a stage drag.
-  const draggable = toolMode === 'select'
+  // Pan by dragging is off only in calibrate mode, which wants every press
+  // interpreted as a reference-line point. Wall mode keeps it: Konva cancels
+  // the click once a drag passes its drag distance (3 px by default), so a
+  // pan never places a wall point - the same mechanism that stops a
+  // select-mode pan from firing the Stage's deselect click.
+  const draggable = toolMode !== 'calibrate'
 
   const handleWheel = useCallback(
     (e: KonvaEventObject<WheelEvent>) => {

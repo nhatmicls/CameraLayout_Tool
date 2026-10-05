@@ -91,6 +91,7 @@ export function App() {
         decodedImage,
         image,
         cameras,
+        walls: useProjectStore.getState().walls,
         scale,
         onDownscaled: (widthPx, heightPx, scaleFactor) =>
           pushNotification(
