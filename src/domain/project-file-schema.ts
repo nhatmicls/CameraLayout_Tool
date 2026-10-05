@@ -1,8 +1,19 @@
 import { z } from 'zod'
+import {
+  MOUNT_HEIGHT_MAX_M,
+  MOUNT_HEIGHT_MIN_M,
+  TILT_MAX_DEG,
+  TILT_MIN_DEG,
+} from './mounted-camera-ground-coverage-calculator'
 import type { PlacedCamera, Project } from './project-types'
 
-/** Bumped whenever the saved-file shape changes in a non-backward-compatible way. */
-export const PROJECT_SCHEMA_VERSION = 1 as const
+/**
+ * Version written to saved files. Bumped whenever a file saved by this build
+ * could not be opened by an older one. Version 2 = version 1 plus the optional
+ * camera keys `mountHeightM` / `tiltDeg` (strict superset, so version 1 files
+ * are read with the same schema and need no migration).
+ */
+export const PROJECT_SCHEMA_VERSION = 2 as const
 
 /** Mirrors `serializeCsv`'s input cap intent: generous for a floor-plan PNG, small enough to reject garbage quickly. */
 const MAX_PROJECT_TEXT_LENGTH_BYTES = 80 * 1024 * 1024 // 80 MB
@@ -32,21 +43,28 @@ const scaleCalibrationSchema = z.strictObject({
   refLengthM: z.number().finite().gt(0),
 })
 
-const placedCameraSchema = z.strictObject({
-  id: z.string().min(1),
-  modelId: z.string().min(1),
-  x: z.number().finite(),
-  y: z.number().finite(),
-  rotationDeg: z.number().finite(),
-  hfovDeg: z.number().finite().gt(0).lte(360).optional(),
-  rangeM: z.number().finite().gt(0).lte(500),
-})
+const placedCameraSchema = z
+  .strictObject({
+    id: z.string().min(1),
+    modelId: z.string().min(1),
+    x: z.number().finite(),
+    y: z.number().finite(),
+    rotationDeg: z.number().finite(),
+    hfovDeg: z.number().finite().gt(0).lte(360).optional(),
+    rangeM: z.number().finite().gt(0).lte(500),
+    mountHeightM: z.number().finite().gte(MOUNT_HEIGHT_MIN_M).lte(MOUNT_HEIGHT_MAX_M).optional(),
+    tiltDeg: z.number().finite().gte(TILT_MIN_DEG).lte(TILT_MAX_DEG).optional(),
+  })
+  .refine((camera) => (camera.mountHeightM === undefined) === (camera.tiltDeg === undefined), {
+    message: 'mountHeightM and tiltDeg must be set together',
+    path: ['tiltDeg'],
+  })
 
 const MAX_CAMERAS = 500
 
 const projectFileSchema = z.strictObject({
   app: z.literal('camera-layout-tool'),
-  schemaVersion: z.literal(PROJECT_SCHEMA_VERSION),
+  schemaVersion: z.union([z.literal(1), z.literal(PROJECT_SCHEMA_VERSION)]),
   image: planImageSchema,
   scale: scaleCalibrationSchema.nullable(),
   cameras: z.array(placedCameraSchema).max(MAX_CAMERAS),

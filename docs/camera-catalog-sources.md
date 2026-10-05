@@ -20,6 +20,8 @@ phase plan). They were downloaded to a local scratch directory for this session
 only. The SHA-256 below lets anyone re-download the same `sourceUrl` and confirm
 they have byte-identical content to what was actually read.
 
+**Note:** Vertical FOV (VFOV) data for all records is documented in the "Addendum: vertical FOV (VFOV)" section below.
+
 ---
 
 ## Hikvision (4 models, 8 records)
@@ -334,3 +336,139 @@ None. No PDF differed from a previously recorded hash and no download failed.
 - Dahua IPC-HFW2441T-ZS "IK10 (optional)": re-read; the sheet prints the phrase twice and
   never says what the option is (the optional accessories listed are a junction box, pole
   mount, power adapter and mount tester). Still stored as no IK rating; to be revisited.
+
+## Addendum 2026-10-05: vertical FOV (VFOV)
+
+Optional lens fields `vfovDeg` (fixed) and `vfovWideDeg` + `vfovTeleDeg` (varifocal), read on
+2026-10-05 from the PDF at each record's own `sourceUrl`. Method: `curl -A "Mozilla/5.0 ..." -L`
+-> `%PDF` header check -> `sha256sum` -> `pdftotext -enc UTF-8 -raw` and `-layout`. All 29 unique
+PDFs downloaded and all 29 SHA-256 values equal the ones recorded earlier in this document, so
+every record was read from the same document version as its other fields. Catalog size: 51
+records (Hikvision 20, Dahua 16, Axis 15).
+
+Rule: a value is stored only when the vertical angle is printed on the FOV line of that
+record's lens, copied as printed (no rounding, no correction, no value from another model, a
+reseller, a calculation or the record's `notes`). A varifocal lens is stored only when both the
+wide and the tele end are printed. When a record has no stored VFOV the app computes one at
+runtime from HFOV and the pixel aspect ratio and labels it as computed. No other catalog field
+was changed.
+
+Quotes are the extracted text of the stated page; " / " marks a line break in the PDF text.
+Characters are kept as extracted (some Axis sheets print the ring "˚" instead of "°", and an en
+dash "–" in ranges). Every quote below was found in both the `-raw` and the `-layout` text of
+that page, the lens label, H line and V line are consecutive lines in `-raw`, and the H value in
+each quote equals the stored `hfovDeg` / `hfovWideDeg` / `hfovTeleDeg`.
+
+### Hikvision (8 PDFs, 20 records)
+
+| Record id | VFOV as printed (page, quote) | Stored |
+|---|---|---|
+| hikvision-ds-2cd2143g2-i-2.8mm | p.2 "2.8 mm, horizontal FOV 103°, vertical FOV 55°, diagonal FOV 122°" | `vfovDeg` 55 |
+| hikvision-ds-2cd2143g2-i-4mm | p.2 "4 mm, horizontal FOV 84°, vertical FOV 45°, diagonal FOV 100°" | `vfovDeg` 45 |
+| hikvision-ds-2cd2387g2-lsu-sl-2.8mm | p.2 "2.8 mm, horizontal FOV 102°, vertical FOV 52°, diagonal FOV 124°" | `vfovDeg` 52 |
+| hikvision-ds-2cd2387g2-lsu-sl-4mm | p.2 "4 mm, horizontal FOV 88°, vertical FOV 47°, diagonal FOV 104°" | `vfovDeg` 47 |
+| hikvision-ds-2cd2t47g2-l-2.8mm | p.2 "2.8 mm, horizontal FOV 112°, vertical FOV 61°, diagonal FOV 134°" | `vfovDeg` 61 |
+| hikvision-ds-2cd2t47g2-l-4mm | p.2 "4 mm, horizontal FOV 95°, vertical FOV 51°, diagonal FOV 115°" | `vfovDeg` 51 |
+| hikvision-ds-2cd2t47g2-l-6mm | p.2 "6 mm, horizontal FOV 58°, vertical FOV 31°, diagonal FOV 69°" | `vfovDeg` 31 |
+| hikvision-ds-2cd2746g2-izs-2.8-12mm | p.2 "2.8 to 12 mm, horizontal FOV 108° to 30°, vertical FOV 56° to 17°, diagonal FOV 131° to / 35°" | `vfovWideDeg` 56, `vfovTeleDeg` 17 |
+| hikvision-ds-2cd1023g2-liu-2.8mm | p.2 "2.8 mm, horizontal FOV 103°, vertical FOV 56°, diagonal FOV 121°" | `vfovDeg` 56 |
+| hikvision-ds-2cd1023g2-liu-4mm | p.2 "4 mm, horizontal FOV 83°, vertical FOV 44°, diagonal FOV 99°" | `vfovDeg` 44 |
+| hikvision-ds-2cd1023g2-liuf-2.8mm | p.2 "2.8 mm, horizontal FOV 103°, vertical FOV 56°, diagonal FOV 121°" | `vfovDeg` 56 |
+| hikvision-ds-2cd1023g2-liuf-4mm | p.2 "4 mm, horizontal FOV 83°, vertical FOV 44°, diagonal FOV 99°" | `vfovDeg` 44 |
+| hikvision-ds-2cd1323g2-liu-2.8mm | p.2 "2.8 mm, horizontal FOV 103°, vertical FOV 56°, diagonal FOV 121°" | `vfovDeg` 56 |
+| hikvision-ds-2cd1323g2-liu-4mm | p.2 "4 mm, horizontal FOV 83°, vertical FOV 44°, diagonal FOV 99°" | `vfovDeg` 44 |
+| hikvision-ds-2cd1043g2-liu-2.8mm | p.2 "2.8 mm, horizontal FOV 98°, vertical FOV 54°, diagonal FOV 114°" | `vfovDeg` 54 |
+| hikvision-ds-2cd1043g2-liu-4mm | p.2 "4 mm, horizontal FOV 78°, vertical FOV 42°, diagonal FOV 93°" | `vfovDeg` 42 |
+| hikvision-ds-2cd1043g2-liuf-2.8mm | p.2 "2.8 mm, horizontal FOV 98°, vertical FOV 54°, diagonal FOV 114°" | `vfovDeg` 54 |
+| hikvision-ds-2cd1043g2-liuf-4mm | p.2 "4 mm, horizontal FOV 78°, vertical FOV 42°, diagonal FOV 93°" | `vfovDeg` 42 |
+| hikvision-ds-2cd1343g2-liu-2.8mm | p.2 "2.8 mm, horizontal FOV 98°, vertical FOV 54°, diagonal FOV 114°" | `vfovDeg` 54 |
+| hikvision-ds-2cd1343g2-liu-4mm | p.2 "4 mm, horizontal FOV 78°, vertical FOV 42°, diagonal FOV 93°" | `vfovDeg` 42 |
+
+### Dahua (9 PDFs, 16 records)
+
+| Record id | VFOV as printed (page, quote) | Stored |
+|---|---|---|
+| dahua-ipc-hdbw2441e-s-2.8mm | p.2 "2.8 mm: H: 102°; V: 54°; D: 121°" | `vfovDeg` 54 |
+| dahua-ipc-hdbw2441e-s-3.6mm | p.2 "3.6 mm: H: 84°; V: 42°; D: 101°" | `vfovDeg` 42 |
+| dahua-ipc-hdw3549h-as-pv-2.8mm | p.2 "2.8 mm: H: 97°; V: 70°; D: 128°" | `vfovDeg` 70 |
+| dahua-ipc-hdw3549h-as-pv-3.6mm | p.2 "3.6 mm: H: 78°; V: 58°; D: 102°" | `vfovDeg` 58 |
+| dahua-ipc-hfw2441s-s-2.8mm | p.2 "2.8mm: H: 95°; V: 52°; D: 114°;" | `vfovDeg` 52 |
+| dahua-ipc-hfw2441s-s-3.6mm | p.2 "3.6mm: H: 78°; V: 41°; D: 94°" | `vfovDeg` 41 |
+| dahua-ipc-ebw5641-as-1.68mm | p.2 "1.68 mm: H: 185°; V: 185°; D: 185°" | `vfovDeg` 185 |
+| dahua-ipc-hfw1430dt-stw-2.8mm | p.2 "2.8 mm: / Horizontal: 90°; Vertical: 50°; Diagonal: 107°" | `vfovDeg` 50 |
+| dahua-ipc-hfw1430dt-stw-3.6mm | p.2 "3.6 mm: / Horizontal: 76°; Vertical: 40°; Diagonal: 92°" | `vfovDeg` 40 |
+| dahua-ipc-hfw1230s-s5-2.8mm | p.2 "2.8 mm: Horizontal: 102°; Vertical: 54°; Diagonal: 120" | `vfovDeg` 54 |
+| dahua-ipc-hfw1230s-s5-3.6mm | p.2 "3.6 mm: Horizontal: 84°; Vertical: 45°; Diagonal: 100°" | `vfovDeg` 45 |
+| dahua-ipc-hfw2249s-s-il-2.8mm | p.2 "2.8 mm: H: 107°; V: 56°; D: 127°;" | `vfovDeg` 56 |
+| dahua-ipc-hfw2249s-s-il-3.6mm | p.2 "3.6 mm: H: 88°; V: 44°; D: 105°" | `vfovDeg` 44 |
+| dahua-ipc-hfw2441t-zs-2.7-13.5mm | p.2 "H: 104°–29°; / V: 54°–16°; / D: 125°–34°" | `vfovWideDeg` 54, `vfovTeleDeg` 16 |
+| dahua-ipc-hdbw1430de-sw-2.8mm | p.2 "2.8 mm: / Horizontal: 90°; Vertical: 50°; Diagonal: 107°" | `vfovDeg` 50 |
+| dahua-ipc-hdbw1430de-sw-3.6mm | p.2 "3.6 mm: / Horizontal: 76°; Vertical: 40°; Diagonal: 92°" | `vfovDeg` 40 |
+
+### Axis (12 PDFs, 15 records)
+
+| Record id | VFOV as printed (page, quote) | Stored |
+|---|---|---|
+| axis-m2035-le-3.2mm | p.2 "AXIS M2035-LE: / 3.2 mm, F1.4 / Horizontal field of view: 101° / Vertical field of view: 54°" (one FOV pair, no aspect label; see judgment calls) | `vfovDeg` 54 |
+| axis-m2035-le-8mm | p.2 "AXIS M2035-LE 8mm: / 7.5 mm, F1.6 / Horizontal field of view: 39° / Vertical field of view: 22°" (one FOV pair, no aspect label; see judgment calls) | `vfovDeg` 22 |
+| axis-m2036-le-2.4mm | p.2 "4 MP (4:3) / Horizontal field of view: 109° / Vertical field of view: 81°" (4:3 block, the mode of the record's 2304x1728) | `vfovDeg` 81 |
+| axis-m3098-lv-3.76mm | p.2 "3.76 mm, F2.0 / Horizontal field of view: 124° / Vertical field of view: 66°" (one FOV pair, no aspect label; see judgment calls) | `vfovDeg` 66 |
+| axis-p3265-lve-9mm | p.2 "Varifocal, 3.4–8.9 mm, F1.8 / Horizontal field of view: 100°-36° / Vertical field of view: 53°-20°" | `vfovWideDeg` 53, `vfovTeleDeg` 20 |
+| axis-p3265-lve-22mm | p.2 "Varifocal, 9–22 mm, F1.6 / Horizontal field of view: 35°-15° / Vertical field of view: 19°-9°" | `vfovWideDeg` 19, `vfovTeleDeg` 9 |
+| axis-m3085-v-3.1mm | p.2 "3.1 mm, F2.0 / Horizontal field of view: 102° / Vertical field of view: 55°" | `vfovDeg` 55 |
+| axis-m3086-v-2.4mm | p.2 "2.4 mm, F2.1 / Horizontal field of view: 130° / Vertical field of view: 93°" (flagged below) | `vfovDeg` 93 |
+| axis-m3088-v-2.9mm | p.2 "2.9 mm, F2.0 / Horizontal field of view: 109° / Vertical field of view: 56°" | `vfovDeg` 56 |
+| axis-p1465-le-9mm | p.2 "Varifocal, 3-9 mm, F1.6-3.3 / Horizontal field of view 117˚-37˚ / Vertical field of view 59˚-20˚" (one FOV pair, no aspect label; see judgment calls) | `vfovWideDeg` 59, `vfovTeleDeg` 20 |
+| axis-p1465-le-29mm | p.2 "Varifocal, 10.9-29 mm, F1.7-1.7 / Horizontal field of view 29˚-11˚ / Vertical field of view 16˚-6˚" (one FOV pair, no aspect label; see judgment calls) | `vfovWideDeg` 16, `vfovTeleDeg` 6 |
+| axis-p1467-le-8mm | p.2 "Varifocal, 2.8–8 mm, F1.3 / Horizontal field of view 106˚–38˚ / Vertical field of view 78˚–29˚" (one FOV pair, no aspect label; see judgment calls) | `vfovWideDeg` 78, `vfovTeleDeg` 29 |
+| axis-p1468-le-12.9mm | p.2 "Varifocal, 6.2–12.9 mm, F1.6–2.9 / Horizontal field of view 108˚–49˚ / Vertical field of view 58˚–27˚" | `vfovWideDeg` 58, `vfovTeleDeg` 27 |
+| axis-p3287-lve-8.5mm | p.2 "Varifocal, 3.0–8.5 mm, F1.38–2.58 / Horizontal field of view: 104°–34° / Vertical field of view: 76°–26°" (one FOV pair, no aspect label; see judgment calls) | `vfovWideDeg` 76, `vfovTeleDeg` 26 |
+| axis-m4317-plve-1.1mm | p.2 "Focal length: 1.1 mm, F2.2 / Horizontal field of view: 182° / Vertical field of view: 182°" (fisheye, stored as printed) | `vfovDeg` 182 |
+
+### Tally
+
+| Brand | Records | Printed and stored | Absent |
+|---|---|---|---|
+| Hikvision | 20 | 20 | 0 |
+| Dahua | 16 | 16 | 0 |
+| Axis | 15 | 15 | 0 |
+| Total | 51 | 51 | 0 |
+
+Varifocal records (9): all print both ends. Fixed records: 42.
+
+### Judgment calls
+
+- Hikvision `-LIU` and `-LIUF` records of DS-2CD1023G2 and DS-2CD1043G2 share one sheet titled
+  `...-LIU(F)` with one FOV table, so both records of a lens carry the same value.
+- Axis M2036-LE is the only sheet that prints a FOV pair per aspect ratio ("4 MP (16:9)": 130° /
+  71°; "4 MP (4:3)": 109° / 81°). The record is the 4:3 mode (2304x1728, HFOV 109°), so 81 is
+  stored.
+- One FOV pair, no aspect label: M2035-LE, M3098-LV, P1465-LE and P3287-LVE list several aspect
+  ratios under "Resolution", and P1467-LE lists a second 720p capture mode, but each prints a
+  single horizontal + vertical pair per lens with no mode named. The vertical value is stored
+  because it is printed on the same lens block as the horizontal value the record already
+  uses, and each record's pixel size is the largest resolution the sheet lists. The sheet does
+  not itself say which mode the pair belongs to. These 7 records are: axis-m2035-le-3.2mm,
+  axis-m2035-le-8mm, axis-m3098-lv-3.76mm, axis-p1465-le-9mm, axis-p1465-le-29mm,
+  axis-p1467-le-8mm, axis-p3287-lve-8.5mm.
+- Fisheye: Dahua IPC-EBW5641-AS "V: 185°" and Axis M4317-PLVE "Vertical field of view: 182°"
+  are stored as printed. Both sheets list several dewarp / view modes; the single FOV line is
+  the lens line.
+- Dahua IPC-HFW1230S-S5 prints "Diagonal: 120" with no degree sign on the 2.8 mm line; the
+  vertical value on that line is printed normally.
+
+### Flagged for the owner
+
+- `axis-m3086-v-2.4mm`: the sheet prints "Horizontal field of view: 130°" and "Vertical field of
+  view: 93°" and one resolution range, "2688x1512 (4 MP) to 320x240". 93 is stored as printed.
+  It is larger than a 16:9 image with a 130° horizontal angle would suggest, and the M2036-LE
+  sheet (same 2.4 mm F2.1 lens, 1/2.7" sensor) prints 71° for its 16:9 mode. The M3086-V sheet
+  names no aspect mode for the pair, so nothing printed contradicts it; the value was not
+  corrected. Review whether this record should keep the printed value or fall back to the
+  computed one.
+- Dahua DH-IPC-HDW3549H-AS-PV: 70° and 58° are stored as printed for a 2960x1688 image.
+
+### Changed or failed PDFs
+
+None. No download failed, every file had a `%PDF` header, and no SHA-256 differed from the
+recorded one, so no record is flagged "datasheet revised".

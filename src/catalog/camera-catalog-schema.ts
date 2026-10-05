@@ -2,6 +2,10 @@
 // official manufacturer datasheet (see docs/camera-catalog-sources.md) - no values
 // from memory, resellers, or calculation.
 //
+// Vertical FOV (vfov*) is optional: present only when the datasheet prints it. The
+// app derives a fallback at runtime (labelled as computed) and never stores it. Max
+// is 360, not 180: fisheye datasheets print e.g. "V: 185" and values are as printed.
+//
 // Protection / audio / detection fields are two-state, not tri-state: true or a
 // listed value means the datasheet prints it for this exact model string; false,
 // null or an empty array means "not printed as present" - never a confirmed
@@ -31,6 +35,7 @@ const fixedLensSchema = z.object({
   kind: z.literal("fixed"),
   focalMm: z.number().positive(),
   hfovDeg: z.number().positive().max(360),
+  vfovDeg: z.number().positive().max(360).optional(),
 });
 
 const varifocalLensSchema = z.object({
@@ -39,6 +44,8 @@ const varifocalLensSchema = z.object({
   focalMaxMm: z.number().positive(),
   hfovWideDeg: z.number().positive().max(360),
   hfovTeleDeg: z.number().positive().max(360),
+  vfovWideDeg: z.number().positive().max(360).optional(),
+  vfovTeleDeg: z.number().positive().max(360).optional(),
 });
 
 export const lensSchema = z.discriminatedUnion("kind", [
@@ -135,6 +142,20 @@ export const cameraModelSchema = z
           code: "custom",
           message: "lens.hfovWideDeg must exceed lens.hfovTeleDeg (wide angle > tele angle)",
           path: ["lens", "hfovWideDeg"],
+        });
+      }
+      const { vfovWideDeg, vfovTeleDeg } = record.lens;
+      if ((vfovWideDeg === undefined) !== (vfovTeleDeg === undefined)) {
+        ctx.addIssue({
+          code: "custom",
+          message: "lens.vfovWideDeg and lens.vfovTeleDeg must both be present or both absent",
+          path: ["lens", "vfovWideDeg"],
+        });
+      } else if (vfovWideDeg !== undefined && vfovTeleDeg !== undefined && vfovWideDeg <= vfovTeleDeg) {
+        ctx.addIssue({
+          code: "custom",
+          message: "lens.vfovWideDeg must exceed lens.vfovTeleDeg",
+          path: ["lens", "vfovWideDeg"],
         });
       }
     }

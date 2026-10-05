@@ -4,6 +4,7 @@ import { Arc, Circle, Group, Ring } from 'react-konva'
 import { computeDoriBands } from '../domain/camera-coverage-resolver'
 import { computeDoriDistancesM } from '../domain/dori-zone-distance-calculator'
 import { coneSweepShape, sectorStartDeg } from '../domain/fov-cone-sector-geometry'
+import { computeMountedGroundCoverage } from '../domain/mounted-camera-ground-coverage-calculator'
 import { metersToPlanPx } from '../domain/scale-calibration-calculator'
 import { DORI_BAND_COLORS, DORI_BAND_FILL_OPACITY, DORI_BAND_FILL_OPACITY_SELECTED } from './brand-and-dori-color-palette'
 
@@ -17,17 +18,24 @@ export interface CameraFovConeShapeProps {
   pixelWidth: number
   hfovDeg: number
   rangeM: number
+  /** Lens height above the floor, metres. undefined = flat cone from the camera out to `rangeM` (no height model). */
+  mountHeightM?: number
+  tiltDeg?: number
+  /** Effective VFOV in degrees; null when not applicable (HFOV >= 180 without a datasheet value). Ignored when `mountHeightM` is undefined. */
+  vfovDeg: number | null
   planPxPerMeter: number
   selected: boolean
 }
 
 /**
- * One camera's FOV cone: bands from the domain's `computeDoriBands`,
+ * One camera's FOV cone: bands from the domain's `computeDoriBands` (or,
+ * for a camera with a mount height, `computeMountedGroundCoverage`, whose
+ * bands start at the blind-spot radius and end at the floor far edge),
  * converted to plan px via the calibrated scale. Non-listening (clicks
  * always pass through to the marker icon below/above it - see
  * `plan-scene-layers.tsx` for the two-layer z-order).
  *
- * Takes primitive inputs (`pixelWidth`/`hfovDeg`/`rangeM`), not a
+ * Takes primitive inputs (`pixelWidth`/`hfovDeg`/`rangeM`/mounting), not a
  * pre-computed `bands` array, specifically so `React.memo` + the internal
  * `useMemo`s below can actually skip work for every camera except the one
  * that changed - an array literal recomputed by the parent every render
@@ -42,6 +50,9 @@ export const CameraFovConeShape = memo(function CameraFovConeShape({
   pixelWidth,
   hfovDeg,
   rangeM,
+  mountHeightM,
+  tiltDeg,
+  vfovDeg,
   planPxPerMeter,
   selected,
 }: CameraFovConeShapeProps) {
@@ -56,7 +67,20 @@ export const CameraFovConeShape = memo(function CameraFovConeShape({
   }, [nodeRegistry, cameraId])
 
   const distances = useMemo(() => computeDoriDistancesM(pixelWidth, hfovDeg), [pixelWidth, hfovDeg])
-  const bands = useMemo(() => computeDoriBands(distances, rangeM), [distances, rangeM])
+  const bands = useMemo(
+    () =>
+      mountHeightM === undefined
+        ? computeDoriBands(distances, rangeM)
+        : computeMountedGroundCoverage({
+            mountHeightM,
+            tiltDeg: tiltDeg ?? 0,
+            vfovDeg,
+            hfovDeg,
+            rangeM,
+            doriSlantM: distances,
+          }).bands,
+    [distances, rangeM, mountHeightM, tiltDeg, vfovDeg, hfovDeg],
+  )
   const sweepShape = useMemo(() => coneSweepShape(hfovDeg), [hfovDeg])
   // The camera's own bearing lives on this Group's `rotation` (updated
   // imperatively during a rotation-handle drag); each band's *local*

@@ -1,10 +1,16 @@
 import type { ManufacturerDori } from '../catalog/camera-catalog-loader'
 import { isApproximateDoriModel, type DoriDistancesM } from '../domain/dori-zone-distance-calculator'
+import type { DoriGroundDistancesM } from '../domain/mounted-camera-ground-coverage-calculator'
+import { formatM } from './camera-properties-form-helpers'
 
 interface CameraDoriDistanceTableProps {
   computed: DoriDistancesM
   effectiveHfovDeg: number
   manufacturerDori: ManufacturerDori | null
+  /** Floor distance of each threshold for a mounted camera. Omitted = no "On floor" column. */
+  groundDistances?: DoriGroundDistancesM
+  /** Blind-spot radius of the mounted camera, to flag thresholds that land inside it. */
+  nearM?: number
 }
 
 const ZONE_LABELS: ReadonlyArray<{ key: keyof DoriDistancesM; label: string }> = [
@@ -14,9 +20,10 @@ const ZONE_LABELS: ReadonlyArray<{ key: keyof DoriDistancesM; label: string }> =
   { key: 'detect', label: 'Detect' },
 ]
 
-/** Formats a metre distance to 1 decimal place. */
-function formatM(value: number): string {
-  return `${value.toFixed(1)} m`
+/** null = the threshold's slant distance is shorter than the mount height. */
+function formatGroundM(groundM: number | null, nearM: number): string {
+  if (groundM === null) return 'out of reach'
+  return groundM <= nearM ? `${formatM(groundM)} (in blind spot)` : formatM(groundM)
 }
 
 /**
@@ -24,8 +31,16 @@ function formatM(value: number): string {
  * manufacturer's printed DORI shown alongside (when the catalog record has
  * one) labelled "datasheet (reference)" so it reads as a cross-check, not a
  * contradiction - wide lenses can differ a lot from the computed value.
+ * For a mounted camera an "On floor" column adds where each threshold lands
+ * on the floor plan.
  */
-export function CameraDoriDistanceTable({ computed, effectiveHfovDeg, manufacturerDori }: CameraDoriDistanceTableProps) {
+export function CameraDoriDistanceTable({
+  computed,
+  effectiveHfovDeg,
+  manufacturerDori,
+  groundDistances,
+  nearM = 0,
+}: CameraDoriDistanceTableProps) {
   const approximate = isApproximateDoriModel(effectiveHfovDeg)
 
   return (
@@ -35,6 +50,7 @@ export function CameraDoriDistanceTable({ computed, effectiveHfovDeg, manufactur
           <tr className="text-neutral-400">
             <th className="pb-1 font-normal">Zone</th>
             <th className="pb-1 font-normal">Computed</th>
+            {groundDistances && <th className="pb-1 font-normal">On floor</th>}
             {manufacturerDori && <th className="pb-1 font-normal">Datasheet (reference)</th>}
           </tr>
         </thead>
@@ -45,6 +61,11 @@ export function CameraDoriDistanceTable({ computed, effectiveHfovDeg, manufactur
               <td data-testid={`properties-dori-computed-${key}`} className="py-0.5 font-medium text-neutral-900">
                 {formatM(computed[key])}
               </td>
+              {groundDistances && (
+                <td data-testid={`properties-dori-ground-${key}`} className="py-0.5 text-neutral-900">
+                  {formatGroundM(groundDistances[key], nearM)}
+                </td>
+              )}
               {manufacturerDori && (
                 <td data-testid={`properties-dori-manufacturer-${key}`} className="py-0.5 text-neutral-500">
                   {formatM(manufacturerDori[key])}

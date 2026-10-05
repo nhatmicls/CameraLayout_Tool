@@ -1,4 +1,4 @@
-// Unit tests for the protection / audio / detection fields of the catalog schema.
+// Unit tests for the protection / audio / detection / vertical-FOV fields of the catalog schema.
 import { describe, expect, it } from "vitest";
 import { cameraModelSchema } from "./camera-catalog-schema";
 
@@ -83,4 +83,28 @@ describe("audio flags", () => {
       expect(parses({ [key]: true })).toBe(true);
     },
   );
+});
+
+describe("datasheet vertical FOV", () => {
+  const varifocal = { kind: "varifocal", focalMinMm: 2.7, focalMaxMm: 13.5, hfovWideDeg: 104, hfovTeleDeg: 29 };
+
+  it("fixed lens: optional, kept as printed (fisheye values above 180 allowed)", () => {
+    expect(cameraModelSchema.parse(baseRecord).lens).not.toHaveProperty("vfovDeg");
+    expect(parses({ lens: { ...baseRecord.lens, vfovDeg: 54 } })).toBe(true);
+    expect(parses({ lens: { ...baseRecord.lens, vfovDeg: 185 } })).toBe(true);
+    expect(parses({ lens: { ...baseRecord.lens, vfovDeg: 0 } })).toBe(false);
+    expect(parses({ lens: { ...baseRecord.lens, vfovDeg: 361 } })).toBe(false);
+  });
+
+  it("varifocal lens: both ends or neither", () => {
+    expect(parses({ lens: varifocal })).toBe(true);
+    expect(parses({ lens: { ...varifocal, vfovWideDeg: 54, vfovTeleDeg: 16 } })).toBe(true);
+    expect(parses({ lens: { ...varifocal, vfovWideDeg: 54 } })).toBe(false);
+    expect(parses({ lens: { ...varifocal, vfovTeleDeg: 16 } })).toBe(false);
+  });
+
+  it("varifocal lens: wide must exceed tele", () => {
+    expect(parses({ lens: { ...varifocal, vfovWideDeg: 16, vfovTeleDeg: 16 } })).toBe(false);
+    expect(parses({ lens: { ...varifocal, vfovWideDeg: 16, vfovTeleDeg: 54 } })).toBe(false);
+  });
 });

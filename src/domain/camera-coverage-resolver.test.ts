@@ -4,6 +4,7 @@ import {
   DEFAULT_MAX_RANGE_M,
   resolveDefaultRangeM,
   resolveEffectiveHfovDeg,
+  resolveEffectiveVfovDeg,
 } from './camera-coverage-resolver'
 import { computeDoriDistancesM } from './dori-zone-distance-calculator'
 import type { CameraModelSpec } from './project-types'
@@ -31,6 +32,83 @@ describe('resolveEffectiveHfovDeg', () => {
   it('varifocal falls back to wide on a non-finite override', () => {
     const lens = { kind: 'varifocal' as const, focalMinMm: 2.8, focalMaxMm: 12, hfovWideDeg: 100, hfovTeleDeg: 30 }
     expect(resolveEffectiveHfovDeg(lens, NaN)).toBe(100)
+  })
+})
+
+describe('resolveEffectiveVfovDeg', () => {
+  const varifocal = { kind: 'varifocal' as const, focalMinMm: 2.7, focalMaxMm: 13.5, hfovWideDeg: 104, hfovTeleDeg: 29 }
+  const varifocalWithVfov = { ...varifocal, vfovWideDeg: 54, vfovTeleDeg: 16 }
+
+  it('fixed lens uses the datasheet value when present', () => {
+    const lens = { kind: 'fixed' as const, focalMm: 2.8, hfovDeg: 102, vfovDeg: 54 }
+    expect(resolveEffectiveVfovDeg(lens, 2688, 1520, 102)).toEqual({ vfovDeg: 54, source: 'datasheet' })
+  })
+
+  it('fixed lens without a datasheet value derives it from HFOV and aspect ratio', () => {
+    const lens = { kind: 'fixed' as const, focalMm: 2.8, hfovDeg: 90 }
+    const vfov = resolveEffectiveVfovDeg(lens, 1920, 1080, 90)
+    expect(vfov?.source).toBe('computed')
+    expect(vfov?.vfovDeg).toBeCloseTo(58.72, 2)
+  })
+
+  it('varifocal returns the datasheet value at either zoom end', () => {
+    expect(resolveEffectiveVfovDeg(varifocalWithVfov, 2688, 1520, 104)).toEqual({ vfovDeg: 54, source: 'datasheet' })
+    expect(resolveEffectiveVfovDeg(varifocalWithVfov, 2688, 1520, 29)).toEqual({ vfovDeg: 16, source: 'datasheet' })
+  })
+
+  it('varifocal interpolates linearly between the datasheet ends and says so', () => {
+    expect(resolveEffectiveVfovDeg(varifocalWithVfov, 2688, 1520, 66.5)).toEqual({
+      vfovDeg: 35,
+      source: 'datasheet-interpolated',
+    })
+  })
+
+  it('varifocal without datasheet values is computed', () => {
+    expect(resolveEffectiveVfovDeg(varifocal, 2688, 1520, 66.5)?.source).toBe('computed')
+  })
+
+  it('returns null at HFOV >= 180 without a datasheet value, the datasheet value otherwise', () => {
+    expect(resolveEffectiveVfovDeg({ kind: 'fixed', focalMm: 1.4, hfovDeg: 185 }, 2592, 1944, 185)).toBeNull()
+    expect(resolveEffectiveVfovDeg({ kind: 'fixed', focalMm: 1.4, hfovDeg: 185, vfovDeg: 185 }, 2592, 1944, 185)).toEqual({
+      vfovDeg: 185,
+      source: 'datasheet',
+    })
+  })
+})
+
+describe('resolveEffectiveVfovDeg - datasheet values unusable for a rectilinear lens', () => {
+  it('falls back to the derivation when a datasheet VFOV >= 180 sits on a lens with HFOV < 180', () => {
+    const vfov = resolveEffectiveVfovDeg({ kind: 'fixed', focalMm: 1.8, hfovDeg: 170, vfovDeg: 185 }, 1920, 1080, 170)
+    expect(vfov?.source).toBe('computed')
+    expect(vfov?.vfovDeg).toBeLessThan(180)
+  })
+
+  it('falls back when a varifocal interpolation reaches 180 or more below HFOV 180', () => {
+    const lens = {
+      kind: 'varifocal' as const,
+      focalMinMm: 1,
+      focalMaxMm: 5,
+      hfovWideDeg: 181,
+      hfovTeleDeg: 100,
+      vfovWideDeg: 200,
+      vfovTeleDeg: 60,
+    }
+    const vfov = resolveEffectiveVfovDeg(lens, 1920, 1080, 179.9)
+    expect(vfov?.source).toBe('computed')
+    expect(vfov?.vfovDeg).toBeLessThan(180)
+  })
+
+  it('never returns NaN for a degenerate varifocal range (wide == tele)', () => {
+    const lens = {
+      kind: 'varifocal' as const,
+      focalMinMm: 3,
+      focalMaxMm: 3,
+      hfovWideDeg: 90,
+      hfovTeleDeg: 90,
+      vfovWideDeg: 50,
+      vfovTeleDeg: 50,
+    }
+    expect(resolveEffectiveVfovDeg(lens, 1920, 1080, 90)?.vfovDeg).toBeCloseTo(58.72, 2)
   })
 })
 
@@ -99,5 +177,26 @@ describe('computeDoriBands', () => {
     expect(() => computeDoriBands(distances, 0)).toThrow()
     expect(() => computeDoriBands(distances, -5)).toThrow()
     expect(() => computeDoriBands(distances, NaN)).toThrow()
+  })
+
+  it('startM = 0 is identical to omitting it', () => {
+    expect(computeDoriBands(distances, 30, 0)).toEqual(computeDoriBands(distances, 30))
+    expect(computeDoriBands(distances, 50, 0)).toEqual(computeDoriBands(distances, 50))
+  })
+
+  it('starts the first band at startM and drops zones that end before it', () => {
+    const bands = computeDoriBands(distances, 30, 5) // identify ends at 3.70
+    expect(bands.map((b) => b.zone)).toEqual(['recognize', 'observe', 'detect'])
+    expect(bands[0].innerM).toBe(5)
+  })
+
+  it('returns no bands when startM is at or past rangeM', () => {
+    expect(computeDoriBands(distances, 30, 30)).toEqual([])
+    expect(computeDoriBands(distances, 30, 40)).toEqual([])
+  })
+
+  it('throws on a negative or non-finite startM', () => {
+    expect(() => computeDoriBands(distances, 30, -1)).toThrow(/startM/)
+    expect(() => computeDoriBands(distances, 30, NaN)).toThrow(/startM/)
   })
 })

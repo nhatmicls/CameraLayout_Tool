@@ -3,7 +3,7 @@ import type Konva from 'konva'
 import { Image as KonvaImage, Layer } from 'react-konva'
 import { cameraModelById } from '../catalog/camera-catalog-loader'
 import type { PlacedCamera } from '../domain/project-types'
-import { resolveEffectiveHfovDeg } from '../domain/camera-coverage-resolver'
+import { resolveEffectiveHfovDeg, resolveEffectiveVfovDeg } from '../domain/camera-coverage-resolver'
 import { CameraFovConeShape } from './camera-fov-cone-shape'
 import { CameraMarkerNode } from './camera-marker-node'
 import { BRAND_TINTS, computeIconRadiusPx } from './brand-and-dori-color-palette'
@@ -101,6 +101,8 @@ export function PlanSceneLayers({
         {conesInPaintOrder.map((camera) => {
           const model = cameraModelById(camera.modelId)
           if (!model) return null // unknown/removed catalog id - skip rather than crash the scene
+          const hfovDeg = resolveEffectiveHfovDeg(model.lens, camera.hfovDeg)
+          const vfov = resolveEffectiveVfovDeg(model.lens, model.pixelWidth, model.pixelHeight, hfovDeg)
           return (
             <CameraFovConeShape
               key={camera.id}
@@ -110,8 +112,11 @@ export function PlanSceneLayers({
               y={camera.y}
               rotationDeg={camera.rotationDeg}
               pixelWidth={model.pixelWidth}
-              hfovDeg={resolveEffectiveHfovDeg(model.lens, camera.hfovDeg)}
+              hfovDeg={hfovDeg}
               rangeM={camera.rangeM}
+              mountHeightM={camera.mountHeightM}
+              tiltDeg={camera.tiltDeg}
+              vfovDeg={vfov?.vfovDeg ?? null}
               planPxPerMeter={planPxPerMeter}
               selected={interactive && camera.id === selectedCameraId}
             />

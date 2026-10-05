@@ -1,29 +1,35 @@
 import type { ChangeEvent } from 'react'
 import { cameraModelById } from '../catalog/camera-catalog-loader'
-import { resolveDefaultRangeM, resolveEffectiveHfovDeg } from '../domain/camera-coverage-resolver'
-import { computeDoriDistancesM } from '../domain/dori-zone-distance-calculator'
+import {
+  resolveDefaultRangeM,
+  resolveEffectiveHfovDeg,
+  resolveEffectiveVfovDeg,
+} from '../domain/camera-coverage-resolver'
+import { computeDoriDistancesM, isApproximateDoriModel } from '../domain/dori-zone-distance-calculator'
 import { normalizeDegrees } from '../domain/fov-cone-sector-geometry'
+import {
+  computeMountedGroundCoverage,
+  DEFAULT_MOUNT_HEIGHT_M,
+  suggestTiltDegForFarEdgeM,
+  TILT_MAX_DEG,
+} from '../domain/mounted-camera-ground-coverage-calculator'
 import { useEditorUiStore } from '../state/editor-ui-store'
 import { useProjectStore } from '../state/project-store'
 import { CameraDoriDistanceTable } from './camera-dori-distance-table'
+import { CameraGroundCoverageReadout } from './camera-ground-coverage-readout'
+import { CameraMountingHeightTiltInputs } from './camera-mounting-height-tilt-inputs'
+import { fieldLabelClass, inputClass } from './camera-properties-form-helpers'
+import { CameraRangeInputWithReset } from './camera-range-input-with-reset'
 import { CameraReadonlySummaryFields } from './camera-readonly-summary-fields'
-
-const MIN_RANGE_M = 0.5
-const MAX_RANGE_M = 500
-
-const fieldLabelClass = 'mt-3 block text-xs font-medium text-neutral-500'
-const inputClass =
-  'mt-1 w-full rounded border border-neutral-300 px-2 py-1 text-sm focus:border-blue-600 focus:outline focus:outline-2 focus:outline-blue-600'
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value))
-}
+import { CameraUnknownModelNotice } from './camera-unknown-model-notice'
+import { CameraVarifocalHfovSlider } from './camera-varifocal-hfov-slider'
 
 /**
  * Right-panel editor for the currently-selected camera: read-only catalog
- * facts, editable rotation/range/HFOV, and the computed DORI table. Pure
- * forms over domain functions - no geometry/DORI math lives here (see
- * `camera-coverage-resolver.ts` / `dori-zone-distance-calculator.ts`).
+ * facts, editable rotation/range/HFOV/mounting, floor coverage and the
+ * computed DORI table. Pure forms over domain functions - no geometry/DORI
+ * math lives here (see `camera-coverage-resolver.ts`,
+ * `dori-zone-distance-calculator.ts`, `mounted-camera-ground-coverage-calculator.ts`).
  */
 export function CameraPropertiesPanel() {
   const cameras = useProjectStore((s) => s.cameras)
@@ -56,29 +62,25 @@ export function CameraPropertiesPanel() {
   }
 
   if (!model) {
-    // The catalog no longer has this camera's model (e.g. loaded from an older project file after a catalog change).
-    return (
-      <div data-testid="properties-panel" className="text-sm">
-        <h2 className="text-sm font-semibold text-neutral-700">
-          Properties <span className="text-neutral-400">({label})</span>
-        </h2>
-        <p data-testid="properties-unknown-model-note" className="mt-2 text-xs text-amber-700">
-          This camera&apos;s model (&quot;{camera.modelId}&quot;) is no longer in the catalog. Its data can still be deleted.
-        </p>
-        <button
-          type="button"
-          data-testid="properties-delete-button"
-          onClick={handleDelete}
-          className="mt-3 rounded bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 focus:outline focus:outline-2 focus:outline-red-800"
-        >
-          Delete camera
-        </button>
-      </div>
-    )
+    return <CameraUnknownModelNotice label={label} modelId={camera.modelId} onDelete={handleDelete} />
   }
 
   const effectiveHfovDeg = resolveEffectiveHfovDeg(model.lens, camera.hfovDeg)
   const doriDistances = computeDoriDistancesM(model.pixelWidth, effectiveHfovDeg)
+  const vfov = resolveEffectiveVfovDeg(model.lens, model.pixelWidth, model.pixelHeight, effectiveHfovDeg)
+  // Mounting unset = legacy flat cone: no floor model, panel as before plus one button.
+  const coverage =
+    camera.mountHeightM === undefined
+      ? null
+      : computeMountedGroundCoverage({
+          mountHeightM: camera.mountHeightM,
+          tiltDeg: camera.tiltDeg ?? 0,
+          vfovDeg: vfov?.vfovDeg ?? null,
+          hfovDeg: effectiveHfovDeg,
+          rangeM: camera.rangeM,
+          doriSlantM: doriDistances,
+        })
+  const tiltApplicable = !isApproximateDoriModel(effectiveHfovDeg)
 
   const handleRotationChange = (e: ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.valueAsNumber
@@ -86,20 +88,13 @@ export function CameraPropertiesPanel() {
     updateCamera(camera.id, { rotationDeg: normalizeDegrees(raw) })
   }
 
-  const handleRangeChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.valueAsNumber
-    if (!Number.isFinite(raw)) return
-    updateCamera(camera.id, { rangeM: clamp(raw, MIN_RANGE_M, MAX_RANGE_M) })
-  }
-
-  const handleResetRange = () => {
-    updateCamera(camera.id, { rangeM: resolveDefaultRangeM(model, effectiveHfovDeg) })
-  }
-
-  const handleHfovChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.valueAsNumber
-    if (!Number.isFinite(raw)) return
-    updateCamera(camera.id, { hfovDeg: raw })
+  // Initial tilt puts the far edge at the current range, so the cone length barely changes on click.
+  const handleSetMounting = () => {
+    const tiltDeg =
+      tiltApplicable && vfov
+        ? Math.round(suggestTiltDegForFarEdgeM(DEFAULT_MOUNT_HEIGHT_M, camera.rangeM, vfov.vfovDeg))
+        : TILT_MAX_DEG
+    updateCamera(camera.id, { mountHeightM: DEFAULT_MOUNT_HEIGHT_M, tiltDeg })
   }
 
   return (
@@ -135,48 +130,31 @@ export function CameraPropertiesPanel() {
         className={inputClass}
       />
 
-      <label className={fieldLabelClass} htmlFor="properties-range-input">
-        Range (m)
-      </label>
-      <div className="mt-1 flex gap-2">
-        <input
-          id="properties-range-input"
-          data-testid="properties-range-input"
-          type="number"
-          min={MIN_RANGE_M}
-          max={MAX_RANGE_M}
-          step={0.1}
-          value={camera.rangeM}
-          onChange={handleRangeChange}
-          className="w-full rounded border border-neutral-300 px-2 py-1 text-sm focus:border-blue-600 focus:outline focus:outline-2 focus:outline-blue-600"
-        />
-        <button
-          type="button"
-          data-testid="properties-range-reset-button"
-          onClick={handleResetRange}
-          className="flex-shrink-0 rounded border border-neutral-300 px-2 py-1 text-xs font-medium text-neutral-600 hover:bg-neutral-100"
-        >
-          Reset
-        </button>
-      </div>
+      <CameraRangeInputWithReset
+        rangeM={camera.rangeM}
+        onChange={(rangeM) => updateCamera(camera.id, { rangeM })}
+        onReset={() => updateCamera(camera.id, { rangeM: resolveDefaultRangeM(model, effectiveHfovDeg) })}
+      />
 
       {model.lens.kind === 'varifocal' && (
-        <>
-          <label className={fieldLabelClass} htmlFor="properties-hfov-slider">
-            HFOV: <span data-testid="properties-hfov-value">{effectiveHfovDeg.toFixed(1)}&deg;</span>
-          </label>
-          <input
-            id="properties-hfov-slider"
-            data-testid="properties-hfov-slider"
-            type="range"
-            min={model.lens.hfovTeleDeg}
-            max={model.lens.hfovWideDeg}
-            step={0.1}
-            value={effectiveHfovDeg}
-            onChange={handleHfovChange}
-            className="mt-1 w-full"
-          />
-        </>
+        <CameraVarifocalHfovSlider
+          hfovTeleDeg={model.lens.hfovTeleDeg}
+          hfovWideDeg={model.lens.hfovWideDeg}
+          hfovDeg={effectiveHfovDeg}
+          onChange={(hfovDeg) => updateCamera(camera.id, { hfovDeg })}
+        />
+      )}
+
+      <CameraMountingHeightTiltInputs
+        mountHeightM={camera.mountHeightM}
+        tiltDeg={camera.tiltDeg}
+        tiltApplicable={tiltApplicable}
+        onSetMounting={handleSetMounting}
+        onChange={(patch) => updateCamera(camera.id, patch)}
+        onClear={() => updateCamera(camera.id, { mountHeightM: undefined, tiltDeg: undefined })}
+      />
+      {coverage && (
+        <CameraGroundCoverageReadout coverage={coverage} vfov={vfov} illuminationRangeM={model.illuminationRangeM} />
       )}
 
       <h3 className="mt-4 text-xs font-semibold text-neutral-700">DORI distances</h3>
@@ -184,6 +162,8 @@ export function CameraPropertiesPanel() {
         computed={doriDistances}
         effectiveHfovDeg={effectiveHfovDeg}
         manufacturerDori={model.manufacturerDoriM}
+        groundDistances={coverage?.doriGroundM}
+        nearM={coverage?.nearM}
       />
     </div>
   )

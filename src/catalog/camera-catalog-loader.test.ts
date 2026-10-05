@@ -99,6 +99,23 @@ describe("cameraModels (loaded + validated catalog)", () => {
     }
   });
 
+  // The floor-coverage geometry needs a VFOV below 180deg for every rectilinear lens
+  // (HFOV < 180); only fisheye records, where VFOV is ignored, may print more.
+  it("every datasheet VFOV on a rectilinear lens (HFOV < 180) is below 180", () => {
+    for (const model of cameraModels) {
+      const lens = model.lens;
+      const pairs =
+        lens.kind === "fixed"
+          ? [[lens.hfovDeg, lens.vfovDeg]]
+          : [[lens.hfovWideDeg, lens.vfovWideDeg], [lens.hfovTeleDeg, lens.vfovTeleDeg]];
+      for (const [hfov, vfov] of pairs) {
+        if (vfov !== undefined && hfov !== undefined && hfov < 180) {
+          expect(vfov, model.id).toBeLessThan(180);
+        }
+      }
+    }
+  });
+
   it("every HFOV value (fixed or varifocal) is within (0, 360]", () => {
     for (const model of cameraModels) {
       const hfovValues =

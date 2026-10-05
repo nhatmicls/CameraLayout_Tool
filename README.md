@@ -20,6 +20,17 @@ calls once the page has loaded.
 - **Placement**: drag from the catalog, move, rotate with the handle, adjust range and (for
   varifocal lenses) HFOV in the properties panel. Undo/redo.
 - **DORI coverage**: each cone is banded Identify / Recognize / Observe / Detect per EN 62676-4.
+- **Mounting height + tilt** (optional, per camera): click "Set mounting height + tilt" in the
+  properties panel and enter the lens height and the downward tilt. The cone then shows floor
+  coverage: it starts at the blind spot under the camera and ends at the far edge of the view
+  (or at the range, whichever is nearer). The panel lists blind spot, far edge and where each
+  DORI threshold lands on the floor, next to the datasheet's illumination range, and warns
+  when the far edge is beyond that range (it never clips to it). Vertical FOV is the datasheet
+  value where the datasheet prints one, otherwise computed from HFOV and the sensor aspect
+  ratio and labelled as computed. Cameras without a mounting height keep the flat cone.
+  Approximations: DORI floor distances use the slant distance from the lens
+  (`sqrt(d² - h²)`), blind spot and far edge are centre-line values drawn as arcs (the true
+  footprint is a trapezoid), and tilt is ignored for fisheye lenses (HFOV >= 180°).
 - **Bill of materials**: grouped by model + lens, with quantity, camera numbers, unit price,
   line total and an estimated grand total.
 - **Export**: PNG at image resolution with a legend + BOM strip (downscaled with a notice above
@@ -66,7 +77,7 @@ is still running - stop it first.
 | Path | Contents |
 |---|---|
 | `src/catalog/` | Zod schema, loader, and the three brand JSON data files |
-| `src/domain/` | Pure logic: FOV geometry, DORI distances, scale, BOM grouping, CSV, project file schema (no React/Konva imports) |
+| `src/domain/` | Pure logic: FOV geometry, DORI distances, mounted-camera floor coverage, scale, BOM grouping, CSV, project file schema (no React/Konva imports) |
 | `src/canvas/` | Konva stage, pan/zoom, camera markers, cones, calibration overlay |
 | `src/panels/` | Toolbar, catalog sidebar, properties panel, BOM panel |
 | `src/export/` | PNG and CSV export |
@@ -80,5 +91,7 @@ is still running - stop it first.
 ## Status
 
 v1 in progress. Working: image load, calibration, catalog, placement, DORI cones, properties,
-BOM with prices, save/load, PNG + CSV export (verified in Chromium). Not done yet: Playwright
+BOM with prices, mounting height + tilt floor coverage, save/load, PNG + CSV export (verified
+in Chromium). Project files are saved as schema version 2: files from earlier versions still
+open, but a file saved by this version needs this version or newer. Not done yet: Playwright
 end-to-end suite, Firefox/Safari export checks, full documentation set.

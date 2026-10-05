@@ -23,6 +23,14 @@ Project rules:
   manufacturer datasheet, copied as printed - never from memory, resellers or calculation.
   `priceVn` is the one exception: a Vietnamese reseller's displayed VND price, or `null`. Never
   invent or currency-convert a price. Record every source in `./docs/camera-catalog-sources.md`.
+- Vertical FOV (VFOV) fields (`vfovDeg`, `vfovWideDeg`, `vfovTeleDeg`) are optional: stored only
+  when the datasheet prints a vertical angle, copied as printed. The runtime computes a fallback
+  from HFOV and sensor aspect ratio and never writes it to the catalog JSON.
+- Camera mounting (`mountHeightM` + `tiltDeg`, tilt = degrees down from horizontal) is optional
+  and both-or-neither. Unset must draw and save exactly like the flat cone. Floor-coverage math
+  lives in `src/domain/mounted-camera-ground-coverage-calculator.ts` (metres only; slant model,
+  centre-line arcs, fisheye HFOV >= 180 ignores tilt) - keep it out of components.
+- Project files: `PROJECT_SCHEMA_VERSION` is 2; the reader accepts 1 and 2, the writer emits 2.
 - Konva drag events bubble: a draggable child's drag reaches its parent's drag handlers, so
   parent handlers must check `e.target === e.currentTarget`.
 - Windows: a leftover dev server locks `node_modules` and breaks `npm ci` (EPERM). Kill the

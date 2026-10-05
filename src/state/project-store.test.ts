@@ -35,6 +35,19 @@ describe('useProjectStore undo/redo (zundo)', () => {
     expect(useProjectStore.getState().cameras[0]).toMatchObject({ x: 50, y: 60 })
   })
 
+  it('sets, clears and undoes mounting height + tilt', () => {
+    useProjectStore.getState().addCamera(makeCamera())
+    useProjectStore.getState().updateCamera('cam-1', { mountHeightM: 3, tiltDeg: 20 })
+    expect(useProjectStore.getState().cameras[0]).toMatchObject({ mountHeightM: 3, tiltDeg: 20 })
+
+    useProjectStore.getState().updateCamera('cam-1', { mountHeightM: undefined, tiltDeg: undefined })
+    expect(useProjectStore.getState().cameras[0].mountHeightM).toBeUndefined()
+    expect(useProjectStore.getState().cameras[0].tiltDeg).toBeUndefined()
+
+    useProjectStore.temporal.getState().undo()
+    expect(useProjectStore.getState().cameras[0]).toMatchObject({ mountHeightM: 3, tiltDeg: 20 })
+  })
+
   it('clears history on replaceProject so undo cannot reach past a different plan', () => {
     useProjectStore.getState().addCamera(makeCamera())
     expect(useProjectStore.temporal.getState().pastStates.length).toBeGreaterThan(0)

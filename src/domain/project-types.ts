@@ -17,6 +17,10 @@ export interface PlacedCamera {
   hfovDeg?: number
   /** Coverage range drawn on the canvas, metres. */
   rangeM: number
+  /** Lens height above the floor, metres [0.5, 30]. Omitted = legacy flat cone (no height model). */
+  mountHeightM?: number
+  /** Downward tilt of the optical axis from horizontal, degrees [0, 90]. Set together with mountHeightM. */
+  tiltDeg?: number
 }
 
 export interface ScaleCalibrationRefLine {
@@ -57,13 +61,22 @@ export interface Project {
  * `id`, `sourceUrl`, `notes`) satisfy this type without any adapter.
  */
 export type CameraLensSpec =
-  | { kind: 'fixed'; focalMm: number; hfovDeg: number }
+  | {
+      kind: 'fixed'
+      focalMm: number
+      hfovDeg: number
+      /** Datasheet vertical FOV, degrees. Omitted = not printed (derived at runtime). */
+      vfovDeg?: number
+    }
   | {
       kind: 'varifocal'
       focalMinMm: number
       focalMaxMm: number
       hfovWideDeg: number
       hfovTeleDeg: number
+      /** Datasheet vertical FOV at the wide / tele end, degrees. Both present or both omitted. */
+      vfovWideDeg?: number
+      vfovTeleDeg?: number
     }
 
 export interface CameraModelSpec {

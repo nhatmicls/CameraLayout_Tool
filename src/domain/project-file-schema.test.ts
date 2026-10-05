@@ -33,6 +33,76 @@ describe('serializeProject + parseProjectFile round trip', () => {
   })
 })
 
+describe('schema version', () => {
+  it('writes schemaVersion 2', () => {
+    expect(JSON.parse(serializeProject(baseProject)).schemaVersion).toBe(2)
+  })
+
+  it('still reads a version 1 file, leaving cameras without mounting keys', () => {
+    const raw = JSON.parse(serializeProject(baseProject))
+    raw.schemaVersion = 1
+    const result = parseProjectFile(JSON.stringify(raw), KNOWN_MODEL_IDS)
+    expect(result.ok).toBe(true)
+    if (!result.ok) throw new Error('expected ok')
+    expect(result.project).toEqual(baseProject)
+    expect(result.project.cameras[0]).not.toHaveProperty('mountHeightM')
+    expect(result.project.cameras[0]).not.toHaveProperty('tiltDeg')
+  })
+})
+
+describe('camera mounting height + tilt', () => {
+  function parseWithCamera(patch: Record<string, unknown>) {
+    const raw = JSON.parse(serializeProject(baseProject))
+    Object.assign(raw.cameras[0], patch)
+    return parseProjectFile(JSON.stringify(raw), KNOWN_MODEL_IDS)
+  }
+
+  it('round-trips both fields', () => {
+    const project: Project = {
+      ...baseProject,
+      cameras: [{ ...baseProject.cameras[0], mountHeightM: 2.7, tiltDeg: 32 }],
+    }
+    const result = parseProjectFile(serializeProject(project), KNOWN_MODEL_IDS)
+    expect(result.ok).toBe(true)
+    if (!result.ok) throw new Error('expected ok')
+    expect(result.project).toEqual(project)
+  })
+
+  it('serialises a cleared camera without the keys', () => {
+    const project: Project = {
+      ...baseProject,
+      cameras: [{ ...baseProject.cameras[0], mountHeightM: undefined, tiltDeg: undefined }],
+    }
+    const text = serializeProject(project)
+    expect(text).not.toContain('mountHeightM')
+    expect(text).not.toContain('tiltDeg')
+    expect(parseProjectFile(text, KNOWN_MODEL_IDS).ok).toBe(true)
+  })
+
+  it('accepts the range limits', () => {
+    expect(parseWithCamera({ mountHeightM: 0.5, tiltDeg: 0 }).ok).toBe(true)
+    expect(parseWithCamera({ mountHeightM: 30, tiltDeg: 90 }).ok).toBe(true)
+  })
+
+  it.each([
+    [{ mountHeightM: 0.49, tiltDeg: 10 }],
+    [{ mountHeightM: 30.01, tiltDeg: 10 }],
+    [{ mountHeightM: 'NaN', tiltDeg: 10 }],
+    [{ mountHeightM: 3, tiltDeg: -1 }],
+    [{ mountHeightM: 3, tiltDeg: 90.5 }],
+    [{ mountHeightM: 3 }],
+    [{ tiltDeg: 10 }],
+  ])('rejects %j', (patch) => {
+    expect(parseWithCamera(patch).ok).toBe(false)
+  })
+
+  it('reports a half-set mounting with a readable path', () => {
+    const result = parseWithCamera({ mountHeightM: 3 })
+    if (result.ok) throw new Error('expected rejection')
+    expect(result.error).toContain('cameras.0.tiltDeg: mountHeightM and tiltDeg must be set together')
+  })
+})
+
 describe('parseProjectFile rejection cases', () => {
   it('rejects malformed JSON', () => {
     const result = parseProjectFile('{not json', KNOWN_MODEL_IDS)
@@ -54,7 +124,7 @@ describe('parseProjectFile rejection cases', () => {
 
   it('rejects an unknown/future schemaVersion', () => {
     const raw = JSON.parse(serializeProject(baseProject))
-    raw.schemaVersion = 2
+    raw.schemaVersion = 3
     const result = parseProjectFile(JSON.stringify(raw), KNOWN_MODEL_IDS)
     expect(result.ok).toBe(false)
   })
