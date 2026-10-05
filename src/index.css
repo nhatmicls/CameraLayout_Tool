@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+/* Full-height app shell: html/body/#root must all be 100% for `h-screen` on
+   the root component to actually fill the viewport (Tailwind's reset alone
+   doesn't guarantee this without an explicit chain). */
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
