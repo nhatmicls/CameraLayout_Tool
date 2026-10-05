@@ -9,9 +9,14 @@ calls once the page has loaded.
 ## Features
 
 - **Floor plan + scale**: load a PNG/JPEG, draw a reference line of known length to calibrate.
-- **Camera catalog**: 47 records across Hikvision, Dahua and Axis (one per lens option), every
-  optical spec transcribed from the official datasheet. Filter by brand, form factor, and
-  "only models with a listed price".
+- **Camera catalog**: 51 records across Hikvision, Dahua and Axis (one per lens option), every
+  optical spec transcribed from the official datasheet. Each card also shows the datasheet's
+  IP / IK rating, built-in mic or speaker, and the target classes its on-device analytics
+  print (human / vehicle / face / license plate); the properties panel adds audio ports. "Not
+  listed"
+  means the datasheet does not print it, not that the camera lacks it. Filter by brand, form
+  factor, "only models with a listed price", outdoor rating (IP65+), built-in mic, and
+  human / vehicle detection.
 - **Placement**: drag from the catalog, move, rotate with the handle, adjust range and (for
   varifocal lenses) HFOV in the properties panel. Undo/redo.
 - **DORI coverage**: each cone is banded Identify / Recognize / Observe / Detect per EN 62676-4.

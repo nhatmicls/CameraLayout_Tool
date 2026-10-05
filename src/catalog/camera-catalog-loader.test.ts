@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { cameraModelArraySchema, type Brand, type CameraModel } from "./camera-catalog-schema";
+import {
+  cameraModelArraySchema,
+  DETECTION_TYPES,
+  type Brand,
+  type CameraModel,
+} from "./camera-catalog-schema";
 import { cameraModelById, cameraModels } from "./camera-catalog-loader";
 import hikvisionRaw from "./data/hikvision-camera-models.json?raw";
 import dahuaRaw from "./data/dahua-camera-models.json?raw";
@@ -17,6 +22,53 @@ describe("camera catalog data files", () => {
     const parsed: unknown = JSON.parse(raw);
     const result = cameraModelArraySchema.safeParse(parsed);
     expect(result.success).toBe(true);
+  });
+});
+
+// Schema defaults would hide a record that was never transcribed, so these checks
+// read the RAW JSON: every record must state all seven fields explicitly.
+const TRANSCRIBED_FEATURE_KEYS = [
+  "ingressRatings",
+  "ikRating",
+  "hasBuiltInMic",
+  "hasBuiltInSpeaker",
+  "hasAudioInPort",
+  "hasAudioOutPort",
+  "detectionTypes",
+] as const;
+
+describe("protection / audio / detection transcription", () => {
+  it.each([
+    ["hikvision-camera-models.json", hikvisionRaw],
+    ["dahua-camera-models.json", dahuaRaw],
+    ["axis-camera-models.json", axisRaw],
+  ])("%s states all seven fields on every raw record", (_fileLabel, raw) => {
+    const records = JSON.parse(raw) as Record<string, unknown>[];
+    for (const record of records) {
+      const missing = TRANSCRIBED_FEATURE_KEYS.filter((key) => !Object.hasOwn(record, key));
+      expect(missing, `record ${String(record.id)}`).toEqual([]);
+    }
+  });
+
+  it("lists detectionTypes in canonical order (human, vehicle, face)", () => {
+    for (const model of cameraModels) {
+      const canonical = DETECTION_TYPES.filter((type) => model.detectionTypes.includes(type));
+      expect(model.detectionTypes, model.id).toEqual(canonical);
+    }
+  });
+
+  it("gives lens variants of one body (same sourceUrl + model) identical values", () => {
+    const byBody = new Map<string, string>();
+    for (const model of cameraModels) {
+      const bodyKey = `${model.sourceUrl}|${model.model}`;
+      const values = JSON.stringify(TRANSCRIBED_FEATURE_KEYS.map((key) => model[key]));
+      const seen = byBody.get(bodyKey);
+      if (seen === undefined) {
+        byBody.set(bodyKey, values);
+      } else {
+        expect(values, model.id).toBe(seen);
+      }
+    }
   });
 });
 

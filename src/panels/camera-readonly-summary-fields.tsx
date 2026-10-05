@@ -1,5 +1,7 @@
 import type { CameraModel } from '../catalog/camera-catalog-loader'
+import { audioLabel, detectionLabel, ipRateLabel } from '../catalog/camera-catalog-feature-labels'
 import type { CameraLensSpec, PlacedCamera, ScaleCalibration } from '../domain/project-types'
+import { capitalizeFirstLetter } from './capitalize-first-letter'
 
 interface CameraReadonlySummaryFieldsProps {
   camera: PlacedCamera
@@ -7,9 +9,8 @@ interface CameraReadonlySummaryFieldsProps {
   scale: ScaleCalibration | null
 }
 
-function capitalize(s: string): string {
-  return s.length ? s[0].toUpperCase() + s.slice(1) : s
-}
+// The datasheet being silent on audio / detection is never a confirmed absence, so no "No".
+const NOT_LISTED = 'not listed'
 
 function lensLabel(lens: CameraLensSpec): string {
   return lens.kind === 'fixed' ? `${lens.focalMm} mm (fixed)` : `${lens.focalMinMm}-${lens.focalMaxMm} mm (varifocal)`
@@ -32,13 +33,13 @@ export function CameraReadonlySummaryFields({ camera, model, scale }: CameraRead
         <div>
           <dt className="inline text-neutral-400">Brand </dt>
           <dd data-testid="properties-brand" className="inline font-medium text-neutral-900">
-            {capitalize(model.brand)}
+            {capitalizeFirstLetter(model.brand)}
           </dd>
         </div>
         <div>
           <dt className="inline text-neutral-400">Form </dt>
           <dd data-testid="properties-form-factor" className="inline font-medium text-neutral-900">
-            {capitalize(model.formFactor)}
+            {capitalizeFirstLetter(model.formFactor)}
           </dd>
         </div>
         <div className="col-span-2">
@@ -63,6 +64,24 @@ export function CameraReadonlySummaryFields({ camera, model, scale }: CameraRead
           <dt className="inline text-neutral-400">Illumination </dt>
           <dd data-testid="properties-illumination-range" className="inline font-medium text-neutral-900">
             {model.illuminationRangeM !== null ? `${model.illuminationRangeM} m (datasheet)` : 'unpublished'}
+          </dd>
+        </div>
+        <div className="col-span-2">
+          <dt className="inline text-neutral-400">IP rate </dt>
+          <dd data-testid="properties-protection" className="inline font-medium text-neutral-900">
+            {ipRateLabel(model)}
+          </dd>
+        </div>
+        <div className="col-span-2">
+          <dt className="inline text-neutral-400">Audio </dt>
+          <dd data-testid="properties-audio" className="inline font-medium text-neutral-900">
+            {audioLabel(model) ?? NOT_LISTED}
+          </dd>
+        </div>
+        <div className="col-span-2">
+          <dt className="inline text-neutral-400">Detection </dt>
+          <dd data-testid="properties-detection" className="inline font-medium text-neutral-900">
+            {detectionLabel(model) ?? NOT_LISTED}
           </dd>
         </div>
       </dl>

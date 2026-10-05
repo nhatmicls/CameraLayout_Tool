@@ -1,15 +1,24 @@
 // Zod schema for the static camera catalog. Every record must be traceable to an
 // official manufacturer datasheet (see docs/camera-catalog-sources.md) - no values
-// from memory, resellers, or calculation. See plans/.../phase-02-*.md for the method.
+// from memory, resellers, or calculation.
+//
+// Protection / audio / detection fields are two-state, not tri-state: true or a
+// listed value means the datasheet prints it for this exact model string; false,
+// null or an empty array means "not printed as present" - never a confirmed
+// absence. UI wording for the negative is "not listed"; the one exception, by owner
+// decision, is the properties "IP rate" row, which reads "None".
 import { z } from "zod";
 
 export const BRANDS = ["hikvision", "dahua", "axis"] as const;
 export const FORM_FACTORS = ["dome", "turret", "bullet", "fisheye"] as const;
 export const ILLUMINATION_TYPES = ["ir", "white-light", "dual"] as const;
+// On-device target classes, in canonical order.
+export const DETECTION_TYPES = ["human", "vehicle", "face", "license-plate"] as const;
 
 export type Brand = (typeof BRANDS)[number];
 export type FormFactor = (typeof FORM_FACTORS)[number];
 export type IlluminationType = (typeof ILLUMINATION_TYPES)[number];
+export type DetectionType = (typeof DETECTION_TYPES)[number];
 
 // Official domain each brand's sourceUrl must resolve under (host must end with this).
 const BRAND_DOMAIN: Record<Brand, string> = {
@@ -49,6 +58,14 @@ const doriSchema = z.object({
 export type ManufacturerDori = z.infer<typeof doriSchema>;
 
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+// Ingress protection code as printed, e.g. "IP67", "IP69K".
+const INGRESS_RATING_PATTERN = /^IP\d{2}K?$/;
+// Impact protection code as printed, IK00..IK11, e.g. "IK10".
+const IK_RATING_PATTERN = /^IK(0\d|1[01])$/;
+
+function hasDuplicates(values: readonly string[]): boolean {
+  return new Set(values).size !== values.length;
+}
 
 // Indicative Vietnam street price, read from a Vietnamese reseller's public
 // product page (unlike every optical spec above, which must come from the
@@ -79,6 +96,24 @@ export const cameraModelSchema = z
     illuminationRangeM: z.number().positive().nullable(),
     illuminationType: z.enum(ILLUMINATION_TYPES).nullable(),
     manufacturerDoriM: doriSchema.nullable(),
+    /** Every IP code printed for this model, in printed order. [] = none printed. */
+    ingressRatings: z
+      .array(z.string().regex(INGRESS_RATING_PATTERN, "ingress rating must look like IP67 or IP69K"))
+      .default([]),
+    /** IK code as printed (IK00..IK11). null = none printed. */
+    ikRating: z
+      .string()
+      .regex(IK_RATING_PATTERN, "ikRating must be IK00..IK11")
+      .nullable()
+      .default(null),
+    hasBuiltInMic: z.boolean().default(false),
+    hasBuiltInSpeaker: z.boolean().default(false),
+    /** Physical audio / line / mic input connector. */
+    hasAudioInPort: z.boolean().default(false),
+    /** Physical audio / line output connector. */
+    hasAudioOutPort: z.boolean().default(false),
+    /** On-device target classes printed on the datasheet. */
+    detectionTypes: z.array(z.enum(DETECTION_TYPES)).default([]),
     sourceUrl: z.string().url(),
     sourceRetrieved: z
       .string()
@@ -102,6 +137,21 @@ export const cameraModelSchema = z
           path: ["lens", "hfovWideDeg"],
         });
       }
+    }
+
+    if (hasDuplicates(record.ingressRatings)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "ingressRatings must not contain duplicates",
+        path: ["ingressRatings"],
+      });
+    }
+    if (hasDuplicates(record.detectionTypes)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "detectionTypes must not contain duplicates",
+        path: ["detectionTypes"],
+      });
     }
 
     let host = "";

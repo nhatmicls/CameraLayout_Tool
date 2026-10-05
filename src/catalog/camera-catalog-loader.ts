@@ -46,4 +46,4 @@ export function cameraModelById(id: string): CameraModel | undefined {
   return modelsById.get(id);
 }
 
-export type { CameraModel, Brand, FormFactor, Lens, ManufacturerDori } from "./camera-catalog-schema";
+export type { CameraModel, Brand, DetectionType, FormFactor, Lens, ManufacturerDori } from "./camera-catalog-schema";

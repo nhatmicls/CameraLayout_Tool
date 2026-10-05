@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { Brand, FormFactor } from '../catalog/camera-catalog-schema'
+import type { CatalogFeatureFilterKey } from '../catalog/camera-catalog-feature-filters'
 import { useProjectStore } from './project-store'
 
 /** `select`: default, drag/pan/select cameras. `calibrate`: next two clicks on the stage draw a reference line. */
@@ -36,6 +37,8 @@ export interface EditorUiState {
   catalogFormFactorFilter: FormFactor | 'all'
   /** True hides catalog models with no Vietnam price ("price on request"). */
   catalogPricedOnlyFilter: boolean
+  /** Selected feature filter keys (outdoor rating, mic, detection...), AND-combined with the three above. UI-only: not persisted, not in undo history. */
+  catalogFeatureFilters: CatalogFeatureFilterKey[]
   /**
    * True whenever the project store has changed since the last save/load
    * (phase 6). Set automatically by the `project-store` subscription below;
@@ -57,6 +60,8 @@ export interface EditorUiActions {
   setCatalogBrandFilter: (filter: Brand | 'all') => void
   setCatalogFormFactorFilter: (filter: FormFactor | 'all') => void
   setCatalogPricedOnlyFilter: (pricedOnly: boolean) => void
+  /** Adds the key if absent, removes it if present. */
+  toggleCatalogFeatureFilter: (key: CatalogFeatureFilterKey) => void
   setHasUnsavedChanges: (hasUnsavedChanges: boolean) => void
 }
 
@@ -75,6 +80,7 @@ export const useEditorUiStore = create<EditorUiStore>((set) => ({
   catalogBrandFilter: 'all',
   catalogFormFactorFilter: 'all',
   catalogPricedOnlyFilter: false,
+  catalogFeatureFilters: [],
   hasUnsavedChanges: false,
 
   setToolMode: (toolMode) => set({ toolMode }),
@@ -102,6 +108,13 @@ export const useEditorUiStore = create<EditorUiStore>((set) => ({
   setCatalogFormFactorFilter: (catalogFormFactorFilter) => set({ catalogFormFactorFilter }),
 
   setCatalogPricedOnlyFilter: (catalogPricedOnlyFilter) => set({ catalogPricedOnlyFilter }),
+
+  toggleCatalogFeatureFilter: (key) =>
+    set((state) => ({
+      catalogFeatureFilters: state.catalogFeatureFilters.includes(key)
+        ? state.catalogFeatureFilters.filter((k) => k !== key)
+        : [...state.catalogFeatureFilters, key],
+    })),
 
   setHasUnsavedChanges: (hasUnsavedChanges) => set({ hasUnsavedChanges }),
 }))

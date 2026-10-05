@@ -144,7 +144,8 @@ is verified by an automated test in `src/catalog/camera-catalog-loader.test.ts`.
 
 ## Addendum 2026-10-05: Vietnam-market models + indicative VN prices
 
-Catalog is now 47 records (Hikvision 16, Dahua 16, Axis 15). New models were chosen
+Catalog was then 47 records (Hikvision 16, Dahua 16, Axis 15); 51 after the `-LIUF` records
+added below. New models were chosen
 because Vietnamese resellers list them; optical specs still come only from the official
 datasheet (same curl + `pdftotext -raw` method, every HFOV / max-resolution / illumination /
 DORI line below re-read from the downloaded PDF).
@@ -178,12 +179,158 @@ the displayed selling price (not the struck-through list price), whole VND. `nul
 Vietnamese page showed a number for that exact model ("Liên hệ" / "Vui lòng gọi" / not listed).
 Never converted from a foreign-currency price by us.
 
-- Hikvision 11/16 priced: hacom.vn (DS-2CD1023G2, DS-2CD1323G2), vuhoangtelecom.vn
-  (DS-2CD1043G2, DS-2CD1343G2), panaco.vn (DS-2CD2T47G2-L). The 1023/1323/1043 prices are
-  the shops' `-LIUF` (built-in mic) listing - flagged in each record's `notes`.
+- Hikvision 15/20 priced: hacom.vn (DS-2CD1023G2-LIUF, DS-2CD1323G2), vuhoangtelecom.vn
+  (DS-2CD1043G2-LIUF, DS-2CD1343G2), panaco.vn (DS-2CD2T47G2-L). The 1023 / 1323 / 1043 prices
+  are the shops' `-LIUF` listings. By owner decision the plain `-LIU` records carry that same
+  price (flagged in their `notes`); it is not a price read for the exact `-LIU` model.
   No price: DS-2CD2143G2-I (VN shops stock only `-IU`), DS-2CD2387G2-LSU/SL, DS-2CD2746G2-IZS.
 - Dahua 11/16 priced: hacom.vn, vuhoangtelecom.vn. No price: HDW3549H-AS-PV, EBW5641-AS,
   HDBW1430DE-SW.
 - Axis 5/15 priced, all from fado.vn - a cross-border marketplace reselling Amazon US
   listings at a landed VND price, not an authorised Vietnam distributor (flagged in `notes`).
   Axis distributors in Vietnam quote on request, so the rest are `null`.
+
+## Addendum 2026-10-05: protection rating, audio, built-in detection
+
+Seven fields per record (`ingressRatings`, `ikRating`, `hasBuiltInMic`, `hasBuiltInSpeaker`,
+`hasAudioInPort`, `hasAudioOutPort`, `detectionTypes`), read on 2026-10-05 from the PDF at each
+record's own `sourceUrl`. Method: `curl -A "Mozilla/5.0" -L` -> `%PDF` header check ->
+`sha256sum` -> `pdftotext -layout`, cross-checked with `pdftotext -raw` (layout mode shifts
+table rows against their labels) -> values copied as printed. All 29 unique PDFs downloaded;
+the 12 with a SHA-256 earlier in this document matched it exactly, the other 17 are hashed here
+for the first time. Six PDFs (two per brand) were downloaded a second time and re-checked
+against the tables below: same hashes, quotes found.
+
+### Field rules
+
+- Two-state, not tri-state. `true` / a listed value = the datasheet prints it for this exact
+  model string. `false` / `null` / `[]` = not printed as present. That is not a confirmed
+  absence, so the app says "not listed", never "no".
+- Exact model. A value the datasheet prints only for a suffix variant ("-S:", "Only -ZAS
+  supports", a per-lens row) applies only to a record whose `model` satisfies that condition.
+- Ingress: every printed IP code, printed order; "IP66/IP67" is stored as `["IP66","IP67"]`.
+  NEMA is not stored. A rating printed as optional or accessory-dependent is not stored.
+- Audio: on-device hardware only. A built-in mic/speaker must be printed as built-in; ports
+  are physical connectors. Network speaker pairing, portcast and optional accessories do not
+  count.
+- Detection: the printed target class of an on-device function, never a technology name alone
+  (AcuSense, WizSense, SMD, AXIS Object Analytics).
+
+| Stored | Printed wording that maps to it |
+|---|---|
+| `human` | human, person, people, pedestrian, humanoid, body (as a detected/classified target) |
+| `vehicle` | vehicle, motor vehicle, car (as a detected/classified target) |
+| `face` | face detection, face capture, face recognition (a named function; a metadata class line alone does not count) |
+| `license-plate` | license plate(s) as a detected object class |
+
+  Not mapped: plain motion detection, line crossing / intrusion with no class filter,
+  people counting with no "human" wording, object attributes, optional paid apps.
+- The "Outdoor (IP65+)" sidebar filter is computed in the app from `ingressRatings` (dust
+  digit 6, water digit 5 or higher). It is not a catalog value.
+
+### Hikvision (8 PDFs, 20 records)
+
+| Model | record ids | SHA-256 | hash status | IP/IK: page + quote | Audio: page + quote | Detection: page + quote |
+|---|---|---|---|---|---|---|
+| DS-2CD2143G2-I | hikvision-ds-2cd2143g2-i-2.8mm, hikvision-ds-2cd2143g2-i-4mm | `b83491f396a0bb86b01a56eb1c5e6f0dde584e39cb9dfec802df72748ca6097c` | match (sources doc) | p.1 "Water and dust resistant (IP67) and vandal resistant (IK10)"; p.4 "IP67 (IEC 60529-2013), IK10 (IEC 62262: 2002)" -> `["IP67"]` / `"IK10"` | p.3 "Audi o -S: 1 input (line in) ... 1 output (line out)" - conditioned on "-S" suffix; record model is plain "DS-2CD2143G2-I" (no S) so condition not satisfied -> all 4 audio flags `false`; no "microphone"/"speaker" word anywhere in the PDF | p.3 "Motion detection (human and vehicle targets classification)"; p.3 "intrusion detection (support alarm triggering by specified target types (human and vehicle))"; p.3 "Face detection" (General Function) -> `["human","vehicle","face"]` |
+| DS-2CD2387G2-LSU/SL | hikvision-ds-2cd2387g2-lsu-sl-2.8mm, hikvision-ds-2cd2387g2-lsu-sl-4mm | `cc48a9d8f69b0586c689879bb299bdd74a35eaa0ced2baa7ddacb4f3b78190fd` | match (sources doc) | p.1 "Water and dust resistant (IP67)"; p.4 "Protection IP67: IEC 60529-2013"; no "IK"/"vandal" anywhere -> `["IP67"]` / `null` | p.3 "Built-in Microphone Yes"; p.3 "Built-in Speaker 1.5 W, 10 cm: 95 dB"; p.3 "1 input (line in), max. input amplitude: 3.3 Vpp..."; p.3 "1 output (line out), max.output amplitude: 3.3 Vpp..." -> all 4 `true` | p.3 "Motion detection (support alarm triggering by specified target types (human and vehicle))"; p.3 "intrusion detection ... (support alarm triggering by specified target types (human and vehicle))"; p.4 "Face Capture Yes" -> `["human","vehicle","face"]` |
+| DS-2CD2T47G2-L | hikvision-ds-2cd2t47g2-l-2.8mm, hikvision-ds-2cd2t47g2-l-4mm, hikvision-ds-2cd2t47g2-l-6mm | `41ddcaf3d2cf249f72d629ca5be8c3f774b804b184241f1d4c9093aea670964e` | match (sources doc) | p.1 "Water and dust resistant (IP67)"; p.4 "Protection IP67 (IEC 60529-2013)"; no "IK"/"vandal" anywhere -> `["IP67"]` / `null` | no "microphone"/"speaker"/"line in"/"line out"/"audio in"/"audio out" anywhere in the PDF -> all 4 `false` | p.3 "Motion detection (human and vehicle targets classification)"; p.3 "Face Capture Yes"; p.3 "Perimeter Protection: Line crossing detection, intrusion detection, region entrance detection, region exiting detection" (no class filter printed for this row - not mapped) -> `["human","vehicle","face"]` |
+| DS-2CD2746G2-IZS | hikvision-ds-2cd2746g2-izs-2.8-12mm | `7e8e0689feb3a5145573aca7cdabd16ae83376a1dd7ed9e6aca86d5bce6c1a1c` | match (sources doc) | p.1 "Water and dust resistant (IP66) and vandal-resistant (IK10)"; p.4 "Protection IP66 (IEC 60529-2013), IK10(IEC 62262:2002)" -> `["IP66"]` / `"IK10"` | p.3 "1 input (line in), 3.5 mm connector..."; p.3 "1 output (line out), 3.5 mm connector..." -> in/out `true`; no "microphone"/"speaker" word anywhere -> mic/speaker `false` | p.3 "Motion detection (human and vehicle targets classification)"; p.4 "Face Capture Yes"; p.4 "Perimeter Protection: Line crossing detection, intrusion detection, region entrance detection, region exiting detection" (no class filter - not mapped) -> `["human","vehicle","face"]` |
+| DS-2CD1023G2-LIU(F) | hikvision-ds-2cd1023g2-liu-2.8mm, hikvision-ds-2cd1023g2-liu-4mm, hikvision-ds-2cd1023g2-liuf-2.8mm, hikvision-ds-2cd1023g2-liuf-4mm | `48889c720c850b5f02ffcaeffae7a709fea68c0e4ed0ebe47b5e8fb508f02526` | new hash (addendum, no prior entry) | p.1 "Water and dust resistant (IP67)"; p.4 "Protection IP67: IEC 60529-2013"; no "IK"/"vandal" anywhere -> `["IP67"]` / `null` | p.1 "Built-in microphone for real-time audio security" (unconditioned, applies to whole "DS-2CD1023G2-LIU(F)" family); p.3 "Built-in Microphone Yes" (no "-F:" prefix, unlike the "-F: Built-in memory card slot..." and "Reset Key -F: Yes" rows right next to it) -> mic `true`; no "speaker"/"line in"/"line out" word anywhere -> speaker/in/out `false` | p.1 "Support Human and Vehicle Detection"; p.3 "Motion detection (support alarm triggering by specified target types (human and vehicle))"; no "face" word anywhere -> `["human","vehicle"]` |
+| DS-2CD1323G2-LIU | hikvision-ds-2cd1323g2-liu-2.8mm, hikvision-ds-2cd1323g2-liu-4mm | `ba2525e89d336973ef44082b263111c4cc77ad28a8dc5f325929dba3047e3b6f` | new hash (addendum) | p.1 "Water and dust resistant (IP67)"; p.4 "Protection IP67: IEC 60529-2013"; no "IK"/"vandal" anywhere -> `["IP67"]` / `null` | p.1 "Built-in microphone for real-time audio security"; p.3 "Built-in Microphone Yes" (unconditioned; "-F:" prefix used elsewhere for Profile G / Reset Key only) -> mic `true`; no "speaker"/"line in"/"line out" anywhere -> speaker/in/out `false` | p.1 "Support Human and Vehicle Detection"; p.3 "Motion detection (support alarm triggering by specified target types (human and vehicle))"; no "face" word anywhere -> `["human","vehicle"]` |
+| DS-2CD1043G2-LIU(F) | hikvision-ds-2cd1043g2-liu-2.8mm, hikvision-ds-2cd1043g2-liu-4mm, hikvision-ds-2cd1043g2-liuf-2.8mm, hikvision-ds-2cd1043g2-liuf-4mm | `4b26acd06ad50a702bb7cf8d93ff4230221261877ba3464f3591a093a986a9e6` | new hash (addendum) | p.1 "Water and dust resistant (IP67)"; p.4 "Protection IP67: IEC 60529-2013"; no "IK"/"vandal" anywhere -> `["IP67"]` / `null` | p.1 "Built-in microphone for real-time audio security"; p.3 "Built-in Microphone Yes" (unconditioned, same "-F:" pattern as the 1023G2 sheet) -> mic `true`; no "speaker"/"line in"/"line out" anywhere -> speaker/in/out `false` | p.1 "Support Human and Vehicle Detection"; p.3 "Motion detection (support alarm triggering by specified target types (human and vehicle))"; no "face" word anywhere -> `["human","vehicle"]` |
+| DS-2CD1343G2-LIU | hikvision-ds-2cd1343g2-liu-2.8mm, hikvision-ds-2cd1343g2-liu-4mm | `eb0e53cb99b06dc6ecf59c4f0dc5a31ee193aa451e1168d45afaf262a7da50a9` | new hash (addendum) | p.1 "Water and dust resistant (IP67)"; p.4 "Protection IP67: IEC 60529-2013"; no "IK"/"vandal" anywhere -> `["IP67"]` / `null` | p.1 "Built-in microphone for real-time audio security"; p.3 "Built-in Microphone Yes" (unconditioned) -> mic `true`; no "speaker"/"line in"/"line out" anywhere -> speaker/in/out `false` | p.1 "Support Human and Vehicle Detection"; p.3 "Motion detection (support alarm triggering by specified target types (human and vehicle))"; no "face" word anywhere -> `["human","vehicle"]` |
+
+### Dahua (9 PDFs, 16 records)
+
+| Model | Record ids | SHA-256 | Hash status | IP/IK: page + quote | Audio: page + quote | Detection: page + quote |
+|---|---|---|---|---|---|---|
+| DH-IPC-HDBW2441E-S | dahua-ipc-hdbw2441e-s-2.8mm, dahua-ipc-hdbw2441e-s-3.6mm | `15679ca651d249e82b364216a7b3b8e2d76bf821aa81a9826986561c2651cb67` | match (sources.md) | p.3 "Protection ... IP67; IK10" (also p.1 "IP67, IK10 protection.") | p.2 "Built-in MIC Yes" (raw); no Audio Input/Output row, no Built-in Speaker row anywhere in doc | p.2 "Intrusion, tripwire (the two functions support the classification and accurate detection of vehicle and human)" |
+| DH-IPC-HDW3549H-AS-PV | dahua-ipc-hdw3549h-as-pv-2.8mm, dahua-ipc-hdw3549h-as-pv-3.6mm | `1a590cd9b069651c2d76b78f49c7a52706f585593029574e4837ccb6cf5f93e3` | match (sources.md) | p.3 "Protection IP67" (no IK code printed anywhere in doc) | p.2 "Built-in MIC Yes"; p.2 "Built-in Speaker / Yes / Max power consumption: 2 W; max sound level at 10 cm: 110 dB"; p.3 "Audio Input 1 channel (RCA port)"; p.3 "Audio Output 1 channel (RCA port)" | p.2 "...classification and accurate detection of vehicle and human), stay detection, loitering detection"; p.2 "Face Detection (Full ... Face detection; snapshot; ... face snapshot upload; ..." |
+| IPC-HFW2441S-S | dahua-ipc-hfw2441s-s-2.8mm, dahua-ipc-hfw2441s-s-3.6mm | `b91cdb0e14f7081e3da15f483b7bf3f147b238ef3632a081caa73eabadecbc4f` | match (sources.md) | p.3 "Protection IP67" (no IK code printed) | "Built-in MIC Yes"; no Audio Input/Output, no Built-in Speaker row anywhere | "Intrusion, tripwire ... classification and accurate detection of vehicle and human)" |
+| DH-IPC-EBW5641-AS | dahua-ipc-ebw5641-as-1.68mm | `bfb002f5ec015c87b3e7562bfb0e29a1d9f3b249ab701b8976b7409bf56b325b` | match (sources.md) | p.3 "Protection IP67; IK10" (also p.1 "IP67 and IK10 protection.") | p.3 "Built-in MIC Yes, built-in dual Mic"; p.3 "Built-in Speaker Yes, built-in speaker"; p.3 "Audio Input 1 channel (RCA port)"; p.3 "Audio Output 1 channel (RCA port)" | "IVS (Perimeter Protection) / Tripwire, intrusion (the two functions support accurate detection of human)" - no vehicle/face word anywhere in doc |
+| IPC-HFW1430DT-STW | dahua-ipc-hfw1430dt-stw-2.8mm, dahua-ipc-hfw1430dt-stw-3.6mm | `000585487d67ae0f1bce916e2e6243e9bbc418dfb90f8a8b0ddf4ef8f2f4bc33` | new hash (not in sources.md) | p.3 "Protection IP67" (no IK code printed) | p.2 "Built-in MIC Yes"; p.2 "Built-in Speaker Yes"; no Audio Input/Output RCA port row anywhere (two-way audio is via mobile app, not a physical port) | not printed - no human/vehicle/face/classif word anywhere in doc |
+| IPC-HFW1230S-S5 | dahua-ipc-hfw1230s-s5-2.8mm, dahua-ipc-hfw1230s-s5-3.6mm | `73604b69e98f74c8215b70eeecacf7a48928a8c9c5287075a0f5efd61bcde289` | new hash (not in sources.md) | p.3 "Protection IP67" (no IK code printed) | not printed - no Audio/mic/speaker section anywhere in doc | not printed - no human/vehicle/face/classif word anywhere in doc |
+| IPC-HFW2249S-S-IL | dahua-ipc-hfw2249s-s-il-2.8mm, dahua-ipc-hfw2249s-s-il-3.6mm | `27b462cdd6745032f61cd6891a303b2d1ecafb407877195c52b0afb6afa7e6fc` | new hash (not in sources.md) | p.3 "Protection IP67" (no IK code printed) | p.2 "Built-in MIC Yes"; no Audio Input/Output, no Built-in Speaker row anywhere | p.2 "classification and accurate detection of vehicle and human)" |
+| IPC-HFW2441T-ZS | dahua-ipc-hfw2441t-zs-2.7-13.5mm | `37aa36632f5e59eb558e2b7221b62a452538a7ae4743cf74c238245c2bdd1546` | new hash (not in sources.md) | p.3 "Protection IP67, IK10 (optional)" - see Ambiguous | p.2 "Built-in MIC Yes"; p.3 "Audio Input 1 channel (RCA port) (Only - ZAS supports)"; p.3 "Audio Output 1 channel (RCA port) (Only - ZAS supports)" - see decision below; no Built-in Speaker row | p.2 "classification and accurate detection of vehicle and human)" |
+| IPC-HDBW1430DE-SW | dahua-ipc-hdbw1430de-sw-2.8mm, dahua-ipc-hdbw1430de-sw-3.6mm | `8c50b744625353e234ca37f80fd3056fb869edba9b32fd97c9e637956c3365d6` | new hash (not in sources.md) | p.3 "Protection IP67; IK10" (also p.1 "IP67, IK10 protection.") | not printed - no Audio/mic/speaker section anywhere in doc | not printed - no human/vehicle/face/classif word anywhere in doc |
+
+### Axis (12 PDFs, 15 records)
+
+| Model | Record ids | SHA-256 | Hash status | IP/IK: page + quote | Audio: page + quote | Detection: page + quote |
+|---|---|---|---|---|---|---|
+| AXIS M2035-LE | axis-m2035-le-3.2mm, axis-m2035-le-8mm | `f2fe0840dfcdcbac6a6b5114f9540c0d375e2b66bf64871b67f55fbb4542f167` | match (docs) | p.2/4 "IEC 60068-2-X, IEC/EN 60529 IP66/IP67, IEC/EN 62262 IK08"; p.2 "IP66-/IP67-, NEMA 4X- and IK08-rated" -> `["IP66","IP67"]`, `"IK08"` | p.2 "Audio Smart pairing with Axis speakers via edge-to-edge technology"; "Audio output" row printed with no connector value -> network-paired speaker, not built-in/physical port -> all 4 audio flags `false` | p.1 "AXIS Object Analytics offers detection and classification of humans, vehicles, and types of vehicles"; p.2 "Object classes: humans, vehicles (types: cars, buses, trucks," -> `["human","vehicle"]` |
+| AXIS M2036-LE | axis-m2036-le-2.4mm | `865dbaa741869a9644dc29fdfdb5a3a340d25dfc714affdf2bf0e0fbc736e867` | match (docs) | p.2 "IEC 60068-2-X, IEC/EN 60529 IP66/IP67, IEC/EN 62262 IK08"; p.2 "IP66-/IP67-, NEMA 4X- and IK08-rated" -> `["IP66","IP67"]`, `"IK08"` | p.2 "Audio Smart pairing with Axis speakers via edge-to-edge technology"; blank "Audio output" row -> all 4 flags `false` | p.1 "offers detection and classification of humans, vehicles, and types of vehicles"; p.2 "Object classes: humans, vehicles (types: cars, buses, trucks," -> `["human","vehicle"]` |
+| AXIS M3098-LV | axis-m3098-lv-3.76mm | `af5748cdafe9b4e8f372d0f1a058ed368091b6b1f504c95a29dfe50037199908` | match (docs) | p.4 "IEC/EN 60529 IP42, IEC/EN 62262 IK08"; p.2 "IP42- and IK08-rated" -> `["IP42"]`, `"IK08"` | Connectors section: "Connectors / Network: RJ45 ... / Sensor / Acoustic sensor" - no Audio row, no "microphone"/"speaker" word anywhere in doc (only regulatory "MIC(4)" mark) -> all 4 flags `false` | p.3 AXIS Object Analytics "Object classes: humans, vehicles (types: cars, buses, trucks, bikes, other)"; p.3 AXIS Scene Metadata (listed under "Included" apps) "Object data: Classes: humans, faces, vehicles (types: cars, buses, trucks, bikes), license plates" -> `["human","vehicle","license-plate"]` (`face` not stored, see Owner decisions) |
+| AXIS P3265-LVE 9 mm | axis-p3265-lve-9mm | `513355551df3cf9d27b8baef96af1e97346a7fef9b6073723bffbab8ebdf0e7b` | match (docs) | p.4 "IEC/EN 60529 IP66, IEC/EN 62262 IK10, NEMA 250"; p.4 "IP66-, NEMA 4X- and IK10-rated" -> `["IP66"]`, `"IK10"` | p.2 "Audio input/output / 9 mm: External microphone input, line input, digital input with ring power, line output, automatic gain control"; p.5 connectors "9 mm: 4-pin 2.5 mm terminal block for audio in and out" -> external mic (not built-in) so `hasBuiltInMic=false`; line in + line out physically present -> `hasAudioInPort=true`, `hasAudioOutPort=true`; no speaker wording -> `hasBuiltInSpeaker=false` | p.3 AXIS Object Analytics "Object classes: humans, vehicles (types: cars, buses,"; p.3 AXIS Scene Metadata "Object data: Classes: humans, faces, vehicles (types:" (Included apps list confirms on-device) -> `["human","vehicle","license-plate"]` (`face` not stored, see Owner decisions) |
+| AXIS P3265-LVE 22 mm | axis-p3265-lve-22mm | `513355551df3cf9d27b8baef96af1e97346a7fef9b6073723bffbab8ebdf0e7b` | match (docs), same PDF as 9mm | same as 9mm row -> `["IP66"]`, `"IK10"` | p.2 "22 mm: External microphone input, line input, digital input with ring power, automatic gain control, network speaker pairing"; p.5 connectors "22 mm: 3.5 mm mic/line in" (no out connector for this variant) -> `hasAudioInPort=true`, `hasAudioOutPort=false` (only network speaker pairing, not physical out), `hasBuiltInMic=false`, `hasBuiltInSpeaker=false` | same datasheet, same analytics section -> `["human","vehicle","license-plate"]` (`face` not stored, see Owner decisions) |
+| AXIS M3085-V | axis-m3085-v-3.1mm | `42a2c7f7c549ba64c3aa697865364f7af99d13aa261be3c9780605150682cce9` | new hash (not in docs) | p.2 "IP42 water- and dust-resistant (to comply with IP42, follow Installation Guide), IK08 impact-resistant"; p.4 "IEC/EN 60529 IP42, IEC/EN 62262 Class IK08" -> `["IP42"]`, `"IK08"` | p.2 "Audio Two-way audio connectivity via optional accessories using portcast technology"; blank "Audio input/output" row -> optional accessory + portcast = all 4 flags `false` | p.2 "Object classes: humans, vehicles (types: cars, buses, trucks, bikes)" -> `["human","vehicle"]` |
+| AXIS M3086-V | axis-m3086-v-2.4mm | `54dba946bf08138ca0e2f20193396594d2d26f09f4136259f204c7eb3bb3eff2` | new hash (not in docs) | p.2 "IP42 water- and dust-resistant (to comply with IP42, follow Installation Guide), IK08 impact-resistant"; p.4 "IEC/EN 60529 IP42, IEC/EN 62262 Class IK08" -> `["IP42"]`, `"IK08"` | p.2 "Audio Two-way audio connectivity via optional accessories using portcast technology" -> all 4 flags `false` | p.2 "Object classes: humans, vehicles (types: cars, buses, trucks," -> `["human","vehicle"]` |
+| AXIS M3088-V | axis-m3088-v-2.9mm | `55b218540b1ff848b929d4f120c449af82823d53255737c91d52da9baeb0b449` | new hash (not in docs) | p.4 "IEC 60068-2-27, IEC/EN 60529 IP42, IEC/EN 62262 Class IK08"; p.3 "IP42 water- and dust-resistant (to comply with IP42, follow Installation Guide), IK08 impact-resistant" -> `["IP42"]`, `"IK08"` | p.2 "Audio Two-way audio connectivity via optional accessories using portcast technology" -> all 4 flags `false` | p.2 "AXIS Object Analytics / Object classes: humans, vehicles (types: cars, buses, trucks, bikes)"; p.2 "Metadata / Object data: Classes: humans, faces, vehicles (types: cars, buses, trucks, bikes), license plates" -> `["human","vehicle"]` (`face` not stored, see Owner decisions) (see Ambiguous) |
+| AXIS P1465-LE 9 mm | axis-p1465-le-9mm | `a5303f4a48ab392b1b62607afa5e8176159605efe0d35c39bdc925388e5675ce` | new hash (not in docs) | p.4 "IEC/EN 60529 IP66/IP67, IEC/EN 62262 IK10, NEMA 250 Type 4X"; p.1 "this IP66/IP67, NEMA 4X, and IK10-rated camera" -> `["IP66","IP67"]`, `"IK10"` | p.3 "Audio input / Input for external unbalanced microphone, optional 5 V microphone power" + "Unbalanced line input"; p.3 "Audio output / Output via network speaker pairing"; connectors p.4 "Audio: 3.5 mm mic/line in" (input only, no out connector) -> `hasAudioInPort=true`, `hasBuiltInMic=false` (external mic only), `hasAudioOutPort=false`, `hasBuiltInSpeaker=false` (network pairing only) | p.3 AXIS Object Analytics "Object classes: humans, vehicles (types: cars, buses, trucks, bikes, other)"; p.3 AXIS Scene Metadata (in "Included" apps list) "Object classes: humans, faces, vehicles (types: cars, buses, trucks, bikes), license plates" -> `["human","vehicle","license-plate"]` (`face` not stored, see Owner decisions) |
+| AXIS P1465-LE 29 mm | axis-p1465-le-29mm | `a5303f4a48ab392b1b62607afa5e8176159605efe0d35c39bdc925388e5675ce` | new hash, same PDF as 9mm | same as 9mm row -> `["IP66","IP67"]`, `"IK10"` | same shared-body spec -> `hasAudioInPort=true`, others `false` | same analytics section -> `["human","vehicle","license-plate"]` (`face` not stored, see Owner decisions) |
+| AXIS P1467-LE | axis-p1467-le-8mm | `9bfd5ff6b3cf97d85c53b0540bfae39d8358f2a8bf754c38b220ef3fd709324b` | new hash (not in docs) | p.4 "IEC/EN 60529 IP66/IP67, IEC/EN 62262 IK10"; p.1 "This IP66/IP67, NEMA 4X, and IK10-rated camera" -> `["IP66","IP67"]`, `"IK10"` | p.2 "Audio input/output / External microphone input or line input, digital audio input, ring power, network speaker pairing"; connectors p.4 "3.5 mm mic/line in" + separate "Terminal block for 1 supervised alarm input and 1 output (12 V DC output ...)" (that output is the alarm relay, not audio) -> `hasAudioInPort=true`, `hasBuiltInMic=false`, `hasAudioOutPort=false`, `hasBuiltInSpeaker=false` | p.2 "Applications Included / AXIS Object Analytics, AXIS Scene Metadata, AXIS Image Health Analytics"; p.2 "Object classes: humans, vehicles (types: cars, buses, trucks, bikes, other)"; p.2 "Object classes: humans, faces, vehicles (types: cars, buses, trucks, bikes), license plates" -> `["human","vehicle","license-plate"]` (`face` not stored, see Owner decisions) |
+| AXIS P1468-LE | axis-p1468-le-12.9mm | `92f8f1387d2525da2c3c91644958c54956242a9dac5803694f91367d608a36b4` | new hash (not in docs) | p.4 "IEC/EN 60529 IP66/IP67, IEC/EN 62262 IK10"; p.1 "This IP66/IP67, NEMA 4X, and IK10-rated camera" -> `["IP66","IP67"]`, `"IK10"` | p.2 "Audio input/output / External microphone input or line input, digital audio input, ring power, network speaker pairing"; connectors p.4 "3.5 mm mic/line in" + separate alarm-relay output -> `hasAudioInPort=true`, `hasBuiltInMic=false`, `hasAudioOutPort=false`, `hasBuiltInSpeaker=false` | p.2 "Applications Included / AXIS Object Analytics, AXIS Scene Metadata, AXIS Image Health Analytics"; "Object classes: humans, vehicles (types: cars, buses,"; "Object classes: humans, faces, vehicles (types: cars," -> `["human","vehicle","license-plate"]` (`face` not stored, see Owner decisions) |
+| AXIS P3287-LVE | axis-p3287-lve-8.5mm | `da45052397f4eea2889bdbd9230c8568f509b74253d38eb898d173a26baf75ee` | new hash (not in docs) | p.4 "IEC/EN 60529 IP66, IEC/EN 62262 IK10, NEMA 250"; p.1 "This robust, IK10-, IP66-, and NEMA 4X-rated outdoor-ready camera" -> `["IP66"]`, `"IK10"` | Connectors p.5: "Network: RJ45 ...", "I/O: 4-pin 2.5 mm terminal block for 1 alarm input and 1 output", "Sensor / Acoustic sensor" - no Audio row, no "microphone"/"speaker" word anywhere -> all 4 flags `false` | p.3 "Applications Included / AXIS Object Analytics, AXIS Image Health Analytics, AXIS Audio Analytics, AXIS Scene Metadata, AXIS Live Privacy Shield, AXIS Video Motion Detection"; "Object classes: humans, vehicles (types: cars, buses, trucks, bikes, other)"; "AXIS Scene Metadata / Object classes: humans, faces, vehicles (types: cars, buses, trucks, bikes), license plates" -> `["human","vehicle","license-plate"]` (`face` not stored, see Owner decisions) |
+| AXIS M4317-PLVE | axis-m4317-plve-1.1mm | `302a4eea32f2e2a0378a735a1c9e021c3b1eaac446924adac0e13d7546d7d2ce` | new hash (not in docs) | p.4 "IEC/EN 60529 IP66, ISO 4892-2, NEMA 250 Type 4X"; "IEC/EN 62262 IK10"; p.3 "IP66-, NEMA 4X- and IK10-rated" -> `["IP66"]`, `"IK10"` | p.2 "Audio features / Network speaker pairing"; p.2 "Audio / Audio features through portcast technology: two-way audio"; connectors p.4 "Audio: Audio and I/O connectivity via portcast technology" -> all network/portcast, not physical/built-in -> all 4 flags `false` | p.2 "Applications Included / AXIS Object Analytics, AXIS Scene Metadata, AXIS Video Motion Detection"; "AXIS Object Analytics / Object classes: humans, vehicles (types: cars, buses, trucks, bikes)"; "AXIS Scene [Metadata] / Object classes: humans, faces, vehicles (types: cars, buses, trucks, bikes)" -> `["human","vehicle"]` (`face` not stored, see Owner decisions) |
+
+### Judgment calls
+
+- Hikvision `-LIU` records (DS-2CD1023G2, DS-2CD1043G2 on a `-LIUF` datasheet; DS-2CD1323G2,
+  DS-2CD1343G2 on their own `-LIU` sheet, same wording): the 1023G2 / 1043G2 sheets are
+  titled `...-LIU(F)`, the 1023G2 sheet lists both `-LIU` and `-LIUF` under "Available Model",
+  and "Built-in Microphone Yes" is printed with no "-F:" marker although the neighbouring
+  rows (memory card slot, reset key, Profile G) carry one. The mic is therefore stored as
+  `true` for `-LIU`. This contradicts the "-LIUF (built-in mic)" wording in those records'
+  earlier `notes`, which came from reseller
+  listings, not the datasheet (all six notes were reworded, see Owner decisions).
+- Axis M3085-V, M3086-V, M3088-V: IP42 is printed with "to comply with IP42, follow
+  Installation Guide". That is an installation instruction for the camera itself, not an
+  optional accessory, so IP42 is stored.
+- Hikvision `-C` datasheet filenames (DS-2CD2T47G2-L, DS-2CD2746G2-IZS): the PDFs print only
+  the plain model name and no "-C" condition, so every value applies.
+- Hikvision DS-2CD2143G2-I: audio line in/out is printed for "-S" only; the record is not
+  "-S", so both ports are not listed.
+- Dahua IPC-HFW2441T-ZS: prints "Protection IP67, IK10 (optional)" without saying what the
+  option is, so `ikRating` is `null`. Audio in/out is "(Only - ZAS supports)"; the record is
+  `-ZS`, so both ports are not listed.
+- Axis M3098-LV, P3287-LVE: a "Sensor: Acoustic sensor" is printed, but never the word
+  microphone, so `hasBuiltInMic` stays `false`.
+- Axis M3088-V: the "humans, faces, vehicles ... license plates" class line sits under a bare
+  "Metadata" heading and AXIS Scene Metadata is not named in this sheet's "Applications
+  Included" list, unlike the other Axis sheets. Neither `face` nor `license-plate` is stored
+  for it.
+- Axis P3265-LVE: the 9 mm and 22 mm variants share one PDF but have different printed audio
+  connectors (9 mm: terminal block for audio in and out; 22 mm: 3.5 mm mic/line in only).
+
+### Printed classes that are not stored
+
+- "license plates" was unmapped in the first pass and is now stored as `license-plate` (see
+  Owner decisions): an AXIS Scene Metadata object class on M3098-LV, P3265-LVE, P1465-LE,
+  P1467-LE, P1468-LE and P3287-LVE. No Hikvision or Dahua sheet in the catalog prints it.
+- Axis object attributes (vehicle color, clothing color) and the BETA "PPE monitoring"
+  scenario: not target classes.
+- Dahua "People Counting" (IPC-EBW5641-AS): no "human" wording on the counting function itself.
+
+### Changed or failed PDFs
+
+None. No PDF differed from a previously recorded hash and no download failed.
+
+### Owner decisions (2026-10-05, after the first pass)
+
+- `-LIUF` records added for DS-2CD1023G2 and DS-2CD1043G2 (2.8 mm and 4 mm each, 4 records).
+  Both sheets are titled `...-LIU(F)`, so every value is the same as the `-LIU` record of the
+  same sheet. The reseller price is the shops' `-LIUF` listing; by owner decision the plain
+  `-LIU` records carry the same price as their `-LIUF` sibling. The `-LIU` ids are unchanged.
+  DS-2CD1323G2 got no `-LIUF` record: its sheet is titled `-LIU` only and names no `-LIUF`
+  model, so its `-LIU` record still carries the `-LIUF` listing price.
+- Axis `face` removed from all 10 Axis records that had it. The only source was the AXIS
+  Scene Metadata class line ("humans, faces, vehicles"), not a named face-detection function.
+  Hikvision and Dahua `face` values rest on "Face detection" / "Face Capture Yes" and stay.
+- `license-plate` added as a detection type and stored for the 8 records of the 6 Axis models
+  listed above. Its source is that same Scene Metadata class line.
+- Display: the properties panel shows "IP rate: None" when no ingress rating is printed (no
+  current record), and audio ports as Input / Output / IO.
+- Dahua IPC-HFW2441T-ZS "IK10 (optional)": re-read; the sheet prints the phrase twice and
+  never says what the option is (the optional accessories listed are a junction box, pole
+  mount, power adapter and mount tester). Still stored as no IK rating; to be revisited.

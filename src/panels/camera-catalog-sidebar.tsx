@@ -1,17 +1,16 @@
 import { useMemo } from 'react'
 import { cameraModels } from '../catalog/camera-catalog-loader'
 import { BRANDS, FORM_FACTORS, type Brand, type FormFactor } from '../catalog/camera-catalog-schema'
+import { CATALOG_FEATURE_FILTERS, matchesCatalogFilters, type CatalogFilterCriteria } from '../catalog/camera-catalog-feature-filters'
 import { useProjectStore } from '../state/project-store'
 import { useEditorUiStore } from '../state/editor-ui-store'
 import { CameraCatalogModelCard } from './camera-catalog-model-card'
 import { DoriLegend } from './dori-legend'
-
-function capitalize(s: string): string {
-  return s.length ? s[0].toUpperCase() + s.slice(1) : s
-}
+import { capitalizeFirstLetter } from './capitalize-first-letter'
 
 /**
- * Left sidebar: brand/form-factor/has-price filterable catalog of camera models, each
+ * Left sidebar: catalog of camera models, filterable by brand, form factor, listed price
+ * and datasheet features (outdoor rating, built-in mic, human / vehicle detection), each
  * a draggable card (HTML5 drag-and-drop - `floor-plan-stage.tsx` owns the
  * drop target). Disabled with an explanatory hint until the plan's scale is
  * calibrated, since a cone with no scale has a meaningless radius.
@@ -24,19 +23,20 @@ export function CameraCatalogSidebar() {
   const setFormFactorFilter = useEditorUiStore((s) => s.setCatalogFormFactorFilter)
   const pricedOnlyFilter = useEditorUiStore((s) => s.catalogPricedOnlyFilter)
   const setPricedOnlyFilter = useEditorUiStore((s) => s.setCatalogPricedOnlyFilter)
+  const featureFilters = useEditorUiStore((s) => s.catalogFeatureFilters)
+  const toggleFeatureFilter = useEditorUiStore((s) => s.toggleCatalogFeatureFilter)
 
   const disabled = scale === null
 
-  const filteredModels = useMemo(
-    () =>
-      cameraModels.filter(
-        (m) =>
-          (brandFilter === 'all' || m.brand === brandFilter) &&
-          (formFactorFilter === 'all' || m.formFactor === formFactorFilter) &&
-          (!pricedOnlyFilter || m.priceVn !== null),
-      ),
-    [brandFilter, formFactorFilter, pricedOnlyFilter],
-  )
+  const filteredModels = useMemo(() => {
+    const criteria: CatalogFilterCriteria = {
+      brand: brandFilter,
+      formFactor: formFactorFilter,
+      pricedOnly: pricedOnlyFilter,
+      features: featureFilters,
+    }
+    return cameraModels.filter((m) => matchesCatalogFilters(m, criteria))
+  }, [brandFilter, formFactorFilter, pricedOnlyFilter, featureFilters])
 
   return (
     <aside className="flex w-[280px] flex-shrink-0 flex-col overflow-hidden border-r border-neutral-200 bg-white">
@@ -61,7 +61,7 @@ export function CameraCatalogSidebar() {
               <option value="all">All</option>
               {BRANDS.map((b) => (
                 <option key={b} value={b}>
-                  {capitalize(b)}
+                  {capitalizeFirstLetter(b)}
                 </option>
               ))}
             </select>
@@ -77,7 +77,7 @@ export function CameraCatalogSidebar() {
               <option value="all">All</option>
               {FORM_FACTORS.map((f) => (
                 <option key={f} value={f}>
-                  {capitalize(f)}
+                  {capitalizeFirstLetter(f)}
                 </option>
               ))}
             </select>
@@ -91,6 +91,19 @@ export function CameraCatalogSidebar() {
             />
             <span className="text-neutral-500">Only models with a listed price</span>
           </label>
+          <div className="grid grid-cols-2 gap-1">
+            {CATALOG_FEATURE_FILTERS.map(({ key, label }) => (
+              <label key={key} className="flex items-center gap-1">
+                <input
+                  type="checkbox"
+                  data-testid={`catalog-feature-filter-${key}`}
+                  checked={featureFilters.includes(key)}
+                  onChange={() => toggleFeatureFilter(key)}
+                />
+                <span className="text-neutral-500">{label}</span>
+              </label>
+            ))}
+          </div>
         </div>
 
         <div className="mt-3 flex flex-col gap-2">
