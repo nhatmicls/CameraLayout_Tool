@@ -13,11 +13,12 @@ import { EmptyStateImagePicker } from './panels/app-shell/empty-state-image-pick
 import { CatalogSidebar } from './panels/app-shell/catalog-sidebar'
 import { SelectionPropertiesPanel } from './panels/app-shell/selection-properties-panel'
 import { BillOfMaterialsPanel } from './panels/bom/bill-of-materials-panel'
+import { CableEstimatePanel } from './panels/cable/cable-estimate-panel'
 import { FloorPlanStage } from './canvas/stage/floor-plan-stage'
 import { installDevTestHooks } from './dev-test-hooks'
 
 const REPLACE_IMAGE_CONFIRM_MESSAGE =
-  'Replacing the floor plan clears all placed cameras, sensors and the scale calibration. Continue?'
+  'Replacing the floor plan clears all placed cameras, sensors, hubs, cables and the scale calibration. Continue?'
 
 installDevTestHooks()
 
@@ -32,6 +33,7 @@ export function App() {
   const scale = useProjectStore((s) => s.scale)
   const cameras = useProjectStore((s) => s.cameras)
   const sensors = useProjectStore((s) => s.sensors)
+  const cables = useProjectStore((s) => s.cables)
   const setImage = useProjectStore((s) => s.setImage)
 
   const toolMode = useEditorUiStore((s) => s.toolMode)
@@ -52,8 +54,9 @@ export function App() {
 
   const loadImageFile = useCallback(
     async (file: File) => {
-      const { cameras, sensors } = useProjectStore.getState()
-      if ((cameras.length > 0 || sensors.length > 0) && !window.confirm(REPLACE_IMAGE_CONFIRM_MESSAGE)) {
+      const { cameras, sensors, hubs, cables } = useProjectStore.getState()
+      const hasLayout = cameras.length > 0 || sensors.length > 0 || hubs.length > 0 || cables.length > 0
+      if (hasLayout && !window.confirm(REPLACE_IMAGE_CONFIRM_MESSAGE)) {
         return
       }
       try {
@@ -104,7 +107,7 @@ export function App() {
         onZoomOut={zoomOut}
         onFit={fitToView}
         onToggleShowCalibrationLine={() => setShowCalibrationLine(!showCalibrationLine)}
-        hasCameras={cameras.length > 0 || sensors.length > 0}
+        hasCameras={cameras.length > 0 || sensors.length > 0 || cables.length > 0}
         isExportingPng={isExportingPng}
         onExportPng={handleExportPng}
         onExportCsv={handleExportCsv}
@@ -127,6 +130,7 @@ export function App() {
 
         <aside className="w-[320px] flex-shrink-0 overflow-y-auto border-l border-neutral-200 bg-white p-3">
           <SelectionPropertiesPanel />
+          <CableEstimatePanel />
           <BillOfMaterialsPanel />
         </aside>
       </div>

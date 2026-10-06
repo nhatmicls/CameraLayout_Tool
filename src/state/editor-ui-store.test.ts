@@ -7,6 +7,8 @@ describe('useEditorUiStore camera / wall / sensor selection', () => {
       selectedCameraId: null,
       selectedWallId: null,
       selectedSensorId: null,
+      selectedHubId: null,
+      selectedCableId: null,
       wallDrawKind: 'opaque',
       toolMode: 'select',
     })
@@ -56,32 +58,61 @@ describe('useEditorUiStore camera / wall / sensor selection', () => {
     expect(useEditorUiStore.getState()).toMatchObject({ selectedWallId: 'wall-1', selectedSensorId: null })
   })
 
-  it('at most one of the three selection ids is ever set, across an interleaved sequence', () => {
-    const { setSelectedCameraId, setSelectedWallId, setSelectedSensorId } = useEditorUiStore.getState()
+  const selectedIds = () => {
+    const { selectedCameraId, selectedWallId, selectedSensorId, selectedHubId, selectedCableId } = useEditorUiStore.getState()
+    return { selectedCameraId, selectedWallId, selectedSensorId, selectedHubId, selectedCableId }
+  }
+  const NONE = { selectedCameraId: null, selectedWallId: null, selectedSensorId: null, selectedHubId: null, selectedCableId: null }
+
+  it('at most one of the five selection ids is ever set, across an interleaved sequence', () => {
+    const { setSelectedCameraId, setSelectedWallId, setSelectedSensorId, setSelectedHubId, setSelectedCableId } =
+      useEditorUiStore.getState()
     const sequence: Array<() => void> = [
       () => setSelectedCameraId('cam-1'),
+      () => setSelectedHubId('hub-1'),
       () => setSelectedSensorId('sensor-1'),
+      () => setSelectedCableId('cable-1'),
       () => setSelectedWallId('wall-1'),
       () => setSelectedCameraId('cam-2'),
-      () => setSelectedWallId('wall-2'),
+      () => setSelectedCableId('cable-2'),
+      () => setSelectedHubId('hub-2'),
       () => setSelectedSensorId('sensor-2'),
     ]
     for (const step of sequence) {
       step()
-      const { selectedCameraId, selectedWallId, selectedSensorId } = useEditorUiStore.getState()
-      const setCount = [selectedCameraId, selectedWallId, selectedSensorId].filter((id) => id !== null).length
-      expect(setCount).toBeLessThanOrEqual(1)
+      expect(Object.values(selectedIds()).filter((id) => id !== null)).toHaveLength(1)
     }
   })
 
-  it('clearSelection sets all three ids to null', () => {
-    useEditorUiStore.getState().setSelectedSensorId('sensor-1')
+  it('selecting a hub or a cable clears the other four ids', () => {
+    const { setSelectedCameraId, setSelectedHubId, setSelectedCableId } = useEditorUiStore.getState()
+    setSelectedCameraId('cam-1')
+    setSelectedHubId('hub-1')
+    expect(selectedIds()).toEqual({ ...NONE, selectedHubId: 'hub-1' })
+    setSelectedCableId('cable-1')
+    expect(selectedIds()).toEqual({ ...NONE, selectedCableId: 'cable-1' })
+    setSelectedCameraId('cam-1')
+    expect(selectedIds()).toEqual({ ...NONE, selectedCameraId: 'cam-1' })
+  })
+
+  it('clearing the hub id leaves a cable selection alone', () => {
+    useEditorUiStore.getState().setSelectedCableId('cable-1')
+    useEditorUiStore.getState().setSelectedHubId(null)
+    expect(selectedIds()).toEqual({ ...NONE, selectedCableId: 'cable-1' })
+  })
+
+  it('clearSelection sets all five ids to null', () => {
+    useEditorUiStore.getState().setSelectedCableId('cable-1')
     useEditorUiStore.getState().clearSelection()
-    expect(useEditorUiStore.getState()).toMatchObject({
-      selectedCameraId: null,
-      selectedWallId: null,
-      selectedSensorId: null,
-    })
+    expect(selectedIds()).toEqual(NONE)
+  })
+
+  it('stores the hub and cable tool modes and the cable draw type', () => {
+    useEditorUiStore.getState().setToolMode('hub')
+    expect(useEditorUiStore.getState().toolMode).toBe('hub')
+    useEditorUiStore.getState().setToolMode('cable')
+    useEditorUiStore.getState().setCableDrawTypeId('cat6-utp')
+    expect(useEditorUiStore.getState()).toMatchObject({ toolMode: 'cable', cableDrawTypeId: 'cat6-utp' })
   })
 
   it('defaults new walls to opaque and remembers the chosen kind and the wall tool mode', () => {

@@ -1,9 +1,10 @@
 import { useMemo } from 'react'
-import { computeBomTotal, formatVnd, groupCamerasIntoBom, type BomRow } from '../../domain/bom/bill-of-materials-grouping'
-import { groupSensorsIntoBom } from '../../domain/bom/sensor-bill-of-materials-grouping'
-import { buildCameraModelByIdRecord } from '../../export/shared/camera-model-by-id-record'
-import { buildSensorModelByIdRecord } from '../../export/shared/sensor-model-by-id-record'
+import { computeBomTotal, formatVnd, type BomRow } from '../../domain/bom/bill-of-materials-grouping'
+import { formatBomUnpricedNote } from '../../domain/bom/cable-bill-of-materials-grouping'
+import { SCALE_NOT_SET_CABLE_MESSAGE } from '../../domain/cable/cable-layout-estimate'
+import { buildCombinedBomRows } from '../../export/shared/build-combined-bom-rows'
 import { useProjectStore } from '../../state/project-store'
+import { BillOfMaterialsCableRowsTable } from './bill-of-materials-cable-rows-table'
 import { BillOfMaterialsRow } from './bill-of-materials-row'
 import { BillOfMaterialsTableHeaderRow } from './bill-of-materials-table-header-row'
 
@@ -12,46 +13,51 @@ function bomRowSlug(row: BomRow): string {
   return `${row.type}-${row.brand}-${row.model}-${row.lens}`.toLowerCase().replace(/[^a-z0-9]+/g, '-')
 }
 
+const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ? '' : 's'}`
+
 /**
- * Live bill-of-materials table, grouped by the domain layer
- * (`groupCamerasIntoBom` + `groupSensorsIntoBom`). Pure presentation - no
- * grouping/sorting logic lives here. Cameras and sensors render as two
- * separate tables (sub-headings shown only when the project has both), each
- * sharing the same header row and row component.
+ * Live bill-of-materials table. Pure presentation - the rows come from
+ * `buildCombinedBomRows`, the same call the CSV and PNG exports make, so
+ * the three can never disagree. Cameras, sensors and cables render as
+ * separate tables (sub-headings shown only when the project has more than
+ * one of them); cable rows need a scale, since their quantity is metres.
  */
 export function BillOfMaterialsPanel() {
   const cameras = useProjectStore((s) => s.cameras)
   const sensors = useProjectStore((s) => s.sensors)
+  const hubs = useProjectStore((s) => s.hubs)
+  const cables = useProjectStore((s) => s.cables)
+  const cableTypes = useProjectStore((s) => s.cableTypes)
+  const cableSettings = useProjectStore((s) => s.cableSettings)
+  const scale = useProjectStore((s) => s.scale)
 
-  // Reuses the full-catalog record builders already used by the PNG/CSV export orchestrators
-  // (`buildCameraModelByIdRecord`/`buildSensorModelByIdRecord`) instead of a hand-rolled
-  // per-placed-item loop building the same id->spec shape.
-  const cameraModels = useMemo(() => buildCameraModelByIdRecord(), [])
-  const sensorModels = useMemo(() => buildSensorModelByIdRecord(), [])
-
-  const cameraRows = useMemo(() => groupCamerasIntoBom(cameras, cameraModels), [cameras, cameraModels])
-  const sensorRows = useMemo(() => groupSensorsIntoBom(sensors, sensorModels), [sensors, sensorModels])
-
-  const cameraCount = useMemo(() => cameraRows.reduce((sum, row) => sum + row.quantity, 0), [cameraRows])
-  const sensorCount = useMemo(() => sensorRows.reduce((sum, row) => sum + row.quantity, 0), [sensorRows])
-  const total = useMemo(() => computeBomTotal([...cameraRows, ...sensorRows]), [cameraRows, sensorRows])
+  const { cameraRows, sensorRows, cableRows, allRows } = useMemo(
+    () => buildCombinedBomRows({ cameras, sensors, hubs, cables, cableTypes, cableSettings, scale }),
+    [cameras, sensors, hubs, cables, cableTypes, cableSettings, scale],
+  )
+  const cameraCount = cameraRows.reduce((sum, row) => sum + row.quantity, 0)
+  const sensorCount = sensorRows.reduce((sum, row) => sum + row.quantity, 0)
+  const total = useMemo(() => computeBomTotal(allRows), [allRows])
+  const unpricedNote = formatBomUnpricedNote(total)
 
   const hasCameras = cameraRows.length > 0
   const hasSensors = sensorRows.length > 0
-  const showSubHeadings = hasCameras && hasSensors
+  const hasCables = cables.length > 0
+  const showSubHeadings = [hasCameras, hasSensors, hasCables].filter(Boolean).length > 1
 
   return (
     <div data-testid="bom-panel" className="mt-4 border-t border-neutral-200 pt-3">
       <div className="flex items-baseline justify-between">
         <h2 className="text-sm font-semibold text-neutral-700">Bill of materials</h2>
         <span data-testid="bom-total-count" className="text-xs text-neutral-500">
-          {cameraCount} camera{cameraCount === 1 ? '' : 's'}, {sensorCount} sensor{sensorCount === 1 ? '' : 's'}
+          {plural(cameraCount, 'camera')}, {plural(sensorCount, 'sensor')}
+          {hasCables && `, ${plural(cables.length, 'cable')}`}
         </span>
       </div>
 
-      {!hasCameras && !hasSensors ? (
+      {!hasCameras && !hasSensors && !hasCables ? (
         <p data-testid="bom-empty-state" className="mt-2 text-xs text-neutral-400">
-          No cameras or sensors placed yet.
+          No cameras, sensors or cables placed yet.
         </p>
       ) : (
         <div className="mt-2 overflow-x-auto">
@@ -87,15 +93,26 @@ export function BillOfMaterialsPanel() {
             </>
           )}
 
+          {hasCables && (
+            <>
+              {showSubHeadings && <h3 className="mt-3 text-xs font-semibold text-neutral-600">Cables</h3>}
+              {scale ? (
+                <BillOfMaterialsCableRowsTable rows={cableRows} />
+              ) : (
+                <p data-testid="bom-cables-no-scale" className="text-xs font-medium text-amber-600">
+                  {SCALE_NOT_SET_CABLE_MESSAGE}
+                </p>
+              )}
+            </>
+          )}
+
           <p data-testid="bom-total-price" className="mt-2 text-right text-xs font-semibold text-neutral-800">
             Estimated total: {formatVnd(total.totalVnd)}
-            {total.unpricedQuantity > 0 && (
-              <span className="ml-1 font-normal text-neutral-500">
-                (excludes {total.unpricedQuantity} item{total.unpricedQuantity === 1 ? '' : 's'} with no listed price)
-              </span>
-            )}
+            {unpricedNote && <span className="ml-1 font-normal text-neutral-500">({unpricedNote})</span>}
           </p>
-          <p className="mt-0.5 text-right text-[10px] text-neutral-400">Indicative Vietnam reseller prices - confirm with your supplier.</p>
+          <p className="mt-0.5 text-right text-[10px] text-neutral-400">
+            Indicative Vietnam reseller prices{hasCables ? '; cable prices as you entered them' : ''} - confirm with your supplier.
+          </p>
         </div>
       )}
     </div>

@@ -1,7 +1,10 @@
 import type { CameraModelSpec, PlacedCamera } from '../project-file/project-types'
 
+/** What `BomRow.quantity` counts: pieces (cameras, sensors) or metres (cables). */
+export type BomUnit = 'pcs' | 'm'
+
 export interface BomRow {
-  /** "Camera", or the sensor kind label (`SENSOR_KIND_LABELS`) for a sensor row. */
+  /** "Camera", the sensor kind label (`SENSOR_KIND_LABELS`) for a sensor row, or "Cable". */
   type: string
   brand: string
   model: string
@@ -11,6 +14,7 @@ export interface BomRow {
   /** e.g. "2.8 mm" or "2.8-12 mm". Empty for every sensor kind except thermal. */
   lens: string
   quantity: number
+  unit: BomUnit
   /** Item labels for this row, derived from placement order, e.g. "C1, C3" or "S2, S5". */
   labels: string
   /** Indicative Vietnam unit price in VND, or null when the catalog has no price for this model. */
@@ -59,6 +63,7 @@ export function groupCamerasIntoBom(
       resolution: `${model.pixelWidth}x${model.pixelHeight} (${model.resolutionMp} MP)`,
       lens: lensLabel(model.lens),
       quantity: cameraNumbers.length,
+      unit: 'pcs',
       labels: cameraNumbers.map((n) => `C${n}`).join(', '),
       unitPriceVnd,
       lineTotalVnd: unitPriceVnd === null ? null : unitPriceVnd * cameraNumbers.length,
@@ -72,24 +77,29 @@ export function groupCamerasIntoBom(
 export interface BomTotal {
   /** Sum of every priced row's line total, VND. */
   totalVnd: number
-  /** Number of placed items (cameras and/or sensors) whose model has no catalog price - excluded from `totalVnd`. */
+  /** Number of placed items (cameras and/or sensors) whose model has no catalog price - excluded from `totalVnd`. Pieces only: cable metres never count here. */
   unpricedQuantity: number
+  /** Number of cable rows (unit `m`) with no price - excluded from `totalVnd`. */
+  unpricedCableTypeCount: number
 }
 
 /**
  * Grand total over the priced rows, plus how many items it leaves out (so a
  * partial total is never shown as complete). Works on rows, not cameras -
- * camera and sensor rows join the total identically, no special-casing
- * needed here when sensor rows are included in `rows`.
+ * camera and sensor rows join the total identically. Unpriced rows are
+ * split by unit: a cable row's quantity is metres, which must not be added
+ * to the count of unpriced items.
  */
 export function computeBomTotal(rows: BomRow[]): BomTotal {
   let totalVnd = 0
   let unpricedQuantity = 0
+  let unpricedCableTypeCount = 0
   for (const row of rows) {
-    if (row.lineTotalVnd === null) unpricedQuantity += row.quantity
-    else totalVnd += row.lineTotalVnd
+    if (row.lineTotalVnd !== null) totalVnd += row.lineTotalVnd
+    else if (row.unit === 'm') unpricedCableTypeCount += 1
+    else unpricedQuantity += row.quantity
   }
-  return { totalVnd, unpricedQuantity }
+  return { totalVnd, unpricedQuantity, unpricedCableTypeCount }
 }
 
 const VND_NUMBER_FORMAT = new Intl.NumberFormat('vi-VN')
@@ -112,6 +122,7 @@ const BOM_HEADER = [
   'Resolution',
   'Lens',
   'Quantity',
+  'Unit',
   'Labels',
   'Unit Price (VND)',
   'Total (VND)',
@@ -119,8 +130,8 @@ const BOM_HEADER = [
 
 /**
  * Shared by CSV export and the PNG export strip (DRY) - header row plus one
- * row per BOM entry (cameras, then sensors - the caller concatenates
- * `groupCamerasIntoBom` + `groupSensorsIntoBom` results in that order).
+ * row per BOM entry (cameras, then sensors, then cables - see
+ * `build-combined-bom-rows.ts`).
  * Prices default to plain integers (what a spreadsheet wants from the CSV);
  * the PNG strip passes a grouping formatter instead. An unknown price is an
  * empty cell.
@@ -137,6 +148,7 @@ export function bomToTable(rows: BomRow[], formatPrice: (amountVnd: number) => s
       r.resolution,
       r.lens,
       String(r.quantity),
+      r.unit,
       r.labels,
       price(r.unitPriceVnd),
       price(r.lineTotalVnd),

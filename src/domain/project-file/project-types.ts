@@ -3,6 +3,7 @@
  * calibration, the placed cameras and the drawn walls. Pure data shapes only - no behaviour,
  * no React/Konva imports. Phase 4 builds the zustand store on top of these.
  */
+import type { CableLayout } from '../cable/cable-layout-types'
 import type { PlacedSensor } from '../sensor/sensor-types'
 
 /** A camera placed on the floor plan. Position/rotation live in image pixel space (y-down, matching canvas + Konva). */
@@ -58,7 +59,8 @@ export interface Wall {
   y2: number
 }
 
-export interface Project {
+/** The cable fields (`hubs`, `cables`, `cableTypes`, `cableSettings`) are always present in memory; optional in the file (v1-v4 files have none). */
+export interface Project extends CableLayout {
   image: PlanImage
   scale: ScaleCalibration | null
   cameras: PlacedCamera[]

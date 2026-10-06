@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { serializeProject, type SensorModelLookup } from '../../domain/project-file/project-file-schema'
+import { createEmptyCableLayout } from '../../domain/cable/cable-layout-types'
 import type { Project } from '../../domain/project-file/project-types'
 import { deriveProjectFileName, loadProjectFromFile } from './project-file-save-and-load'
 
@@ -59,6 +60,7 @@ describe('loadProjectFromFile - sensor model lookup pass-through', () => {
     cameras: [],
     walls: [],
     sensors: [{ id: 's1', modelId: 'pir-1', shape: 'sector', x: 0, y: 0, rotationDeg: 0, rangeM: 5 }],
+    ...createEmptyCableLayout(),
   }
 
   function makeFile(): File {

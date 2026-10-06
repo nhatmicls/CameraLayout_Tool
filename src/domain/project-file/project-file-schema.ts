@@ -5,7 +5,9 @@ import {
   TILT_MAX_DEG,
   TILT_MIN_DEG,
 } from '../camera/mounted-camera-ground-coverage-calculator'
+import { MAX_CABLES, MAX_CABLE_TYPES, MAX_HUBS } from '../cable/cable-layout-types'
 import type { PlacedCamera, Project } from './project-types'
+import { cableSchema, cableSettingsSchema, cableTypeSchema, hubSchema, normaliseLoadedCabling } from './project-file-cable-schema'
 import { MAX_SENSORS, normaliseLoadedSensors, placedSensorSchema, type SensorModelLookup } from './project-file-sensor-schema'
 import { MAX_WALLS, normaliseLoadedWalls, wallSchema } from './project-file-wall-schema'
 
@@ -18,12 +20,14 @@ export type { SensorModelLookup, SensorModelLookupEntry } from './project-file-s
  * could not be opened by an older one. Version 2 = version 1 plus the optional
  * camera keys `mountHeightM` / `tiltDeg`; version 3 = version 2 plus the
  * optional top-level `walls`; version 4 = version 3 plus the optional
- * top-level `sensors`. Each is a strict superset, so older files are read
- * with the same schema and need no migration. The writer always emits v4,
- * even for a project with no sensors (owner decision: one writer path) - a v4
- * file will not open in a pre-sensor build.
+ * top-level `sensors`; version 5 = version 4 plus the optional top-level
+ * `hubs` / `cables` / `cableTypes` / `cableSettings`. Each is a strict
+ * superset, so older files are read with the same schema and need no
+ * migration. The writer always emits v5, even for a project with no cables
+ * (owner decision: one writer path) - a v5 file will not open in a pre-cable
+ * build.
  */
-export const PROJECT_SCHEMA_VERSION = 4 as const
+export const PROJECT_SCHEMA_VERSION = 5 as const
 
 /** Mirrors `serializeCsv`'s input cap intent: generous for a floor-plan PNG, small enough to reject garbage quickly. */
 const MAX_PROJECT_TEXT_LENGTH_BYTES = 80 * 1024 * 1024 // 80 MB
@@ -74,12 +78,16 @@ const MAX_CAMERAS = 500
 
 const projectFileSchema = z.strictObject({
   app: z.literal('camera-layout-tool'),
-  schemaVersion: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(PROJECT_SCHEMA_VERSION)]),
+  schemaVersion: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(PROJECT_SCHEMA_VERSION)]),
   image: planImageSchema,
   scale: scaleCalibrationSchema.nullable(),
   cameras: z.array(placedCameraSchema).max(MAX_CAMERAS),
   walls: z.array(wallSchema).max(MAX_WALLS).optional(),
   sensors: z.array(placedSensorSchema).max(MAX_SENSORS).optional(),
+  hubs: z.array(hubSchema).max(MAX_HUBS).optional(),
+  cables: z.array(cableSchema).max(MAX_CABLES).optional(),
+  cableTypes: z.array(cableTypeSchema).max(MAX_CABLE_TYPES).optional(),
+  cableSettings: cableSettingsSchema.optional(),
 })
 
 /** Serialises a project to the on-disk JSON shape (adds the `app`/`schemaVersion` envelope). */
@@ -92,6 +100,10 @@ export function serializeProject(project: Project): string {
     cameras: project.cameras,
     walls: project.walls,
     sensors: project.sensors,
+    hubs: project.hubs,
+    cables: project.cables,
+    cableTypes: project.cableTypes,
+    cableSettings: project.cableSettings,
   })
 }
 
@@ -112,7 +124,8 @@ export type ParseProjectResult =
  * camera/model cross-check against the caller's known catalog ids, wall
  * normalisation (a file without `walls` loads with none) and sensor
  * normalisation against `sensorModelLookup` (a file without `sensors` loads
- * with none). Never throws - every failure mode returns `{ ok: false, error }`.
+ * with none) and cable normalisation against the cameras / sensors that were
+ * kept (`normaliseLoadedCabling`). Never throws - every failure mode returns `{ ok: false, error }`.
  */
 export function parseProjectFile(
   text: string,
@@ -146,12 +159,15 @@ export function parseProjectFile(
       return false
     })
 
+    const walls = normaliseLoadedWalls(result.data.walls ?? [], warnings)
+    const sensors = normaliseLoadedSensors(result.data.sensors ?? [], sensorModelLookup, warnings)
     const project: Project = {
       image: result.data.image,
       scale: result.data.scale,
       cameras,
-      walls: normaliseLoadedWalls(result.data.walls ?? [], warnings),
-      sensors: normaliseLoadedSensors(result.data.sensors ?? [], sensorModelLookup, warnings),
+      walls,
+      sensors,
+      ...normaliseLoadedCabling(result.data, { cameras, sensors }, warnings),
     }
 
     return { ok: true, project, warnings }

@@ -94,32 +94,36 @@ describe('bomToTable', () => {
       'Resolution',
       'Lens',
       'Quantity',
+      'Unit',
       'Labels',
       'Unit Price (VND)',
       'Total (VND)',
     ])
   })
 
-  it('includes a leading Type column and the Labels column after Quantity, matching the header', () => {
+  it('includes a leading Type column and the Unit + Labels columns after Quantity, matching the header', () => {
     const rows = groupCamerasIntoBom([camera('hik-dome-2.8'), camera('hik-dome-2.8')], modelById)
     const table = bomToTable(rows)
     expect(table[0][0]).toBe('Type')
     expect(table[1][0]).toBe('Camera')
-    expect(table[0][7]).toBe('Labels')
-    expect(table[1][7]).toBe('C1, C2')
+    expect(table[0]).toHaveLength(11)
+    expect(table[0][7]).toBe('Unit')
+    expect(table[1][7]).toBe('pcs')
+    expect(table[0][8]).toBe('Labels')
+    expect(table[1][8]).toBe('C1, C2')
     expect(table[1][6]).toBe('2') // Quantity
   })
 
   it('appends unit price and line total as plain integers, blank when the model has no price', () => {
     const rows = groupCamerasIntoBom([camera('axis-bullet'), camera('hik-dome-2.8'), camera('hik-dome-2.8')], modelById)
     const table = bomToTable(rows)
-    expect(table[1].slice(8)).toEqual(['', '']) // axis: no price
-    expect(table[2].slice(8)).toEqual(['2500000', '5000000'])
+    expect(table[1].slice(9)).toEqual(['', '']) // axis: no price
+    expect(table[2].slice(9)).toEqual(['2500000', '5000000'])
   })
 
   it('uses the supplied price formatter', () => {
     const rows = groupCamerasIntoBom([camera('hik-dome-2.8')], modelById)
-    expect(bomToTable(rows, () => 'X')[1].slice(8)).toEqual(['X', 'X'])
+    expect(bomToTable(rows, () => 'X')[1].slice(9)).toEqual(['X', 'X'])
   })
 })
 
@@ -129,11 +133,11 @@ describe('computeBomTotal', () => {
       [camera('hik-dome-2.8'), camera('hik-dome-4'), camera('axis-bullet'), camera('axis-bullet')],
       modelById,
     )
-    expect(computeBomTotal(rows)).toEqual({ totalVnd: 5_000_000, unpricedQuantity: 2 })
+    expect(computeBomTotal(rows)).toEqual({ totalVnd: 5_000_000, unpricedQuantity: 2, unpricedCableTypeCount: 0 })
   })
 
   it('is zero for an empty BOM', () => {
-    expect(computeBomTotal([])).toEqual({ totalVnd: 0, unpricedQuantity: 0 })
+    expect(computeBomTotal([])).toEqual({ totalVnd: 0, unpricedQuantity: 0, unpricedCableTypeCount: 0 })
   })
 })
 

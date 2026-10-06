@@ -16,12 +16,12 @@ Layout: `data/` (catalog JSON, repo root), `src/catalog` (schema, loader), `src/
 Every `src` folder except `state` is grouped into feature subfolders - put a new file in the
 matching one, never loose at the folder root:
 - `catalog/`: `camera`, `sensor`, `shared`
-- `domain/`: `beam`, `bom`, `camera`, `export`, `project-file`, `sensor`, `wall`, `shared`
-- `canvas/`: `beam`, `camera`, `sensor`, `wall`, `stage`, `shared`
-- `panels/`: `app-shell`, `bom`, `camera`, `sensor`, `shared`
+- `domain/`: `beam`, `bom`, `cable`, `camera`, `export`, `project-file`, `sensor`, `wall`, `shared`
+- `canvas/`: `beam`, `cable`, `camera`, `sensor`, `wall`, `stage`, `shared`
+- `panels/`: `app-shell`, `bom`, `cable`, `camera`, `sensor`, `shared`
 - `export/`: `csv`, `png`, `shared`
 - `file-io/`: `browser`, `project-file`
-A new feature (cable, fire alarm, ...) gets its own subfolder where it adds files.
+A new feature (fire alarm, ...) gets its own subfolder where it adds files.
 Catalog data: `data/<brand>/<device-type>/<brand>-<device-type>_<NN>.json`, where `device-type`
 is `camera-<formFactor>` (bullet, dome, turret, ptz, fisheye) or `sensor-<kind>` (pir, beam,
 vibration, thermal); e.g. `data/hikvision/camera-bullet/hikvision-camera-bullet_02.json`. A record
@@ -65,8 +65,32 @@ Project rules:
   and both-or-neither. Unset must draw and save exactly like the flat cone. Floor-coverage math
   lives in `src/domain/camera/mounted-camera-ground-coverage-calculator.ts` (metres only; slant model,
   centre-line arcs, fisheye HFOV >= 180 ignores tilt) - keep it out of components.
-- Project files: `PROJECT_SCHEMA_VERSION` is 4 (v3 + optional `sensors`); the reader accepts
-  1, 2, 3 and 4, the writer always emits 4.
+- Project files: `PROJECT_SCHEMA_VERSION` is 5 (v4 + optional `hubs`, `cables`, `cableTypes`,
+  `cableSettings`); the reader accepts 1 to 5, the writer always emits 5.
+- Cables: a cable is `{ device, hubId, typeId, points }` - `device` is a `{ kind, id, end? }`
+  ref (`end` = `tx` / `rx`, for a beam only), `points` are the INTERMEDIATE vertices in image
+  px, device -> hub; both ends derive from the live device / hub position
+  (`src/domain/cable/cable-endpoint-index.ts`). Metres are never persisted. Deleting a camera,
+  sensor or hub removes its cables in the same `set()` (one undo step); a cable type in use,
+  or the last one, cannot be deleted (>= 1 type always). `setImage` clears hubs + cables and
+  keeps cable types + settings. A riser / drop (cables leave for the floor above / below) is a `Hub`
+  with `kind: 'riser' | 'drop'`: `mountHeightM` (never negative) is the height it rises to /
+  the depth below this floor (`hubEffectiveHeightM` negates a drop's), optional
+  `extraLengthM` = cable on the other floor; labels `H{n}` / `R{n}` / `D{n}` come from
+  `hubLabels`. Cones + sensor coverage are hidden in cable mode
+  (`coverageVisible`).
+- Cable maths lives in `src/domain/cable/cable-length-estimate-calculator.ts` +
+  `cable-layout-estimate.ts` (`computeCableLayoutEstimate` is the one entry point for panels,
+  canvas, BOM and exports) - keep it out of components. The scale-error range applies to
+  horizontal metres only (vertical runs and slack are typed in metres); the length limit
+  checks the run without waste. No scale = no cable metres: never use the
+  `planPxPerMeter ?? 1` fallback for cables.
+- Cable lines render in the walls Layer's children slot (after wall lines, before wall node
+  handles); hubs and the selected cable's vertex editor are in the markers Layer; the hub
+  and cable tools share the one editor-overlay Layer - no sixth Konva Layer.
+- Cable prices (VND/m per type) are user input: never invented, never prefilled. BOM rows
+  carry `unit` (`pcs` / `m`); metres never count as unpriced items. BOM rows for the panel,
+  CSV and PNG all come from `src/export/shared/build-combined-bom-rows.ts`.
 - Walls are single segments in image px. For cameras `opaque` blocks and `glass` never does.
   For sensors the table `SENSOR_BLOCKING_WALL_KINDS` in
   `src/domain/sensor/sensor-wall-blocking-rules.ts` is the single source: PIR and thermal are clipped

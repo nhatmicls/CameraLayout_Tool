@@ -1,5 +1,6 @@
 import type { ScaleCalibration } from '../../domain/project-file/project-types'
 import type { ToolMode } from '../../state/editor-ui-store'
+import { CableToolControls } from './cable-tool-controls'
 import { WallToolControls } from './wall-tool-controls'
 
 interface AppToolbarProps {
@@ -14,7 +15,7 @@ interface AppToolbarProps {
   onZoomOut: () => void
   onFit: () => void
   onToggleShowCalibrationLine: () => void
-  /** Phase 7 (PNG/CSV export): disabled with a tooltip until an image is loaded; CSV also needs at least one placed camera. */
+  /** PNG/CSV export: disabled with a tooltip until an image is loaded; CSV also needs at least one placed camera, sensor or cable (the prop name predates sensors and cables). */
   hasCameras: boolean
   isExportingPng: boolean
   onExportPng: () => void
@@ -31,7 +32,7 @@ interface AppToolbarProps {
 const buttonClass =
   'rounded px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:text-neutral-400 disabled:hover:bg-transparent focus:outline focus:outline-2 focus:outline-blue-600'
 
-/** Top toolbar: open image, project save/load, calibration tool + status, wall tool, export, undo/redo, zoom controls. */
+/** Top toolbar: open image, project save/load, calibration tool + status, wall tool, hub + cable tools, export, undo/redo, zoom controls. Wraps onto a second row in a narrow window instead of clipping. */
 export function AppToolbar({
   hasImage,
   scale,
@@ -58,7 +59,7 @@ export function AppToolbar({
   const isCalibrating = toolMode === 'calibrate'
 
   return (
-    <div className="flex h-12 flex-shrink-0 items-center gap-2 border-b border-neutral-200 bg-white px-3">
+    <div className="flex min-h-12 flex-shrink-0 flex-wrap items-center gap-2 border-b border-neutral-200 bg-white px-3 py-1">
       <button type="button" data-testid="load-image-button" onClick={onOpenFileDialog} className={buttonClass}>
         Open image
       </button>
@@ -110,6 +111,10 @@ export function AppToolbar({
 
       <div className="h-6 w-px bg-neutral-200" />
 
+      <CableToolControls hasImage={hasImage} buttonClass={buttonClass} />
+
+      <div className="h-6 w-px bg-neutral-200" />
+
       <button
         type="button"
         data-testid="export-png-button"
@@ -126,7 +131,7 @@ export function AppToolbar({
         data-testid="export-csv-button"
         onClick={onExportCsv}
         disabled={!hasImage || !hasCameras}
-        title={hasCameras ? 'Export the BOM as a CSV' : 'Place at least one camera first'}
+        title={hasCameras ? 'Export the BOM as a CSV' : 'Place at least one camera, sensor or cable first'}
         className={buttonClass}
       >
         Export CSV

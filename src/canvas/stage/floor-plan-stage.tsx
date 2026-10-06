@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type DragEvent } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import type Konva from 'konva'
 import type { KonvaEventObject } from 'konva/lib/Node'
 import { Layer, Stage } from 'react-konva'
@@ -10,8 +10,11 @@ import { WallDrawingOverlay } from '../wall/wall-drawing-overlay'
 import { ScaleCalibrationLengthDialog } from '../../panels/app-shell/scale-calibration-length-dialog'
 import { PlanSceneLayers } from './plan-scene-layers'
 import { CameraDebugList } from '../camera/camera-debug-list'
-import { useCameraDragDropTarget } from '../camera/use-camera-drag-drop-target'
-import { useSensorDragDropTarget } from '../sensor/use-sensor-drag-drop-target'
+import { CableDrawingOverlay } from '../cable/cable-drawing-overlay'
+import { HubPlacementOverlay } from '../cable/hub-placement-overlay'
+import { useHubAndCableSelectionKeyboardShortcuts } from '../cable/use-hub-and-cable-selection-keyboard-shortcuts'
+import { useStageCablingSceneProps } from '../cable/use-stage-cabling-scene-props'
+import { useStageCatalogDropHandlers } from './use-stage-catalog-drop-handlers'
 import { useCameraSelectionKeyboardShortcuts } from '../camera/use-camera-selection-keyboard-shortcuts'
 import { useWallSelectionKeyboardShortcuts } from '../wall/use-wall-selection-keyboard-shortcuts'
 import { useSensorSelectionKeyboardShortcuts } from '../sensor/use-sensor-selection-keyboard-shortcuts'
@@ -21,8 +24,8 @@ import { computePlanPxPerMeter, type RefLine } from '../../domain/shared/scale-c
 
 /**
  * The centre canvas: a Konva Stage sized to its container, with the plan
- * scene (image + cones + walls + markers - `plan-scene-layers.tsx`) and the
- * editor-only calibration and wall-drawing overlays on top. Pan/zoom is purely a stage transform -
+ * scene (image + cones + walls + cables + markers - `plan-scene-layers.tsx`) and the
+ * editor-only calibration, wall-drawing, hub-placement and cable-drawing overlays on top. Pan/zoom is purely a stage transform -
  * positions painted here are always in image pixels (see `project-types.ts`).
  */
 export function FloorPlanStage() {
@@ -52,11 +55,12 @@ export function FloorPlanStage() {
   const [pendingLine, setPendingLine] = useState<RefLine | null>(null)
 
   const { viewport, draggable, stageSize, handleWheel, handleDragEnd, fitToView } = useStagePanZoom()
-  const { handleDragOver: handleCameraDragOver, handleDrop: handleCameraDrop } = useCameraDragDropTarget(stageRef)
-  const { handleDragOver: handleSensorDragOver, handleDrop: handleSensorDrop } = useSensorDragDropTarget(stageRef)
+  const { handleDragOver, handleDropOnStage } = useStageCatalogDropHandlers(stageRef)
+  const { cabling, cablingInteraction } = useStageCablingSceneProps()
   useCameraSelectionKeyboardShortcuts()
   useWallSelectionKeyboardShortcuts()
   useSensorSelectionKeyboardShortcuts()
+  useHubAndCableSelectionKeyboardShortcuts()
   const handleMoveWallNode = useWallNodeMoveHandler()
 
   useStageContainerResizeAndInitialFit(containerRef, image, stageSize, fitToView, setStageSize)
@@ -75,36 +79,13 @@ export function FloorPlanStage() {
     [pendingLine, setScale, setToolMode, pushNotification],
   )
 
-  // Clicking empty canvas (the Stage itself, not a camera/wall/sensor marker) deselects all three.
+  // Clicking empty canvas (the Stage itself, not a camera/wall/sensor/hub/cable) deselects everything.
   const handleStageClick = useCallback(
     (e: KonvaEventObject<MouseEvent | TouchEvent>) => {
       if (e.target !== e.target.getStage()) return
       clearSelection()
     },
     [clearSelection],
-  )
-
-  // Combined drag-over: each hook's handler only reacts to its own MIME type, so calling both is safe.
-  const handleDragOver = useCallback(
-    (e: DragEvent<HTMLDivElement>) => {
-      handleCameraDragOver(e)
-      handleSensorDragOver(e)
-    },
-    [handleCameraDragOver, handleSensorDragOver],
-  )
-
-  // Tries the camera payload first, then the sensor payload, and selects whichever one actually dropped.
-  const handleDropOnStage = useCallback(
-    (e: DragEvent<HTMLDivElement>) => {
-      const newCameraId = handleCameraDrop(e)
-      if (newCameraId) {
-        setSelectedCameraId(newCameraId)
-        return
-      }
-      const newSensorId = handleSensorDrop(e)
-      if (newSensorId) setSelectedSensorId(newSensorId)
-    },
-    [handleCameraDrop, handleSensorDrop, setSelectedCameraId, setSelectedSensorId],
   )
 
   const handleCameraDragEnd = useCallback((id: string, x: number, y: number) => updateCamera(id, { x, y }), [updateCamera])
@@ -115,12 +96,14 @@ export function FloorPlanStage() {
   )
 
   if (!image || !decodedImage) return null
+  // The drawing tools place points with a click, so they get the crosshair.
+  const isDrawingTool = toolMode !== 'select' && toolMode !== 'calibrate'
 
   return (
     <div
       ref={containerRef}
       data-testid="stage-container"
-      className={`relative h-full w-full overflow-hidden bg-neutral-200 ${toolMode === 'wall' ? 'cursor-crosshair' : ''}`}
+      className={`relative h-full w-full overflow-hidden bg-neutral-200 ${isDrawingTool ? 'cursor-crosshair' : ''}`}
       onDragOver={handleDragOver}
       onDrop={handleDropOnStage}
     >
@@ -147,12 +130,15 @@ export function FloorPlanStage() {
             walls={walls}
             sensors={sensors}
             planPxPerMeter={scale?.planPxPerMeter ?? 1}
+            cabling={cabling}
+            cablingInteraction={cablingInteraction}
+            coverageVisible={toolMode !== 'cable'}
             interactive
             selectedCameraId={selectedCameraId}
             selectedWallId={selectedWallId}
             selectedSensorId={selectedSensorId}
             wallsSelectable={toolMode === 'select'}
-            markersListening={toolMode !== 'wall'}
+            markersListening={!isDrawingTool}
             viewportScale={viewport.scale}
             onSelectCamera={setSelectedCameraId}
             onSelectWall={setSelectedWallId}
@@ -162,7 +148,7 @@ export function FloorPlanStage() {
             onCameraRotateEnd={handleCameraRotateEnd}
             onSensorCommit={updateSensor}
           />
-          {/* One Layer for both editor overlays: with the scene's four that makes five, Konva's recommended maximum. */}
+          {/* One Layer for every editor overlay: with the scene's four that makes five, Konva's recommended maximum. */}
           <Layer>
             <ScaleCalibrationOverlay
               stageRef={stageRef}
@@ -171,6 +157,13 @@ export function FloorPlanStage() {
               onLineDrawn={handleLineDrawn}
             />
             <WallDrawingOverlay
+              stageRef={stageRef}
+              viewportScale={viewport.scale}
+              imageWidthPx={image.widthPx}
+              imageHeightPx={image.heightPx}
+            />
+            <HubPlacementOverlay stageRef={stageRef} imageWidthPx={image.widthPx} imageHeightPx={image.heightPx} />
+            <CableDrawingOverlay
               stageRef={stageRef}
               viewportScale={viewport.scale}
               imageWidthPx={image.widthPx}

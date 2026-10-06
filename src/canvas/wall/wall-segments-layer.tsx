@@ -1,4 +1,4 @@
-import { memo, useMemo, useState } from 'react'
+import { memo, useMemo, useState, type ReactNode } from 'react'
 import { Layer, Line } from 'react-konva'
 import type { Wall } from '../../domain/project-file/project-types'
 import { moveWallNode, type WallNode } from '../../domain/wall/wall-node-editing'
@@ -20,6 +20,8 @@ export interface WallSegmentsLayerProps {
   imageHeightPx: number
   /** A node (a point where walls end) was dragged and dropped. */
   onMoveWallNode: (from: WallNode, to: WallNode) => void
+  /** Drawn after the wall lines and before the node handles (the cable routes). Pass a memoised element, or null, to keep this layer's memo effective. */
+  children?: ReactNode
 }
 
 /** Screen px either side of a wall line that still counts as clicking it. */
@@ -44,6 +46,7 @@ export const WallSegmentsLayer = memo(function WallSegmentsLayer({
   imageWidthPx,
   imageHeightPx,
   onMoveWallNode,
+  children,
 }: WallSegmentsLayerProps) {
   const [nodeDrag, setNodeDrag] = useState<{ from: WallNode; to: WallNode } | null>(null)
   const shownWalls = useMemo(
@@ -77,6 +80,7 @@ export const WallSegmentsLayer = memo(function WallSegmentsLayer({
           />
         )
       })}
+      {children}
       {selectable && (
         <WallNodeDragHandles
           walls={walls}

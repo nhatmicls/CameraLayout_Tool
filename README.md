@@ -2,7 +2,8 @@
 
 Browser-only floor-plan camera planner. Load a floor-plan image, calibrate the scale, drag
 Hikvision / Dahua / Axis camera models onto the plan, see FOV cones shaded by EN 62676-4 DORI
-bands, and get a priced bill of materials. Export a PNG (plan + BOM strip) and a BOM CSV,
+bands, draw cable routes to get a provisional cable-length estimate, and get a priced bill of
+materials. Export a PNG (plan + BOM strip) and a BOM CSV,
 save/load the project as JSON. Nothing leaves the browser: no backend, no accounts, no network
 calls once the page has loaded.
 
@@ -74,15 +75,65 @@ calls once the page has loaded.
   within 0.3 m of a camera is treated as the wall it is mounted on and ignored for that
   camera - so a camera aimed back through its mounting wall is shown seeing into the next
   room. The same 0.3 m rule applies to sensors and to both ends of a beam.
+- **Cables**: a provisional cable-length estimate from routes you draw by hand.
+  - Hubs: click "Add hub" and click the plan to place a hub (switch, recorder, alarm panel);
+    hubs are numbered H1, H2... and can be dragged. A hub has a mount height (default 1.5 m)
+    and is where cables end. Hubs are not a BOM line.
+  - Risers and drops: "Add riser" places the point where cables go up to the floor above
+    (R1, R2..., up arrow), "Add drop" the point where they go down to the floor below (D1,
+    D2..., down arrow). Both work like a hub - cables end on them. A riser's "Rises to" is
+    the height above this floor the cable climbs to (it starts at the route height, so set
+    it); a drop's "Goes down to" is how far below this floor it ends (it starts at 0, i.e.
+    the cable descends the route height). "Length on the other floor" (default 0) is added
+    to every cable ending there, for the run from that point to its hub. Each plan is one
+    floor: the other floor's own routes are not drawn here.
+  - While "Draw cable" is on, camera cones and sensor coverage are hidden so the route is
+    drawn on a clear plan; they come back when you leave the tool.
+  - Drawing: click "Draw cable", click a camera, a sensor (either end of an IR beam) or a hub
+    to start, click to add route points, then click the other kind of end - a hub, riser
+    or drop after a device, a device after one of those - to finish. Backspace removes the last point, Esc cancels
+    the cable, a second Esc leaves the tool. The cable takes the type chosen in the toolbar.
+  - Editing: click a cable to select it, drag a point to move it, double-click the line to
+    add a point, double-click a point to remove it. Deleting a camera, sensor or hub also
+    removes its cables, in the same undo step.
+  - Cable types: name, optional length limit (m) and optional price (VND/m) - a new project
+    starts with Cat6 UTP (90 m limit), Power 2-core and Alarm signal, all without a price.
+    A type in use, or the last remaining type, cannot be deleted.
+  - How the estimate is built, per cable: horizontal route length (drawn route / scale) +
+    the vertical run at each end (route height vs the device's and the hub's height) + the
+    length on the other floor (riser / drop only) + slack at each end = the run; the run + waste % = what to buy. Per type the metres are summed
+    and rounded up to a whole metre. Defaults (the "Allowances" section): waste 15 %, route
+    height 3 m, device height 3 m (used for sensors and for cameras with no mounting height),
+    slack 0.5 m at the device and 3 m at the hub.
+  - Range: every length is shown with a min-max range, e.g. `30.8 m (30.6-31.1 m)`. It is
+    the worst case of the scale's click error only: each of the two scale clicks may be off
+    by the "scale click error" (default 3 image px), which stretches or shrinks every
+    horizontal length by the same factor. A very short reference line gives a warning.
+  - Length limit: a cable whose run (without waste) exceeds its type's limit is drawn red
+    and dashed and listed as a warning; one that exceeds it only at the top of the range is
+    dashed and listed as "may exceed".
+  - Limits: the route is 2D with straight segments - no conduit bends, no obstacles. The
+    range does not cover image distortion, a perspective photo, or a wrongly typed reference
+    length. This is not a voltage-drop or PoE-budget calculation. Sensors have no mounting
+    height, so they use the default device height. A cable end follows its camera, sensor or
+    hub when the drag is dropped, not while dragging. There are no hub-to-hub links. A cable
+    type's colour is its position in the type list. Measure on site before ordering.
 - **Bill of materials**: camera rows grouped by model + lens, then sensor rows grouped by
-  model, with quantity, labels (C1, C3 / S2, S5), unit price, line total and one estimated
-  grand total. One placed beam counts as one transmitter + receiver set.
+  model, then one cable row per cable type in use, with quantity, labels (C1, C3 / S2, S5 /
+  C1-H1), unit price, line total and one estimated grand total. One placed beam counts as one
+  transmitter + receiver set. A cable row's quantity is whole metres to buy.
   The CSV and the PNG table have the columns `Type, Brand, Model, Form Factor, Resolution,
-  Lens, Quantity, Labels, Unit Price (VND), Total (VND)`. Breaking change for anything that
-  parses the CSV: `Type` is new and comes first, and `Cameras` was renamed `Labels`. For
-  sensors `Form Factor` is empty, and `Resolution` / `Lens` are filled for thermal only.
+  Lens, Quantity, Unit, Labels, Unit Price (VND), Total (VND)`. Breaking change for anything
+  that parses the CSV: `Unit` is new, after `Quantity` (`pcs` for cameras and sensors, `m`
+  for cables); earlier, `Type` was added first and `Cameras` was renamed `Labels`. For
+  sensors `Form Factor` is empty, and `Resolution` / `Lens` are filled for thermal only. A
+  cable row has Type `Cable`, the type name in `Model` and the price per metre in `Unit
+  Price`. Cable rows need a scale: a CSV exported before the scale is set leaves them out
+  and says so.
 - **Export**: PNG at image resolution with a legend + BOM strip (downscaled with a notice above
-  ~16.7 M pixels), and a BOM CSV. Project save/load as JSON.
+  ~16.7 M pixels), and a BOM CSV. The PNG draws hubs and cables and, when the plan has
+  cables, a legend line with the cable types and the provisional total. The PNG needs a
+  scale. Project save/load as JSON.
 
 ## Prices
 
@@ -92,6 +143,10 @@ no published Vietnam price show "price on request" and are excluded from the est
 (the total says how many cameras or sensors it leaves out). Axis camera prices come from a
 cross-border marketplace, not an authorised distributor. Takex beam prices are set prices
 (TX+RX pair). Always confirm with your supplier.
+
+Cable prices are the one price you type yourself: VND per metre, per cable type, saved with
+the project. Nothing is prefilled. A type with no price shows "price on request" and is left
+out of the total, which says how many cable types it leaves out.
 
 A camera catalog record can also carry up to two sales channels - a primary one (a Shopee
 shop) and a secondary one (another Vietnamese shop). Its card then shows one row per channel:
@@ -138,27 +193,30 @@ is still running - stop it first.
 |---|---|
 | `data/` | Camera and sensor catalog JSON: `data/<brand>/<device-type>/<brand>-<device-type>_<NN>.json`, device type = `camera-<form factor>` or `sensor-<kind>` |
 | `src/catalog/` | Zod schemas and loaders for the camera and sensor catalogs |
-| `src/domain/` | Pure logic: FOV geometry, DORI distances, mounted-camera floor coverage, sensor coverage (resolver, thermal bands, beam line check, wall-blocking table), wall visibility geometry (occlusion polygon, endpoint snap, crossing detection), scale, BOM grouping, CSV, project file schema (no React/Konva imports) |
-| `src/canvas/` | Konva stage, pan/zoom, camera and sensor markers, cones, sensor coverage, walls + wall drawing tool, calibration overlay |
-| `src/panels/` | Toolbar, catalog sidebar (Cameras / Sensors tabs), camera and sensor properties panels, BOM panel |
+| `src/domain/` | Pure logic: FOV geometry, DORI distances, mounted-camera floor coverage, sensor coverage (resolver, thermal bands, beam line check, wall-blocking table), wall visibility geometry (occlusion polygon, endpoint snap, crossing detection), cable layout (types, length + range estimate, snap lookup, drawing chain, vertex editing), scale, BOM grouping, CSV, project file schema (no React/Konva imports) |
+| `src/canvas/` | Konva stage, pan/zoom, camera and sensor markers, cones, sensor coverage, walls + wall drawing tool, hubs, cable lines + cable drawing tool + vertex editor, calibration overlay |
+| `src/panels/` | Toolbar, catalog sidebar (Cameras / Sensors tabs), camera, sensor, hub and cable properties panels, cable estimate panel, BOM panel |
 | `src/export/` | PNG and CSV export |
 | `src/file-io/`, `src/state/` | Project save/load, zustand stores, undo/redo |
 
-Every `src/` folder except `state/` is split into feature subfolders (`beam`, `bom`, `camera`,
-`sensor`, `wall`, ... plus `shared` for cross-feature helpers).
+Every `src/` folder except `state/` is split into feature subfolders (`beam`, `bom`, `cable`,
+`camera`, `sensor`, `wall`, ... plus `shared` for cross-feature helpers).
 
 ## Docs
 
 - [`docs/tech-stack.md`](./docs/tech-stack.md) - approved stack, versions, decisions
-- [`docs/camera-catalog-sources.md`](./docs/camera-catalog-sources.md) - datasheet and price provenance for every catalog record
+- [`docs/camera-catalog-sources.md`](./docs/camera-catalog-sources.md) - datasheet and price provenance for every camera catalog record
+- [`docs/sensor-catalog-sources.md`](./docs/sensor-catalog-sources.md) - the same for the sensor catalog
+- [`docs/project-changelog.md`](./docs/project-changelog.md) - dated record of features and breaking changes
+- [`docs/development-roadmap.md`](./docs/development-roadmap.md) - what is done and what is open
 
 ## Status
 
 v1 in progress. Working: image load, calibration, camera + sensor catalogs, placement, DORI
 cones, sensor coverage (PIR sectors / beams / thermal), properties, BOM with prices, mounting
-height + tilt floor coverage, walls with camera cone occlusion and sensor wall blocking,
-save/load, PNG + CSV export (verified in Chromium). Project files are saved as schema version
-4: files from earlier versions (1-3) still open, but a file saved by this version needs this
-version or newer. Known limit: on a very dense plan (about 100 sensors and 300 walls) moving
+height + tilt floor coverage, walls with camera cone occlusion and sensor wall blocking, hubs
+and cable routes with a cable-length estimate, save/load, PNG + CSV export (verified in
+Chromium). Project files are saved as schema version 5: files from earlier versions (1-4)
+still open, but a file saved by this version needs this version or newer. Known limit: on a very dense plan (about 100 sensors and 300 walls) moving
 a wall or a sensor can take a few tenths of a second to redraw. Not done yet: Playwright
 end-to-end suite, Firefox/Safari export checks, full documentation set.

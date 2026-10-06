@@ -8,8 +8,8 @@ import { useProjectStore } from './project-store'
 /** Which catalog the sidebar shows (phase 6 owns the sidebar itself; the tab state lives here so phase 4's drop/selection wiring and phase 6's panel agree on it). */
 export type CatalogTab = 'cameras' | 'sensors'
 
-/** `select`: default, drag/pan/select cameras and walls. `calibrate`: next two clicks on the stage draw a reference line. `wall`: clicks draw a chain of wall segments. */
-export type ToolMode = 'select' | 'calibrate' | 'wall'
+/** `select`: default, drag/pan/select cameras, sensors, walls, hubs and cables. `calibrate`: next two clicks on the stage draw a reference line. `wall`: clicks draw a chain of wall segments. `hub` / `riser` / `drop`: each click places a hub / a riser / a drop (the point where cables go up to the floor above / down to the floor below). `cable`: clicks draw one cable route from a device to a hub (or the reverse). */
+export type ToolMode = 'select' | 'calibrate' | 'wall' | 'hub' | 'riser' | 'drop' | 'cable'
 
 /** Stage transform. Lives here, never in `project-store`, so pan/zoom never touches undo history or the save payload. */
 export interface Viewport {
@@ -30,9 +30,13 @@ export interface EditorUiState {
   toolMode: ToolMode
   viewport: Viewport
   selectedCameraId: string | null
-  /** At most one of `selectedCameraId` / `selectedWallId` / `selectedSensorId` is set: each setter clears the other two, so Delete only ever removes one thing. */
+  /** At most one of the five `selected*Id` fields is set: each setter clears the other four, so Delete only ever removes one thing. */
   selectedWallId: string | null
   selectedSensorId: string | null
+  selectedHubId: string | null
+  selectedCableId: string | null
+  /** Cable type given to the cable drawn next. May go stale (type deleted, project replaced): consumers resolve `cableTypes.find(id) ?? cableTypes[0]`. */
+  cableDrawTypeId: string | null
   /** Kind given to walls drawn next. */
   wallDrawKind: WallKind
   /** The decoded `HTMLImageElement` for the current plan, reused by the on-screen layer and export (phase 7). Not persisted. */
@@ -68,7 +72,10 @@ export interface EditorUiActions {
   setSelectedCameraId: (id: string | null) => void
   setSelectedWallId: (id: string | null) => void
   setSelectedSensorId: (id: string | null) => void
-  /** Sets all three of `selectedCameraId` / `selectedWallId` / `selectedSensorId` to null in one update. */
+  setSelectedHubId: (id: string | null) => void
+  setSelectedCableId: (id: string | null) => void
+  setCableDrawTypeId: (id: string | null) => void
+  /** Sets all five `selected*Id` fields to null in one update. */
   clearSelection: () => void
   setWallDrawKind: (kind: WallKind) => void
   setDecodedImage: (image: HTMLImageElement | null) => void
@@ -90,12 +97,24 @@ export type EditorUiStore = EditorUiState & EditorUiActions
 
 let notificationSeq = 0
 
-export const useEditorUiStore = create<EditorUiStore>((set) => ({
-  toolMode: 'select',
-  viewport: DEFAULT_VIEWPORT,
+const NO_SELECTION = {
   selectedCameraId: null,
   selectedWallId: null,
   selectedSensorId: null,
+  selectedHubId: null,
+  selectedCableId: null,
+}
+type SelectionKey = keyof typeof NO_SELECTION
+
+/** Selecting something clears the other four ids; clearing one id leaves the others alone. */
+const selectOnly = (key: SelectionKey, id: string | null): Partial<Record<SelectionKey, string | null>> =>
+  id ? { ...NO_SELECTION, [key]: id } : { [key]: null }
+
+export const useEditorUiStore = create<EditorUiStore>((set) => ({
+  toolMode: 'select',
+  viewport: DEFAULT_VIEWPORT,
+  ...NO_SELECTION,
+  cableDrawTypeId: null,
   wallDrawKind: 'opaque',
   decodedImage: null,
   showCalibrationLine: true,
@@ -113,16 +132,14 @@ export const useEditorUiStore = create<EditorUiStore>((set) => ({
 
   setViewport: (viewport) => set({ viewport }),
 
-  setSelectedCameraId: (id) =>
-    set(id ? { selectedCameraId: id, selectedWallId: null, selectedSensorId: null } : { selectedCameraId: null }),
+  setSelectedCameraId: (id) => set(selectOnly('selectedCameraId', id)),
+  setSelectedWallId: (id) => set(selectOnly('selectedWallId', id)),
+  setSelectedSensorId: (id) => set(selectOnly('selectedSensorId', id)),
+  setSelectedHubId: (id) => set(selectOnly('selectedHubId', id)),
+  setSelectedCableId: (id) => set(selectOnly('selectedCableId', id)),
+  setCableDrawTypeId: (cableDrawTypeId) => set({ cableDrawTypeId }),
 
-  setSelectedWallId: (id) =>
-    set(id ? { selectedWallId: id, selectedCameraId: null, selectedSensorId: null } : { selectedWallId: null }),
-
-  setSelectedSensorId: (id) =>
-    set(id ? { selectedSensorId: id, selectedCameraId: null, selectedWallId: null } : { selectedSensorId: null }),
-
-  clearSelection: () => set({ selectedCameraId: null, selectedWallId: null, selectedSensorId: null }),
+  clearSelection: () => set(NO_SELECTION),
 
   setWallDrawKind: (wallDrawKind) => set({ wallDrawKind }),
 

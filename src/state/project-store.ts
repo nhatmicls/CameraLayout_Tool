@@ -1,9 +1,12 @@
 import { create } from 'zustand'
 import { temporal } from 'zundo'
+import { createEmptyCableLayout } from '../domain/cable/cable-layout-types'
+import { removeCablesOfDevice } from '../domain/cable/cable-reference-integrity'
 import type { PlacedCamera, Project, ScaleCalibration, Wall } from '../domain/project-file/project-types'
 import { applyPlacedSensorPatch } from '../domain/sensor/placed-sensor-patch'
 import type { PlacedSensor, PlacedSensorPatch } from '../domain/sensor/sensor-types'
 import { moveWallNode, type WallNode } from '../domain/wall/wall-node-editing'
+import { createCablingActions, type CablingActions, type CablingState } from './project-store-cabling-actions'
 
 /**
  * The project store: the floor-plan image, its scale calibration, the
@@ -13,7 +16,7 @@ import { moveWallNode, type WallNode } from '../domain/wall/wall-node-editing'
  * `editor-ui-store.ts` instead, so it never pollutes the save payload or
  * undo history.
  */
-export interface ProjectState {
+export interface ProjectState extends CablingState {
   image: Project['image'] | null
   scale: ScaleCalibration | null
   cameras: PlacedCamera[]
@@ -21,13 +24,14 @@ export interface ProjectState {
   sensors: PlacedSensor[]
 }
 
-export interface ProjectActions {
-  /** Sets a newly loaded floor-plan image. Always clears cameras, walls, sensors + scale: all are meaningless against a different plan. */
+export interface ProjectActions extends CablingActions {
+  /** Sets a newly loaded floor-plan image. Always clears cameras, walls, sensors, hubs, cables + scale: all are meaningless against a different plan. Cable types and settings are kept. */
   setImage: (image: Project['image']) => void
   setScale: (scale: ScaleCalibration | null) => void
   addCamera: (camera: PlacedCamera) => void
   /** Merges `patch` into the camera matching `id`. No-op if the id is unknown. */
   updateCamera: (id: string, patch: Partial<Omit<PlacedCamera, 'id'>>) => void
+  /** Also removes the camera's cables, in the same undo step. */
   deleteCamera: (id: string) => void
   addWall: (wall: Wall) => void
   /** Merges `patch` into the wall matching `id`. An unknown id leaves the state (and so the undo history) untouched. */
@@ -39,7 +43,7 @@ export interface ProjectActions {
   addSensor: (sensor: PlacedSensor) => void
   /** Merges `patch` into the sensor matching `id` via `applyPlacedSensorPatch`. An unknown id leaves the state (and so the undo history) untouched. */
   updateSensor: (id: string, patch: PlacedSensorPatch) => void
-  /** An unknown id leaves the state (and so the undo history) untouched - the selected id can be stale after an undo. */
+  /** Also removes the sensor's cables, in the same undo step. An unknown id leaves the state (and so the undo history) untouched - the selected id can be stale after an undo. */
   deleteSensor: (id: string) => void
   /** Replaces the whole project (used when loading a project file, phase 6). */
   replaceProject: (project: Project) => void
@@ -49,13 +53,15 @@ export interface ProjectActions {
 
 export type ProjectStore = ProjectState & ProjectActions
 
-const INITIAL_STATE: ProjectState = {
+/** A function, not a constant: every reset needs fresh arrays (and fresh default cable types). */
+const createInitialState = (): ProjectState => ({
   image: null,
   scale: null,
   cameras: [],
   walls: [],
   sensors: [],
-}
+  ...createEmptyCableLayout(),
+})
 
 // `setImage`/`replaceProject`/`resetProject` below call `useProjectStore.temporal` -
 // a reference to the store this very `create()(...)` call produces. That's safe
@@ -68,14 +74,15 @@ const INITIAL_STATE: ProjectState = {
 export const useProjectStore = create<ProjectStore>()(
   temporal(
     (set, get) => ({
-      ...INITIAL_STATE,
+      ...createInitialState(),
 
       // A new/replaced image or project makes every prior undo step point at
       // cameras/scale that no longer belong to the picture on screen -
       // clearing history outright is simpler and safer than trying to keep
       // it coherent across a swapped plan.
       setImage: (image) => {
-        set({ image, scale: null, cameras: [], walls: [], sensors: [] })
+        // Cable types + allowances are kept: typed prices are not plan geometry.
+        set({ image, scale: null, cameras: [], walls: [], sensors: [], hubs: [], cables: [] })
         useProjectStore.temporal.getState().clear()
       },
 
@@ -88,8 +95,13 @@ export const useProjectStore = create<ProjectStore>()(
           cameras: state.cameras.map((camera) => (camera.id === id ? { ...camera, ...patch } : camera)),
         })),
 
+      // One `set()` = one undo step for the camera and its cables. `removeCablesOf*` return the same
+      // array when nothing matched, so a cable-free project keeps its `cables` identity.
       deleteCamera: (id) =>
-        set((state) => ({ cameras: state.cameras.filter((camera) => camera.id !== id) })),
+        set((state) => ({
+          cameras: state.cameras.filter((camera) => camera.id !== id),
+          cables: removeCablesOfDevice(state.cables, 'camera', id),
+        })),
 
       addWall: (wall) => set((state) => ({ walls: [...state.walls, wall] })),
 
@@ -122,8 +134,17 @@ export const useProjectStore = create<ProjectStore>()(
 
       deleteSensor: (id) => {
         if (!get().sensors.some((sensor) => sensor.id === id)) return
-        set((state) => ({ sensors: state.sensors.filter((sensor) => sensor.id !== id) }))
+        set((state) => ({
+          sensors: state.sensors.filter((sensor) => sensor.id !== id),
+          cables: removeCablesOfDevice(state.cables, 'sensor', id),
+        }))
       },
+
+      // Thin lambdas: zundo's `set` / `get` are typed for the whole store, the slice only needs its own keys.
+      ...createCablingActions(
+        (partial) => set(partial),
+        () => get(),
+      ),
 
       replaceProject: (project) => {
         set({
@@ -132,12 +153,16 @@ export const useProjectStore = create<ProjectStore>()(
           cameras: project.cameras,
           walls: project.walls,
           sensors: project.sensors,
+          hubs: project.hubs,
+          cables: project.cables,
+          cableTypes: project.cableTypes,
+          cableSettings: project.cableSettings,
         })
         useProjectStore.temporal.getState().clear()
       },
 
       resetProject: () => {
-        set({ ...INITIAL_STATE, cameras: [], walls: [], sensors: [] })
+        set(createInitialState())
         useProjectStore.temporal.getState().clear()
       },
     }),
@@ -150,6 +175,10 @@ export const useProjectStore = create<ProjectStore>()(
         scale: state.scale,
         walls: state.walls,
         sensors: state.sensors,
+        hubs: state.hubs,
+        cables: state.cables,
+        cableTypes: state.cableTypes,
+        cableSettings: state.cableSettings,
       }),
       limit: 100,
     },

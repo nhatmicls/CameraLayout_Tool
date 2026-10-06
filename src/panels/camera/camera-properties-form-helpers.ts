@@ -9,6 +9,10 @@ export const inlineInputClass =
 
 export const inputClass = `mt-1 ${inlineInputClass}`
 
+/** Small input with no width of its own (the caller adds one), for dense rows such as the cable types table. */
+export const compactInputClass =
+  'min-w-0 rounded border border-neutral-300 px-1.5 py-1 text-xs focus:border-blue-600 focus:outline focus:outline-2 focus:outline-blue-600'
+
 export const secondaryButtonClass =
   'rounded border border-neutral-300 px-2 py-1 text-xs font-medium text-neutral-600 hover:bg-neutral-100 focus:outline focus:outline-2 focus:outline-blue-600'
 

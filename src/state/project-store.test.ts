@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { useProjectStore } from './project-store'
+import { createEmptyCableLayout } from '../domain/cable/cable-layout-types'
 import type { PlacedCamera, Wall } from '../domain/project-file/project-types'
 import type { PlacedSectorSensor } from '../domain/sensor/sensor-types'
 
@@ -120,7 +121,7 @@ describe('useProjectStore walls', () => {
     useProjectStore.getState().addWall(makeWall({ id: 'old' }))
     useProjectStore
       .getState()
-      .replaceProject({ image: OTHER_IMAGE, scale: null, cameras: [], walls: [makeWall({ id: 'new' })], sensors: [] })
+      .replaceProject({ image: OTHER_IMAGE, scale: null, cameras: [], walls: [makeWall({ id: 'new' })], sensors: [], ...createEmptyCableLayout() })
     expect(useProjectStore.getState().walls.map((w) => w.id)).toEqual(['new'])
   })
 })
@@ -193,7 +194,7 @@ describe('useProjectStore sensors', () => {
     useProjectStore.getState().addSensor(makeSensor({ id: 'old' }))
     useProjectStore
       .getState()
-      .replaceProject({ image: OTHER_IMAGE, scale: null, cameras: [], walls: [], sensors: [makeSensor({ id: 'new' })] })
+      .replaceProject({ image: OTHER_IMAGE, scale: null, cameras: [], walls: [], sensors: [makeSensor({ id: 'new' })], ...createEmptyCableLayout() })
     expect(useProjectStore.getState().sensors.map((s) => s.id)).toEqual(['new'])
   })
 })
@@ -250,6 +251,7 @@ describe('useProjectStore undo/redo (zundo)', () => {
       cameras: [],
       walls: [],
       sensors: [],
+      ...createEmptyCableLayout(),
     })
 
     expect(useProjectStore.temporal.getState().pastStates).toHaveLength(0)

@@ -1,18 +1,19 @@
 import { useMemo } from 'react'
 import { Image as KonvaImage, Layer } from 'react-konva'
-import { cameraModelById } from '../../catalog/camera/camera-catalog-loader'
 import type { PlacedCamera, Wall } from '../../domain/project-file/project-types'
 import { metersToPlanPx } from '../../domain/shared/scale-calibration-calculator'
 import type { PlacedSensor, PlacedSensorPatch } from '../../domain/sensor/sensor-types'
 import type { WallNode } from '../../domain/wall/wall-node-editing'
 import { WALL_MOUNT_CLEARANCE_M } from '../../domain/wall/wall-segment-geometry'
 import { CameraFovConesLayer } from '../camera/camera-fov-cones-layer'
-import { CameraMarkerNode } from '../camera/camera-marker-node'
+import { CameraMarkerNodes } from '../camera/camera-marker-nodes'
 import { SensorCoverageShapes } from '../sensor/sensor-coverage-shapes'
 import { SensorMarkerNodes } from '../sensor/sensor-marker-nodes'
 import { useConeLiveHandles } from '../camera/use-cone-live-handles'
 import { WallSegmentsLayer } from '../wall/wall-segments-layer'
-import { BRAND_TINTS, computeIconRadiusPx, computeWallStrokeWidthPx } from '../shared/brand-and-dori-color-palette'
+import { computeIconRadiusPx, computeWallStrokeWidthPx } from '../shared/brand-and-dori-color-palette'
+import { HubAndSelectedCableNodes } from '../cable/hub-and-selected-cable-nodes'
+import { usePlanSceneCabling, type PlanSceneCabling, type PlanSceneCablingInteraction } from '../cable/use-plan-scene-cabling'
 
 export interface PlanSceneLayersProps {
   decodedImage: HTMLImageElement
@@ -22,6 +23,12 @@ export interface PlanSceneLayersProps {
   walls: Wall[]
   sensors: PlacedSensor[]
   planPxPerMeter: number
+  /** Hubs, cables, cable types + settings and the real scale (null = no over-length styling). */
+  cabling: PlanSceneCabling
+  /** Hub / cable selection and editing. Omitted (export, dev spike) = hubs and cables are a static render. */
+  cablingInteraction?: PlanSceneCablingInteraction
+  /** False hides every camera cone and sensor coverage shape (the cable tool: routes are drawn on a clear plan). Default true. */
+  coverageVisible?: boolean
   /** False strips drag/selection/rotation-handle wiring for a pure static render - the PNG export reuses this component that way. */
   interactive: boolean
   selectedCameraId: string | null
@@ -29,7 +36,7 @@ export interface PlanSceneLayersProps {
   selectedSensorId: string | null
   /** True only in select mode: walls can be clicked. Ignored when `interactive` is false. */
   wallsSelectable: boolean
-  /** False while drawing walls, so a click on a camera (cameras sit ON walls) places a wall point instead of grabbing the camera. Ignored when `interactive` is false. */
+  /** False while a drawing tool (walls, hubs, cables) is on, so a click on a camera (cameras sit ON walls) reaches the Stage as a tool click instead of grabbing the camera. Ignored when `interactive` is false. */
   markersListening?: boolean
   /** Needed only to size the screen-constant selection ring/rotation handle and wall click target; irrelevant (and unused) when `interactive` is false. */
   viewportScale: number
@@ -52,14 +59,15 @@ export interface PlanSceneLayersProps {
  *
  * Four layers, in paint order: image (non-listening) -> cones (camera FOV
  * cones, then `SensorCoverageShapes` - both non-listening, so clicks always
- * pass through to what is above) -> walls -> markers (camera markers, then
- * `SensorMarkerNodes`/beams; listening only when interactive). Every icon is
- * above every wall and every cone/coverage shape regardless of placement
- * order, so a camera or sensor on a wall wins the click. Sensors add zero
- * Konva Layers: their coverage lives inside the cones Layer via
- * `CameraFovConesLayer`'s `children`, their markers inside this same markers
- * Layer - the scene stays at Konva's recommended five-Layer maximum
- * (comment in `floor-plan-stage.tsx`).
+ * pass through to what is above) -> walls (wall lines, then the cable
+ * routes, then the wall node handles) -> markers (camera markers,
+ * `SensorMarkerNodes`/beams, hubs, then the selected cable's editor;
+ * listening only when interactive). Every icon is above every wall, cable
+ * and cone/coverage shape regardless of placement order, so a camera or
+ * sensor on a wall wins the click. Sensors and cables add zero Konva
+ * Layers: they live inside the cones, walls and markers Layers - the scene
+ * stays at Konva's recommended five-Layer maximum (comment in
+ * `floor-plan-stage.tsx`).
  */
 export function PlanSceneLayers({
   decodedImage,
@@ -69,6 +77,9 @@ export function PlanSceneLayers({
   walls,
   sensors,
   planPxPerMeter,
+  cabling,
+  cablingInteraction,
+  coverageVisible = true,
   interactive,
   selectedCameraId,
   selectedWallId,
@@ -88,20 +99,15 @@ export function PlanSceneLayers({
   const wallClearancePx = useMemo(() => metersToPlanPx(WALL_MOUNT_CLEARANCE_M, planPxPerMeter), [planPxPerMeter])
   // Perf: no wall can be farther than this from anything else on the image.
   const maxClipRadiusPx = useMemo(() => Math.hypot(imageWidthPx, imageHeightPx), [imageWidthPx, imageHeightPx])
-
-  // Shared camera+sensor live-handle registry and its eight drag/rotate
-  // wrapper callbacks - see `use-cone-live-handles.ts`.
+  // Shared camera+sensor live-handle registry and its eight drag/rotate wrapper callbacks - see `use-cone-live-handles.ts`.
+  const live = useConeLiveHandles(onCameraDragEnd, onCameraRotateEnd, onSensorCommit)
+  const { coneLiveHandles } = live
+  const cablingInteractionIfInteractive = interactive ? cablingInteraction : undefined
   const {
-    coneLiveHandles,
-    handleCameraDragMove,
-    handleCameraDragEnd,
-    handleCameraRotateLive,
-    handleCameraRotateEnd,
-    handleSensorDragMove,
-    handleSensorDragEnd,
-    handleSensorRotateLive,
-    handleSensorRotateEnd,
-  } = useConeLiveHandles(onCameraDragEnd, onCameraRotateEnd, onSensorCommit)
+    index: cableEndpointIndex,
+    limitStatusById,
+    cableLines,
+  } = usePlanSceneCabling({ cameras, sensors, cabling, interaction: cablingInteractionIfInteractive, iconRadiusPx, viewportScale })
 
   return (
     <>
@@ -115,6 +121,7 @@ export function PlanSceneLayers({
         planPxPerMeter={planPxPerMeter}
         selectedCameraId={interactive ? selectedCameraId : null}
         coneLiveHandles={coneLiveHandles}
+        visible={coverageVisible}
       >
         <SensorCoverageShapes
           sensors={sensors}
@@ -137,33 +144,25 @@ export function PlanSceneLayers({
         imageWidthPx={imageWidthPx}
         imageHeightPx={imageHeightPx}
         onMoveWallNode={onMoveWallNode}
-      />
+      >
+        {cableLines}
+      </WallSegmentsLayer>
 
       <Layer listening={interactive && markersListening}>
-        {cameras.map((camera, index) => {
-          const model = cameraModelById(camera.modelId)
-          if (!model) return null
-          return (
-            <CameraMarkerNode
-              key={camera.id}
-              camera={camera}
-              label={`C${index + 1}`}
-              formFactor={model.formFactor}
-              tint={BRAND_TINTS[model.brand]}
-              iconRadiusPx={iconRadiusPx}
-              selected={interactive && camera.id === selectedCameraId}
-              interactive={interactive}
-              viewportScale={viewportScale}
-              imageWidthPx={imageWidthPx}
-              imageHeightPx={imageHeightPx}
-              onSelect={onSelectCamera}
-              onDragMove={handleCameraDragMove}
-              onDragEnd={handleCameraDragEnd}
-              onRotateLive={handleCameraRotateLive}
-              onRotateEnd={handleCameraRotateEnd}
-            />
-          )
-        })}
+        <CameraMarkerNodes
+          cameras={cameras}
+          iconRadiusPx={iconRadiusPx}
+          selectedCameraId={selectedCameraId}
+          interactive={interactive}
+          viewportScale={viewportScale}
+          imageWidthPx={imageWidthPx}
+          imageHeightPx={imageHeightPx}
+          onSelectCamera={onSelectCamera}
+          onDragMove={live.handleCameraDragMove}
+          onDragEnd={live.handleCameraDragEnd}
+          onRotateLive={live.handleCameraRotateLive}
+          onRotateEnd={live.handleCameraRotateEnd}
+        />
 
         <SensorMarkerNodes
           sensors={sensors}
@@ -177,11 +176,22 @@ export function PlanSceneLayers({
           imageHeightPx={imageHeightPx}
           wallClearancePx={wallClearancePx}
           onSelectSensor={onSelectSensor}
-          onDragMove={handleSensorDragMove}
-          onDragEnd={handleSensorDragEnd}
-          onRotateLive={handleSensorRotateLive}
-          onRotateEnd={handleSensorRotateEnd}
+          onDragMove={live.handleSensorDragMove}
+          onDragEnd={live.handleSensorDragEnd}
+          onRotateLive={live.handleSensorRotateLive}
+          onRotateEnd={live.handleSensorRotateEnd}
           onCommit={onSensorCommit}
+        />
+
+        <HubAndSelectedCableNodes
+          cabling={cabling}
+          index={cableEndpointIndex}
+          limitStatusById={limitStatusById}
+          interaction={cablingInteractionIfInteractive}
+          iconRadiusPx={iconRadiusPx}
+          viewportScale={viewportScale}
+          imageWidthPx={imageWidthPx}
+          imageHeightPx={imageHeightPx}
         />
       </Layer>
     </>

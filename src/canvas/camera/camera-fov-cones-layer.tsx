@@ -16,6 +16,8 @@ export interface CameraFovConesLayerProps {
   selectedCameraId: string | null
   /** Filled by each cone; `plan-scene-layers.tsx` drives it from the marker drag / rotate callbacks. */
   coneLiveHandles: RefObject<Map<string, ConeLiveHandle>>
+  /** False hides the whole Layer (camera cones and the sensor coverage in `children`) - the cable tool does this so routes are drawn on a clear plan. Default true. */
+  visible?: boolean
   /** Rendered inside this Layer, after every camera cone - `plan-scene-layers.tsx` passes `SensorCoverageShapes` here so sensor coverage costs zero extra Konva Layers (phase-05 layer-budget constraint). */
   children?: ReactNode
 }
@@ -32,6 +34,7 @@ export function CameraFovConesLayer({
   planPxPerMeter,
   selectedCameraId,
   coneLiveHandles,
+  visible = true,
   children,
 }: CameraFovConesLayerProps) {
   const opaqueWalls = useMemo(() => selectOpaqueWallSegments(walls), [walls])
@@ -48,7 +51,7 @@ export function CameraFovConesLayer({
   }, [cameras, selectedCameraId])
 
   return (
-    <Layer listening={false}>
+    <Layer listening={false} visible={visible}>
       {conesInPaintOrder.map((camera) => {
         const model = cameraModelById(camera.modelId)
         if (!model) return null // unknown/removed catalog id - skip rather than crash the scene

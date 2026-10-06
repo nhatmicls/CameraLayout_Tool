@@ -1,6 +1,7 @@
 import { bomToTable, formatVndNumber, type BomRow } from '../../domain/bom/bill-of-materials-grouping'
 import type { BomStripLayout } from '../../domain/export/export-image-layout-calculator'
 import type { SensorKind } from '../../domain/sensor/sensor-types'
+import { drawCableLegendLine, type CableLegend } from './draw-export-cable-legend-line'
 import { drawDoriLegendLine, drawSensorLegendLine } from './draw-export-legend-lines'
 import { truncateCanvasTextToWidth } from './truncate-canvas-text-to-width'
 
@@ -13,14 +14,18 @@ export interface BomStripContent {
   hasApproximateDoriModel: boolean
   /** Kinds of placed sensors whose model is known, pir/beam/vibration/thermal order. Empty (the common case for a camera-only or sensor-free plan) draws only the DORI legend line - see `legendLineCountFor`. */
   sensorKindsPresent: SensorKind[]
+  /** Null (a plan without cables) draws no cable legend line. */
+  cableLegend: CableLegend | null
 }
 
-// Type, Brand, Model, Form Factor, Resolution, Lens, Quantity, Labels, Unit Price, Total - sums to 1, proportional to strip
-// width so the table never clips at any export size. Tuned (phase 7 manual verification at 1200px/6000px-wide exports)
-// against the two longest headers - "Quantity" and "Unit Price (VND)" - which clipped to "Qua…" / "Unit Price (…" at the
-// plan's originally proposed weights; Model/Resolution/Labels keep extra room for long data cells (catalog model numbers,
-// multi-item label lists) even though those are allowed to truncate with an ellipsis, unlike a header.
-const COLUMN_WEIGHTS = [0.06, 0.07, 0.16, 0.09, 0.14, 0.07, 0.07, 0.11, 0.13, 0.1]
+// Type, Brand, Model, Form Factor, Resolution, Lens, Quantity, Unit, Labels, Unit Price, Total - sums to 1, proportional to
+// strip width so the table never clips at any export size (one weight per `bomToTable` column - tested). Tuned (manual
+// verification at 1200px/6000px-wide exports) against the two longest headers - "Quantity" and "Unit Price (VND)" - which
+// clipped to "Qua…" / "Unit Price (…" at narrower weights, so those two are never shrunk. Type stays at 0.06: at 0.05 a
+// 1200px export clipped "Camera" to "Cam…". The Unit column's 0.04 came out of Model, Resolution and Labels, which keep
+// extra room for long data cells (catalog model numbers, multi-item label lists) even though those are allowed to
+// truncate with an ellipsis, unlike a header.
+export const COLUMN_WEIGHTS = [0.06, 0.07, 0.14, 0.09, 0.13, 0.07, 0.07, 0.04, 0.1, 0.13, 0.1]
 
 const TEXT_COLOR = '#111827'
 const GRID_LINE_COLOR = '#d4d4d8'
@@ -68,17 +73,22 @@ function drawTableRow(
   ctx.stroke()
 }
 
-/** 2 lines (DORI + sensor) when the plan has any sensor whose model is known; 1 (DORI only) otherwise - must mirror whatever line count the caller fed `computeBomStripLayout`, so the strip's reserved legend height and what actually gets drawn into it never disagree. */
-function legendLineCountFor(content: BomStripContent): number {
-  return content.sensorKindsPresent.length > 0 ? 2 : 1
+/**
+ * How many legend lines the strip draws: the DORI line, plus one when the
+ * plan has a sensor whose model is known, plus one when it has cables. The
+ * ONE definition: the caller feeds this to `computeBomStripLayout`, so the
+ * strip's reserved legend height and what gets drawn into it cannot disagree.
+ */
+export function legendLineCountFor(content: Pick<BomStripContent, 'sensorKindsPresent' | 'cableLegend'>): number {
+  return 1 + (content.sensorKindsPresent.length > 0 ? 1 : 0) + (content.cableLegend ? 1 : 0)
 }
 
 /**
- * Draws the export strip below the plan: one or two legend lines (DORI
- * swatches + scale note + export date, plus a sensor-kind line when the
- * plan has sensors) followed by the BOM table (same columns as the CSV
- * export's `bomToTable`, phase 3/7 - cameras then sensors, one source so
- * CSV and PNG can never drift). `scale` is the export's overall downscale
+ * Draws the export strip below the plan: one to three legend lines (DORI
+ * swatches + scale note + export date, a sensor-kind line when the plan has
+ * sensors, a cable line when it has cables) followed by the BOM table (same
+ * columns as the CSV export's `bomToTable` - cameras, sensors, then cables,
+ * one source so CSV and PNG can never drift). `scale` is the export's overall downscale
  * factor (1 = full resolution): every metric here is the phase-3 `layout`
  * value times `scale`, so the strip shrinks in lockstep with the plan above
  * it instead of overflowing a downscaled canvas. Assumes the caller already
@@ -105,12 +115,13 @@ export function drawBomTableAndLegendStrip(
   ctx.fillStyle = '#ffffff'
   ctx.fillRect(0, stripOriginY, widthPx, totalHeightPx)
 
-  const legendLineCount = legendLineCountFor(content)
-  const legendLineHeightPx = legendHeightPx / legendLineCount
+  const legendLineHeightPx = legendHeightPx / legendLineCountFor(content)
+  /** Centre Y of legend line `lineIndex` (0 = the DORI line). */
+  const lineCenterY = (lineIndex: number) => stripOriginY + legendLineHeightPx * (lineIndex + 0.5)
 
   drawDoriLegendLine(
     ctx,
-    stripOriginY + legendLineHeightPx / 2,
+    lineCenterY(0),
     widthPx,
     fontPx,
     cellPaddingPx,
@@ -118,15 +129,13 @@ export function drawBomTableAndLegendStrip(
     content.dateText,
     content.hasApproximateDoriModel,
   )
-  if (legendLineCount > 1) {
-    drawSensorLegendLine(
-      ctx,
-      stripOriginY + legendLineHeightPx + legendLineHeightPx / 2,
-      widthPx,
-      fontPx,
-      cellPaddingPx,
-      content.sensorKindsPresent,
-    )
+  let nextLineIndex = 1
+  if (content.sensorKindsPresent.length > 0) {
+    drawSensorLegendLine(ctx, lineCenterY(nextLineIndex), widthPx, fontPx, cellPaddingPx, content.sensorKindsPresent)
+    nextLineIndex += 1
+  }
+  if (content.cableLegend) {
+    drawCableLegendLine(ctx, lineCenterY(nextLineIndex), widthPx, fontPx, cellPaddingPx, content.cableLegend)
   }
 
   let rowTop = stripOriginY + legendHeightPx

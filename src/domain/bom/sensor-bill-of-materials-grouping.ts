@@ -56,6 +56,7 @@ export function groupSensorsIntoBom(sensors: PlacedSensor[], modelById: Record<s
       resolution: model.kind === 'thermal' ? thermalResolution(model) : '',
       lens: model.kind === 'thermal' ? thermalLens(model) : '',
       quantity: sensorNumbers.length,
+      unit: 'pcs',
       labels: sensorNumbers.map((n) => `S${n}`).join(', '),
       unitPriceVnd,
       lineTotalVnd: unitPriceVnd === null ? null : unitPriceVnd * sensorNumbers.length,

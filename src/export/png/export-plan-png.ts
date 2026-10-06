@@ -1,18 +1,20 @@
-import { groupCamerasIntoBom } from '../../domain/bom/bill-of-materials-grouping'
-import { groupSensorsIntoBom } from '../../domain/bom/sensor-bill-of-materials-grouping'
 import { computeBomStripLayout, computeExportScale } from '../../domain/export/export-image-layout-calculator'
 import { resolveEffectiveHfovDeg } from '../../domain/camera/camera-coverage-resolver'
 import { isApproximateDoriModel } from '../../domain/camera/dori-zone-distance-calculator'
+import type { CableLayout } from '../../domain/cable/cable-layout-types'
 import type { PlacedCamera, PlanImage, ScaleCalibration, Wall } from '../../domain/project-file/project-types'
 import { SENSOR_KIND_DISPLAY_ORDER, type PlacedSensor, type SensorKind, type SensorModelSpec } from '../../domain/sensor/sensor-types'
 import { hasGlassWallClippingAnySensor } from '../../domain/sensor/sensor-wall-blocking-rules'
 import { triggerBrowserFileDownload } from '../../file-io/browser/trigger-browser-file-download'
+import { buildCombinedBomRows } from '../shared/build-combined-bom-rows'
 import { buildCameraModelByIdRecord } from '../shared/camera-model-by-id-record'
 import { buildSensorModelByIdRecord } from '../shared/sensor-model-by-id-record'
 import { canAllocateCanvas, SAFARI_SAFE_MAX_CANVAS_PIXELS, SAFARI_SAFE_MAX_CANVAS_SIDE_PX } from './probe-max-canvas-size'
 import { renderPlanToOffscreenCanvas } from './render-plan-to-offscreen-canvas'
-import { drawBomTableAndLegendStrip } from './draw-bom-table-and-legend-strip'
-import { isPixelDataBlank, type RgbaSample } from './is-pixel-data-blank'
+import { drawBomTableAndLegendStrip, legendLineCountFor } from './draw-bom-table-and-legend-strip'
+import { buildCableLegend } from './draw-export-cable-legend-line'
+import { canvasToPngBlob, sampleCanvasPixels } from './export-canvas-pixel-helpers'
+import { isPixelDataBlank } from './is-pixel-data-blank'
 import { sanitizeExportFileName } from '../shared/sanitize-export-file-name'
 
 /** Unique kinds among `sensors` whose model is known (skips a dangling `modelId`, same as the BOM grouping), in `SENSOR_KIND_DISPLAY_ORDER`. */
@@ -25,7 +27,7 @@ function resolveSensorKindsPresent(sensors: readonly PlacedSensor[], sensorModel
   return SENSOR_KIND_DISPLAY_ORDER.filter((kind) => present.has(kind))
 }
 
-export interface ExportPlanPngOptions {
+export interface ExportPlanPngOptions extends CableLayout {
   decodedImage: HTMLImageElement
   image: PlanImage
   cameras: PlacedCamera[]
@@ -49,33 +51,9 @@ function formatIsoDate(date: Date): string {
   return date.toISOString().slice(0, 10)
 }
 
-function canvasToPngBlob(canvas: HTMLCanvasElement): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    canvas.toBlob((blob) => {
-      if (blob) resolve(blob)
-      else reject(new Error('Canvas failed to encode a PNG blob.'))
-    }, 'image/png')
-  })
-}
-
-/** Samples a 3x3 grid spread across the canvas (not just corners, which the white strip background would dominate) for the post-render blank check. */
-function sampleCanvasPixels(ctx: CanvasRenderingContext2D, widthPx: number, heightPx: number): RgbaSample[] {
-  const fractions = [0.1, 0.5, 0.9]
-  const samples: RgbaSample[] = []
-  for (const fx of fractions) {
-    for (const fy of fractions) {
-      const x = Math.min(widthPx - 1, Math.max(0, Math.round(fx * widthPx)))
-      const y = Math.min(heightPx - 1, Math.max(0, Math.round(fy * heightPx)))
-      const [r, g, b, a] = ctx.getImageData(x, y, 1, 1).data
-      samples.push([r, g, b, a])
-    }
-  }
-  return samples
-}
-
 /**
  * Exports the floor plan (image-native resolution, cameras/cones/DORI
- * bands and walls exactly as on screen, no selection UI) plus a BOM strip beneath it
+ * bands, walls, hubs and cables exactly as on screen, no selection UI) plus a BOM strip beneath it
  * as a single PNG download. Downscales uniformly (plan and strip together)
  * when the combined canvas would exceed the browser-safe size, and reports
  * that back via `onDownscaled` rather than failing or silently cropping.
@@ -84,10 +62,13 @@ function sampleCanvasPixels(ctx: CanvasRenderingContext2D, widthPx: number, heig
 export async function exportPlanPng(options: ExportPlanPngOptions): Promise<void> {
   const modelById = buildCameraModelByIdRecord()
   const sensorModelById = buildSensorModelByIdRecord()
-  const rows = [...groupCamerasIntoBom(options.cameras, modelById), ...groupSensorsIntoBom(options.sensors, sensorModelById)]
-  const sensorKindsPresent = resolveSensorKindsPresent(options.sensors, sensorModelById)
-  const legendLineCount = sensorKindsPresent.length > 0 ? 2 : 1
-  const layout = computeBomStripLayout(options.image.widthPx, rows.length, legendLineCount)
+  const { allRows: rows, cableEstimate } = buildCombinedBomRows(options)
+  // Built before the layout: the strip's height depends on how many legend lines its content draws.
+  const legends = {
+    sensorKindsPresent: resolveSensorKindsPresent(options.sensors, sensorModelById),
+    cableLegend: buildCableLegend(options.cables, options.cableTypes, options.cableSettings, cableEstimate),
+  }
+  const layout = computeBomStripLayout(options.image.widthPx, rows.length, legendLineCountFor(legends))
 
   const maxPixels = options.maxCanvasPixels ?? SAFARI_SAFE_MAX_CANVAS_PIXELS
   const maxSidePx = options.maxCanvasSidePx ?? SAFARI_SAFE_MAX_CANVAS_SIDE_PX
@@ -115,6 +96,13 @@ export async function exportPlanPng(options: ExportPlanPngOptions): Promise<void
       walls: options.walls,
       sensors: options.sensors,
       planPxPerMeter: options.scale?.planPxPerMeter ?? 1,
+      cabling: {
+        hubs: options.hubs,
+        cables: options.cables,
+        cableTypes: options.cableTypes,
+        cableSettings: options.cableSettings,
+        scale: options.scale,
+      },
       pixelRatio: scale,
     })
 
@@ -147,7 +135,7 @@ export async function exportPlanPng(options: ExportPlanPngOptions): Promise<void
       scaleNoteText: showWallOcclusionNote ? `${scaleNote}${WALL_OCCLUSION_NOTE_SUFFIX}` : scaleNote,
       dateText: `Exported ${formatIsoDate(options.now ?? new Date())}`,
       hasApproximateDoriModel,
-      sensorKindsPresent,
+      ...legends,
     })
 
     if (isPixelDataBlank(sampleCanvasPixels(ctx, outputWidthPx, outputHeightPx))) {

@@ -62,6 +62,10 @@ export function useProjectFileActions() {
         cameras: current.cameras,
         walls: current.walls,
         sensors: current.sensors,
+        hubs: current.hubs,
+        cables: current.cables,
+        cableTypes: current.cableTypes,
+        cableSettings: current.cableSettings,
       })
       setHasUnsavedChanges(false)
     } catch (err) {

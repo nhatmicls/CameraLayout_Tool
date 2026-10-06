@@ -4,6 +4,7 @@ import type Konva from 'konva'
 import { Stage } from 'react-konva'
 import type { PlacedCamera, Wall } from '../../domain/project-file/project-types'
 import type { PlacedSensor } from '../../domain/sensor/sensor-types'
+import type { PlanSceneCabling } from '../../canvas/cable/use-plan-scene-cabling'
 import { PlanSceneLayers } from '../../canvas/stage/plan-scene-layers'
 
 export interface RenderPlanToOffscreenCanvasOptions {
@@ -14,6 +15,8 @@ export interface RenderPlanToOffscreenCanvasOptions {
   walls: Wall[]
   sensors: PlacedSensor[]
   planPxPerMeter: number
+  /** Hubs + cables are drawn like on screen, without selection or handles. */
+  cabling: PlanSceneCabling
   /** Export downscale factor (<=1). Konva's `pixelRatio` scales the *rasterised* output while the Stage/scene stays in image-px coordinates. */
   pixelRatio: number
 }
@@ -86,6 +89,7 @@ export async function renderPlanToOffscreenCanvas(
             walls={options.walls}
             sensors={options.sensors}
             planPxPerMeter={options.planPxPerMeter}
+            cabling={options.cabling}
             interactive={false}
             selectedCameraId={null}
             selectedWallId={null}

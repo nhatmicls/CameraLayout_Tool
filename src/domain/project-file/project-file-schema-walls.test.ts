@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { MAX_WALLS, WALLS_CROSS_WARNING, parseProjectFile, serializeProject, type SensorModelLookup } from './project-file-schema'
 import type { Project, Wall } from './project-types'
+import { createEmptyCableLayout } from '../cable/cable-layout-types'
 
 // Smallest possible valid PNG (1x1 transparent pixel), as a real base64 data URL.
 const TINY_PNG_DATA_URL =
@@ -25,6 +26,7 @@ function projectWith(walls: Wall[]): Project {
     cameras: [{ id: 'cam-1', modelId: 'model-a', x: 10, y: 20, rotationDeg: 45, rangeM: 15 }],
     walls,
     sensors: [],
+    ...createEmptyCableLayout(),
   }
 }
 
@@ -49,7 +51,7 @@ const CLOSED_ROOM = [
 ]
 
 describe('project file walls - back-compat', () => {
-  it.each([1, 2])('loads a version %i file without `walls` as an empty wall list', (version) => {
+  it.each([1, 2, 3, 4])('loads a version %i file without `walls` as an empty wall list', (version) => {
     const result = expectOk(
       parseRaw(undefined, (raw) => {
         delete raw.walls

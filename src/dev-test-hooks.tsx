@@ -4,6 +4,7 @@ import { Stage } from 'react-konva'
 import { useProjectStore } from './state/project-store'
 import { useEditorUiStore, type UiNotification, type Viewport } from './state/editor-ui-store'
 import { PlanSceneLayers } from './canvas/stage/plan-scene-layers'
+import type { Cable, Hub } from './domain/cable/cable-layout-types'
 import type { PlacedCamera, ScaleCalibration, Wall } from './domain/project-file/project-types'
 import type { PlacedSensor } from './domain/sensor/sensor-types'
 
@@ -16,11 +17,15 @@ declare global {
       getCameras: () => PlacedCamera[]
       getWalls: () => Wall[]
       getSensors: () => PlacedSensor[]
+      getHubs: () => Hub[]
+      getCables: () => Cable[]
       getSelectedCameraId: () => string | null
       pushNotification: (kind: UiNotification['kind'], message: string) => void
       seedCamera: (camera: Omit<PlacedCamera, 'id'>) => void
       seedWall: (wall: Omit<Wall, 'id'>) => void
       seedSensor: (sensor: Omit<PlacedSensor, 'id'>) => void
+      seedHub: (hub: Omit<Hub, 'id'>) => void
+      seedCable: (cable: Omit<Cable, 'id'>) => void
       runExportSpike: () => Promise<{ dataUrlLength: number; widthPx: number; heightPx: number }>
     }
   }
@@ -38,7 +43,7 @@ declare global {
  */
 function runExportSpike(): Promise<{ dataUrlLength: number; widthPx: number; heightPx: number }> {
   return new Promise((resolve, reject) => {
-    const { image, scale, cameras, walls, sensors } = useProjectStore.getState()
+    const { image, scale, cameras, walls, sensors, hubs, cables, cableTypes, cableSettings } = useProjectStore.getState()
     const decodedImage = useEditorUiStore.getState().decodedImage
     if (!image || !scale || !decodedImage) {
       reject(new Error('runExportSpike: no calibrated project to export'))
@@ -67,6 +72,7 @@ function runExportSpike(): Promise<{ dataUrlLength: number; widthPx: number; hei
           walls={walls}
           sensors={sensors}
           planPxPerMeter={scale.planPxPerMeter}
+          cabling={{ hubs, cables, cableTypes, cableSettings, scale }}
           interactive={false}
           selectedCameraId={null}
           selectedWallId={null}
@@ -126,6 +132,8 @@ export function installDevTestHooks(): void {
     getCameras: () => useProjectStore.getState().cameras,
     getWalls: () => useProjectStore.getState().walls,
     getSensors: () => useProjectStore.getState().sensors,
+    getHubs: () => useProjectStore.getState().hubs,
+    getCables: () => useProjectStore.getState().cables,
     getSelectedCameraId: () => useEditorUiStore.getState().selectedCameraId,
     pushNotification: (kind, message) => useEditorUiStore.getState().pushNotification(kind, message),
     seedCamera: (camera) => useProjectStore.getState().addCamera({ id: crypto.randomUUID(), ...camera }),
@@ -134,6 +142,8 @@ export function installDevTestHooks(): void {
     // discriminant for TS's inference (unlike seedCamera/seedWall, whose types aren't unions);
     // the shape is still correct at runtime - the caller's `sensor` already matches one member.
     seedSensor: (sensor) => useProjectStore.getState().addSensor({ id: crypto.randomUUID(), ...sensor } as PlacedSensor),
+    seedHub: (hub) => useProjectStore.getState().addHub({ id: crypto.randomUUID(), ...hub }),
+    seedCable: (cable) => useProjectStore.getState().addCable({ id: crypto.randomUUID(), ...cable }),
     runExportSpike,
   }
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { parseProjectFile, serializeProject, type SensorModelLookup } from './project-file-schema'
 import type { Project } from './project-types'
+import { createEmptyCableLayout } from '../cable/cable-layout-types'
 
 // Smallest possible valid PNG (1x1 transparent pixel), as a real base64 data URL.
 const TINY_PNG_DATA_URL =
@@ -12,6 +13,7 @@ const baseProject: Project = {
   cameras: [{ id: 'cam-1', modelId: 'model-a', x: 10, y: 20, rotationDeg: 45, rangeM: 15 }],
   walls: [],
   sensors: [],
+  ...createEmptyCableLayout(),
 }
 
 const KNOWN_MODEL_IDS = new Set(['model-a', 'model-b'])
@@ -31,7 +33,7 @@ describe('serializeProject + parseProjectFile round trip', () => {
   })
 
   it('round-trips a project with scale: null and no cameras', () => {
-    const project: Project = { image: baseProject.image, scale: null, cameras: [], walls: [], sensors: [] }
+    const project: Project = { image: baseProject.image, scale: null, cameras: [], walls: [], sensors: [], ...createEmptyCableLayout() }
     const result = parseProjectFile(serializeProject(project), KNOWN_MODEL_IDS, SENSOR_MODEL_LOOKUP)
     expect(result.ok).toBe(true)
     if (!result.ok) throw new Error('expected ok')
@@ -40,8 +42,8 @@ describe('serializeProject + parseProjectFile round trip', () => {
 })
 
 describe('schema version', () => {
-  it('writes schemaVersion 4', () => {
-    expect(JSON.parse(serializeProject(baseProject)).schemaVersion).toBe(4)
+  it('writes schemaVersion 5', () => {
+    expect(JSON.parse(serializeProject(baseProject)).schemaVersion).toBe(5)
   })
 
   it('still reads a version 1 file, leaving cameras without mounting keys', () => {
@@ -130,7 +132,7 @@ describe('parseProjectFile rejection cases', () => {
 
   it('rejects an unknown/future schemaVersion', () => {
     const raw = JSON.parse(serializeProject(baseProject))
-    raw.schemaVersion = 5
+    raw.schemaVersion = 6
     const result = parseProjectFile(JSON.stringify(raw), KNOWN_MODEL_IDS, SENSOR_MODEL_LOOKUP)
     expect(result.ok).toBe(false)
   })

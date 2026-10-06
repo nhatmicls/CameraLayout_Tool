@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { parseProjectFile, serializeProject, type SensorModelLookup } from './project-file-schema'
 import type { Project } from './project-types'
+import { createEmptyCableLayout } from '../cable/cable-layout-types'
 import type { PlacedBeamSensor, PlacedCircleSensor, PlacedSectorSensor } from '../sensor/sensor-types'
 
 // Smallest possible valid PNG (1x1 transparent pixel), as a real base64 data URL.
@@ -37,6 +38,7 @@ function projectWith(sensors: Project['sensors']): Project {
     cameras: [],
     walls: [],
     sensors,
+    ...createEmptyCableLayout(),
   }
 }
 
@@ -57,7 +59,7 @@ function expectOk(result: ReturnType<typeof parseProjectFile>) {
 }
 
 describe('project file sensors - back-compat', () => {
-  it.each([1, 2, 3])('loads a version %i file without `sensors` as an empty sensor list', (version) => {
+  it.each([1, 2, 3, 4])('loads a version %i file without `sensors` as an empty sensor list', (version) => {
     const result = expectOk(
       parseRaw(undefined, (raw) => {
         delete raw.sensors
@@ -99,8 +101,8 @@ describe('project file sensors - v4 round trip per shape', () => {
     expect(result.project).toEqual(project)
   })
 
-  it('writes schemaVersion 4', () => {
-    expect(JSON.parse(serializeProject(projectWith([sector]))).schemaVersion).toBe(4)
+  it('writes schemaVersion 5', () => {
+    expect(JSON.parse(serializeProject(projectWith([sector]))).schemaVersion).toBe(5)
   })
 })
 
@@ -156,7 +158,7 @@ describe('project file sensors - rejected input', () => {
 
   it('rejects an unknown/future schemaVersion', () => {
     const raw = JSON.parse(serializeProject(projectWith([]))) as Record<string, unknown>
-    raw.schemaVersion = 5
+    raw.schemaVersion = 6
     expect(parseProjectFile(JSON.stringify(raw), KNOWN_MODEL_IDS, SENSOR_MODEL_LOOKUP).ok).toBe(false)
   })
 })

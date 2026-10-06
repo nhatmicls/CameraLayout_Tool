@@ -1,0 +1,71 @@
+import { describe, expect, it } from 'vitest'
+import { buildCableEndpointIndex, cableEndRefKey, cableLabel, resolveCablePathPx } from './cable-endpoint-index'
+import type { Cable } from './cable-layout-types'
+import { BEAM_S2, CABLE_A, CAMERA_C1, CAMERA_C2, HUB_H1, PIR_S1 } from './cable-worked-example.test-fixtures'
+
+const index = buildCableEndpointIndex([CAMERA_C1, CAMERA_C2], [PIR_S1, BEAM_S2], [HUB_H1])
+
+describe('buildCableEndpointIndex', () => {
+  it('labels cameras, sensors and hubs by array position', () => {
+    expect(index.devices.map((device) => device.label)).toEqual(['C1', 'C2', 'S1', 'S2tx', 'S2rx'])
+    expect(index.hubs.map((hub) => hub.label)).toEqual(['H1'])
+  })
+
+  it('yields two ends for a beam, at its transmitter and receiver', () => {
+    expect(index.deviceByKey.get(cableEndRefKey({ kind: 'sensor', id: 'beam-1', end: 'tx' }))).toMatchObject({ x: 200, y: 600 })
+    expect(index.deviceByKey.get(cableEndRefKey({ kind: 'sensor', id: 'beam-1', end: 'rx' }))).toMatchObject({ x: 500, y: 600 })
+  })
+
+  it('numbers hubs, risers and drops each on their own', () => {
+    const mixed = buildCableEndpointIndex(
+      [],
+      [],
+      [HUB_H1, { ...HUB_H1, id: 'r', kind: 'riser' }, { ...HUB_H1, id: 'd', kind: 'drop' }, { ...HUB_H1, id: 'h2' }, { ...HUB_H1, id: 'd2', kind: 'drop' }],
+    )
+    expect(mixed.hubs.map((hub) => hub.label)).toEqual(['H1', 'R1', 'D1', 'H2', 'D2'])
+  })
+
+  it('gives a drop a negative height (it ends below this floor) and carries the length beyond', () => {
+    const index2 = buildCableEndpointIndex([], [], [{ id: 'd', kind: 'drop', x: 0, y: 0, mountHeightM: 2, extraLengthM: 7 }, HUB_H1])
+    expect(index2.hubs.map((hub) => [hub.mountHeightM, hub.extraLengthM])).toEqual([[-2, 7], [1.5, 0]])
+  })
+
+  it('carries a camera mounting height and null for everything without one', () => {
+    expect(index.devices.map((device) => device.mountHeightM)).toEqual([2.5, null, null, null, null])
+  })
+
+  it('keeps the first entry of a repeated camera id', () => {
+    const twin = buildCableEndpointIndex([CAMERA_C1, { ...CAMERA_C1, x: 999 }], [], [])
+    expect(twin.deviceByKey.get(cableEndRefKey({ kind: 'camera', id: 'cam-1' }))).toMatchObject({ x: 100, label: 'C1' })
+  })
+
+  it('never confuses a camera with a sensor of the same id', () => {
+    expect(cableEndRefKey({ kind: 'camera', id: 'a' })).not.toBe(cableEndRefKey({ kind: 'sensor', id: 'a' }))
+  })
+})
+
+describe('resolveCablePathPx + cableLabel', () => {
+  it('returns device, intermediate points, hub', () => {
+    expect(resolveCablePathPx(CABLE_A, index)).toEqual([
+      { x: 100, y: 100 },
+      { x: 400, y: 100 },
+      { x: 400, y: 500 },
+      { x: 700, y: 500 },
+    ])
+    expect(cableLabel(CABLE_A, index)).toBe('C1-H1')
+  })
+
+  it('labels a beam end', () => {
+    const cable: Cable = { ...CABLE_A, device: { kind: 'sensor', id: 'beam-1', end: 'tx' } }
+    expect(cableLabel(cable, index)).toBe('S2tx-H1')
+  })
+
+  it('returns null and a "?" label for a dangling end', () => {
+    const noHub: Cable = { ...CABLE_A, hubId: 'gone' }
+    const noDevice: Cable = { ...CABLE_A, device: { kind: 'camera', id: 'gone' } }
+    expect(resolveCablePathPx(noHub, index)).toBeNull()
+    expect(resolveCablePathPx(noDevice, index)).toBeNull()
+    expect(cableLabel(noHub, index)).toBe('C1-?')
+    expect(cableLabel(noDevice, index)).toBe('?-H1')
+  })
+})
