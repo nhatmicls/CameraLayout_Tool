@@ -13,7 +13,7 @@ const ICON_STROKE_COLOR = '#1f2937' // neutral-800, reads on any brand tint
 const ICON_DETAIL_COLOR = '#ffffff'
 
 /**
- * Four original, geometric form-factor icons built from Konva primitives
+ * Five original, geometric form-factor icons built from Konva primitives
  * only (no vendor artwork/traced logos - see phase-05 security note).
  * Always drawn upright (never rotated with the camera's bearing - the cone
  * already shows direction).
@@ -83,6 +83,22 @@ export function CameraFormFactorIconShape({ formFactor, tint, radiusPx }: Camera
           <Circle radius={radiusPx * 0.6} stroke={ICON_DETAIL_COLOR} strokeWidth={detailStrokeWidth} />
           <Line points={[-radiusPx * 0.35, 0, radiusPx * 0.35, 0]} stroke={ICON_DETAIL_COLOR} strokeWidth={detailStrokeWidth} />
           <Line points={[0, -radiusPx * 0.35, 0, radiusPx * 0.35]} stroke={ICON_DETAIL_COLOR} strokeWidth={detailStrokeWidth} />
+        </Group>
+      )
+
+    case 'ptz':
+      // Circle body + a lens dot inside a pan ring, suggesting the rotating head.
+      return (
+        <Group>
+          <Circle radius={radiusPx} fill={tint} stroke={ICON_STROKE_COLOR} strokeWidth={strokeWidth} />
+          <Arc
+            innerRadius={radiusPx * 0.62}
+            outerRadius={radiusPx * 0.62 + detailStrokeWidth}
+            angle={270}
+            rotation={45}
+            fill={ICON_DETAIL_COLOR}
+          />
+          <Circle radius={radiusPx * 0.3} fill={ICON_STROKE_COLOR} />
         </Group>
       )
 

@@ -14,7 +14,9 @@
 import { z } from "zod";
 
 export const BRANDS = ["hikvision", "dahua", "axis"] as const;
-export const FORM_FACTORS = ["dome", "turret", "bullet", "fisheye"] as const;
+// "ptz" = pan-tilt(-zoom) camera: drawn as one cone at the bearing the user sets, like any
+// other form factor - the pan range is not modelled.
+export const FORM_FACTORS = ["dome", "turret", "bullet", "fisheye", "ptz"] as const;
 export const ILLUMINATION_TYPES = ["ir", "white-light", "dual"] as const;
 // On-device target classes, in canonical order.
 export const DETECTION_TYPES = ["human", "vehicle", "face", "license-plate"] as const;
@@ -24,11 +26,13 @@ export type FormFactor = (typeof FORM_FACTORS)[number];
 export type IlluminationType = (typeof ILLUMINATION_TYPES)[number];
 export type DetectionType = (typeof DETECTION_TYPES)[number];
 
-// Official domain each brand's sourceUrl must resolve under (host must end with this).
-const BRAND_DOMAIN: Record<Brand, string> = {
-  hikvision: "hikvision.com",
-  dahua: "dahuasecurity.com",
-  axis: "axis.com",
+// Official domains each brand's sourceUrl must resolve under (host must end with one).
+// hikvision.vn (Hikvision Vietnam) is accepted by owner decision for older models whose
+// datasheet is no longer hosted on hikvision.com.
+const BRAND_DOMAINS: Record<Brand, readonly string[]> = {
+  hikvision: ["hikvision.com", "hikvision.vn"],
+  dahua: ["dahuasecurity.com"],
+  axis: ["axis.com"],
 };
 
 const fixedLensSchema = z.object({
@@ -86,6 +90,38 @@ const priceVnSchema = z.object({
 
 export type PriceVn = z.infer<typeof priceVnSchema>;
 
+// Shop product page. https only: the card renders it as a clickable href.
+const purchaseUrlSchema = z
+  .string()
+  .url()
+  .regex(/^https:\/\//, "purchase link must be an https URL");
+
+// One sales channel for a model: the shop's short name (shown as "buy (hacom)"), its
+// product page, and the selling price that page displayed on `retrieved` (null when the
+// page shows no number, e.g. "Liên hệ").
+const purchaseChannelSchema = z.object({
+  shop: z.string().regex(/^[a-z0-9]+$/, "shop must be a short lowercase name, e.g. shopee"),
+  url: purchaseUrlSchema,
+  amountVnd: z.number().int().positive().nullable().default(null),
+  retrieved: z.string().regex(ISO_DATE_PATTERN, "retrieved must be an ISO date (YYYY-MM-DD)"),
+});
+
+export type PurchaseChannel = z.infer<typeof purchaseChannelSchema>;
+
+// Where to buy this model: a primary and a secondary sales channel, either of which may be
+// missing (null) but not both. Like priceVn this is shop data, not a datasheet value.
+// null = no channel recorded.
+const purchaseLinksSchema = z
+  .object({
+    primary: purchaseChannelSchema.nullable().default(null),
+    secondary: purchaseChannelSchema.nullable().default(null),
+  })
+  .refine((links) => links.primary !== null || links.secondary !== null, {
+    message: "purchaseLinks needs a primary or a secondary channel (use null for none)",
+  });
+
+export type PurchaseLinks = z.infer<typeof purchaseLinksSchema>;
+
 // id: kebab-case, lowercase alphanumeric segments joined by '-', dots allowed for
 // focal-length fragments (e.g. "hikvision-ds-2cd2143g2-i-2.8mm").
 const ID_PATTERN = /^[a-z0-9]+([.-][a-z0-9]+)*$/;
@@ -126,6 +162,7 @@ export const cameraModelSchema = z
       .string()
       .regex(ISO_DATE_PATTERN, "sourceRetrieved must be an ISO date (YYYY-MM-DD)"),
     priceVn: priceVnSchema.nullable().default(null),
+    purchaseLinks: purchaseLinksSchema.nullable().default(null),
     notes: z.string().optional(),
   })
   .superRefine((record, ctx) => {
@@ -181,11 +218,11 @@ export const cameraModelSchema = z
     } catch {
       // invalid URL already flagged by z.string().url() above
     }
-    const expectedDomain = BRAND_DOMAIN[record.brand];
-    if (host && !host.endsWith(expectedDomain)) {
+    const expectedDomains = BRAND_DOMAINS[record.brand];
+    if (host && !expectedDomains.some((domain) => host === domain || host.endsWith(`.${domain}`))) {
       ctx.addIssue({
         code: "custom",
-        message: `sourceUrl host "${host}" must end with "${expectedDomain}" for brand "${record.brand}"`,
+        message: `sourceUrl host "${host}" must be under one of ${expectedDomains.join(", ")} for brand "${record.brand}"`,
         path: ["sourceUrl"],
       });
     }

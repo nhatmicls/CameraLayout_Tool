@@ -23,6 +23,10 @@ Project rules:
   manufacturer datasheet, copied as printed - never from memory, resellers or calculation.
   `priceVn` is the one exception: a Vietnamese reseller's displayed VND price, or `null`. Never
   invent or currency-convert a price. Record every source in `./docs/camera-catalog-sources.md`.
+- Hikvision datasheets may also come from `hikvision.vn` (owner decision) when hikvision.com no
+  longer hosts one. `purchaseLinks` (`primary` = the Shopee shop, `secondary` = another
+  Vietnamese shop; each `{ shop, url, amountVnd, retrieved }`) is shop data like `priceVn`:
+  copy the displayed selling price, `null` when the page shows none.
 - Vertical FOV (VFOV) fields (`vfovDeg`, `vfovWideDeg`, `vfovTeleDeg`) are optional: stored only
   when the datasheet prints a vertical angle, copied as printed. The runtime computes a fallback
   from HFOV and sensor aspect ratio and never writes it to the catalog JSON.

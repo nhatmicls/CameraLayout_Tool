@@ -108,3 +108,52 @@ describe("datasheet vertical FOV", () => {
     expect(parses({ lens: { ...varifocal, vfovWideDeg: 16, vfovTeleDeg: 54 } })).toBe(false);
   });
 });
+
+describe("purchaseLinks", () => {
+  const shopee = { shop: "shopee", url: "https://shopee.vn/product/1/2", amountVnd: 1_000_000, retrieved: "2026-10-06" };
+  const hacom = { shop: "hacom", url: "https://hacom.vn/camera", retrieved: "2026-10-06" };
+
+  it("defaults to null when absent", () => {
+    expect(cameraModelSchema.parse(baseRecord).purchaseLinks).toBeNull();
+  });
+
+  it("accepts one channel alone and defaults the other to null", () => {
+    expect(cameraModelSchema.parse({ ...baseRecord, purchaseLinks: { primary: shopee } }).purchaseLinks).toEqual({
+      primary: shopee,
+      secondary: null,
+    });
+    expect(parses({ purchaseLinks: { secondary: hacom } })).toBe(true);
+  });
+
+  it("defaults a channel's price to null (page shows no number)", () => {
+    const model = cameraModelSchema.parse({ ...baseRecord, purchaseLinks: { primary: shopee, secondary: hacom } });
+    expect(model.purchaseLinks?.secondary?.amountVnd).toBeNull();
+  });
+
+  it.each([
+    [{}],
+    [{ primary: null, secondary: null }],
+    [{ primary: { ...shopee, url: "not a url" } }],
+    [{ primary: { ...shopee, url: "http://shopee.vn/product/1/2" } }],
+    [{ primary: { ...shopee, url: "javascript:alert(1)" } }],
+    [{ primary: { ...shopee, shop: "Shopee VN" } }],
+    [{ primary: { ...shopee, amountVnd: 0 } }],
+    [{ primary: { ...shopee, retrieved: "06/10/2026" } }],
+    [{ primary: shopee, secondary: { ...hacom, url: "javascript:alert(1)" } }],
+  ])("rejects %j", (value) => {
+    expect(parses({ purchaseLinks: value })).toBe(false);
+  });
+});
+
+describe("sourceUrl host per brand", () => {
+  it.each(["https://assets.hikvision.com/a.pdf", "https://hikvision.vn/wp-content/uploads/a.pdf"])(
+    "accepts %s for hikvision",
+    (url) => {
+      expect(parses({ sourceUrl: url })).toBe(true);
+    },
+  );
+
+  it.each(["https://nothikvision.com/a.pdf", "https://www.dahuasecurity.com/a.pdf"])("rejects %s for hikvision", (url) => {
+    expect(parses({ sourceUrl: url })).toBe(false);
+  });
+});

@@ -9,7 +9,7 @@ calls once the page has loaded.
 ## Features
 
 - **Floor plan + scale**: load a PNG/JPEG, draw a reference line of known length to calibrate.
-- **Camera catalog**: 51 records across Hikvision, Dahua and Axis (one per lens option), every
+- **Camera catalog**: 106 records across Hikvision, Dahua and Axis (one per lens option), every
   optical spec transcribed from the official datasheet. Each card also shows the datasheet's
   IP / IK rating, built-in mic or speaker, and the target classes its on-device analytics
   print (human / vehicle / face / license plate); the properties panel adds audio ports. "Not
@@ -59,6 +59,14 @@ page on the date stored with each record; each catalog card links to its source.
 no published Vietnam price show "price on request" and are excluded from the estimated total
 (the total says how many cameras it leaves out). Axis prices come from a cross-border
 marketplace, not an authorised distributor. Always confirm with your supplier.
+
+A catalog record can also carry up to two sales channels - a primary one (a Shopee shop) and a
+secondary one (another Vietnamese shop). Its card then shows one row per channel: that shop's
+price and a "buy (shopee)" / "buy (hacom)" link. 63 Hikvision records have them. The BOM
+keeps using one price per model: the secondary shop's where it shows one, else the Shopee one.
+
+PTZ models are drawn as one cone at the bearing you set (2.8-12 mm zoom adjustable like any
+varifocal lens); the pan sweep is not modelled.
 
 Sources and method: [`docs/camera-catalog-sources.md`](./docs/camera-catalog-sources.md).
 

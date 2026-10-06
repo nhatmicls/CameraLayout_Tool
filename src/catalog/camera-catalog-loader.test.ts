@@ -79,14 +79,15 @@ describe("cameraModels (loaded + validated catalog)", () => {
   });
 
   it("every sourceUrl host matches the record's brand domain", () => {
-    const brandDomain: Record<Brand, string> = {
-      hikvision: "hikvision.com",
-      dahua: "dahuasecurity.com",
-      axis: "axis.com",
+    const brandDomains: Record<Brand, string[]> = {
+      hikvision: ["hikvision.com", "hikvision.vn"],
+      dahua: ["dahuasecurity.com"],
+      axis: ["axis.com"],
     };
     for (const model of cameraModels) {
       const host = new URL(model.sourceUrl).host;
-      expect(host.endsWith(brandDomain[model.brand])).toBe(true);
+      const matches = brandDomains[model.brand].some((domain) => host === domain || host.endsWith(`.${domain}`));
+      expect(matches).toBe(true);
     }
   });
 

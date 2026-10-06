@@ -192,6 +192,27 @@ Never converted from a foreign-currency price by us.
   listings at a landed VND price, not an authorised Vietnam distributor (flagged in `notes`).
   Axis distributors in Vietnam quote on request, so the rest are `null`.
 
+### `purchaseLinks` (sales channels, not a datasheet value)
+
+Optional per record: a `primary` and a `secondary` sales channel, either may be `null` but not
+both. Each channel is `{ shop, url, amountVnd, retrieved }`: the shop's short name, its https
+product page, the selling price that page displayed on `retrieved` (`null` when it shows no
+number) and the date. The catalog card shows one row per channel: price and "buy (shop)".
+
+- `primary`: the Shopee shop `daitailoc63`, URL in the canonical
+  `https://shopee.vn/product/<shopId>/<itemId>` form. URL and price were read on 2026-10-06
+  from the shop's own listing in a logged-in browser (Shopee serves a verification wall to
+  anonymous requests, so they cannot be re-checked with `curl`). The price is the one shown on
+  the listing card during a 10.10 sale; a listing may cover several lens options.
+- `secondary`: another Vietnamese shop's product page for the model - the page `priceVn` was
+  read from where there is one. For DS-2CD2T86G2-ISU/SL it is the hacom.vn page, which shows
+  only a list price next to "Giá: Liên hệ", so its `amountVnd` is `null`.
+
+`priceVn` (the BOM estimate) is unchanged in meaning: the other shop's price where one exists,
+otherwise the Shopee listing price (flagged in the record's `notes`).
+
+63 of the 75 Hikvision records carry channels; Dahua and Axis records have none.
+
 ## Addendum 2026-10-05: protection rating, audio, built-in detection
 
 Seven fields per record (`ingressRatings`, `ikRating`, `hasBuiltInMic`, `hasBuiltInSpeaker`,
@@ -472,3 +493,128 @@ Varifocal records (9): all print both ends. Fixed records: 42.
 
 None. No download failed, every file had a `%PDF` header, and no SHA-256 differed from the
 recorded one, so no record is flagged "datasheet revised".
+
+## Addendum 2026-10-06: Hikvision models sold by the Shopee shop `daitailoc63`
+
+27 models / 55 records, added because that shop sells them. Retrieval date for all
+rows: **2026-10-06**. Same method as above, except that every value in the JSON was parsed by
+script from the `pdftotext -raw` output of the PDF at the record's `sourceUrl` (lens / FOV
+lines, DORI lines, "Max. Resolution", supplement light type and range, IP / IK codes, "Built-in
+Microphone" / "Built-in Speaker", "1 input (line in)" / "1 output (line out)", target classes),
+not typed by hand.
+
+| Record id | Model | Lens | HFOV source | Max res. source | Illumination source | DORI source | SHA-256 |
+|---|---|---|---|---|---|---|---|
+| hikvision-ds-2cd1b47g3h-liu-2.8mm | DS-2CD1B47G3H-LIU | 2.8mm | "2.8 mm, horizontal FOV 104°, vertical FOV 54.4°" | "Max. Resolution 2560 × 1440" | "Up to 50 m" | "2.8 mm, D: 61 m, O: 24 m, R: 12 m, I: 6 m" | `87bd1016f8949fc59c26e380a033d5daec99e0ccd4aa2d7a92396960ddc119c5` |
+| hikvision-ds-2cd1b47g3h-liu-4mm | DS-2CD1B47G3H-LIU | 4mm | "4 mm, horizontal FOV 89.3°, vertical FOV 48.2°" | "Max. Resolution 2560 × 1440" | "Up to 50 m" | "4 mm, D: 68 m, O: 27 m, R: 13 m, I: 6 m" | `87bd1016f8949fc59c26e380a033d5daec99e0ccd4aa2d7a92396960ddc119c5` |
+| hikvision-ds-2cd1047g3h-liu-srb-2.8mm | DS-2CD1047G3H-LIU/SRB | 2.8mm | "2.8 mm, horizontal FOV 104°, vertical FOV 54.4°" | "Max. Resolution 2560 × 1440" | "Up to 30 m" | "2.8 mm, D: 61 m, O: 24 m, R: 12 m, I: 6 m" | `17b045e2857e51f4899e7a70e6e474daf17870cab6d16087273b93177879c30a` |
+| hikvision-ds-2cd1047g3h-liu-srb-4mm | DS-2CD1047G3H-LIU/SRB | 4mm | "4 mm, horizontal FOV 89.3°, vertical FOV 48.2°" | "Max. Resolution 2560 × 1440" | "Up to 30 m" | "4 mm, D: 68 m, O: 27 m, R: 13 m, I: 6 m" | `17b045e2857e51f4899e7a70e6e474daf17870cab6d16087273b93177879c30a` |
+| hikvision-ds-2cd1047g2h-liu-2.8mm | DS-2CD1047G2H-LIU | 2.8mm | "2.8 mm, horizontal FOV 115°, vertical FOV 60°" | "Max. Resolution 2560 × 1440" | "Up to 30 m" | "2.8 mm, D: 64 m, O: 25 m, R: 12 m, I: 6 m" | `b38d814d5525b7c0d3a48b043d11837c918f4b8ee219a8993822c03d096b9702` |
+| hikvision-ds-2cd1047g2h-liu-4mm | DS-2CD1047G2H-LIU | 4mm | "4 mm, horizontal FOV 94°, vertical FOV 50°" | "Max. Resolution 2560 × 1440" | "Up to 30 m" | "4 mm, D: 77 m, O: 30 m, R: 15 m, I: 7 m" | `b38d814d5525b7c0d3a48b043d11837c918f4b8ee219a8993822c03d096b9702` |
+| hikvision-ds-2cd1t47g2h-liu-2.8mm | DS-2CD1T47G2H-LIU | 2.8mm | "2.8 mm, horizontal FOV 115°, vertical FOV 60°" | "Max. Resolution 2560 × 1440" | "Up to 50 m" | "2.8 mm, D: 64 m, O: 25 m, R: 12 m, I: 6 m" | `14d45a1330a09099ee2c9090ab2f4a5d1f2437652783784a8c30daa3de2c799d` |
+| hikvision-ds-2cd1t47g2h-liu-4mm | DS-2CD1T47G2H-LIU | 4mm | "4 mm, horizontal FOV 94°, vertical FOV 50°" | "Max. Resolution 2560 × 1440" | "Up to 50 m" | "4 mm, D: 77 m, O: 30 m, R: 15 m, I: 7 m" | `14d45a1330a09099ee2c9090ab2f4a5d1f2437652783784a8c30daa3de2c799d` |
+| hikvision-ds-2cd1t67g2h-liu-2.8mm | DS-2CD1T67G2H-LIU | 2.8mm | "2.8 mm, horizontal FOV 115°, vertical FOV 60°" | "Max. Resolution 3200 × 1800" | "Up to 50 m" | "2.8 mm, D: 64 m, O: 25 m, R: 12 m, I: 6 m" | `0bed54e3de0f5012a4b284a75f40a1d4fc41305ac64afe6f9adf23ceac2b0fdc` |
+| hikvision-ds-2cd1t67g2h-liu-4mm | DS-2CD1T67G2H-LIU | 4mm | "4 mm, horizontal FOV 94°, vertical FOV 50°" | "Max. Resolution 3200 × 1800" | "Up to 50 m" | "4 mm, D: 77 m, O: 30 m, R: 15 m, I: 7 m" | `0bed54e3de0f5012a4b284a75f40a1d4fc41305ac64afe6f9adf23ceac2b0fdc` |
+| hikvision-ds-2cd1321g2-liu-2.8mm | DS-2CD1321G2-LIU | 2.8mm | "2.8 mm, horizontal FOV 101°, vertical FOV 56°" | "Max. Resolution 1920 × 1080" | "IR: up to 20 m White Light: up to 15 m" | "2.8 mm, D: 44 m, O: 17 m, R: 8 m, I: 4 m" | `ecf01256d305c14fac48d46e4e47a593c865f6b7795dfd8f8a734b2c2db1d7c6` |
+| hikvision-ds-2cd1321g2-liu-4mm | DS-2CD1321G2-LIU | 4mm | "4 mm, horizontal FOV 80°, vertical FOV 44°" | "Max. Resolution 1920 × 1080" | "IR: up to 20 m White Light: up to 15 m" | "4 mm, D: 55 m, O: 22 m, R: 11 m, I: 5 m" | `ecf01256d305c14fac48d46e4e47a593c865f6b7795dfd8f8a734b2c2db1d7c6` |
+| hikvision-ds-2cd1327g2h-liu-2.8mm | DS-2CD1327G2H-LIU | 2.8mm | "2.8 mm, horizontal FOV 106°, vertical FOV 56°" | "Max. Resolution 1920 × 1080" | "Up to 30 m" | "2.8 mm, D: 44 m, O: 17 m, R: 8 m, I: 4 m" | `8e92f7d24b22a6015b58b7ed139d5169c553446bd86d48e9f13f7812faab6693` |
+| hikvision-ds-2cd1327g2h-liu-4mm | DS-2CD1327G2H-LIU | 4mm | "4 mm, horizontal FOV 88°, vertical FOV 47°" | "Max. Resolution 1920 × 1080" | "Up to 30 m" | "4 mm, D: 53 m, O: 21 m, R: 10 m, I: 5 m" | `8e92f7d24b22a6015b58b7ed139d5169c553446bd86d48e9f13f7812faab6693` |
+| hikvision-ds-2cd1347g2h-liu-2.8mm | DS-2CD1347G2H-LIU | 2.8mm | "2.8 mm, horizontal FOV 96°, vertical FOV 52°" | "Max. Resolution 2560 × 1440" | "Up to 30 m" | "2.8 mm, D: 63 m, O: 25 m, R: 12 m, I: 6 m" | `ed8370b89ee0368702a8e118c7e5967d0bea64c4183d214e32d63ad855df32c8` |
+| hikvision-ds-2cd1347g2h-liu-4mm | DS-2CD1347G2H-LIU | 4mm | "4 mm, horizontal FOV 80°, vertical FOV 43°" | "Max. Resolution 2560 × 1440" | "Up to 30 m" | "4 mm, D: 77 m, O: 30 m, R: 15 m, I: 7 m" | `ed8370b89ee0368702a8e118c7e5967d0bea64c4183d214e32d63ad855df32c8` |
+| hikvision-ds-2cd1367g2h-liu-2.8mm | DS-2CD1367G2H-LIU | 2.8mm | "2.8 mm, horizontal FOV 115°, vertical FOV 60°" | "Max. Resolution 3200 × 1800" | "Up to 30 m" | "2.8 mm, D: 64 m, O: 25 m, R: 12 m, I: 6 m" | `ab2619c8d8b2e7ac018d00ef3e5b6abbf27f8bfa223142372d78de502505aef7` |
+| hikvision-ds-2cd1367g2h-liu-4mm | DS-2CD1367G2H-LIU | 4mm | "4 mm, horizontal FOV 94°, vertical FOV 50°" | "Max. Resolution 3200 × 1800" | "Up to 30 m" | "4 mm, D: 77 m, O: 30 m, R: 15 m, I: 7 m" | `ab2619c8d8b2e7ac018d00ef3e5b6abbf27f8bfa223142372d78de502505aef7` |
+| hikvision-ds-2cd1347g3h-liuf-srb-2.8mm | DS-2CD1347G3H-LIUF/SRB | 2.8mm | "2.8 mm, horizontal FOV 104°, vertical FOV 54.4°" | "Max. Resolution 2560 × 1440" | "Up to 30 m" | "2.8 mm, D: 61 m, O: 24 m, R: 12 m, I: 6 m" | `19723ba738f6d3e2ec9f6c9399a1012ca0d31d6af08677f9ec0ec6345d8324d4` |
+| hikvision-ds-2cd1347g3h-liuf-srb-4mm | DS-2CD1347G3H-LIUF/SRB | 4mm | "4 mm, horizontal FOV 89.3°, vertical FOV 48.2°" | "Max. Resolution 2560 × 1440" | "Up to 30 m" | "4 mm, D: 68 m, O: 27 m, R: 13 m, I: 6 m" | `19723ba738f6d3e2ec9f6c9399a1012ca0d31d6af08677f9ec0ec6345d8324d4` |
+| hikvision-ds-2cd1123g2-liu-2.8mm | DS-2CD1123G2-LIU | 2.8mm | "2.8 mm, horizontal FOV 103°, vertical FOV 56°" | "Max. Resolution 1920 × 1080" | "Up to 30 m" | "2.8 mm, D: 45 m, O: 18 m, R: 9 m, I: 4 m" | `e57eaa3d1dafdf2d9abf5d711bcf3f629705295f979586eadf8eb8e50cf4cc65` |
+| hikvision-ds-2cd1123g2-liu-4mm | DS-2CD1123G2-LIU | 4mm | "4 mm, horizontal FOV 83°, vertical FOV 44°" | "Max. Resolution 1920 × 1080" | "Up to 30 m" | "4 mm, D: 56 m, O: 22 m, R: 11 m, I: 5 m" | `e57eaa3d1dafdf2d9abf5d711bcf3f629705295f979586eadf8eb8e50cf4cc65` |
+| hikvision-ds-2cd1147g2h-liu-2.8mm | DS-2CD1147G2H-LIU | 2.8mm | "2.8 mm, horizontal FOV 96°, vertical FOV 52°" | "Max. Resolution 2560 × 1440" | "Up to 30 m" | "2.8 mm, D: 63 m, O: 25 m, R: 12 m, I: 6 m" | `ad4e89b61a69f82b1de84b7884569d631611ce7d3764cc9ed404d1a76b4f2a8d` |
+| hikvision-ds-2cd1147g2h-liu-4mm | DS-2CD1147G2H-LIU | 4mm | "4 mm, horizontal FOV 80°, vertical FOV 43°" | "Max. Resolution 2560 × 1440" | "Up to 30 m" | "4 mm, D: 77 m, O: 30 m, R: 15 m, I: 7 m" | `ad4e89b61a69f82b1de84b7884569d631611ce7d3764cc9ed404d1a76b4f2a8d` |
+| hikvision-ds-2cd1127g2h-liu-2.8mm | DS-2CD1127G2H-LIU | 2.8mm | "2.8 mm, horizontal FOV 106°, vertical FOV 56°" | "Max. Resolution 1920 × 1080" | "Up to 30 m" | "2.8 mm, D: 44 m, O: 17 m, R: 8 m, I: 4 m" | `e433eebd17e33d7780f152fd419e60ad4862b94d37d87739e82405f5cad2c877` |
+| hikvision-ds-2cd1127g2h-liu-4mm | DS-2CD1127G2H-LIU | 4mm | "4 mm, horizontal FOV 88°, vertical FOV 47°" | "Max. Resolution 1920 × 1080" | "Up to 30 m" | "4 mm, D: 53 m, O: 21 m, R: 10 m, I: 5 m" | `e433eebd17e33d7780f152fd419e60ad4862b94d37d87739e82405f5cad2c877` |
+| hikvision-ds-2cd1143g2-liu-2.8mm | DS-2CD1143G2-LIU | 2.8mm | "2.8 mm, horizontal FOV 98°, vertical FOV 54°" | "Max. Resolution 2560 × 1440" | "Up to 30 m" | "2.8 mm, D: 63 m, O: 25 m, R: 12 m, I: 6 m" | `0a0d00b06d3183de0e0acfc989334d5483827daa57f49b1fcdc491cb60bce767` |
+| hikvision-ds-2cd1143g2-liu-4mm | DS-2CD1143G2-LIU | 4mm | "4 mm, horizontal FOV 78°, vertical FOV 42°" | "Max. Resolution 2560 × 1440" | "Up to 30 m" | "4 mm, D: 78 m, O: 31 m, R: 15 m, I: 7 m" | `0a0d00b06d3183de0e0acfc989334d5483827daa57f49b1fcdc491cb60bce767` |
+| hikvision-ds-2cd2121g0-i-2.8mm | DS-2CD2121G0-I | 2.8mm | "2.8 mm, horizontal FOV 111.6°, vertical FOV 59.1°" | "Max. Resolution 1920 × 1080" | "Up to 30 m" | not printed -> `null` | `f4b53dfdb9e9fc99d51a09d1ef06e5fc334333cd6f8da4e50ac16e4797e1c99b` |
+| hikvision-ds-2cd2121g0-i-4mm | DS-2CD2121G0-I | 4mm | "4 mm, horizontal FOV 91.5°, vertical FOV 46.1°" | "Max. Resolution 1920 × 1080" | "Up to 30 m" | not printed -> `null` | `f4b53dfdb9e9fc99d51a09d1ef06e5fc334333cd6f8da4e50ac16e4797e1c99b` |
+| hikvision-ds-2cd2121g0-i-6mm | DS-2CD2121G0-I | 6mm | "6 mm, horizontal FOV 56°, vertical FOV 29.8°" | "Max. Resolution 1920 × 1080" | "Up to 30 m" | not printed -> `null` | `f4b53dfdb9e9fc99d51a09d1ef06e5fc334333cd6f8da4e50ac16e4797e1c99b` |
+| hikvision-ds-2cd2083g2-li2u-2.8mm | DS-2CD2083G2-LI2U | 2.8mm | "2.8 mm, horizontal FOV 108°, vertical FOV 59°" | "Max. Resolution 3840 × 2160" | "Up to 40 m" | "2.8 mm, D: 84 m, O: 33 m, R: 16 m, I: 8 m" | `a4dfad8b9e484a775b7ea49dde4a431f9d4311962a365cb6e87e716ee6c219a7` |
+| hikvision-ds-2cd2083g2-li2u-4mm | DS-2CD2083G2-LI2U | 4mm | "4 mm, horizontal FOV 88°, vertical FOV 44°" | "Max. Resolution 3840 × 2160" | "Up to 40 m" | "4 mm, D: 117 m, O: 46 m, R: 23 m, I: 11 m" | `a4dfad8b9e484a775b7ea49dde4a431f9d4311962a365cb6e87e716ee6c219a7` |
+| hikvision-ds-2cd2083g2-li2u-6mm | DS-2CD2083G2-LI2U | 6mm | "6 mm, horizontal FOV 54°, vertical FOV 29°" | "Max. Resolution 3840 × 2160" | "Up to 40 m" | "6 mm, D: 176 m, O: 70 m, R: 35 m, I: 17 m" | `a4dfad8b9e484a775b7ea49dde4a431f9d4311962a365cb6e87e716ee6c219a7` |
+| hikvision-ds-2cd2t87g3-lis2uy-srb-2.8mm | DS-2CD2T87G3-LIS2UY/SRB | 2.8mm | "2.8 mm, horizontal FOV 108.8°, vertical FOV 56.4°" | "Max. Resolution 3840 × 2160" | "Up to 60 m" | "2.8 mm, D: 89 m, O: 35 m, R: 17 m, I: 8 m" | `8aae3627641bfa6fff7b68a7d47f601d1409af4667ef24fa37b6835aa787136c` |
+| hikvision-ds-2cd2t87g3-lis2uy-srb-4mm | DS-2CD2T87G3-LIS2UY/SRB | 4mm | "4 mm, horizontal FOV 93.3°, vertical FOV 47.2°" | "Max. Resolution 3840 × 2160" | "Up to 60 m" | "4 mm, D: 109 m, O: 43 m, R: 21 m, I: 10 m" | `8aae3627641bfa6fff7b68a7d47f601d1409af4667ef24fa37b6835aa787136c` |
+| hikvision-ds-2cd2t86g2-isu-sl-2.8mm | DS-2CD2T86G2-ISU/SL | 2.8mm | "2.8 mm, horizontal FOV 110°, vertical FOV 58°" | "Max. Resolution 3840 × 2160" | "Up to 60 m" | "2.8 mm, D: 89 m, O: 35 m, R: 17 m, I: 9 m" | `ac6212e1abe8d81387d7251a03caebcc6a8404fa6dc3718226439c033483ef27` |
+| hikvision-ds-2cd2t86g2-isu-sl-4mm | DS-2CD2T86G2-ISU/SL | 4mm | "4 mm, horizontal FOV 88°, vertical FOV 50°" | "Max. Resolution 3840 × 2160" | "Up to 60 m" | "4 mm, D: 99 m, O: 39 m, R: 20 m, I: 10 m" | `ac6212e1abe8d81387d7251a03caebcc6a8404fa6dc3718226439c033483ef27` |
+| hikvision-ds-2cd2t86g2-isu-sl-6mm | DS-2CD2T86G2-ISU/SL | 6mm | "6 mm, horizontal FOV 59°, vertical FOV 34°" | "Max. Resolution 3840 × 2160" | "Up to 60 m" | "6 mm, D: 140 m, O: 55 m, R: 28 m, I: 14 m" | `ac6212e1abe8d81387d7251a03caebcc6a8404fa6dc3718226439c033483ef27` |
+| hikvision-ds-2cd1121g0-i-2.8mm | DS-2CD1121G0-I | 2.8mm | "2.8 mm, horizontal FOV 101°, vertical FOV 56°" | "Max. Resolution 1920 × 1080" | "Up to 20 m" | "2.8 mm, D: 44 m, O: 17 m, R: 8 m, I: 4 m" | `e1bf3672b5c0efafd2f60739a4ed7b0374a020767cfc3d305a479a37e46ba522` |
+| hikvision-ds-2cd1121g0-i-4mm | DS-2CD1121G0-I | 4mm | "4 mm, horizontal FOV 80°, vertical FOV 44°" | "Max. Resolution 1920 × 1080" | "Up to 20 m" | "4 mm, D: 55 m, O: 22 m, R: 11 m, I: 5 m" | `e1bf3672b5c0efafd2f60739a4ed7b0374a020767cfc3d305a479a37e46ba522` |
+| hikvision-ds-2cd1021g2-liu-2.8mm | DS-2CD1021G2-LIU | 2.8mm | "2.8 mm, horizontal FOV 101°, vertical FOV 56°" | "Max. Resolution 1920 × 1080" | "IR: up to 20 m White Light: up to 15 m" | "2.8 mm, D: 44 m, O: 17 m, R: 8 m, I: 4 m" | `ce36309f9102f2074aa51856fb84f4c6400d32ccde7d164399787c0e946b5157` |
+| hikvision-ds-2cd1021g2-liu-4mm | DS-2CD1021G2-LIU | 4mm | "4 mm, horizontal FOV 80°, vertical FOV 44°" | "Max. Resolution 1920 × 1080" | "IR: up to 20 m White Light: up to 15 m" | "4 mm, D: 55 m, O: 22 m, R: 11 m, I: 5 m" | `ce36309f9102f2074aa51856fb84f4c6400d32ccde7d164399787c0e946b5157` |
+| hikvision-ds-2cd1121g2-liu-2.8mm | DS-2CD1121G2-LIU | 2.8mm | "2.8 mm, horizontal FOV 101°, vertical FOV 56°" | "Max. Resolution 1920 × 1080" | "IR: up to 20 m White Light: up to 15 m" | "2.8 mm, D: 44 m, O: 17 m, R: 8 m, I: 4 m" | `660a44936962230db30fc48d349e79d591a8efff25c6be5d38e6d2b1f0a57e08` |
+| hikvision-ds-2cd1121g2-liu-4mm | DS-2CD1121G2-LIU | 4mm | "4 mm, horizontal FOV 80°, vertical FOV 44°" | "Max. Resolution 1920 × 1080" | "IR: up to 20 m White Light: up to 15 m" | "4 mm, D: 55 m, O: 22 m, R: 11 m, I: 5 m" | `660a44936962230db30fc48d349e79d591a8efff25c6be5d38e6d2b1f0a57e08` |
+| hikvision-ds-2cd1027g2h-liu-2.8mm | DS-2CD1027G2H-LIU | 2.8mm | "2.8 mm, horizontal FOV 115°, vertical FOV 60°" | "Max. Resolution 1920 × 1080" | "Up to 30 m" | "2.8 mm, D: 64 m, O: 25 m, R: 12 m, I: 6 m" | `642baeae7b321e479dc617098052a5e54d54e4a37206b373f77ea93dc2408a7a` |
+| hikvision-ds-2cd1027g2h-liu-4mm | DS-2CD1027G2H-LIU | 4mm | "4 mm, horizontal FOV 94°, vertical FOV 50°" | "Max. Resolution 1920 × 1080" | "Up to 30 m" | "4 mm, D: 77 m, O: 30 m, R: 15 m, I: 7 m" | `642baeae7b321e479dc617098052a5e54d54e4a37206b373f77ea93dc2408a7a` |
+| hikvision-ds-2cd1b47g2h-liu-2.8mm | DS-2CD1B47G2H-LIU | 2.8mm | "2.8 mm, horizontal FOV 96°, vertical FOV 52°" | "Max. Resolution 2560 × 1440" | "Up to 50 m" | "2.8 mm, D: 63 m, O: 25 m, R: 12 m, I: 6 m" | `88ee835d501c0e02e024f7db61874224700f0097a944460e39d639ceed6e24ad` |
+| hikvision-ds-2cd1b47g2h-liu-4mm | DS-2CD1B47G2H-LIU | 4mm | "4 mm, horizontal FOV 80°, vertical FOV 43°" | "Max. Resolution 2560 × 1440" | "Up to 50 m" | "4 mm, D: 77 m, O: 30 m, R: 15 m, I: 7 m" | `88ee835d501c0e02e024f7db61874224700f0097a944460e39d639ceed6e24ad` |
+| hikvision-ds-2cd2t21g1-i-4mm | DS-2CD2T21G1-I | 4mm | "4 mm, horizontal FOV 75°, vertical FOV 41°" | "Max. Resolution 1920 × 1080" | "IR Range 50 m" | not printed -> `null` | `066776720b00ee84e4802a17af5c4dfc9404e92d0b2582db11278b730a1af8e6` |
+| hikvision-ds-2cd2t21g1-i-6mm | DS-2CD2T21G1-I | 6mm | "6 mm, horizontal FOV 49°, vertical FOV 26°" | "Max. Resolution 1920 × 1080" | "IR Range 50 m" | not printed -> `null` | `066776720b00ee84e4802a17af5c4dfc9404e92d0b2582db11278b730a1af8e6` |
+| hikvision-ds-2cd2t41g1-i-4mm | DS-2CD2T41G1-I | 4mm | "4 mm, horizontal FOV 75°, vertical FOV 41°" | "Max. Resolution 2560 × 1440" | "IR Range 50 m" | not printed -> `null` | `7507e38d8ed76f8a888f46c2f0767cfaedf275d02593e53932c8de5c4d1d4522` |
+| hikvision-ds-2cd2t41g1-i-6mm | DS-2CD2T41G1-I | 6mm | "6 mm, horizontal FOV 49°, vertical FOV 26°" | "Max. Resolution 2560 × 1440" | "IR Range 50 m" | not printed -> `null` | `7507e38d8ed76f8a888f46c2f0767cfaedf275d02593e53932c8de5c4d1d4522` |
+| hikvision-ds-2de3a404iwg-e-w-2.8-12mm | DS-2DE3A404IWG-E/W | 2.8-12mm zoom | "Horizontal field of view: 96.7° to 31.6°" | "Max. Resolution 2560 × 1440" | "IR distance: up to 50 m, white light distance: up to 6 m" | tele end only (D 180 m) -> `null` | `0a339e126862b39cc50be62bb255421c5458cb842b7f20014ccb57eacc19df50` |
+| hikvision-ds-2de2a404iwg1-e-w-2.8-12mm | DS-2DE2A404IWG1-E/W | 2.8-12mm zoom | "Horizontal field of view: 99.4° to 32.8°" | "Max. Resolution 2560 × 1440" | "IR Distance: up to 20 m" | tele end only (D 180 m) -> `null` | `43d3946f6f1f3fce9998b18a49e8ed858b569f2aaf42e6b4d87819274e77957c` |
+
+Source URLs:
+- DS-2CD1B47G3H-LIU: https://assets.hikvision.com/prd/public/all/doc/sm000094507/DS-2CD1B47G3H-LIUF_Datasheet_20250619.pdf
+- DS-2CD1047G3H-LIU/SRB: https://assets.hikvision.com/prd/normal/all/doc/sm000094491/DS-2CD1047G3H-LIUF_SLRB_Datasheet_20251030.pdf
+- DS-2CD1047G2H-LIU: https://assets.hikvision.com/prd/public/all/doc/sm000059814/DS-2CD1047G2H-LIUF_Datasheet_20241128.pdf
+- DS-2CD1T47G2H-LIU: https://assets.hikvision.com/prd/public/all/doc/sm000059807/DS-2CD1T47G2H-LIUF_Datasheet_20240527.pdf
+- DS-2CD1T67G2H-LIU: https://assets.hikvision.com/prd/public/all/doc/sm000059799/DS-2CD1T67G2H-LIUF_Datasheet_20240527.pdf
+- DS-2CD1321G2-LIU: https://assets.hikvision.com/prd/public/all/doc/sm000069640/DS-2CD1321G2-LIU_Datasheet_20240521.pdf
+- DS-2CD1327G2H-LIU: https://assets.hikvision.com/prd/normal/all/doc/sm000059818/DS-2CD1327G2H-LIU_Datasheet_20260703.pdf
+- DS-2CD1347G2H-LIU: https://assets.hikvision.com/prd/normal/all/doc/sm000059809/DS-2CD1347G2H-LIUF_Datasheet_20241025.pdf
+- DS-2CD1367G2H-LIU: https://assets.hikvision.com/prd/normal/all/doc/sm000059802/DS-2CD1367G2H-LIU_Datasheet_20260703.pdf
+- DS-2CD1347G3H-LIUF/SRB: https://assets.hikvision.com/prd/public/all/doc/sm000094497/DS-2CD1347G3H-LIUF_SLRB_Datasheet_20250618.pdf
+- DS-2CD1123G2-LIU: https://assets.hikvision.com/prd/normal/all/doc/sm000042451/DS-2CD1123G2-LIU_Datasheet_20260603.pdf
+- DS-2CD1147G2H-LIU: https://assets.hikvision.com/prd/public/all/doc/sm000059812/DS-2CD1147G2H-LIUF_Datasheet_20241025.pdf
+- DS-2CD1127G2H-LIU: https://assets.hikvision.com/prd/public/all/doc/sm000059819/DS-2CD1127G2H-LIUF_Datasheet_20240411.pdf
+- DS-2CD1143G2-LIU: https://assets.hikvision.com/prd/public/all/doc/sm000042443/DS-2CD1143G2-LIUF_Datasheet_20230914.pdf
+- DS-2CD2121G0-I: https://assets.hikvision.com/prd/normal/all/doc/m000000089/DS-2CD2121G0-IWS_Datasheet_20260525.pdf
+- DS-2CD2083G2-LI2U: https://assets.hikvision.com/prd/normal/all/doc/m000117783/DS-2CD2083G2-LI2U_Datasheet_20260105.pdf
+- DS-2CD2T87G3-LIS2UY/SRB: https://assets.hikvision.com/prd/public/all/doc/sm000077922/DS-2CD2T87G3-LIS2UY_SLRB_Datasheet_20250411.pdf
+- DS-2CD2T86G2-ISU/SL: https://assets.hikvision.com/prd/public/all/doc/sm000059154/DS-2CD2T86G2-ISU_SL-D_Datasheet_20250211.pdf
+- DS-2CD1121G0-I: https://assets.hikvision.com/prd/normal/all/doc/m000077362/DS-2CD1121G0-I_Datasheet_20260525.pdf
+- DS-2CD1021G2-LIU: https://assets.hikvision.com/prd/public/all/doc/sm000069642/DS-2CD1021G2-LIU_Datasheet_20240719.pdf
+- DS-2CD1121G2-LIU: https://assets.hikvision.com/prd/public/all/doc/sm000069645/DS-2CD1121G2-LIUF_Datasheet_20240521.pdf
+- DS-2CD1027G2H-LIU: https://assets.hikvision.com/prd/normal/all/doc/sm000059821/DS-2CD1027G2H-LIUF_Datasheet_20240718.pdf
+- DS-2CD1B47G2H-LIU: https://assets.hikvision.com/prd/public/all/doc/sm000083256/DS-2CD1B47G2H-LIUF_Datasheet_20240929.pdf
+- DS-2CD2T21G1-I: https://hikvision.vn/wp-content/uploads/2020/05/DS-2CD2T21G1-I_Datasheet_V5.5.84_20200110.pdf
+- DS-2CD2T41G1-I: https://hikvision.vn/wp-content/uploads/2020/05/DS-2CD2T41G1-I-Datasheet.pdf
+- DS-2DE3A404IWG-E/W: https://assets.hikvision.com/prd/normal/all/doc/m000070142/DS-2DE3A404IWG-E_W_Datasheet_20260917.pdf
+- DS-2DE2A404IWG1-E/W: https://assets.hikvision.com/prd/normal/all/doc/m000169174/DS-2DE2A404IWG1-E-W_Datasheet_20250621.pdf
+
+Notes:
+- Shop model strings vs datasheet: the shop appends a market suffix (`HUN`) to some names
+  (DS-2CD2083G2-LI2UHUN, DS-2CD2121G0-IHUN, DS-2CD2T86G2-ISU/SLHUN,
+  DS-2CD2T87G3-LIS2UY/SRBHUN, DS-2DE2A404IWG1-E/WHUN); records use the datasheet's string.
+- DS-2CD1B47G3H: the shop sells `-LIU/SRB`, but the only official datasheet found covers
+  `-LIU(F)`, so the record is DS-2CD1B47G3H-LIU and no speaker / strobe is recorded.
+- DS-2CD1347G3H: the shop sells `-LIU/SRB`; the datasheet prints `-LIUF/SL` and `-LIUF/SRB`
+  only, so the record is DS-2CD1347G3H-LIUF/SRB.
+- DS-2CD2121G0-I: datasheet covers `-I(W)(S)`; audio in / out is printed for `-S` only.
+- DS-2CD1121G0-I and DS-2CD1121G2-LIU: the datasheet prints no IP / IK code -> `[]` / `null`.
+- DS-2CD1321G2-LIU, DS-2CD1021G2-LIU, DS-2CD1121G2-LIU: "IR: up to 20 m, White Light: up to
+  15 m" -> `illuminationRangeM` 20 (the longer one).
+- DS-2CD2T21G1-I and DS-2CD2T41G1-I: no datasheet on a hikvision.com host; by owner decision
+  (2026-10-06) the copy hosted by Hikvision Vietnam (`hikvision.vn`) is the source, and the
+  schema accepts that host for Hikvision. The shop lists revision "(C)"; the 2020 datasheet
+  does not distinguish revisions.
+- PTZ (DS-2DE3A404IWG-E/W, DS-2DE2A404IWG1-E/W): `formFactor: "ptz"`, 2.8-12 mm zoom stored as a
+  varifocal lens. DORI is printed for the tele end only, so `manufacturerDoriM` is `null`.
+- Sold by the shop but NOT added, because no datasheet was found on an accepted host:
+  DS-2CD1T41G2-LIU, DS-2CD1T21G2-LIU, DS-2CD1321G0-I, DS-2CD1021G1-I.
+
+`priceVn` for these records, read on 2026-10-06 (displayed selling price): hacom.vn,
+vuhoangtelecom.vn, panaco.vn, smnet.vn, meta.vn, viethansecurity.com, vienthonghoangthach.com.
+Where the shop page is for the `-LIUF` (or `-LIUF/SRB`) variant of an `-LIU` record, the
+record's `notes` says so. Where no other shop shows a selling price, `priceVn` is the Shopee
+listing price: DS-2CD1347G3H-LIUF/SRB, DS-2CD1B47G2H-LIU, DS-2CD2121G0-I,
+DS-2CD2T87G3-LIS2UY/SRB, DS-2CD2T86G2-ISU/SL, DS-2CD2T21G1-I, DS-2CD2T41G1-I,
+DS-2DE3A404IWG-E/W.
