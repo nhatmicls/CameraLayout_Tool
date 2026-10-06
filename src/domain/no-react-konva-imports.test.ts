@@ -18,8 +18,12 @@ const FORBIDDEN_IMPORT_SOURCES = ['react', 'react-dom', 'react-konva', 'konva']
 const importFromPattern = (source: string): RegExp =>
   new RegExp(`from\\s+['"]${source}(/[^'"]*)?['"]`)
 
+// Recursive: domain modules live in feature subfolders (beam, bom, camera, ...).
+// `.tsx` is kept in the list so the "no JSX" check below can actually fail.
 function domainSourceFiles(): string[] {
-  return readdirSync(domainDir).filter((file) => file.endsWith('.ts') && !file.endsWith('.test.ts'))
+  return (readdirSync(domainDir, { recursive: true }) as string[])
+    .map((file) => file.replaceAll('\\', '/'))
+    .filter((file) => /\.tsx?$/.test(file) && !file.endsWith('.test.ts'))
 }
 
 describe('src/domain purity guard', () => {

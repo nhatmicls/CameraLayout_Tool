@@ -1,6 +1,6 @@
 # Sensor Catalog Sources (Phase 1 provenance)
 
-Every record in `src/catalog/data/*-sensor-models.json` is transcribed directly from an
+Every record in `data/<brand>/sensor-<kind>/*.json` is transcribed directly from an
 official manufacturer datasheet (or, where the datasheet omits a field, the manufacturer's
 own installation manual PDF - same domain). This doc is the audit trail: the exact URL
 downloaded, the retrieval date, the datasheet page + exact quote for every stored field,
@@ -260,7 +260,7 @@ one row per channel with that shop's price and a "buy (shop)" link.
 
 ## Record id cross-reference (JSON <-> this doc)
 
-11 records, every id below appears in exactly one `src/catalog/data/*-sensor-models.json`
+11 records, every id below appears in exactly one `data/<brand>/sensor-<kind>/*.json`
 file and in the "Records" tables above (checked both directions - no id in the JSON that
 is undocumented here, no id documented here that is missing from the JSON):
 

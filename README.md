@@ -136,12 +136,16 @@ is still running - stop it first.
 
 | Path | Contents |
 |---|---|
-| `src/catalog/` | Zod schemas, loaders, and the camera and sensor brand JSON data files |
+| `data/` | Camera and sensor catalog JSON: `data/<brand>/<device-type>/<brand>-<device-type>_<NN>.json`, device type = `camera-<form factor>` or `sensor-<kind>` |
+| `src/catalog/` | Zod schemas and loaders for the camera and sensor catalogs |
 | `src/domain/` | Pure logic: FOV geometry, DORI distances, mounted-camera floor coverage, sensor coverage (resolver, thermal bands, beam line check, wall-blocking table), wall visibility geometry (occlusion polygon, endpoint snap, crossing detection), scale, BOM grouping, CSV, project file schema (no React/Konva imports) |
 | `src/canvas/` | Konva stage, pan/zoom, camera and sensor markers, cones, sensor coverage, walls + wall drawing tool, calibration overlay |
 | `src/panels/` | Toolbar, catalog sidebar (Cameras / Sensors tabs), camera and sensor properties panels, BOM panel |
 | `src/export/` | PNG and CSV export |
 | `src/file-io/`, `src/state/` | Project save/load, zustand stores, undo/redo |
+
+Every `src/` folder except `state/` is split into feature subfolders (`beam`, `bom`, `camera`,
+`sensor`, `wall`, ... plus `shared` for cross-feature helpers).
 
 ## Docs
 

@@ -1,9 +1,9 @@
 import { create } from 'zustand'
 import { temporal } from 'zundo'
-import type { PlacedCamera, Project, ScaleCalibration, Wall } from '../domain/project-types'
-import { applyPlacedSensorPatch } from '../domain/placed-sensor-patch'
-import type { PlacedSensor, PlacedSensorPatch } from '../domain/sensor-types'
-import { moveWallNode, type WallNode } from '../domain/wall-node-editing'
+import type { PlacedCamera, Project, ScaleCalibration, Wall } from '../domain/project-file/project-types'
+import { applyPlacedSensorPatch } from '../domain/sensor/placed-sensor-patch'
+import type { PlacedSensor, PlacedSensorPatch } from '../domain/sensor/sensor-types'
+import { moveWallNode, type WallNode } from '../domain/wall/wall-node-editing'
 
 /**
  * The project store: the floor-plan image, its scale calibration, the

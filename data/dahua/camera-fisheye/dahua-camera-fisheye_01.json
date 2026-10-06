@@ -1,0 +1,26 @@
+[
+  {
+    "id": "dahua-ipc-ebw5641-as-1.68mm",
+    "brand": "dahua",
+    "model": "DH-IPC-EBW5641-AS",
+    "formFactor": "fisheye",
+    "resolutionMp": 6,
+    "pixelWidth": 2560,
+    "pixelHeight": 2560,
+    "lens": { "kind": "fixed", "focalMm": 1.68, "hfovDeg": 185, "vfovDeg": 185 },
+    "illuminationRangeM": 15,
+    "illuminationType": "ir",
+    "manufacturerDoriM": { "detect": 33.6, "observe": 13.4, "recognize": 6.7, "identify": 3.4 },
+    "ingressRatings": ["IP67"],
+    "ikRating": "IK10",
+    "hasBuiltInMic": true,
+    "hasBuiltInSpeaker": true,
+    "hasAudioInPort": true,
+    "hasAudioOutPort": true,
+    "detectionTypes": ["human"],
+    "sourceUrl": "https://materialfile.dahuasecurity.com/uploads/cpq/88259/datasheet/DH-IPC-EBW5641-AS_datasheet_20260708_English.pdf",
+    "sourceRetrieved": "2026-10-05",
+    "priceVn": null,
+    "notes": "6MP IR Fisheye WizMind, circular image sensor (pixelWidth = pixelHeight = 2560, native square fisheye frame). Datasheet p.2 'Field of View: 1.68 mm: H: 185deg; V: 185deg; D: 185deg'. HFOV >= 180deg -> use arc/fisheye geometry model per phase-03, not the rectilinear cone. Max illumination distance 15 m (IR), lower than other models - small built-in IR array typical of fisheye form factor."
+  }
+]

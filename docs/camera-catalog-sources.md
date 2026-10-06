@@ -1,6 +1,6 @@
 # Camera Catalog Sources (Phase 2 provenance)
 
-Every record in `src/catalog/data/*.json` is transcribed directly from an official
+Every record in `data/<brand>/camera-<formFactor>/*.json` is transcribed directly from an official
 manufacturer datasheet PDF. This doc is the audit trail: for each model, the exact
 URL downloaded, the retrieval date, the datasheet page where HFOV and max resolution
 were read, and a SHA-256 of the PDF bytes (so the exact document version is pinned
@@ -140,7 +140,7 @@ Widest fixed HFOV shipped: 130° is not present either - highest fixed is
 `axis-m2036-le` at 109° (4:3 mode) and `hikvision-ds-2cd2t47g2-l-2.8mm` at 112°; the
 only value >= 180° is the Dahua fisheye at 185°, which uses the arc/fisheye geometry
 model instead of the rectilinear cone, so it is not in the warning band either. This
-is verified by an automated test in `src/catalog/camera-catalog-loader.test.ts`.
+is verified by an automated test in `src/catalog/camera/camera-catalog-loader.test.ts`.
 
 ---
 

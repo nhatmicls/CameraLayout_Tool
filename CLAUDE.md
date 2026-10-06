@@ -11,8 +11,24 @@ and `./docs/tech-stack.md`.
 Commands: `npm run dev` | `npm run typecheck` | `npm run lint` | `npm test` (Vitest) |
 `npm run build`. Run typecheck + test after every code change.
 
-Layout: `src/catalog` (schema, loader, brand JSON data), `src/domain` (pure logic),
+Layout: `data/` (catalog JSON, repo root), `src/catalog` (schema, loader), `src/domain` (pure logic),
 `src/canvas` (Konva), `src/panels` (UI), `src/export` (PNG/CSV), `src/file-io`, `src/state`.
+Every `src` folder except `state` is grouped into feature subfolders - put a new file in the
+matching one, never loose at the folder root:
+- `catalog/`: `camera`, `sensor`, `shared`
+- `domain/`: `beam`, `bom`, `camera`, `export`, `project-file`, `sensor`, `wall`, `shared`
+- `canvas/`: `beam`, `camera`, `sensor`, `wall`, `stage`, `shared`
+- `panels/`: `app-shell`, `bom`, `camera`, `sensor`, `shared`
+- `export/`: `csv`, `png`, `shared`
+- `file-io/`: `browser`, `project-file`
+A new feature (cable, fire alarm, ...) gets its own subfolder where it adds files.
+Catalog data: `data/<brand>/<device-type>/<brand>-<device-type>_<NN>.json`, where `device-type`
+is `camera-<formFactor>` (bullet, dome, turret, ptz, fisheye) or `sensor-<kind>` (pir, beam,
+vibration, thermal); e.g. `data/hikvision/camera-bullet/hikvision-camera-bullet_02.json`. A record
+must sit in the folder of its own brand and form factor / kind (tested). Loaders glob
+`data/*/camera-*/*.json` and `data/*/sensor-*/*.json`, so a new numbered file, type folder or
+brand folder needs no loader edit. Keep a file to about 25 records and keep lens variants of one model in one file;
+start `_<NN+1>` when full. Only `src/catalog` loaders read `data/`.
 
 Project rules:
 - `src/domain/**` must not import React, Konva (enforced by `no-react-konva-imports.test.ts`)
@@ -27,7 +43,7 @@ Project rules:
   longer hosts one. `purchaseLinks` (`primary` = the Shopee shop, `secondary` = another
   Vietnamese shop; each `{ shop, url, amountVnd, retrieved }`) is shop data like `priceVn`:
   copy the displayed selling price, `null` when the page shows none.
-- Sensor catalog (`src/catalog/data/*-sensor-models.json`; PIR, beam, vibration, thermal) is
+- Sensor catalog (`data/<brand>/sensor-<kind>/*.json`; PIR, beam, vibration, thermal) is
   separate from the camera catalog; ids are disjoint. Specs come only from the official
   datasheet or the manufacturer's own install manual, copied as printed (`dahuatech.com` is
   also accepted for Dahua sensors). One permitted calculation: a feet-only value is stored as
@@ -47,17 +63,17 @@ Project rules:
   `vfovDeg` is shown only when printed and is never computed.
 - Camera mounting (`mountHeightM` + `tiltDeg`, tilt = degrees down from horizontal) is optional
   and both-or-neither. Unset must draw and save exactly like the flat cone. Floor-coverage math
-  lives in `src/domain/mounted-camera-ground-coverage-calculator.ts` (metres only; slant model,
+  lives in `src/domain/camera/mounted-camera-ground-coverage-calculator.ts` (metres only; slant model,
   centre-line arcs, fisheye HFOV >= 180 ignores tilt) - keep it out of components.
 - Project files: `PROJECT_SCHEMA_VERSION` is 4 (v3 + optional `sensors`); the reader accepts
   1, 2, 3 and 4, the writer always emits 4.
 - Walls are single segments in image px. For cameras `opaque` blocks and `glass` never does.
   For sensors the table `SENSOR_BLOCKING_WALL_KINDS` in
-  `src/domain/sensor-wall-blocking-rules.ts` is the single source: PIR and thermal are clipped
+  `src/domain/sensor/sensor-wall-blocking-rules.ts` is the single source: PIR and thermal are clipped
   by opaque + glass, vibration by opaque only, beams are checked (blocked / over-distance
   state), not clipped. Occlusion is a
   full-disc visibility polygon in unrotated image axes
-  (`src/domain/wall-occlusion-visibility-polygon.ts`), applied as a Konva `clipFunc` on the
+  (`src/domain/wall/wall-occlusion-visibility-polygon.ts`), applied as a Konva `clipFunc` on the
   cone's outer, unrotated Group - so rotation / HFOV changes never recompute it, and no blocking
   wall in range means no clip at all. Keep wall math in image px; convert metres only at the
   canvas edge.

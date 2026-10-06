@@ -1,0 +1,42 @@
+[
+  {
+    "id": "dahua-tpc-bf2241-b3f4-dw-s2",
+    "kind": "thermal",
+    "brand": "dahua",
+    "model": "DHI-TPC-BF2241-B3F4-DW-S2",
+    "pixelWidth": 256,
+    "pixelHeight": 192,
+    "focalMm": 3.5,
+    "hfovDeg": 50.6,
+    "vfovDeg": 37.8,
+    "detectionRangeM": {
+      "human": { "detect": 146, "recognize": 38, "identify": 19 },
+      "vehicle": { "detect": 389, "recognize": 97, "identify": 49 }
+    },
+    "sourceUrl": "https://material.dahuasecurity.com/uploads/cpq/prm-os-srv-res/smart/datasheetzipfiles/TPC-BF2241_datasheet_20221020.pdf",
+    "sourceRetrieved": "2026-10-06",
+    "priceVn": null,
+    "purchaseLinks": null,
+    "notes": "Bi-spectrum hybrid bullet camera (thermal + visible), see C7. This record stores the thermal channel only: 256x192 VOx uncooled sensor, 12um pixel pitch, NETD 40mK@f/1.0, spectral range 8-14um. The visible channel on this SKU (4mm lens, H:71.2 deg V:52 deg, 4MP 1/2.7in CMOS) is not modelled and this model is not entered in the camera catalog."
+  },
+  {
+    "id": "dahua-tpc-bf2241-b7f8-dw-s2",
+    "kind": "thermal",
+    "brand": "dahua",
+    "model": "DHI-TPC-BF2241-B7F8-DW-S2",
+    "pixelWidth": 256,
+    "pixelHeight": 192,
+    "focalMm": 7,
+    "hfovDeg": 24,
+    "vfovDeg": 18,
+    "detectionRangeM": {
+      "human": { "detect": 292, "recognize": 75, "identify": 38 },
+      "vehicle": { "detect": 778, "recognize": 194, "identify": 97 }
+    },
+    "sourceUrl": "https://material.dahuasecurity.com/uploads/cpq/prm-os-srv-res/smart/datasheetzipfiles/TPC-BF2241_datasheet_20221020.pdf",
+    "sourceRetrieved": "2026-10-06",
+    "priceVn": null,
+    "purchaseLinks": null,
+    "notes": "Same datasheet and note as dahua-tpc-bf2241-b3f4-dw-s2 (thermal channel only, visible channel not modelled, not entered in camera catalog). This SKU's visible channel is 8mm, H:33.4 deg V:25 deg."
+  }
+]

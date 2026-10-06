@@ -1,0 +1,26 @@
+[
+  {
+    "id": "axis-m4317-plve-1.1mm",
+    "brand": "axis",
+    "model": "AXIS M4317-PLVE",
+    "formFactor": "fisheye",
+    "resolutionMp": 6,
+    "pixelWidth": 2160,
+    "pixelHeight": 2160,
+    "lens": { "kind": "fixed", "focalMm": 1.1, "hfovDeg": 182, "vfovDeg": 182 },
+    "illuminationRangeM": 20,
+    "illuminationType": "ir",
+    "manufacturerDoriM": null,
+    "ingressRatings": ["IP66"],
+    "ikRating": "IK10",
+    "hasBuiltInMic": false,
+    "hasBuiltInSpeaker": false,
+    "hasAudioInPort": false,
+    "hasAudioOutPort": false,
+    "detectionTypes": ["human", "vehicle"],
+    "sourceUrl": "https://www.axis.com/dam/public/1b/86/d9/datasheet-axis-m4317-plve-panoramic-camera-en-US-449450.pdf",
+    "sourceRetrieved": "2026-10-05",
+    "priceVn": null,
+    "notes": "Datasheet p.2: 'Focal length: 1.1 mm, F2.2 ... Horizontal field of view: 182°'. Resolution overview mode 2160x2160 (5 MP). Built-in IR with individually controllable LEDs and Lightfinder, no meters published. DORI not published. Fisheye form factor with >= 180° HFOV. Datasheet headline '6 MP dome with 360deg view'; 'Range of reach 20 m (65.6 ft) depending on the scene'."
+  }
+]

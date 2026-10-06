@@ -1,0 +1,108 @@
+[
+  {
+    "id": "hikvision-ds-2de3a404iwg-e-w-2.8-12mm",
+    "brand": "hikvision",
+    "model": "DS-2DE3A404IWG-E/W",
+    "formFactor": "ptz",
+    "resolutionMp": 4,
+    "pixelWidth": 2560,
+    "pixelHeight": 1440,
+    "lens": {
+      "kind": "varifocal",
+      "focalMinMm": 2.8,
+      "focalMaxMm": 12,
+      "hfovWideDeg": 96.7,
+      "hfovTeleDeg": 31.6,
+      "vfovWideDeg": 51.1,
+      "vfovTeleDeg": 17.7
+    },
+    "illuminationRangeM": 50,
+    "illuminationType": "dual",
+    "manufacturerDoriM": null,
+    "ingressRatings": [
+      "IP66"
+    ],
+    "ikRating": null,
+    "hasBuiltInMic": true,
+    "hasBuiltInSpeaker": true,
+    "hasAudioInPort": true,
+    "hasAudioOutPort": true,
+    "detectionTypes": [
+      "human",
+      "vehicle",
+      "face"
+    ],
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000070142/DS-2DE3A404IWG-E_W_Datasheet_20260917.pdf",
+    "sourceRetrieved": "2026-10-06",
+    "priceVn": {
+      "amountVnd": 6339000,
+      "sourceUrl": "https://shopee.vn/product/1131061889/44666406368",
+      "retrieved": "2026-10-06"
+    },
+    "purchaseLinks": {
+      "primary": {
+        "shop": "shopee",
+        "url": "https://shopee.vn/product/1131061889/44666406368",
+        "amountVnd": 6339000,
+        "retrieved": "2026-10-06"
+      },
+      "secondary": null
+    },
+    "notes": "4 MP 4x Zoom IR Wi-Fi Mini PT Dome Network Camera. Datasheet: 'Horizontal field of view: 96.7deg to 31.6deg', vertical 51.1deg to 17.7deg (wide to tele, 4x optical zoom). Supplement light: IR distance: up to 50 m, white light distance: up to 6 m. Pan 0deg to 350deg, tilt 0deg to 90deg: the app draws one cone at the bearing you set, not the pan sweep. DORI is printed for the tele end only (D 180 m, O 71.4 m, R 36 m, I 18 m), so manufacturerDoriM is null (the slot holds the wide-end reading). priceVn is the Shopee listing price (no other Vietnamese shop shows a selling price)."
+  },
+  {
+    "id": "hikvision-ds-2de2a404iwg1-e-w-2.8-12mm",
+    "brand": "hikvision",
+    "model": "DS-2DE2A404IWG1-E/W",
+    "formFactor": "ptz",
+    "resolutionMp": 4,
+    "pixelWidth": 2560,
+    "pixelHeight": 1440,
+    "lens": {
+      "kind": "varifocal",
+      "focalMinMm": 2.8,
+      "focalMaxMm": 12,
+      "hfovWideDeg": 99.4,
+      "hfovTeleDeg": 32.8,
+      "vfovWideDeg": 51.7,
+      "vfovTeleDeg": 18.4
+    },
+    "illuminationRangeM": 20,
+    "illuminationType": "ir",
+    "manufacturerDoriM": null,
+    "ingressRatings": [
+      "IP66"
+    ],
+    "ikRating": "IK10",
+    "hasBuiltInMic": true,
+    "hasBuiltInSpeaker": true,
+    "hasAudioInPort": true,
+    "hasAudioOutPort": true,
+    "detectionTypes": [
+      "human",
+      "vehicle"
+    ],
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000169174/DS-2DE2A404IWG1-E-W_Datasheet_20250621.pdf",
+    "sourceRetrieved": "2026-10-06",
+    "priceVn": {
+      "amountVnd": 4350000,
+      "sourceUrl": "https://vienthonghoangthach.com/ds-2de2a404iwg1-e-w-camera-wifi-hikvision.html",
+      "retrieved": "2026-10-06"
+    },
+    "purchaseLinks": {
+      "primary": {
+        "shop": "shopee",
+        "url": "https://shopee.vn/product/1131061889/56166369561",
+        "amountVnd": 4779000,
+        "retrieved": "2026-10-06"
+      },
+      "secondary": {
+        "shop": "vienthonghoangthach",
+        "url": "https://vienthonghoangthach.com/ds-2de2a404iwg1-e-w-camera-wifi-hikvision.html",
+        "amountVnd": 4350000,
+        "retrieved": "2026-10-06"
+      }
+    },
+    "notes": "4MP 4X IR Mini Outdoor WiFi Acusense PTZ Camera. Datasheet: 'Horizontal field of view: 99.4deg to 32.8deg', vertical 51.7deg to 18.4deg (wide to tele, 4x optical zoom). Supplement light: IR Distance: up to 20 m. Pan 0deg to 355deg, tilt 0deg to 90deg: the app draws one cone at the bearing you set, not the pan sweep. DORI is printed for the tele end only (D 180 m, O 71.4 m, R 36 m, I 18 m), so manufacturerDoriM is null (the slot holds the wide-end reading)."
+  }
+]

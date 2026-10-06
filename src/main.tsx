@@ -30,7 +30,7 @@ function renderBlockingError(message: string): void {
 /**
  * `./app` is imported dynamically (not as a static top-level import) so a
  * catalog validation failure - thrown at module-evaluation time by
- * `src/catalog/camera-catalog-loader.ts` when a brand JSON file fails its
+ * `src/catalog/camera/camera-catalog-loader.ts` when a brand JSON file fails its
  * Zod schema - surfaces as a readable blocking screen instead of a blank
  * page. A static `import { App } from './app'` would throw before any of
  * this file's own code (including a try/catch around `render`) ever runs,

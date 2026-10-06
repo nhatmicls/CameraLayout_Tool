@@ -1,0 +1,26 @@
+[
+  {
+    "id": "hikvision-ds-pdpg12p-eg2-pir",
+    "kind": "pir",
+    "brand": "hikvision",
+    "model": "DS-PDPG12P-EG2",
+    "coverage": { "rangeM": 12, "angleDeg": 85.9 },
+    "sourceUrl": "https://www.hikvision.com/content/dam/hikvision/products/S000000001/S000000601/S000000933/S000000934/OFR001801/M000050023/Data_Sheet/DS-PDPG12P-EG2_Datasheet_V1.0_202201.pdf",
+    "sourceRetrieved": "2026-10-06",
+    "priceVn": null,
+    "purchaseLinks": null,
+    "notes": "Wired dual PIR + acoustic glass-break detector; see hikvision-ds-pdpg12p-eg2-glass-break for the glass-break half of this same model/datasheet. Cover page also prints 'Glass Break Range: 8m / 120 deg' - the 120 deg angle is not modelled (not drawn/warned/shown). Mounting height 1.8-2.4 m, wall mount, not modelled."
+  },
+  {
+    "id": "hikvision-ds-pdcl12-eg2-we",
+    "kind": "pir",
+    "brand": "hikvision",
+    "model": "DS-PDCL12-EG2-WE",
+    "coverage": { "rangeM": 12, "angleDeg": 360 },
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000044573/DS-PDCL12-EG2-WE_Datasheet.pdf",
+    "sourceRetrieved": "2026-10-06",
+    "priceVn": null,
+    "purchaseLinks": null,
+    "notes": "Wireless ceiling-mount PIR. Datasheet prints a single range (12m) + 360 deg angle, not a height-keyed diameter table (mounting height is a band, 2.4-4m, not tied to a specific diameter) - modelled with the same sector shape as wall PIR, angleDeg=360 giving full-circle coverage. See C2 in docs/sensor-catalog-sources.md."
+  }
+]

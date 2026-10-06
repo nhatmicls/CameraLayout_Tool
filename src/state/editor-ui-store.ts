@@ -1,8 +1,8 @@
 import { create } from 'zustand'
-import type { Brand, FormFactor } from '../catalog/camera-catalog-schema'
-import type { CatalogFeatureFilterKey } from '../catalog/camera-catalog-feature-filters'
-import type { WallKind } from '../domain/project-types'
-import type { SensorKind } from '../domain/sensor-types'
+import type { Brand, FormFactor } from '../catalog/camera/camera-catalog-schema'
+import type { CatalogFeatureFilterKey } from '../catalog/camera/camera-catalog-feature-filters'
+import type { WallKind } from '../domain/project-file/project-types'
+import type { SensorKind } from '../domain/sensor/sensor-types'
 import { useProjectStore } from './project-store'
 
 /** Which catalog the sidebar shows (phase 6 owns the sidebar itself; the tab state lives here so phase 4's drop/selection wiring and phase 6's panel agree on it). */

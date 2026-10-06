@@ -3,9 +3,9 @@ import type Konva from 'konva'
 import { Stage } from 'react-konva'
 import { useProjectStore } from './state/project-store'
 import { useEditorUiStore, type UiNotification, type Viewport } from './state/editor-ui-store'
-import { PlanSceneLayers } from './canvas/plan-scene-layers'
-import type { PlacedCamera, ScaleCalibration, Wall } from './domain/project-types'
-import type { PlacedSensor } from './domain/sensor-types'
+import { PlanSceneLayers } from './canvas/stage/plan-scene-layers'
+import type { PlacedCamera, ScaleCalibration, Wall } from './domain/project-file/project-types'
+import type { PlacedSensor } from './domain/sensor/sensor-types'
 
 declare global {
   interface Window {

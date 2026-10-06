@@ -1,0 +1,1014 @@
+[
+  {
+    "id": "hikvision-ds-2cd2t47g2-l-2.8mm",
+    "brand": "hikvision",
+    "model": "DS-2CD2T47G2-L",
+    "formFactor": "bullet",
+    "resolutionMp": 4,
+    "pixelWidth": 2688,
+    "pixelHeight": 1520,
+    "lens": { "kind": "fixed", "focalMm": 2.8, "hfovDeg": 112, "vfovDeg": 61 },
+    "illuminationRangeM": 60,
+    "illuminationType": "white-light",
+    "manufacturerDoriM": { "detect": 58, "observe": 23, "recognize": 11, "identify": 2 },
+    "ingressRatings": ["IP67"],
+    "ikRating": null,
+    "hasBuiltInMic": false,
+    "hasBuiltInSpeaker": false,
+    "hasAudioInPort": false,
+    "hasAudioOutPort": false,
+    "detectionTypes": ["human", "vehicle", "face"],
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/sm000058342/DS-2CD2T47G2-L-C_Datasheet_V5.5.112_20230418.pdf",
+    "sourceRetrieved": "2026-10-05",
+    "priceVn": { "amountVnd": 4174800, "sourceUrl": "https://panaco.vn/camera-ip-hikvision-co-mau-ban-dem-4mp-ds-2cd2t47g2-l/", "retrieved": "2026-10-05" },
+    "notes": "ColorVu fixed bullet. Datasheet p.2: '2.8 mm, horizontal FOV 112deg'. White Light Range 60 m (raw text extraction; -layout mode mis-aligns this row)."
+  },
+  {
+    "id": "hikvision-ds-2cd2t47g2-l-4mm",
+    "brand": "hikvision",
+    "model": "DS-2CD2T47G2-L",
+    "formFactor": "bullet",
+    "resolutionMp": 4,
+    "pixelWidth": 2688,
+    "pixelHeight": 1520,
+    "lens": { "kind": "fixed", "focalMm": 4, "hfovDeg": 95, "vfovDeg": 51 },
+    "illuminationRangeM": 60,
+    "illuminationType": "white-light",
+    "manufacturerDoriM": { "detect": 77, "observe": 30, "recognize": 15, "identify": 7 },
+    "ingressRatings": ["IP67"],
+    "ikRating": null,
+    "hasBuiltInMic": false,
+    "hasBuiltInSpeaker": false,
+    "hasAudioInPort": false,
+    "hasAudioOutPort": false,
+    "detectionTypes": ["human", "vehicle", "face"],
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/sm000058342/DS-2CD2T47G2-L-C_Datasheet_V5.5.112_20230418.pdf",
+    "sourceRetrieved": "2026-10-05",
+    "priceVn": { "amountVnd": 4174800, "sourceUrl": "https://panaco.vn/camera-ip-hikvision-co-mau-ban-dem-4mp-ds-2cd2t47g2-l/", "retrieved": "2026-10-05" },
+    "notes": "Same datasheet, p.2: '4 mm, horizontal FOV 95deg'."
+  },
+  {
+    "id": "hikvision-ds-2cd2t47g2-l-6mm",
+    "brand": "hikvision",
+    "model": "DS-2CD2T47G2-L",
+    "formFactor": "bullet",
+    "resolutionMp": 4,
+    "pixelWidth": 2688,
+    "pixelHeight": 1520,
+    "lens": { "kind": "fixed", "focalMm": 6, "hfovDeg": 58, "vfovDeg": 31 },
+    "illuminationRangeM": 60,
+    "illuminationType": "white-light",
+    "manufacturerDoriM": { "detect": 115, "observe": 45, "recognize": 23, "identify": 11 },
+    "ingressRatings": ["IP67"],
+    "ikRating": null,
+    "hasBuiltInMic": false,
+    "hasBuiltInSpeaker": false,
+    "hasAudioInPort": false,
+    "hasAudioOutPort": false,
+    "detectionTypes": ["human", "vehicle", "face"],
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/sm000058342/DS-2CD2T47G2-L-C_Datasheet_V5.5.112_20230418.pdf",
+    "sourceRetrieved": "2026-10-05",
+    "priceVn": { "amountVnd": 4174800, "sourceUrl": "https://panaco.vn/camera-ip-hikvision-co-mau-ban-dem-4mp-ds-2cd2t47g2-l/", "retrieved": "2026-10-05" },
+    "notes": "Same datasheet, p.2: '6 mm, horizontal FOV 58deg'."
+  },
+  {
+    "id": "hikvision-ds-2cd1023g2-liu-2.8mm",
+    "brand": "hikvision",
+    "model": "DS-2CD1023G2-LIU",
+    "formFactor": "bullet",
+    "resolutionMp": 2,
+    "pixelWidth": 1920,
+    "pixelHeight": 1080,
+    "lens": { "kind": "fixed", "focalMm": 2.8, "hfovDeg": 103, "vfovDeg": 56 },
+    "illuminationRangeM": 30,
+    "illuminationType": "dual",
+    "manufacturerDoriM": { "detect": 45, "observe": 18, "recognize": 9, "identify": 4 },
+    "ingressRatings": ["IP67"],
+    "ikRating": null,
+    "hasBuiltInMic": true,
+    "hasBuiltInSpeaker": false,
+    "hasAudioInPort": false,
+    "hasAudioOutPort": false,
+    "detectionTypes": ["human", "vehicle"],
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/sm000042453/DS-2CD1023G2-LIUF_Datasheet_20230914.pdf",
+    "sourceRetrieved": "2026-10-05",
+    "priceVn": { "amountVnd": 849000, "sourceUrl": "https://hacom.vn/camera-hikvision-ds-2cd1023g2-liuf", "retrieved": "2026-10-05" },
+    "purchaseLinks": { "primary": { "shop": "shopee", "url": "https://shopee.vn/product/1131061889/46010354737", "amountVnd": 1129000, "retrieved": "2026-10-06" }, "secondary": { "shop": "hacom", "url": "https://hacom.vn/camera-hikvision-ds-2cd1023g2-liuf", "amountVnd": 849000, "retrieved": "2026-10-05" } },
+    "notes": "2MP Smart Hybrid Light fixed bullet. Budget Value Series. Datasheet p.2: '2.8 mm, horizontal FOV 103deg, vertical FOV 56deg, diagonal FOV 121deg'. Dual illumination: IR (850nm) + White Light up to 30m. priceVn is the VN listing for the -LIUF variant, used for the -LIU by owner decision."
+  },
+  {
+    "id": "hikvision-ds-2cd1023g2-liu-4mm",
+    "brand": "hikvision",
+    "model": "DS-2CD1023G2-LIU",
+    "formFactor": "bullet",
+    "resolutionMp": 2,
+    "pixelWidth": 1920,
+    "pixelHeight": 1080,
+    "lens": { "kind": "fixed", "focalMm": 4, "hfovDeg": 83, "vfovDeg": 44 },
+    "illuminationRangeM": 30,
+    "illuminationType": "dual",
+    "manufacturerDoriM": { "detect": 56, "observe": 22, "recognize": 11, "identify": 5 },
+    "ingressRatings": ["IP67"],
+    "ikRating": null,
+    "hasBuiltInMic": true,
+    "hasBuiltInSpeaker": false,
+    "hasAudioInPort": false,
+    "hasAudioOutPort": false,
+    "detectionTypes": ["human", "vehicle"],
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/sm000042453/DS-2CD1023G2-LIUF_Datasheet_20230914.pdf",
+    "sourceRetrieved": "2026-10-05",
+    "priceVn": { "amountVnd": 849000, "sourceUrl": "https://hacom.vn/camera-hikvision-ds-2cd1023g2-liuf", "retrieved": "2026-10-05" },
+    "purchaseLinks": { "primary": { "shop": "shopee", "url": "https://shopee.vn/product/1131061889/46010354737", "amountVnd": 1129000, "retrieved": "2026-10-06" }, "secondary": { "shop": "hacom", "url": "https://hacom.vn/camera-hikvision-ds-2cd1023g2-liuf", "amountVnd": 849000, "retrieved": "2026-10-05" } },
+    "notes": "Same datasheet as 2.8mm variant, p.2: '4 mm, horizontal FOV 83deg, vertical FOV 44deg, diagonal FOV 99deg'. priceVn is the VN listing for the -LIUF variant, used for the -LIU by owner decision."
+  },
+  {
+    "id": "hikvision-ds-2cd1023g2-liuf-2.8mm",
+    "brand": "hikvision",
+    "model": "DS-2CD1023G2-LIUF",
+    "formFactor": "bullet",
+    "resolutionMp": 2,
+    "pixelWidth": 1920,
+    "pixelHeight": 1080,
+    "lens": { "kind": "fixed", "focalMm": 2.8, "hfovDeg": 103, "vfovDeg": 56 },
+    "illuminationRangeM": 30,
+    "illuminationType": "dual",
+    "manufacturerDoriM": { "detect": 45, "observe": 18, "recognize": 9, "identify": 4 },
+    "ingressRatings": ["IP67"],
+    "ikRating": null,
+    "hasBuiltInMic": true,
+    "hasBuiltInSpeaker": false,
+    "hasAudioInPort": false,
+    "hasAudioOutPort": false,
+    "detectionTypes": ["human", "vehicle"],
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/sm000042453/DS-2CD1023G2-LIUF_Datasheet_20230914.pdf",
+    "sourceRetrieved": "2026-10-05",
+    "priceVn": { "amountVnd": 849000, "sourceUrl": "https://hacom.vn/camera-hikvision-ds-2cd1023g2-liuf", "retrieved": "2026-10-05" },
+    "notes": "2MP Smart Hybrid Light fixed bullet. Budget Value Series. Datasheet p.2: '2.8 mm, horizontal FOV 103deg, vertical FOV 56deg, diagonal FOV 121deg'. Dual illumination: IR (850nm) + White Light up to 30m. -LIUF variant: same datasheet, '-F: Built-in memory card slot'."
+  },
+  {
+    "id": "hikvision-ds-2cd1023g2-liuf-4mm",
+    "brand": "hikvision",
+    "model": "DS-2CD1023G2-LIUF",
+    "formFactor": "bullet",
+    "resolutionMp": 2,
+    "pixelWidth": 1920,
+    "pixelHeight": 1080,
+    "lens": { "kind": "fixed", "focalMm": 4, "hfovDeg": 83, "vfovDeg": 44 },
+    "illuminationRangeM": 30,
+    "illuminationType": "dual",
+    "manufacturerDoriM": { "detect": 56, "observe": 22, "recognize": 11, "identify": 5 },
+    "ingressRatings": ["IP67"],
+    "ikRating": null,
+    "hasBuiltInMic": true,
+    "hasBuiltInSpeaker": false,
+    "hasAudioInPort": false,
+    "hasAudioOutPort": false,
+    "detectionTypes": ["human", "vehicle"],
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/sm000042453/DS-2CD1023G2-LIUF_Datasheet_20230914.pdf",
+    "sourceRetrieved": "2026-10-05",
+    "priceVn": { "amountVnd": 849000, "sourceUrl": "https://hacom.vn/camera-hikvision-ds-2cd1023g2-liuf", "retrieved": "2026-10-05" },
+    "notes": "Same datasheet as 2.8mm variant, p.2: '4 mm, horizontal FOV 83deg, vertical FOV 44deg, diagonal FOV 99deg'. -LIUF variant: same datasheet, '-F: Built-in memory card slot'."
+  },
+  {
+    "id": "hikvision-ds-2cd1043g2-liu-2.8mm",
+    "brand": "hikvision",
+    "model": "DS-2CD1043G2-LIU",
+    "formFactor": "bullet",
+    "resolutionMp": 4,
+    "pixelWidth": 2560,
+    "pixelHeight": 1440,
+    "lens": { "kind": "fixed", "focalMm": 2.8, "hfovDeg": 98, "vfovDeg": 54 },
+    "illuminationRangeM": 30,
+    "illuminationType": "dual",
+    "manufacturerDoriM": { "detect": 63, "observe": 25, "recognize": 12, "identify": 6 },
+    "ingressRatings": ["IP67"],
+    "ikRating": null,
+    "hasBuiltInMic": true,
+    "hasBuiltInSpeaker": false,
+    "hasAudioInPort": false,
+    "hasAudioOutPort": false,
+    "detectionTypes": ["human", "vehicle"],
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/sm000042445/DS-2CD1043G2-LIUF_Datasheet_20260409.pdf",
+    "sourceRetrieved": "2026-10-05",
+    "priceVn": { "amountVnd": 1375000, "sourceUrl": "https://vuhoangtelecom.vn/san-pham/camera-ip-4mp-than-tru-hikvision-ds-2cd1043g2-liuf/", "retrieved": "2026-10-05" },
+    "purchaseLinks": { "primary": { "shop": "shopee", "url": "https://shopee.vn/product/1131061889/41482541814", "amountVnd": 1419000, "retrieved": "2026-10-06" }, "secondary": { "shop": "vuhoangtelecom", "url": "https://vuhoangtelecom.vn/san-pham/camera-ip-4mp-than-tru-hikvision-ds-2cd1043g2-liuf/", "amountVnd": 1375000, "retrieved": "2026-10-05" } },
+    "notes": "4MP Smart Hybrid Light fixed bullet. Budget Value Series. Datasheet p.2: '2.8 mm, horizontal FOV 98deg, vertical FOV 54deg, diagonal FOV 114deg'. Dual illumination: IR + White Light up to 30m. DORI: 63/25/12/6m. priceVn is the VN listing for the -LIUF variant, used for the -LIU by owner decision."
+  },
+  {
+    "id": "hikvision-ds-2cd1043g2-liu-4mm",
+    "brand": "hikvision",
+    "model": "DS-2CD1043G2-LIU",
+    "formFactor": "bullet",
+    "resolutionMp": 4,
+    "pixelWidth": 2560,
+    "pixelHeight": 1440,
+    "lens": { "kind": "fixed", "focalMm": 4, "hfovDeg": 78, "vfovDeg": 42 },
+    "illuminationRangeM": 30,
+    "illuminationType": "dual",
+    "manufacturerDoriM": { "detect": 78, "observe": 31, "recognize": 15, "identify": 7 },
+    "ingressRatings": ["IP67"],
+    "ikRating": null,
+    "hasBuiltInMic": true,
+    "hasBuiltInSpeaker": false,
+    "hasAudioInPort": false,
+    "hasAudioOutPort": false,
+    "detectionTypes": ["human", "vehicle"],
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/sm000042445/DS-2CD1043G2-LIUF_Datasheet_20260409.pdf",
+    "sourceRetrieved": "2026-10-05",
+    "priceVn": { "amountVnd": 1375000, "sourceUrl": "https://vuhoangtelecom.vn/san-pham/camera-ip-4mp-than-tru-hikvision-ds-2cd1043g2-liuf/", "retrieved": "2026-10-05" },
+    "purchaseLinks": { "primary": { "shop": "shopee", "url": "https://shopee.vn/product/1131061889/41482541814", "amountVnd": 1419000, "retrieved": "2026-10-06" }, "secondary": { "shop": "vuhoangtelecom", "url": "https://vuhoangtelecom.vn/san-pham/camera-ip-4mp-than-tru-hikvision-ds-2cd1043g2-liuf/", "amountVnd": 1375000, "retrieved": "2026-10-05" } },
+    "notes": "Same datasheet as 2.8mm variant, p.2: '4 mm, horizontal FOV 78deg, vertical FOV 42deg, diagonal FOV 93deg'. DORI: 78/31/15/7m. priceVn is the VN listing for the -LIUF variant, used for the -LIU by owner decision."
+  },
+  {
+    "id": "hikvision-ds-2cd1043g2-liuf-2.8mm",
+    "brand": "hikvision",
+    "model": "DS-2CD1043G2-LIUF",
+    "formFactor": "bullet",
+    "resolutionMp": 4,
+    "pixelWidth": 2560,
+    "pixelHeight": 1440,
+    "lens": { "kind": "fixed", "focalMm": 2.8, "hfovDeg": 98, "vfovDeg": 54 },
+    "illuminationRangeM": 30,
+    "illuminationType": "dual",
+    "manufacturerDoriM": { "detect": 63, "observe": 25, "recognize": 12, "identify": 6 },
+    "ingressRatings": ["IP67"],
+    "ikRating": null,
+    "hasBuiltInMic": true,
+    "hasBuiltInSpeaker": false,
+    "hasAudioInPort": false,
+    "hasAudioOutPort": false,
+    "detectionTypes": ["human", "vehicle"],
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/sm000042445/DS-2CD1043G2-LIUF_Datasheet_20260409.pdf",
+    "sourceRetrieved": "2026-10-05",
+    "priceVn": { "amountVnd": 1375000, "sourceUrl": "https://vuhoangtelecom.vn/san-pham/camera-ip-4mp-than-tru-hikvision-ds-2cd1043g2-liuf/", "retrieved": "2026-10-05" },
+    "notes": "4MP Smart Hybrid Light fixed bullet. Budget Value Series. Datasheet p.2: '2.8 mm, horizontal FOV 98deg, vertical FOV 54deg, diagonal FOV 114deg'. Dual illumination: IR + White Light up to 30m. DORI: 63/25/12/6m. -LIUF variant: same datasheet, '-F: Built-in memory card slot'."
+  },
+  {
+    "id": "hikvision-ds-2cd1043g2-liuf-4mm",
+    "brand": "hikvision",
+    "model": "DS-2CD1043G2-LIUF",
+    "formFactor": "bullet",
+    "resolutionMp": 4,
+    "pixelWidth": 2560,
+    "pixelHeight": 1440,
+    "lens": { "kind": "fixed", "focalMm": 4, "hfovDeg": 78, "vfovDeg": 42 },
+    "illuminationRangeM": 30,
+    "illuminationType": "dual",
+    "manufacturerDoriM": { "detect": 78, "observe": 31, "recognize": 15, "identify": 7 },
+    "ingressRatings": ["IP67"],
+    "ikRating": null,
+    "hasBuiltInMic": true,
+    "hasBuiltInSpeaker": false,
+    "hasAudioInPort": false,
+    "hasAudioOutPort": false,
+    "detectionTypes": ["human", "vehicle"],
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/sm000042445/DS-2CD1043G2-LIUF_Datasheet_20260409.pdf",
+    "sourceRetrieved": "2026-10-05",
+    "priceVn": { "amountVnd": 1375000, "sourceUrl": "https://vuhoangtelecom.vn/san-pham/camera-ip-4mp-than-tru-hikvision-ds-2cd1043g2-liuf/", "retrieved": "2026-10-05" },
+    "notes": "Same datasheet as 2.8mm variant, p.2: '4 mm, horizontal FOV 78deg, vertical FOV 42deg, diagonal FOV 93deg'. DORI: 78/31/15/7m. -LIUF variant: same datasheet, '-F: Built-in memory card slot'."
+  },
+  {
+    "id": "hikvision-ds-2cd1b47g3h-liu-2.8mm",
+    "brand": "hikvision",
+    "model": "DS-2CD1B47G3H-LIU",
+    "formFactor": "bullet",
+    "resolutionMp": 4,
+    "pixelWidth": 2560,
+    "pixelHeight": 1440,
+    "lens": {
+      "kind": "fixed",
+      "focalMm": 2.8,
+      "hfovDeg": 104,
+      "vfovDeg": 54.4
+    },
+    "illuminationRangeM": 50,
+    "illuminationType": "dual",
+    "manufacturerDoriM": {
+      "detect": 61,
+      "observe": 24,
+      "recognize": 12,
+      "identify": 6
+    },
+    "ingressRatings": [
+      "IP67"
+    ],
+    "ikRating": null,
+    "hasBuiltInMic": true,
+    "hasBuiltInSpeaker": false,
+    "hasAudioInPort": false,
+    "hasAudioOutPort": false,
+    "detectionTypes": [
+      "human",
+      "vehicle"
+    ],
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/sm000094507/DS-2CD1B47G3H-LIUF_Datasheet_20250619.pdf",
+    "sourceRetrieved": "2026-10-06",
+    "priceVn": {
+      "amountVnd": 1958000,
+      "sourceUrl": "https://smnet.vn/san-pham/camera-ip-4mp-hikvision-ds-2cd1b47g3h-liuf-srb/",
+      "retrieved": "2026-10-06"
+    },
+    "purchaseLinks": {
+      "primary": {
+        "shop": "shopee",
+        "url": "https://shopee.vn/product/1131061889/52161388791",
+        "amountVnd": 2359000,
+        "retrieved": "2026-10-06"
+      },
+      "secondary": {
+        "shop": "smnet",
+        "url": "https://smnet.vn/san-pham/camera-ip-4mp-hikvision-ds-2cd1b47g3h-liuf-srb/",
+        "amountVnd": 1958000,
+        "retrieved": "2026-10-06"
+      }
+    },
+    "notes": "4 MP ColorVu 3.0 Fixed Bullet Network Camera. Datasheet (DS-2CD1B47G3H-LIU(F)): '2.8 mm, horizontal FOV 104deg, vertical FOV 54.4deg, diagonal FOV 126.7deg'. Supplement light: Up to 50 m. Shops in Vietnam sell the /SRB variant; no official datasheet for it was found, so its strobe light and speaker are not recorded. priceVn is the Vietnam listing for the -LIUF/SRB variant, not this exact model string."
+  },
+  {
+    "id": "hikvision-ds-2cd1b47g3h-liu-4mm",
+    "brand": "hikvision",
+    "model": "DS-2CD1B47G3H-LIU",
+    "formFactor": "bullet",
+    "resolutionMp": 4,
+    "pixelWidth": 2560,
+    "pixelHeight": 1440,
+    "lens": {
+      "kind": "fixed",
+      "focalMm": 4,
+      "hfovDeg": 89.3,
+      "vfovDeg": 48.2
+    },
+    "illuminationRangeM": 50,
+    "illuminationType": "dual",
+    "manufacturerDoriM": {
+      "detect": 68,
+      "observe": 27,
+      "recognize": 13,
+      "identify": 6
+    },
+    "ingressRatings": [
+      "IP67"
+    ],
+    "ikRating": null,
+    "hasBuiltInMic": true,
+    "hasBuiltInSpeaker": false,
+    "hasAudioInPort": false,
+    "hasAudioOutPort": false,
+    "detectionTypes": [
+      "human",
+      "vehicle"
+    ],
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/sm000094507/DS-2CD1B47G3H-LIUF_Datasheet_20250619.pdf",
+    "sourceRetrieved": "2026-10-06",
+    "priceVn": {
+      "amountVnd": 1958000,
+      "sourceUrl": "https://smnet.vn/san-pham/camera-ip-4mp-hikvision-ds-2cd1b47g3h-liuf-srb/",
+      "retrieved": "2026-10-06"
+    },
+    "purchaseLinks": {
+      "primary": {
+        "shop": "shopee",
+        "url": "https://shopee.vn/product/1131061889/52161388791",
+        "amountVnd": 2359000,
+        "retrieved": "2026-10-06"
+      },
+      "secondary": {
+        "shop": "smnet",
+        "url": "https://smnet.vn/san-pham/camera-ip-4mp-hikvision-ds-2cd1b47g3h-liuf-srb/",
+        "amountVnd": 1958000,
+        "retrieved": "2026-10-06"
+      }
+    },
+    "notes": "4 MP ColorVu 3.0 Fixed Bullet Network Camera. Datasheet (DS-2CD1B47G3H-LIU(F)): '4 mm, horizontal FOV 89.3deg, vertical FOV 48.2deg, diagonal FOV 106.5deg'. Supplement light: Up to 50 m. Shops in Vietnam sell the /SRB variant; no official datasheet for it was found, so its strobe light and speaker are not recorded. priceVn is the Vietnam listing for the -LIUF/SRB variant, not this exact model string."
+  },
+  {
+    "id": "hikvision-ds-2cd1047g3h-liu-srb-2.8mm",
+    "brand": "hikvision",
+    "model": "DS-2CD1047G3H-LIU/SRB",
+    "formFactor": "bullet",
+    "resolutionMp": 4,
+    "pixelWidth": 2560,
+    "pixelHeight": 1440,
+    "lens": {
+      "kind": "fixed",
+      "focalMm": 2.8,
+      "hfovDeg": 104,
+      "vfovDeg": 54.4
+    },
+    "illuminationRangeM": 30,
+    "illuminationType": "dual",
+    "manufacturerDoriM": {
+      "detect": 61,
+      "observe": 24,
+      "recognize": 12,
+      "identify": 6
+    },
+    "ingressRatings": [
+      "IP67"
+    ],
+    "ikRating": null,
+    "hasBuiltInMic": true,
+    "hasBuiltInSpeaker": true,
+    "hasAudioInPort": false,
+    "hasAudioOutPort": false,
+    "detectionTypes": [
+      "human",
+      "vehicle"
+    ],
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/sm000094491/DS-2CD1047G3H-LIUF_SLRB_Datasheet_20251030.pdf",
+    "sourceRetrieved": "2026-10-06",
+    "priceVn": {
+      "amountVnd": 1578000,
+      "sourceUrl": "https://panaco.vn/camera-ip-hikvision-4mp-ds-2cd1047g3h-liuf-srb/",
+      "retrieved": "2026-10-06"
+    },
+    "purchaseLinks": {
+      "primary": {
+        "shop": "shopee",
+        "url": "https://shopee.vn/product/1131061889/49507449719",
+        "amountVnd": 2269000,
+        "retrieved": "2026-10-06"
+      },
+      "secondary": {
+        "shop": "panaco",
+        "url": "https://panaco.vn/camera-ip-hikvision-4mp-ds-2cd1047g3h-liuf-srb/",
+        "amountVnd": 1578000,
+        "retrieved": "2026-10-06"
+      }
+    },
+    "notes": "4 MP ColorVu 3.0 Fixed Bullet Network Camera. Datasheet (DS-2CD1047G3H-LIU(F)/S(L)(RB)): '2.8 mm, horizontal FOV 104deg, vertical FOV 54.4deg, diagonal FOV 126.7deg'. Supplement light: Up to 30 m. priceVn is the Vietnam listing for the -LIUF/SRB variant, not this exact model string."
+  },
+  {
+    "id": "hikvision-ds-2cd1047g3h-liu-srb-4mm",
+    "brand": "hikvision",
+    "model": "DS-2CD1047G3H-LIU/SRB",
+    "formFactor": "bullet",
+    "resolutionMp": 4,
+    "pixelWidth": 2560,
+    "pixelHeight": 1440,
+    "lens": {
+      "kind": "fixed",
+      "focalMm": 4,
+      "hfovDeg": 89.3,
+      "vfovDeg": 48.2
+    },
+    "illuminationRangeM": 30,
+    "illuminationType": "dual",
+    "manufacturerDoriM": {
+      "detect": 68,
+      "observe": 27,
+      "recognize": 13,
+      "identify": 6
+    },
+    "ingressRatings": [
+      "IP67"
+    ],
+    "ikRating": null,
+    "hasBuiltInMic": true,
+    "hasBuiltInSpeaker": true,
+    "hasAudioInPort": false,
+    "hasAudioOutPort": false,
+    "detectionTypes": [
+      "human",
+      "vehicle"
+    ],
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/sm000094491/DS-2CD1047G3H-LIUF_SLRB_Datasheet_20251030.pdf",
+    "sourceRetrieved": "2026-10-06",
+    "priceVn": {
+      "amountVnd": 1578000,
+      "sourceUrl": "https://panaco.vn/camera-ip-hikvision-4mp-ds-2cd1047g3h-liuf-srb/",
+      "retrieved": "2026-10-06"
+    },
+    "purchaseLinks": {
+      "primary": {
+        "shop": "shopee",
+        "url": "https://shopee.vn/product/1131061889/49507449719",
+        "amountVnd": 2269000,
+        "retrieved": "2026-10-06"
+      },
+      "secondary": {
+        "shop": "panaco",
+        "url": "https://panaco.vn/camera-ip-hikvision-4mp-ds-2cd1047g3h-liuf-srb/",
+        "amountVnd": 1578000,
+        "retrieved": "2026-10-06"
+      }
+    },
+    "notes": "4 MP ColorVu 3.0 Fixed Bullet Network Camera. Datasheet (DS-2CD1047G3H-LIU(F)/S(L)(RB)): '4 mm, horizontal FOV 89.3deg, vertical FOV 48.2deg, diagonal FOV 106.5deg'. Supplement light: Up to 30 m. priceVn is the Vietnam listing for the -LIUF/SRB variant, not this exact model string."
+  },
+  {
+    "id": "hikvision-ds-2cd1047g2h-liu-2.8mm",
+    "brand": "hikvision",
+    "model": "DS-2CD1047G2H-LIU",
+    "formFactor": "bullet",
+    "resolutionMp": 4,
+    "pixelWidth": 2560,
+    "pixelHeight": 1440,
+    "lens": {
+      "kind": "fixed",
+      "focalMm": 2.8,
+      "hfovDeg": 115,
+      "vfovDeg": 60
+    },
+    "illuminationRangeM": 30,
+    "illuminationType": "dual",
+    "manufacturerDoriM": {
+      "detect": 64,
+      "observe": 25,
+      "recognize": 12,
+      "identify": 6
+    },
+    "ingressRatings": [
+      "IP67"
+    ],
+    "ikRating": null,
+    "hasBuiltInMic": true,
+    "hasBuiltInSpeaker": false,
+    "hasAudioInPort": false,
+    "hasAudioOutPort": false,
+    "detectionTypes": [
+      "human",
+      "vehicle"
+    ],
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/sm000059814/DS-2CD1047G2H-LIUF_Datasheet_20241128.pdf",
+    "sourceRetrieved": "2026-10-06",
+    "priceVn": {
+      "amountVnd": 1499000,
+      "sourceUrl": "https://hacom.vn/camera-hikvision-ds-2cd1047g2h-liuf",
+      "retrieved": "2026-10-06"
+    },
+    "purchaseLinks": {
+      "primary": {
+        "shop": "shopee",
+        "url": "https://shopee.vn/product/1131061889/56108330770",
+        "amountVnd": 1769000,
+        "retrieved": "2026-10-06"
+      },
+      "secondary": {
+        "shop": "hacom",
+        "url": "https://hacom.vn/camera-hikvision-ds-2cd1047g2h-liuf",
+        "amountVnd": 1499000,
+        "retrieved": "2026-10-06"
+      }
+    },
+    "notes": "4MP ColorVu with Smart Hybrid Light Fixed Bullet Network Camera. Datasheet (DS-2CD1047G2H-LIU(F)): '2.8 mm, horizontal FOV 115deg, vertical FOV 60deg, diagonal FOV 143deg'. Supplement light: Up to 30 m. priceVn is the Vietnam listing for the -LIUF variant, not this exact model string."
+  },
+  {
+    "id": "hikvision-ds-2cd1047g2h-liu-4mm",
+    "brand": "hikvision",
+    "model": "DS-2CD1047G2H-LIU",
+    "formFactor": "bullet",
+    "resolutionMp": 4,
+    "pixelWidth": 2560,
+    "pixelHeight": 1440,
+    "lens": {
+      "kind": "fixed",
+      "focalMm": 4,
+      "hfovDeg": 94,
+      "vfovDeg": 50
+    },
+    "illuminationRangeM": 30,
+    "illuminationType": "dual",
+    "manufacturerDoriM": {
+      "detect": 77,
+      "observe": 30,
+      "recognize": 15,
+      "identify": 7
+    },
+    "ingressRatings": [
+      "IP67"
+    ],
+    "ikRating": null,
+    "hasBuiltInMic": true,
+    "hasBuiltInSpeaker": false,
+    "hasAudioInPort": false,
+    "hasAudioOutPort": false,
+    "detectionTypes": [
+      "human",
+      "vehicle"
+    ],
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/sm000059814/DS-2CD1047G2H-LIUF_Datasheet_20241128.pdf",
+    "sourceRetrieved": "2026-10-06",
+    "priceVn": {
+      "amountVnd": 1499000,
+      "sourceUrl": "https://hacom.vn/camera-hikvision-ds-2cd1047g2h-liuf",
+      "retrieved": "2026-10-06"
+    },
+    "purchaseLinks": {
+      "primary": {
+        "shop": "shopee",
+        "url": "https://shopee.vn/product/1131061889/56108330770",
+        "amountVnd": 1769000,
+        "retrieved": "2026-10-06"
+      },
+      "secondary": {
+        "shop": "hacom",
+        "url": "https://hacom.vn/camera-hikvision-ds-2cd1047g2h-liuf",
+        "amountVnd": 1499000,
+        "retrieved": "2026-10-06"
+      }
+    },
+    "notes": "4MP ColorVu with Smart Hybrid Light Fixed Bullet Network Camera. Datasheet (DS-2CD1047G2H-LIU(F)): '4 mm, horizontal FOV 94deg, vertical FOV 50deg, diagonal FOV 110deg'. Supplement light: Up to 30 m. priceVn is the Vietnam listing for the -LIUF variant, not this exact model string."
+  },
+  {
+    "id": "hikvision-ds-2cd1t47g2h-liu-2.8mm",
+    "brand": "hikvision",
+    "model": "DS-2CD1T47G2H-LIU",
+    "formFactor": "bullet",
+    "resolutionMp": 4,
+    "pixelWidth": 2560,
+    "pixelHeight": 1440,
+    "lens": {
+      "kind": "fixed",
+      "focalMm": 2.8,
+      "hfovDeg": 115,
+      "vfovDeg": 60
+    },
+    "illuminationRangeM": 50,
+    "illuminationType": "dual",
+    "manufacturerDoriM": {
+      "detect": 64,
+      "observe": 25,
+      "recognize": 12,
+      "identify": 6
+    },
+    "ingressRatings": [
+      "IP67"
+    ],
+    "ikRating": null,
+    "hasBuiltInMic": true,
+    "hasBuiltInSpeaker": false,
+    "hasAudioInPort": false,
+    "hasAudioOutPort": false,
+    "detectionTypes": [
+      "human",
+      "vehicle"
+    ],
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/sm000059807/DS-2CD1T47G2H-LIUF_Datasheet_20240527.pdf",
+    "sourceRetrieved": "2026-10-06",
+    "priceVn": {
+      "amountVnd": 1790000,
+      "sourceUrl": "https://meta.vn/camera-ip-4mp-than-tru-hikvision-ds-2cd1t47g2h-liuf-p105137",
+      "retrieved": "2026-10-06"
+    },
+    "purchaseLinks": {
+      "primary": {
+        "shop": "shopee",
+        "url": "https://shopee.vn/product/1131061889/49515947195",
+        "amountVnd": 1809000,
+        "retrieved": "2026-10-06"
+      },
+      "secondary": {
+        "shop": "meta",
+        "url": "https://meta.vn/camera-ip-4mp-than-tru-hikvision-ds-2cd1t47g2h-liuf-p105137",
+        "amountVnd": 1790000,
+        "retrieved": "2026-10-06"
+      }
+    },
+    "notes": "4 MP ColorVu with Smart Hybrid Light Fixed Bullet Network Camera. Datasheet (DS-2CD1T47G2H-LIU(F)): '2.8 mm, horizontal FOV 115deg, vertical FOV 60deg, diagonal FOV 143deg'. Supplement light: Up to 50 m. priceVn is the Vietnam listing for the -LIUF variant, not this exact model string."
+  },
+  {
+    "id": "hikvision-ds-2cd1t47g2h-liu-4mm",
+    "brand": "hikvision",
+    "model": "DS-2CD1T47G2H-LIU",
+    "formFactor": "bullet",
+    "resolutionMp": 4,
+    "pixelWidth": 2560,
+    "pixelHeight": 1440,
+    "lens": {
+      "kind": "fixed",
+      "focalMm": 4,
+      "hfovDeg": 94,
+      "vfovDeg": 50
+    },
+    "illuminationRangeM": 50,
+    "illuminationType": "dual",
+    "manufacturerDoriM": {
+      "detect": 77,
+      "observe": 30,
+      "recognize": 15,
+      "identify": 7
+    },
+    "ingressRatings": [
+      "IP67"
+    ],
+    "ikRating": null,
+    "hasBuiltInMic": true,
+    "hasBuiltInSpeaker": false,
+    "hasAudioInPort": false,
+    "hasAudioOutPort": false,
+    "detectionTypes": [
+      "human",
+      "vehicle"
+    ],
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/sm000059807/DS-2CD1T47G2H-LIUF_Datasheet_20240527.pdf",
+    "sourceRetrieved": "2026-10-06",
+    "priceVn": {
+      "amountVnd": 1790000,
+      "sourceUrl": "https://meta.vn/camera-ip-4mp-than-tru-hikvision-ds-2cd1t47g2h-liuf-p105137",
+      "retrieved": "2026-10-06"
+    },
+    "purchaseLinks": {
+      "primary": {
+        "shop": "shopee",
+        "url": "https://shopee.vn/product/1131061889/49515947195",
+        "amountVnd": 1809000,
+        "retrieved": "2026-10-06"
+      },
+      "secondary": {
+        "shop": "meta",
+        "url": "https://meta.vn/camera-ip-4mp-than-tru-hikvision-ds-2cd1t47g2h-liuf-p105137",
+        "amountVnd": 1790000,
+        "retrieved": "2026-10-06"
+      }
+    },
+    "notes": "4 MP ColorVu with Smart Hybrid Light Fixed Bullet Network Camera. Datasheet (DS-2CD1T47G2H-LIU(F)): '4 mm, horizontal FOV 94deg, vertical FOV 50deg, diagonal FOV 110deg'. Supplement light: Up to 50 m. priceVn is the Vietnam listing for the -LIUF variant, not this exact model string."
+  },
+  {
+    "id": "hikvision-ds-2cd1t67g2h-liu-2.8mm",
+    "brand": "hikvision",
+    "model": "DS-2CD1T67G2H-LIU",
+    "formFactor": "bullet",
+    "resolutionMp": 6,
+    "pixelWidth": 3200,
+    "pixelHeight": 1800,
+    "lens": {
+      "kind": "fixed",
+      "focalMm": 2.8,
+      "hfovDeg": 115,
+      "vfovDeg": 60
+    },
+    "illuminationRangeM": 50,
+    "illuminationType": "dual",
+    "manufacturerDoriM": {
+      "detect": 64,
+      "observe": 25,
+      "recognize": 12,
+      "identify": 6
+    },
+    "ingressRatings": [
+      "IP67"
+    ],
+    "ikRating": null,
+    "hasBuiltInMic": true,
+    "hasBuiltInSpeaker": false,
+    "hasAudioInPort": false,
+    "hasAudioOutPort": false,
+    "detectionTypes": [
+      "human",
+      "vehicle"
+    ],
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/sm000059799/DS-2CD1T67G2H-LIUF_Datasheet_20240527.pdf",
+    "sourceRetrieved": "2026-10-06",
+    "priceVn": {
+      "amountVnd": 1740000,
+      "sourceUrl": "https://viethansecurity.com/camera-than-ngoai-troi-6mp-hikvision-ds-2cd1t67g2h-liuf.html",
+      "retrieved": "2026-10-06"
+    },
+    "purchaseLinks": {
+      "primary": {
+        "shop": "shopee",
+        "url": "https://shopee.vn/product/1131061889/56015807364",
+        "amountVnd": 2189000,
+        "retrieved": "2026-10-06"
+      },
+      "secondary": {
+        "shop": "viethansecurity",
+        "url": "https://viethansecurity.com/camera-than-ngoai-troi-6mp-hikvision-ds-2cd1t67g2h-liuf.html",
+        "amountVnd": 1740000,
+        "retrieved": "2026-10-06"
+      }
+    },
+    "notes": "6 MP ColorVu with Smart Hybrid Light Fixed Bullet Network Camera. Datasheet (DS-2CD1T67G2H-LIU(F)): '2.8 mm, horizontal FOV 115deg, vertical FOV 60deg, diagonal FOV 143deg'. Supplement light: Up to 50 m. priceVn is the Vietnam listing for the -LIUF variant, not this exact model string."
+  },
+  {
+    "id": "hikvision-ds-2cd1t67g2h-liu-4mm",
+    "brand": "hikvision",
+    "model": "DS-2CD1T67G2H-LIU",
+    "formFactor": "bullet",
+    "resolutionMp": 6,
+    "pixelWidth": 3200,
+    "pixelHeight": 1800,
+    "lens": {
+      "kind": "fixed",
+      "focalMm": 4,
+      "hfovDeg": 94,
+      "vfovDeg": 50
+    },
+    "illuminationRangeM": 50,
+    "illuminationType": "dual",
+    "manufacturerDoriM": {
+      "detect": 77,
+      "observe": 30,
+      "recognize": 15,
+      "identify": 7
+    },
+    "ingressRatings": [
+      "IP67"
+    ],
+    "ikRating": null,
+    "hasBuiltInMic": true,
+    "hasBuiltInSpeaker": false,
+    "hasAudioInPort": false,
+    "hasAudioOutPort": false,
+    "detectionTypes": [
+      "human",
+      "vehicle"
+    ],
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/sm000059799/DS-2CD1T67G2H-LIUF_Datasheet_20240527.pdf",
+    "sourceRetrieved": "2026-10-06",
+    "priceVn": {
+      "amountVnd": 1740000,
+      "sourceUrl": "https://viethansecurity.com/camera-than-ngoai-troi-6mp-hikvision-ds-2cd1t67g2h-liuf.html",
+      "retrieved": "2026-10-06"
+    },
+    "purchaseLinks": {
+      "primary": {
+        "shop": "shopee",
+        "url": "https://shopee.vn/product/1131061889/56015807364",
+        "amountVnd": 2189000,
+        "retrieved": "2026-10-06"
+      },
+      "secondary": {
+        "shop": "viethansecurity",
+        "url": "https://viethansecurity.com/camera-than-ngoai-troi-6mp-hikvision-ds-2cd1t67g2h-liuf.html",
+        "amountVnd": 1740000,
+        "retrieved": "2026-10-06"
+      }
+    },
+    "notes": "6 MP ColorVu with Smart Hybrid Light Fixed Bullet Network Camera. Datasheet (DS-2CD1T67G2H-LIU(F)): '4 mm, horizontal FOV 94deg, vertical FOV 50deg, diagonal FOV 110deg'. Supplement light: Up to 50 m. priceVn is the Vietnam listing for the -LIUF variant, not this exact model string."
+  },
+  {
+    "id": "hikvision-ds-2cd2083g2-li2u-2.8mm",
+    "brand": "hikvision",
+    "model": "DS-2CD2083G2-LI2U",
+    "formFactor": "bullet",
+    "resolutionMp": 8,
+    "pixelWidth": 3840,
+    "pixelHeight": 2160,
+    "lens": {
+      "kind": "fixed",
+      "focalMm": 2.8,
+      "hfovDeg": 108,
+      "vfovDeg": 59
+    },
+    "illuminationRangeM": 40,
+    "illuminationType": "dual",
+    "manufacturerDoriM": {
+      "detect": 84,
+      "observe": 33,
+      "recognize": 16,
+      "identify": 8
+    },
+    "ingressRatings": [
+      "IP67"
+    ],
+    "ikRating": null,
+    "hasBuiltInMic": true,
+    "hasBuiltInSpeaker": false,
+    "hasAudioInPort": false,
+    "hasAudioOutPort": false,
+    "detectionTypes": [
+      "human",
+      "vehicle",
+      "face"
+    ],
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000117783/DS-2CD2083G2-LI2U_Datasheet_20260105.pdf",
+    "sourceRetrieved": "2026-10-06",
+    "priceVn": {
+      "amountVnd": 3580000,
+      "sourceUrl": "https://vuhoangtelecom.vn/san-pham/camera-ip-than-tru-8mp-hikvision-ds-2cd2083g2-li2u/",
+      "retrieved": "2026-10-06"
+    },
+    "purchaseLinks": {
+      "primary": {
+        "shop": "shopee",
+        "url": "https://shopee.vn/product/1131061889/52217567560",
+        "amountVnd": 3489000,
+        "retrieved": "2026-10-06"
+      },
+      "secondary": {
+        "shop": "vuhoangtelecom",
+        "url": "https://vuhoangtelecom.vn/san-pham/camera-ip-than-tru-8mp-hikvision-ds-2cd2083g2-li2u/",
+        "amountVnd": 3580000,
+        "retrieved": "2026-10-06"
+      }
+    },
+    "notes": "8 MP Acusense Smart Hybrid Light Fixed Bullet Network Camera. Datasheet (DS-2CD2083G2-LI2U): '2.8 mm, horizontal FOV 108deg, vertical FOV 59deg, diagonal FOV 127deg'. Supplement light: Up to 40 m. Datasheet prints 'Built-in Microphone: -2U: Dual Array Microphone'."
+  },
+  {
+    "id": "hikvision-ds-2cd2083g2-li2u-4mm",
+    "brand": "hikvision",
+    "model": "DS-2CD2083G2-LI2U",
+    "formFactor": "bullet",
+    "resolutionMp": 8,
+    "pixelWidth": 3840,
+    "pixelHeight": 2160,
+    "lens": {
+      "kind": "fixed",
+      "focalMm": 4,
+      "hfovDeg": 88,
+      "vfovDeg": 44
+    },
+    "illuminationRangeM": 40,
+    "illuminationType": "dual",
+    "manufacturerDoriM": {
+      "detect": 117,
+      "observe": 46,
+      "recognize": 23,
+      "identify": 11
+    },
+    "ingressRatings": [
+      "IP67"
+    ],
+    "ikRating": null,
+    "hasBuiltInMic": true,
+    "hasBuiltInSpeaker": false,
+    "hasAudioInPort": false,
+    "hasAudioOutPort": false,
+    "detectionTypes": [
+      "human",
+      "vehicle",
+      "face"
+    ],
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000117783/DS-2CD2083G2-LI2U_Datasheet_20260105.pdf",
+    "sourceRetrieved": "2026-10-06",
+    "priceVn": {
+      "amountVnd": 3580000,
+      "sourceUrl": "https://vuhoangtelecom.vn/san-pham/camera-ip-than-tru-8mp-hikvision-ds-2cd2083g2-li2u/",
+      "retrieved": "2026-10-06"
+    },
+    "purchaseLinks": {
+      "primary": {
+        "shop": "shopee",
+        "url": "https://shopee.vn/product/1131061889/52217567560",
+        "amountVnd": 3489000,
+        "retrieved": "2026-10-06"
+      },
+      "secondary": {
+        "shop": "vuhoangtelecom",
+        "url": "https://vuhoangtelecom.vn/san-pham/camera-ip-than-tru-8mp-hikvision-ds-2cd2083g2-li2u/",
+        "amountVnd": 3580000,
+        "retrieved": "2026-10-06"
+      }
+    },
+    "notes": "8 MP Acusense Smart Hybrid Light Fixed Bullet Network Camera. Datasheet (DS-2CD2083G2-LI2U): '4 mm, horizontal FOV 88deg, vertical FOV 44deg, diagonal FOV 105deg'. Supplement light: Up to 40 m. Datasheet prints 'Built-in Microphone: -2U: Dual Array Microphone'."
+  },
+  {
+    "id": "hikvision-ds-2cd2083g2-li2u-6mm",
+    "brand": "hikvision",
+    "model": "DS-2CD2083G2-LI2U",
+    "formFactor": "bullet",
+    "resolutionMp": 8,
+    "pixelWidth": 3840,
+    "pixelHeight": 2160,
+    "lens": {
+      "kind": "fixed",
+      "focalMm": 6,
+      "hfovDeg": 54,
+      "vfovDeg": 29
+    },
+    "illuminationRangeM": 40,
+    "illuminationType": "dual",
+    "manufacturerDoriM": {
+      "detect": 176,
+      "observe": 70,
+      "recognize": 35,
+      "identify": 17
+    },
+    "ingressRatings": [
+      "IP67"
+    ],
+    "ikRating": null,
+    "hasBuiltInMic": true,
+    "hasBuiltInSpeaker": false,
+    "hasAudioInPort": false,
+    "hasAudioOutPort": false,
+    "detectionTypes": [
+      "human",
+      "vehicle",
+      "face"
+    ],
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000117783/DS-2CD2083G2-LI2U_Datasheet_20260105.pdf",
+    "sourceRetrieved": "2026-10-06",
+    "priceVn": {
+      "amountVnd": 3580000,
+      "sourceUrl": "https://vuhoangtelecom.vn/san-pham/camera-ip-than-tru-8mp-hikvision-ds-2cd2083g2-li2u/",
+      "retrieved": "2026-10-06"
+    },
+    "purchaseLinks": {
+      "primary": {
+        "shop": "shopee",
+        "url": "https://shopee.vn/product/1131061889/52217567560",
+        "amountVnd": 3489000,
+        "retrieved": "2026-10-06"
+      },
+      "secondary": {
+        "shop": "vuhoangtelecom",
+        "url": "https://vuhoangtelecom.vn/san-pham/camera-ip-than-tru-8mp-hikvision-ds-2cd2083g2-li2u/",
+        "amountVnd": 3580000,
+        "retrieved": "2026-10-06"
+      }
+    },
+    "notes": "8 MP Acusense Smart Hybrid Light Fixed Bullet Network Camera. Datasheet (DS-2CD2083G2-LI2U): '6 mm, horizontal FOV 54deg, vertical FOV 29deg, diagonal FOV 63deg'. Supplement light: Up to 40 m. Datasheet prints 'Built-in Microphone: -2U: Dual Array Microphone'."
+  }
+]

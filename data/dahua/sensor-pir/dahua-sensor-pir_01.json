@@ -1,0 +1,14 @@
+[
+  {
+    "id": "dahua-ard2251e-w2-v-pir",
+    "kind": "pir",
+    "brand": "dahua",
+    "model": "DHI-ARD2251E-W2(V)",
+    "coverage": { "rangeM": 15, "angleDeg": 90 },
+    "sourceUrl": "https://materialfile.dahuasecurity.com/uploads/cpq/prm-os-srv-res/smart/datasheetzipfiles/ARD2251E-W2(V)_datasheet_20241106.pdf",
+    "sourceRetrieved": "2026-10-06",
+    "priceVn": null,
+    "purchaseLinks": null,
+    "notes": "Wireless outdoor PIR-camera (compatible only with the ARC3800H alarm hub series). Datasheet p.1: 'Detection Range / Angle:90 deg; Range:15 m (49.21 ft), the installation height is 1 m (3.28 ft)'. The device also has a built-in snapshot camera with its own 'Field of View 110 deg (H); 60 deg (V)' - that is the camera's optical FOV, not the PIR detection angle, and is not modelled. No Vietnamese reseller price found for this exact model (only general Dahua outdoor-camera price ranges, not this SKU) - priceVn null."
+  }
+]

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { useProjectStore } from './project-store'
-import type { PlacedCamera, Wall } from '../domain/project-types'
-import type { PlacedSectorSensor } from '../domain/sensor-types'
+import type { PlacedCamera, Wall } from '../domain/project-file/project-types'
+import type { PlacedSectorSensor } from '../domain/sensor/sensor-types'
 
 function makeCamera(overrides: Partial<PlacedCamera> = {}): PlacedCamera {
   return { id: 'cam-1', modelId: 'hik-dome-2.8', x: 10, y: 10, rotationDeg: 0, rangeM: 10, ...overrides }
