@@ -1,21 +1,36 @@
 import { groupCamerasIntoBom } from '../domain/bill-of-materials-grouping'
+import { groupSensorsIntoBom } from '../domain/sensor-bill-of-materials-grouping'
 import { computeBomStripLayout, computeExportScale } from '../domain/export-image-layout-calculator'
 import { resolveEffectiveHfovDeg } from '../domain/camera-coverage-resolver'
 import { isApproximateDoriModel } from '../domain/dori-zone-distance-calculator'
 import type { PlacedCamera, PlanImage, ScaleCalibration, Wall } from '../domain/project-types'
+import { SENSOR_KIND_DISPLAY_ORDER, type PlacedSensor, type SensorKind, type SensorModelSpec } from '../domain/sensor-types'
+import { hasGlassWallClippingAnySensor } from '../domain/sensor-wall-blocking-rules'
 import { triggerBrowserFileDownload } from '../file-io/trigger-browser-file-download'
 import { buildCameraModelByIdRecord } from './camera-model-by-id-record'
+import { buildSensorModelByIdRecord } from './sensor-model-by-id-record'
 import { canAllocateCanvas, SAFARI_SAFE_MAX_CANVAS_PIXELS, SAFARI_SAFE_MAX_CANVAS_SIDE_PX } from './probe-max-canvas-size'
 import { renderPlanToOffscreenCanvas } from './render-plan-to-offscreen-canvas'
 import { drawBomTableAndLegendStrip } from './draw-bom-table-and-legend-strip'
 import { isPixelDataBlank, type RgbaSample } from './is-pixel-data-blank'
 import { sanitizeExportFileName } from './sanitize-export-file-name'
 
+/** Unique kinds among `sensors` whose model is known (skips a dangling `modelId`, same as the BOM grouping), in `SENSOR_KIND_DISPLAY_ORDER`. */
+function resolveSensorKindsPresent(sensors: readonly PlacedSensor[], sensorModelById: Record<string, SensorModelSpec>): SensorKind[] {
+  const present = new Set<SensorKind>()
+  for (const sensor of sensors) {
+    const model = sensorModelById[sensor.modelId]
+    if (model) present.add(model.kind)
+  }
+  return SENSOR_KIND_DISPLAY_ORDER.filter((kind) => present.has(kind))
+}
+
 export interface ExportPlanPngOptions {
   decodedImage: HTMLImageElement
   image: PlanImage
   cameras: PlacedCamera[]
   walls: Wall[]
+  sensors: PlacedSensor[]
   /** Null is valid (e.g. exporting before calibrating) - the plan still renders at a 1:1 pixel/unit fallback, matching `floor-plan-stage.tsx`'s own `scale?.planPxPerMeter ?? 1`. */
   scale: ScaleCalibration | null
   /** Injectable for deterministic tests; defaults to "now". */
@@ -68,8 +83,11 @@ function sampleCanvasPixels(ctx: CanvasRenderingContext2D, widthPx: number, heig
  */
 export async function exportPlanPng(options: ExportPlanPngOptions): Promise<void> {
   const modelById = buildCameraModelByIdRecord()
-  const rows = groupCamerasIntoBom(options.cameras, modelById)
-  const layout = computeBomStripLayout(options.image.widthPx, rows.length)
+  const sensorModelById = buildSensorModelByIdRecord()
+  const rows = [...groupCamerasIntoBom(options.cameras, modelById), ...groupSensorsIntoBom(options.sensors, sensorModelById)]
+  const sensorKindsPresent = resolveSensorKindsPresent(options.sensors, sensorModelById)
+  const legendLineCount = sensorKindsPresent.length > 0 ? 2 : 1
+  const layout = computeBomStripLayout(options.image.widthPx, rows.length, legendLineCount)
 
   const maxPixels = options.maxCanvasPixels ?? SAFARI_SAFE_MAX_CANVAS_PIXELS
   const maxSidePx = options.maxCanvasSidePx ?? SAFARI_SAFE_MAX_CANVAS_SIDE_PX
@@ -95,6 +113,7 @@ export async function exportPlanPng(options: ExportPlanPngOptions): Promise<void
       imageHeightPx: options.image.heightPx,
       cameras: options.cameras,
       walls: options.walls,
+      sensors: options.sensors,
       planPxPerMeter: options.scale?.planPxPerMeter ?? 1,
       pixelRatio: scale,
     })
@@ -118,12 +137,17 @@ export async function exportPlanPng(options: ExportPlanPngOptions): Promise<void
 
     const scaleNote = options.scale ? `1 m = ${options.scale.planPxPerMeter.toFixed(1)} px` : 'Scale not set'
     const hasOpaqueWall = options.walls.some((wall) => wall.kind === 'opaque')
+    // A glass wall draws no occlusion note on its own (glass never clips a camera), but it
+    // DOES clip a PIR/thermal sensor's coverage - the note must appear for that combination
+    // too, not just an opaque wall.
+    const showWallOcclusionNote = hasOpaqueWall || hasGlassWallClippingAnySensor(options.walls, options.sensors, sensorModelById)
 
     drawBomTableAndLegendStrip(ctx, options.image.heightPx * scale, outputWidthPx, layout, scale, {
       rows,
-      scaleNoteText: hasOpaqueWall ? `${scaleNote}${WALL_OCCLUSION_NOTE_SUFFIX}` : scaleNote,
+      scaleNoteText: showWallOcclusionNote ? `${scaleNote}${WALL_OCCLUSION_NOTE_SUFFIX}` : scaleNote,
       dateText: `Exported ${formatIsoDate(options.now ?? new Date())}`,
       hasApproximateDoriModel,
+      sensorKindsPresent,
     })
 
     if (isPixelDataBlank(sampleCanvasPixels(ctx, outputWidthPx, outputHeightPx))) {

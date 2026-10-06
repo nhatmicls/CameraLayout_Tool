@@ -2,7 +2,11 @@ import { create } from 'zustand'
 import type { Brand, FormFactor } from '../catalog/camera-catalog-schema'
 import type { CatalogFeatureFilterKey } from '../catalog/camera-catalog-feature-filters'
 import type { WallKind } from '../domain/project-types'
+import type { SensorKind } from '../domain/sensor-types'
 import { useProjectStore } from './project-store'
+
+/** Which catalog the sidebar shows (phase 6 owns the sidebar itself; the tab state lives here so phase 4's drop/selection wiring and phase 6's panel agree on it). */
+export type CatalogTab = 'cameras' | 'sensors'
 
 /** `select`: default, drag/pan/select cameras and walls. `calibrate`: next two clicks on the stage draw a reference line. `wall`: clicks draw a chain of wall segments. */
 export type ToolMode = 'select' | 'calibrate' | 'wall'
@@ -26,8 +30,9 @@ export interface EditorUiState {
   toolMode: ToolMode
   viewport: Viewport
   selectedCameraId: string | null
-  /** At most one of `selectedCameraId` / `selectedWallId` is set: the setters clear each other, so Delete only ever removes one thing. */
+  /** At most one of `selectedCameraId` / `selectedWallId` / `selectedSensorId` is set: each setter clears the other two, so Delete only ever removes one thing. */
   selectedWallId: string | null
+  selectedSensorId: string | null
   /** Kind given to walls drawn next. */
   wallDrawKind: WallKind
   /** The decoded `HTMLImageElement` for the current plan, reused by the on-screen layer and export (phase 7). Not persisted. */
@@ -44,6 +49,10 @@ export interface EditorUiState {
   catalogPricedOnlyFilter: boolean
   /** Selected feature filter keys (outdoor rating, mic, detection...), AND-combined with the three above. UI-only: not persisted, not in undo history. */
   catalogFeatureFilters: CatalogFeatureFilterKey[]
+  /** Sidebar tab (phase 6). UI-only: not persisted, not in undo history. */
+  catalogTab: CatalogTab
+  /** Sensor catalog kind filter (phase 6). 'all' means no filtering. UI-only: not persisted, not in undo history. */
+  sensorCatalogKindFilter: SensorKind | 'all'
   /**
    * True whenever the project store has changed since the last save/load
    * (phase 6). Set automatically by the `project-store` subscription below;
@@ -58,6 +67,9 @@ export interface EditorUiActions {
   setViewport: (viewport: Viewport) => void
   setSelectedCameraId: (id: string | null) => void
   setSelectedWallId: (id: string | null) => void
+  setSelectedSensorId: (id: string | null) => void
+  /** Sets all three of `selectedCameraId` / `selectedWallId` / `selectedSensorId` to null in one update. */
+  clearSelection: () => void
   setWallDrawKind: (kind: WallKind) => void
   setDecodedImage: (image: HTMLImageElement | null) => void
   setShowCalibrationLine: (show: boolean) => void
@@ -69,6 +81,8 @@ export interface EditorUiActions {
   setCatalogPricedOnlyFilter: (pricedOnly: boolean) => void
   /** Adds the key if absent, removes it if present. */
   toggleCatalogFeatureFilter: (key: CatalogFeatureFilterKey) => void
+  setCatalogTab: (tab: CatalogTab) => void
+  setSensorCatalogKindFilter: (filter: SensorKind | 'all') => void
   setHasUnsavedChanges: (hasUnsavedChanges: boolean) => void
 }
 
@@ -81,6 +95,7 @@ export const useEditorUiStore = create<EditorUiStore>((set) => ({
   viewport: DEFAULT_VIEWPORT,
   selectedCameraId: null,
   selectedWallId: null,
+  selectedSensorId: null,
   wallDrawKind: 'opaque',
   decodedImage: null,
   showCalibrationLine: true,
@@ -90,15 +105,24 @@ export const useEditorUiStore = create<EditorUiStore>((set) => ({
   catalogFormFactorFilter: 'all',
   catalogPricedOnlyFilter: false,
   catalogFeatureFilters: [],
+  catalogTab: 'cameras',
+  sensorCatalogKindFilter: 'all',
   hasUnsavedChanges: false,
 
   setToolMode: (toolMode) => set({ toolMode }),
 
   setViewport: (viewport) => set({ viewport }),
 
-  setSelectedCameraId: (id) => set(id ? { selectedCameraId: id, selectedWallId: null } : { selectedCameraId: null }),
+  setSelectedCameraId: (id) =>
+    set(id ? { selectedCameraId: id, selectedWallId: null, selectedSensorId: null } : { selectedCameraId: null }),
 
-  setSelectedWallId: (id) => set(id ? { selectedWallId: id, selectedCameraId: null } : { selectedWallId: null }),
+  setSelectedWallId: (id) =>
+    set(id ? { selectedWallId: id, selectedCameraId: null, selectedSensorId: null } : { selectedWallId: null }),
+
+  setSelectedSensorId: (id) =>
+    set(id ? { selectedSensorId: id, selectedCameraId: null, selectedWallId: null } : { selectedSensorId: null }),
+
+  clearSelection: () => set({ selectedCameraId: null, selectedWallId: null, selectedSensorId: null }),
 
   setWallDrawKind: (wallDrawKind) => set({ wallDrawKind }),
 
@@ -128,6 +152,10 @@ export const useEditorUiStore = create<EditorUiStore>((set) => ({
         ? state.catalogFeatureFilters.filter((k) => k !== key)
         : [...state.catalogFeatureFilters, key],
     })),
+
+  setCatalogTab: (catalogTab) => set({ catalogTab }),
+
+  setSensorCatalogKindFilter: (sensorCatalogKindFilter) => set({ sensorCatalogKindFilter }),
 
   setHasUnsavedChanges: (hasUnsavedChanges) => set({ hasUnsavedChanges }),
 }))

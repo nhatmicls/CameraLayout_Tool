@@ -1,4 +1,4 @@
-import { useMemo, type RefObject } from 'react'
+import { useMemo, type ReactNode, type RefObject } from 'react'
 import { Layer } from 'react-konva'
 import { cameraModelById } from '../catalog/camera-catalog-loader'
 import { resolveEffectiveHfovDeg, resolveEffectiveVfovDeg } from '../domain/camera-coverage-resolver'
@@ -16,6 +16,8 @@ export interface CameraFovConesLayerProps {
   selectedCameraId: string | null
   /** Filled by each cone; `plan-scene-layers.tsx` drives it from the marker drag / rotate callbacks. */
   coneLiveHandles: RefObject<Map<string, ConeLiveHandle>>
+  /** Rendered inside this Layer, after every camera cone - `plan-scene-layers.tsx` passes `SensorCoverageShapes` here so sensor coverage costs zero extra Konva Layers (phase-05 layer-budget constraint). */
+  children?: ReactNode
 }
 
 /**
@@ -30,6 +32,7 @@ export function CameraFovConesLayer({
   planPxPerMeter,
   selectedCameraId,
   coneLiveHandles,
+  children,
 }: CameraFovConesLayerProps) {
   const opaqueWalls = useMemo(() => selectOpaqueWallSegments(walls), [walls])
   const wallClearancePx = metersToPlanPx(WALL_MOUNT_CLEARANCE_M, planPxPerMeter)
@@ -72,6 +75,7 @@ export function CameraFovConesLayer({
           />
         )
       })}
+      {children}
     </Layer>
   )
 }

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { useProjectStore } from './project-store'
 import type { PlacedCamera, Wall } from '../domain/project-types'
+import type { PlacedSectorSensor } from '../domain/sensor-types'
 
 function makeCamera(overrides: Partial<PlacedCamera> = {}): PlacedCamera {
   return { id: 'cam-1', modelId: 'hik-dome-2.8', x: 10, y: 10, rotationDeg: 0, rangeM: 10, ...overrides }
@@ -8,6 +9,10 @@ function makeCamera(overrides: Partial<PlacedCamera> = {}): PlacedCamera {
 
 function makeWall(overrides: Partial<Wall> = {}): Wall {
   return { id: 'wall-1', kind: 'opaque', x1: 0, y1: 0, x2: 100, y2: 0, ...overrides }
+}
+
+function makeSensor(overrides: Partial<PlacedSectorSensor> = {}): PlacedSectorSensor {
+  return { id: 'sensor-1', modelId: 'pir-1', shape: 'sector', x: 10, y: 10, rotationDeg: 0, rangeM: 10, ...overrides }
 }
 
 const OTHER_IMAGE = { dataUrl: 'data:image/png;base64,AA==', widthPx: 10, heightPx: 10, fileName: 'other.png' }
@@ -113,8 +118,83 @@ describe('useProjectStore walls', () => {
 
   it('takes its walls from replaceProject', () => {
     useProjectStore.getState().addWall(makeWall({ id: 'old' }))
-    useProjectStore.getState().replaceProject({ image: OTHER_IMAGE, scale: null, cameras: [], walls: [makeWall({ id: 'new' })] })
+    useProjectStore
+      .getState()
+      .replaceProject({ image: OTHER_IMAGE, scale: null, cameras: [], walls: [makeWall({ id: 'new' })], sensors: [] })
     expect(useProjectStore.getState().walls.map((w) => w.id)).toEqual(['new'])
+  })
+})
+
+describe('useProjectStore sensors', () => {
+  beforeEach(() => {
+    useProjectStore.getState().resetProject()
+  })
+
+  it('adds, updates and deletes a sensor, each undoable and redoable', () => {
+    const { addSensor, updateSensor, deleteSensor } = useProjectStore.getState()
+    const { undo, redo } = useProjectStore.temporal.getState()
+
+    addSensor(makeSensor())
+    expect(useProjectStore.getState().sensors).toEqual([makeSensor()])
+    undo()
+    expect(useProjectStore.getState().sensors).toEqual([])
+    redo()
+    expect(useProjectStore.getState().sensors).toEqual([makeSensor()])
+
+    updateSensor('sensor-1', { rangeM: 20 })
+    expect(useProjectStore.getState().sensors[0]).toMatchObject({ rangeM: 20 })
+    undo()
+    expect(useProjectStore.getState().sensors[0]).toMatchObject({ rangeM: 10 })
+    redo()
+    expect(useProjectStore.getState().sensors[0]).toMatchObject({ rangeM: 20 })
+
+    deleteSensor('sensor-1')
+    expect(useProjectStore.getState().sensors).toEqual([])
+    undo()
+    expect(useProjectStore.getState().sensors).toHaveLength(1)
+    redo()
+    expect(useProjectStore.getState().sensors).toEqual([])
+  })
+
+  it('ignores an unknown id on updateSensor/deleteSensor and adds no history step', () => {
+    useProjectStore.getState().addSensor(makeSensor())
+    const stepsBefore = useProjectStore.temporal.getState().pastStates.length
+    const sensorsBefore = useProjectStore.getState().sensors
+
+    useProjectStore.getState().updateSensor('missing', { rangeM: 99 })
+    useProjectStore.getState().deleteSensor('missing')
+
+    expect(useProjectStore.getState().sensors).toBe(sensorsBefore)
+    expect(useProjectStore.temporal.getState().pastStates).toHaveLength(stepsBefore)
+  })
+
+  it('adds no history step when the patch is a no-op (nothing in it applies)', () => {
+    useProjectStore.getState().addSensor(makeSensor())
+    const stepsBefore = useProjectStore.temporal.getState().pastStates.length
+
+    useProjectStore.getState().updateSensor('sensor-1', {})
+
+    expect(useProjectStore.temporal.getState().pastStates).toHaveLength(stepsBefore)
+  })
+
+  it('clears sensors and history on setImage and on resetProject', () => {
+    useProjectStore.getState().addSensor(makeSensor())
+    useProjectStore.getState().setImage(OTHER_IMAGE)
+    expect(useProjectStore.getState().sensors).toEqual([])
+    expect(useProjectStore.temporal.getState().pastStates).toHaveLength(0)
+
+    useProjectStore.getState().addSensor(makeSensor())
+    useProjectStore.getState().resetProject()
+    expect(useProjectStore.getState().sensors).toEqual([])
+    expect(useProjectStore.temporal.getState().pastStates).toHaveLength(0)
+  })
+
+  it('takes its sensors from replaceProject', () => {
+    useProjectStore.getState().addSensor(makeSensor({ id: 'old' }))
+    useProjectStore
+      .getState()
+      .replaceProject({ image: OTHER_IMAGE, scale: null, cameras: [], walls: [], sensors: [makeSensor({ id: 'new' })] })
+    expect(useProjectStore.getState().sensors.map((s) => s.id)).toEqual(['new'])
   })
 })
 
@@ -169,6 +249,7 @@ describe('useProjectStore undo/redo (zundo)', () => {
       scale: null,
       cameras: [],
       walls: [],
+      sensors: [],
     })
 
     expect(useProjectStore.temporal.getState().pastStates).toHaveLength(0)

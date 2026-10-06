@@ -7,6 +7,7 @@ import {
   wallSegmentLengthPx,
   type WallSegment,
 } from './wall-segment-geometry'
+import { simplifyCollinearVertices } from './visibility-polygon-collinear-vertex-simplifier'
 
 /**
  * What a camera can see around itself in 2D, as a polygon, given the opaque
@@ -77,7 +78,9 @@ function selectOccludingLocalSegments(input: VisibilityPolygonInput): WallSegmen
 /**
  * Returns `null` when nothing occludes (the caller then skips clipping
  * altogether), else a flat `[x0, y0, x1, y1, ...]` polygon relative to the
- * origin, in unrotated image axes, sorted by bearing.
+ * origin, in unrotated image axes, sorted by bearing and simplified (see
+ * `simplifyCollinearVertices`) - a strictly fewer-or-equal-vertex polygon
+ * tracing the exact same region.
  */
 export function computeWallOcclusionVisibilityPolygon(input: VisibilityPolygonInput): number[] | null {
   const local = selectOccludingLocalSegments(input)
@@ -109,5 +112,5 @@ export function computeWallOcclusionVisibilityPolygon(input: VisibilityPolygonIn
     const reach = nearest === Infinity ? unobstructedRadiusPx : nearest
     polygon.push(reach * dx, reach * dy)
   }
-  return polygon
+  return simplifyCollinearVertices(polygon)
 }

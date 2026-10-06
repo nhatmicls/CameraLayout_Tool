@@ -5,39 +5,40 @@ import { useProjectStore } from './state/project-store'
 import { useEditorUiStore, type UiNotification, type Viewport } from './state/editor-ui-store'
 import { PlanSceneLayers } from './canvas/plan-scene-layers'
 import type { PlacedCamera, ScaleCalibration, Wall } from './domain/project-types'
+import type { PlacedSensor } from './domain/sensor-types'
 
 declare global {
   interface Window {
-    /** Dev-only test seam (dead-code-eliminated from production builds - see `installDevTestHooks`'s `import.meta.env.DEV` guard). Lets a Playwright script read live store state, trigger a notification, and bulk-seed cameras without re-implementing viewport/fit math or exercising drag-and-drop dozens of times over. */
+    /** Dev-only test seam (dead-code-eliminated from production builds - see `installDevTestHooks`'s `import.meta.env.DEV` guard). Lets a Playwright script read live store state, trigger a notification, and bulk-seed cameras/sensors without re-implementing viewport/fit math or exercising drag-and-drop dozens of times over. */
     __cameraLayoutToolTestHooks?: {
       getViewport: () => Viewport
       getScale: () => ScaleCalibration | null
       getCameras: () => PlacedCamera[]
       getWalls: () => Wall[]
+      getSensors: () => PlacedSensor[]
       getSelectedCameraId: () => string | null
       pushNotification: (kind: UiNotification['kind'], message: string) => void
       seedCamera: (camera: Omit<PlacedCamera, 'id'>) => void
       seedWall: (wall: Omit<Wall, 'id'>) => void
+      seedSensor: (sensor: Omit<PlacedSensor, 'id'>) => void
       runExportSpike: () => Promise<{ dataUrlLength: number; widthPx: number; heightPx: number }>
     }
   }
 }
 
 /**
- * Phase-7 de-risking spike (phase-05 step 11b): mounts the same
- * `PlanSceneLayers` used on-screen into a detached, non-interactive Stage
- * at image-native size, and rasterises it. Proves export can reuse this
- * component with zero drawing-code duplication, without building the rest
- * of phase 7 yet.
+ * Mounts the same `PlanSceneLayers` used on-screen into a detached,
+ * non-interactive Stage at image-native size, and rasterises it - lets the
+ * PNG export reuse this component with zero drawing-code duplication.
  *
- * Spike finding: react-konva's Stage ref never attaches on a container that
- * is never inserted into `document` at all (its mount effect appears to
- * depend on being connected). Off-screen-but-attached (never visible, never
- * affects layout) is the workaround.
+ * react-konva's Stage ref never attaches on a container that is never
+ * inserted into `document` at all (its mount effect appears to depend on
+ * being connected). Off-screen-but-attached (never visible, never affects
+ * layout) is the workaround.
  */
 function runExportSpike(): Promise<{ dataUrlLength: number; widthPx: number; heightPx: number }> {
   return new Promise((resolve, reject) => {
-    const { image, scale, cameras, walls } = useProjectStore.getState()
+    const { image, scale, cameras, walls, sensors } = useProjectStore.getState()
     const decodedImage = useEditorUiStore.getState().decodedImage
     if (!image || !scale || !decodedImage) {
       reject(new Error('runExportSpike: no calibrated project to export'))
@@ -64,17 +65,21 @@ function runExportSpike(): Promise<{ dataUrlLength: number; widthPx: number; hei
           imageHeightPx={image.heightPx}
           cameras={cameras}
           walls={walls}
+          sensors={sensors}
           planPxPerMeter={scale.planPxPerMeter}
           interactive={false}
           selectedCameraId={null}
           selectedWallId={null}
+          selectedSensorId={null}
           wallsSelectable={false}
           viewportScale={1}
           onSelectCamera={() => {}}
           onSelectWall={() => {}}
+          onSelectSensor={() => {}}
           onMoveWallNode={() => {}}
           onCameraDragEnd={() => {}}
           onCameraRotateEnd={() => {}}
+          onSensorCommit={() => {}}
         />
       </Stage>,
     )
@@ -120,10 +125,15 @@ export function installDevTestHooks(): void {
     getScale: () => useProjectStore.getState().scale,
     getCameras: () => useProjectStore.getState().cameras,
     getWalls: () => useProjectStore.getState().walls,
+    getSensors: () => useProjectStore.getState().sensors,
     getSelectedCameraId: () => useEditorUiStore.getState().selectedCameraId,
     pushNotification: (kind, message) => useEditorUiStore.getState().pushNotification(kind, message),
     seedCamera: (camera) => useProjectStore.getState().addCamera({ id: crypto.randomUUID(), ...camera }),
     seedWall: (wall) => useProjectStore.getState().addWall({ id: crypto.randomUUID(), ...wall }),
+    // Cast needed: spreading a discriminated union inside an object literal loses the
+    // discriminant for TS's inference (unlike seedCamera/seedWall, whose types aren't unions);
+    // the shape is still correct at runtime - the caller's `sensor` already matches one member.
+    seedSensor: (sensor) => useProjectStore.getState().addSensor({ id: crypto.randomUUID(), ...sensor } as PlacedSensor),
     runExportSpike,
   }
 }

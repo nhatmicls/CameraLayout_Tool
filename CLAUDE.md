@@ -27,18 +27,38 @@ Project rules:
   longer hosts one. `purchaseLinks` (`primary` = the Shopee shop, `secondary` = another
   Vietnamese shop; each `{ shop, url, amountVnd, retrieved }`) is shop data like `priceVn`:
   copy the displayed selling price, `null` when the page shows none.
+- Sensor catalog (`src/catalog/data/*-sensor-models.json`; PIR, beam, vibration, thermal) is
+  separate from the camera catalog; ids are disjoint. Specs come only from the official
+  datasheet or the manufacturer's own install manual, copied as printed (`dahuatech.com` is
+  also accepted for Dahua sensors). One permitted calculation: a feet-only value is stored as
+  ft x 0.3048 rounded to 0.1 m with `convertedFromFeet: true`. A kind with no official PDF
+  ships zero records - never a placeholder. `priceVn` as for cameras; a beam price only when
+  the page shows the TX+RX set price. Record every source in
+  `./docs/sensor-catalog-sources.md`.
+- Thermal is a sensor, banded by the datasheet's detection / recognition / identification
+  distances - never DORI px/m, never `computeDoriBands` - and drawn as a flat cone only.
+  Sensor coverage is clamped to the datasheet at draw time (`sensor-coverage-resolver.ts`).
+- Placed sensors: `sector` (PIR, thermal; a ceiling PIR is a 360 sector), `circle` (vibration /
+  glass-break), `beam` (two ends + `environment` indoor / outdoor choosing the datasheet
+  maximum). Sensors draw inside the cones Layer and the markers Layer - no new Konva Layer.
 - Vertical FOV (VFOV) fields (`vfovDeg`, `vfovWideDeg`, `vfovTeleDeg`) are optional: stored only
   when the datasheet prints a vertical angle, copied as printed. The runtime computes a fallback
-  from HFOV and sensor aspect ratio and never writes it to the catalog JSON.
+  from HFOV and sensor aspect ratio and never writes it to the catalog JSON. A sensor's
+  `vfovDeg` is shown only when printed and is never computed.
 - Camera mounting (`mountHeightM` + `tiltDeg`, tilt = degrees down from horizontal) is optional
   and both-or-neither. Unset must draw and save exactly like the flat cone. Floor-coverage math
   lives in `src/domain/mounted-camera-ground-coverage-calculator.ts` (metres only; slant model,
   centre-line arcs, fisheye HFOV >= 180 ignores tilt) - keep it out of components.
-- Project files: `PROJECT_SCHEMA_VERSION` is 3; the reader accepts 1, 2 and 3, the writer emits 3.
-- Walls are single segments in image px (`opaque` blocks, `glass` never does). Occlusion is a
+- Project files: `PROJECT_SCHEMA_VERSION` is 4 (v3 + optional `sensors`); the reader accepts
+  1, 2, 3 and 4, the writer always emits 4.
+- Walls are single segments in image px. For cameras `opaque` blocks and `glass` never does.
+  For sensors the table `SENSOR_BLOCKING_WALL_KINDS` in
+  `src/domain/sensor-wall-blocking-rules.ts` is the single source: PIR and thermal are clipped
+  by opaque + glass, vibration by opaque only, beams are checked (blocked / over-distance
+  state), not clipped. Occlusion is a
   full-disc visibility polygon in unrotated image axes
   (`src/domain/wall-occlusion-visibility-polygon.ts`), applied as a Konva `clipFunc` on the
-  cone's outer, unrotated Group - so rotation / HFOV changes never recompute it, and no opaque
+  cone's outer, unrotated Group - so rotation / HFOV changes never recompute it, and no blocking
   wall in range means no clip at all. Keep wall math in image px; convert metres only at the
   canvas edge.
 - Konva drag events bubble: a draggable child's drag reaches its parent's drag handlers, so

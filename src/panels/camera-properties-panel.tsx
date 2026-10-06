@@ -47,7 +47,7 @@ export function CameraPropertiesPanel() {
       <div data-testid="properties-panel" className="text-sm text-neutral-400">
         <h2 className="text-sm font-semibold text-neutral-700">Properties</h2>
         <p data-testid="properties-empty-state" className="mt-2">
-          Select a camera on the plan to see and edit its properties.
+          Select a camera or sensor on the plan to see and edit its properties.
         </p>
       </div>
     )

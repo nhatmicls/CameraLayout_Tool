@@ -1,13 +1,14 @@
 import { memo, useMemo, useRef, useEffect, type RefObject } from 'react'
 import type Konva from 'konva'
-import { Arc, Circle, Group, Ring } from 'react-konva'
+import { Group } from 'react-konva'
 import { computeDoriBands } from '../domain/camera-coverage-resolver'
 import { computeDoriDistancesM } from '../domain/dori-zone-distance-calculator'
 import { coneSweepShape, sectorStartDeg } from '../domain/fov-cone-sector-geometry'
 import { computeMountedGroundCoverage } from '../domain/mounted-camera-ground-coverage-calculator'
 import { metersToPlanPx } from '../domain/scale-calibration-calculator'
 import type { WallSegment } from '../domain/wall-segment-geometry'
-import { computeConeClipFunc, type ConeLiveHandle } from './wall-occlusion-cone-clip'
+import { cameraLiveHandleKey, computeConeClipFunc, CONE_CLIP_STROKE_PAD_PX, type ConeLiveHandle } from './wall-occlusion-cone-clip'
+import { CoverageBandArc } from './coverage-band-arc'
 import { DORI_BAND_COLORS, DORI_BAND_FILL_OPACITY, DORI_BAND_FILL_OPACITY_SELECTED } from './brand-and-dori-color-palette'
 
 export interface CameraFovConeShapeProps {
@@ -32,9 +33,6 @@ export interface CameraFovConeShapeProps {
   /** Walls nearer than this to the camera do not block it (its mounting wall), image px. */
   wallClearancePx: number
 }
-
-/** The clip reaches this far past the outermost band so the band's own outline is never shaved. */
-const CONE_CLIP_STROKE_PAD_PX = 2
 
 /**
  * One camera's FOV cone: bands from the domain's `computeDoriBands` (or,
@@ -111,7 +109,8 @@ export const CameraFovConeShape = memo(function CameraFovConeShape({
 
   useEffect(() => {
     const registry = nodeRegistry.current
-    registry.set(cameraId, {
+    const key = cameraLiveHandleKey(cameraId)
+    registry.set(key, {
       moveTo: (pos) => {
         const outer = outerRef.current
         if (!outer) return
@@ -124,7 +123,7 @@ export const CameraFovConeShape = memo(function CameraFovConeShape({
       },
     })
     return () => {
-      registry.delete(cameraId)
+      registry.delete(key)
     }
   }, [nodeRegistry, cameraId])
 
@@ -139,40 +138,19 @@ export const CameraFovConeShape = memo(function CameraFovConeShape({
   return (
     <Group ref={outerRef} x={x} y={y} clipFunc={clipFunc} listening={false}>
       <Group ref={innerRef} rotation={rotationDeg}>
-        {bands.map((band) => {
-          const color = DORI_BAND_COLORS[band.zone]
-          const innerRadius = metersToPlanPx(band.innerM, planPxPerMeter)
-          const outerRadius = metersToPlanPx(band.outerM, planPxPerMeter)
-          const shared = {
-            fill: color,
-            opacity: fillOpacity,
-            stroke: color,
-            strokeWidth,
-            // Perf (phase-05 step 11): large scenes with many cameras stay interactive.
-            perfectDrawEnabled: false,
-            shadowForStrokeEnabled: false,
-          }
-
-          if (sweepShape === 'full-circle') {
-            return innerRadius === 0 ? (
-              <Circle key={band.zone} radius={outerRadius} {...shared} />
-            ) : (
-              <Ring key={band.zone} innerRadius={innerRadius} outerRadius={outerRadius} {...shared} />
-            )
-          }
-
-          // 'sector' and 'half-disc' both render as an Arc - half-disc is simply the angle=180 case.
-          return (
-            <Arc
-              key={band.zone}
-              innerRadius={innerRadius}
-              outerRadius={outerRadius}
-              angle={hfovDeg}
-              rotation={localRotationDeg}
-              {...shared}
-            />
-          )
-        })}
+        {bands.map((band) => (
+          <CoverageBandArc
+            key={band.zone}
+            innerRadius={metersToPlanPx(band.innerM, planPxPerMeter)}
+            outerRadius={metersToPlanPx(band.outerM, planPxPerMeter)}
+            angleDeg={hfovDeg}
+            sweepShape={sweepShape}
+            rotationDeg={localRotationDeg}
+            color={DORI_BAND_COLORS[band.zone]}
+            opacity={fillOpacity}
+            strokeWidth={strokeWidth}
+          />
+        ))}
       </Group>
     </Group>
   )

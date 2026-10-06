@@ -23,9 +23,13 @@ export function buildConeClipFunc(polygon: number[] | null): ConeClipFunc | unde
   }
 }
 
+/** The clip reaches this far past the outermost band so the band's own outline is never shaved - shared by camera cones and sensor coverage shapes (both pass it into `ConeOcclusionInputs.clipRadiusPx`). */
+export const CONE_CLIP_STROKE_PAD_PX = 2
+
 export interface ConeOcclusionInputs {
   /** Outermost band radius plus stroke padding, image px. 0 = nothing drawn, nothing to clip. */
   clipRadiusPx: number
+  /** Segments that block: kind-agnostic despite the name - a camera cone passes opaque walls only, a PIR/thermal sensor passes opaque+glass, a vibration sensor passes opaque only (`SENSOR_BLOCKING_WALL_KINDS`). */
   opaqueWalls: readonly WallSegment[]
   /** `WALL_MOUNT_CLEARANCE_M` in image px. */
   clearancePx: number
@@ -43,6 +47,23 @@ export function computeConeClipFunc(x: number, y: number, inputs: ConeOcclusionI
       originClearancePx: inputs.clearancePx,
     }),
   )
+}
+
+/**
+ * Namespaces a raw camera/sensor id before it is used as a key in the
+ * shared live-handle registry (`use-cone-live-handles.ts`). Camera and
+ * sensor ids are each only unique WITHIN their own kind (a hand-edited
+ * project file can give a camera and a sensor the same raw id string - the
+ * loader only checks for repeats within each array separately), so the raw
+ * id alone is not a safe map key.
+ */
+export function cameraLiveHandleKey(id: string): string {
+  return `camera:${id}`
+}
+
+/** Sensor twin of `cameraLiveHandleKey` - see its docstring. */
+export function sensorLiveHandleKey(id: string): string {
+  return `sensor:${id}`
 }
 
 /** What a marker's drag / rotate uses to move its cone mid-gesture, with no store write and no React render. */

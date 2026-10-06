@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { computeWallOcclusionVisibilityPolygon } from './wall-occlusion-visibility-polygon'
+import { simplifyCollinearVertices } from './visibility-polygon-collinear-vertex-simplifier'
 import type { WallSegment } from './wall-segment-geometry'
 
 const CAMERA = { x: 100, y: 100 }
@@ -156,6 +157,59 @@ describe('computeWallOcclusionVisibilityPolygon - occlusion', () => {
   })
 })
 
+describe('simplifyCollinearVertices', () => {
+  it('leaves a triangle untouched', () => {
+    const triangle = [0, 0, 10, 0, 5, 10]
+    expect(simplifyCollinearVertices(triangle)).toEqual(triangle)
+  })
+
+  it('collapses a straight run down to its two endpoints', () => {
+    const square = [0, 0, 10, 0, 10, 10, 0, 10]
+    // Insert redundant midpoints on the bottom and right edges.
+    const withMidpoints = [0, 0, 5, 0, 10, 0, 10, 5, 10, 10, 0, 10]
+    expect(simplifyCollinearVertices(withMidpoints)).toEqual(square)
+  })
+
+  it('keeps a spike (same line, reversed direction) rather than treating it as collinear-redundant', () => {
+    // 0,0 -> 10,0 -> 5,0 -> 0,10: the path reaches (10,0) then backs away along the same
+    // line to (5,0) - a reversal, not a "keeps going straight through" case - so (10,0) must
+    // survive rather than being dropped as if the path had simply continued straight past it.
+    const spike = [0, 0, 10, 0, 5, 0, 0, 10]
+    expect(simplifyCollinearVertices(spike)).toEqual(spike)
+  })
+
+  // Regression: a run of EXACTLY-duplicate points sitting between two
+  // otherwise-distinct, non-collinear points must collapse to exactly ONE representative -
+  // not disappear entirely. The first (buggy) implementation checked each duplicate against
+  // its immediate (also-duplicate) neighbour and cascade-deleted the whole run, which is
+  // exactly the bug that broke the box-occlusion and crossing-wall tests above.
+  it('collapses a cluster of exact duplicates to one point, not zero, between two unrelated neighbours', () => {
+    // A far point, three identical copies of a near "corner" point, then a point on a
+    // different line - mimics two walls sharing a corner (each pushing the same bearing
+    // triple) plus the walls' own touching-endpoint crossing pushing it a third time.
+    const polygon = [0, 100, 50, 10, 50, 10, 50, 10, 50, 11, 100, 100, 50, 190]
+    const result = simplifyCollinearVertices(polygon)
+    const pairs: Array<[number, number]> = []
+    for (let i = 0; i < result.length; i += 2) pairs.push([result[i], result[i + 1]])
+    // Exactly one copy of the duplicated corner point must remain - not zero.
+    expect(pairs.filter(([x, y]) => x === 50 && y === 10)).toHaveLength(1)
+  })
+
+  it('dedupes an exact-duplicate pair straddling the wrap-around seam (last == first)', () => {
+    const polygon = [0, 0, 10, 0, 10, 10, 0, 10, 0, 0]
+    const result = simplifyCollinearVertices(polygon)
+    expect(result).toEqual([0, 0, 10, 0, 10, 10, 0, 10])
+  })
+
+  it('never collapses below a triangle', () => {
+    // All 4 points exactly collinear - would reduce to 2 points (a degenerate line), so the
+    // function must fall back rather than return something that is not a polygon at all.
+    const allCollinear = [0, 0, 5, 0, 10, 0, 15, 0]
+    const result = simplifyCollinearVertices(allCollinear)
+    expect(result.length).toBeGreaterThanOrEqual(6)
+  })
+})
+
 describe('computeWallOcclusionVisibilityPolygon - output shape', () => {
   it('never cuts the range circle on the unobstructed side and never exceeds the padded radius', () => {
     const polygon = expectPolygon([WALL_IN_FRONT])
@@ -170,6 +224,38 @@ describe('computeWallOcclusionVisibilityPolygon - output shape', () => {
     const polygon = expectPolygon([WALL_IN_FRONT, seg(130, 60, 190, 140), seg(40, 50, 40, 150)])
     expect(polygon.length % 2).toBe(0)
     expect(polygon.every((value) => Number.isFinite(value))).toBe(true)
+  })
+
+  // Many of the 72 fixed rays (every 5deg) landing on the SAME long wall
+  // produce points that are all exactly collinear (they sit on that wall's own straight
+  // line) - simplifyCollinearVertices should drop nearly all of them while leaving the
+  // visible/hidden region identical.
+  it('collapses many collinear ray hits on one long nearby wall into far fewer vertices, same region', () => {
+    // Nearly spans the camera's "north" half: endpoints at roughly -178deg and -3deg
+    // bearing from the camera, so ~35 of the 72 fixed rays hit this single wall.
+    const wideWall = seg(10, 95, 190, 95)
+    const polygon = expectPolygon([wideWall])
+    // Without simplification this would carry close to 72 fixed-ray vertices plus 6
+    // corner-ray vertices; the collinear ones on the wall should collapse to just its
+    // two corner clusters.
+    expect(polygon.length / 2).toBeLessThan(45)
+
+    // Region must still be exactly what an unobstructed-disc + single-wall occlusion implies.
+    expect(isVisible(polygon, 100, 50)).toBe(false) // straight north, behind the wall
+    expect(isVisible(polygon, 100, 98)).toBe(true) // just south of (in front of) the wall
+    expect(isVisible(polygon, 5, 100)).toBe(true) // west of the wall's left end, unobstructed
+    expect(isVisible(polygon, 195, 100)).toBe(true) // east of the wall's right end, unobstructed
+  })
+
+  it('simplification never changes the region for every existing occlusion scenario (spot-check against area)', () => {
+    const room = [seg(60, 60, 140, 60), seg(140, 60, 140, 140), seg(140, 140, 60, 140), seg(60, 140, 60, 60)]
+    const polygon = expectPolygon(room)
+    // A closed rectangular room collapses to its 4 true corners (each wall's many
+    // in-between ray hits are collinear with that wall) - nowhere near the dozens of raw
+    // ray hits that would appear without simplification.
+    expect(polygon.length / 2).toBeLessThan(20)
+    const roomArea = 80 * 80
+    expect(Math.abs(polygonArea(polygon) - roomArea) / roomArea).toBeLessThan(0.01)
   })
 
   it('stays fast with 200 in-range segments (smoke bound, not a benchmark)', () => {

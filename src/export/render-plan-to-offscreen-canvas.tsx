@@ -3,6 +3,7 @@ import { flushSync } from 'react-dom'
 import type Konva from 'konva'
 import { Stage } from 'react-konva'
 import type { PlacedCamera, Wall } from '../domain/project-types'
+import type { PlacedSensor } from '../domain/sensor-types'
 import { PlanSceneLayers } from '../canvas/plan-scene-layers'
 
 export interface RenderPlanToOffscreenCanvasOptions {
@@ -11,6 +12,7 @@ export interface RenderPlanToOffscreenCanvasOptions {
   imageHeightPx: number
   cameras: PlacedCamera[]
   walls: Wall[]
+  sensors: PlacedSensor[]
   planPxPerMeter: number
   /** Export downscale factor (<=1). Konva's `pixelRatio` scales the *rasterised* output while the Stage/scene stays in image-px coordinates. */
   pixelRatio: number
@@ -82,17 +84,21 @@ export async function renderPlanToOffscreenCanvas(
             imageHeightPx={options.imageHeightPx}
             cameras={options.cameras}
             walls={options.walls}
+            sensors={options.sensors}
             planPxPerMeter={options.planPxPerMeter}
             interactive={false}
             selectedCameraId={null}
             selectedWallId={null}
+            selectedSensorId={null}
             wallsSelectable={false}
             viewportScale={1}
             onSelectCamera={() => {}}
             onSelectWall={() => {}}
+            onSelectSensor={() => {}}
             onMoveWallNode={() => {}}
             onCameraDragEnd={() => {}}
             onCameraRotateEnd={() => {}}
+            onSensorCommit={() => {}}
           />
         </Stage>,
       )

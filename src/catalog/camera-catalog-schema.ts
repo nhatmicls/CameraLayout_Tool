@@ -12,6 +12,17 @@
 // absence. UI wording for the negative is "not listed"; the one exception, by owner
 // decision, is the properties "IP rate" row, which reads "None".
 import { z } from "zod";
+import {
+  CATALOG_ID_PATTERN,
+  ISO_DATE_PATTERN,
+  priceVnSchema,
+  purchaseLinksSchema,
+  type PriceVn,
+  type PurchaseChannel,
+  type PurchaseLinks,
+} from "./catalog-shared-price-and-provenance-schema";
+
+export type { PriceVn, PurchaseChannel, PurchaseLinks };
 
 export const BRANDS = ["hikvision", "dahua", "axis"] as const;
 // "ptz" = pan-tilt(-zoom) camera: drawn as one cone at the bearing the user sets, like any
@@ -68,7 +79,6 @@ const doriSchema = z.object({
 
 export type ManufacturerDori = z.infer<typeof doriSchema>;
 
-const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 // Ingress protection code as printed, e.g. "IP67", "IP69K".
 const INGRESS_RATING_PATTERN = /^IP\d{2}K?$/;
 // Impact protection code as printed, IK00..IK11, e.g. "IK10".
@@ -78,57 +88,9 @@ function hasDuplicates(values: readonly string[]): boolean {
   return new Set(values).size !== values.length;
 }
 
-// Indicative Vietnam street price, read from a Vietnamese reseller's public
-// product page (unlike every optical spec above, which must come from the
-// manufacturer's datasheet). null = no VN reseller publishes a price ("Liên hệ").
-const priceVnSchema = z.object({
-  /** Reseller's displayed selling price in VND (whole dong, as printed - VAT treatment varies by shop). */
-  amountVnd: z.number().int().positive(),
-  sourceUrl: z.string().url(),
-  retrieved: z.string().regex(ISO_DATE_PATTERN, "priceVn.retrieved must be an ISO date (YYYY-MM-DD)"),
-});
-
-export type PriceVn = z.infer<typeof priceVnSchema>;
-
-// Shop product page. https only: the card renders it as a clickable href.
-const purchaseUrlSchema = z
-  .string()
-  .url()
-  .regex(/^https:\/\//, "purchase link must be an https URL");
-
-// One sales channel for a model: the shop's short name (shown as "buy (hacom)"), its
-// product page, and the selling price that page displayed on `retrieved` (null when the
-// page shows no number, e.g. "Liên hệ").
-const purchaseChannelSchema = z.object({
-  shop: z.string().regex(/^[a-z0-9]+$/, "shop must be a short lowercase name, e.g. shopee"),
-  url: purchaseUrlSchema,
-  amountVnd: z.number().int().positive().nullable().default(null),
-  retrieved: z.string().regex(ISO_DATE_PATTERN, "retrieved must be an ISO date (YYYY-MM-DD)"),
-});
-
-export type PurchaseChannel = z.infer<typeof purchaseChannelSchema>;
-
-// Where to buy this model: a primary and a secondary sales channel, either of which may be
-// missing (null) but not both. Like priceVn this is shop data, not a datasheet value.
-// null = no channel recorded.
-const purchaseLinksSchema = z
-  .object({
-    primary: purchaseChannelSchema.nullable().default(null),
-    secondary: purchaseChannelSchema.nullable().default(null),
-  })
-  .refine((links) => links.primary !== null || links.secondary !== null, {
-    message: "purchaseLinks needs a primary or a secondary channel (use null for none)",
-  });
-
-export type PurchaseLinks = z.infer<typeof purchaseLinksSchema>;
-
-// id: kebab-case, lowercase alphanumeric segments joined by '-', dots allowed for
-// focal-length fragments (e.g. "hikvision-ds-2cd2143g2-i-2.8mm").
-const ID_PATTERN = /^[a-z0-9]+([.-][a-z0-9]+)*$/;
-
 export const cameraModelSchema = z
   .object({
-    id: z.string().regex(ID_PATTERN, "id must be kebab-case (lowercase, digits, '-', '.')"),
+    id: z.string().regex(CATALOG_ID_PATTERN, "id must be kebab-case (lowercase, digits, '-', '.')"),
     brand: z.enum(BRANDS),
     model: z.string().min(1),
     formFactor: z.enum(FORM_FACTORS),

@@ -1,0 +1,16 @@
+[
+  {
+    "id": "bosch-isc-sm-90",
+    "kind": "vibration",
+    "detection": "shock",
+    "brand": "bosch",
+    "model": "ISC-SM-90",
+    "radii": [{ "surface": "steel and iron-reinforced concrete", "radiusM": 5 }],
+    "glassTypes": [],
+    "sourceUrl": "https://cdn.commerce.boschsecurity.com/public/documents/ISC_SM_90__Data_sheet_enUS_9007200674545547.pdf",
+    "sourceRetrieved": "2026-10-06",
+    "priceVn": null,
+    "purchaseLinks": null,
+    "notes": "Seismic/vault detector (monitors vault walls, safe doors, cash dispensers), not a wall/window shock sensor, but matches the catalog's 'vibration' kind + 'shock' detection type structurally. Datasheet prints a single operating radius r=5m for the one material it names ('steel and iron-reinforced concrete'); no other material/radius pair is printed, so radii has exactly one row."
+  }
+]

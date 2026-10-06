@@ -109,7 +109,15 @@ export function rayFromOriginHitDistance(dx: number, dy: number, s: WallSegment)
   return distance
 }
 
-/** Only opaque walls occlude; glass is drawn for reference. */
+/** Walls whose `kind` is one of `blockingKinds` - the general form behind `selectOpaqueWallSegments` and the sensor blocking table (`sensor-wall-blocking-rules.ts`). */
+export function selectBlockingWallSegments<T extends WallSegment & { kind: string }>(
+  walls: readonly T[],
+  blockingKinds: readonly string[],
+): T[] {
+  return walls.filter((wall) => blockingKinds.includes(wall.kind))
+}
+
+/** Only opaque walls occlude a camera; glass is drawn for reference. */
 export function selectOpaqueWallSegments<T extends WallSegment & { kind: string }>(walls: readonly T[]): T[] {
-  return walls.filter((wall) => wall.kind === 'opaque')
+  return selectBlockingWallSegments(walls, ['opaque'])
 }

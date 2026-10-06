@@ -5,6 +5,7 @@ import {
   isSameWallSegment,
   rayFromOriginHitDistance,
   segmentIntersectionPoint,
+  selectBlockingWallSegments,
   selectOpaqueWallSegments,
   wallSegmentLengthPx,
   type WallSegment,
@@ -136,5 +137,24 @@ describe('selectOpaqueWallSegments', () => {
     const selected = selectOpaqueWallSegments([opaque, glass])
     expect(selected).toHaveLength(1)
     expect(selected[0]).toBe(opaque)
+  })
+})
+
+describe('selectBlockingWallSegments', () => {
+  const opaque = { ...seg(0, 0, 1, 1), kind: 'opaque' }
+  const glass = { ...seg(2, 2, 3, 3), kind: 'glass' }
+
+  it('excludes glass when only opaque is a blocking kind', () => {
+    const selected = selectBlockingWallSegments([opaque, glass], ['opaque'])
+    expect(selected).toEqual([opaque])
+  })
+
+  it('includes both when both kinds are listed as blocking', () => {
+    const selected = selectBlockingWallSegments([opaque, glass], ['opaque', 'glass'])
+    expect(selected).toEqual([opaque, glass])
+  })
+
+  it('returns an empty array when no kind matches', () => {
+    expect(selectBlockingWallSegments([opaque, glass], [])).toEqual([])
   })
 })

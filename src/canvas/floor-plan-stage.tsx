@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type DragEvent } from 'react'
+import { useCallback, useRef, useState, type DragEvent } from 'react'
 import type Konva from 'konva'
 import type { KonvaEventObject } from 'konva/lib/Node'
 import { Layer, Stage } from 'react-konva'
@@ -11,9 +11,12 @@ import { ScaleCalibrationLengthDialog } from '../panels/scale-calibration-length
 import { PlanSceneLayers } from './plan-scene-layers'
 import { CameraDebugList } from './camera-debug-list'
 import { useCameraDragDropTarget } from './use-camera-drag-drop-target'
+import { useSensorDragDropTarget } from './use-sensor-drag-drop-target'
 import { useCameraSelectionKeyboardShortcuts } from './use-camera-selection-keyboard-shortcuts'
 import { useWallSelectionKeyboardShortcuts } from './use-wall-selection-keyboard-shortcuts'
+import { useSensorSelectionKeyboardShortcuts } from './use-sensor-selection-keyboard-shortcuts'
 import { useWallNodeMoveHandler } from './use-wall-node-move-handler'
+import { useStageContainerResizeAndInitialFit } from './use-stage-container-resize-and-initial-fit'
 import { computePlanPxPerMeter, type RefLine } from '../domain/scale-calibration-calculator'
 
 /**
@@ -29,6 +32,8 @@ export function FloorPlanStage() {
   const cameras = useProjectStore((s) => s.cameras)
   const updateCamera = useProjectStore((s) => s.updateCamera)
   const walls = useProjectStore((s) => s.walls)
+  const sensors = useProjectStore((s) => s.sensors)
+  const updateSensor = useProjectStore((s) => s.updateSensor)
   const decodedImage = useEditorUiStore((s) => s.decodedImage)
   const toolMode = useEditorUiStore((s) => s.toolMode)
   const setToolMode = useEditorUiStore((s) => s.setToolMode)
@@ -38,38 +43,23 @@ export function FloorPlanStage() {
   const setSelectedCameraId = useEditorUiStore((s) => s.setSelectedCameraId)
   const selectedWallId = useEditorUiStore((s) => s.selectedWallId)
   const setSelectedWallId = useEditorUiStore((s) => s.setSelectedWallId)
+  const selectedSensorId = useEditorUiStore((s) => s.selectedSensorId)
+  const setSelectedSensorId = useEditorUiStore((s) => s.setSelectedSensorId)
+  const clearSelection = useEditorUiStore((s) => s.clearSelection)
 
   const containerRef = useRef<HTMLDivElement>(null)
   const stageRef = useRef<Konva.Stage>(null)
   const [pendingLine, setPendingLine] = useState<RefLine | null>(null)
 
   const { viewport, draggable, stageSize, handleWheel, handleDragEnd, fitToView } = useStagePanZoom()
-  const { handleDragOver, handleDrop } = useCameraDragDropTarget(stageRef)
+  const { handleDragOver: handleCameraDragOver, handleDrop: handleCameraDrop } = useCameraDragDropTarget(stageRef)
+  const { handleDragOver: handleSensorDragOver, handleDrop: handleSensorDrop } = useSensorDragDropTarget(stageRef)
   useCameraSelectionKeyboardShortcuts()
   useWallSelectionKeyboardShortcuts()
+  useSensorSelectionKeyboardShortcuts()
   const handleMoveWallNode = useWallNodeMoveHandler()
 
-  // Keep the stage sized to its flex container (the container, not the window, since side panels resize it too).
-  // Written to editor-ui-store (not local state) so the toolbar's zoom/fit buttons can use the same size.
-  useEffect(() => {
-    const container = containerRef.current
-    if (!container) return
-    const observer = new ResizeObserver((entries) => {
-      const entry = entries[0]
-      if (entry) setStageSize({ width: entry.contentRect.width, height: entry.contentRect.height })
-    })
-    observer.observe(container)
-    return () => observer.disconnect()
-  }, [setStageSize])
-
-  // Fit the plan to the view whenever a new image is loaded (and we already know the container size).
-  const fileNameRef = useRef<string | null>(null)
-  useEffect(() => {
-    if (!image || stageSize.width === 0 || stageSize.height === 0) return
-    if (fileNameRef.current === image.fileName) return
-    fileNameRef.current = image.fileName
-    fitToView()
-  }, [image, stageSize, fitToView])
+  useStageContainerResizeAndInitialFit(containerRef, image, stageSize, fitToView, setStageSize)
 
   const handleLineDrawn = useCallback((line: RefLine) => setPendingLine(line), [])
 
@@ -85,22 +75,36 @@ export function FloorPlanStage() {
     [pendingLine, setScale, setToolMode, pushNotification],
   )
 
-  // Clicking empty canvas (the Stage itself, not a camera marker or a wall) deselects both.
+  // Clicking empty canvas (the Stage itself, not a camera/wall/sensor marker) deselects all three.
   const handleStageClick = useCallback(
     (e: KonvaEventObject<MouseEvent | TouchEvent>) => {
       if (e.target !== e.target.getStage()) return
-      setSelectedCameraId(null)
-      setSelectedWallId(null)
+      clearSelection()
     },
-    [setSelectedCameraId, setSelectedWallId],
+    [clearSelection],
   )
 
+  // Combined drag-over: each hook's handler only reacts to its own MIME type, so calling both is safe.
+  const handleDragOver = useCallback(
+    (e: DragEvent<HTMLDivElement>) => {
+      handleCameraDragOver(e)
+      handleSensorDragOver(e)
+    },
+    [handleCameraDragOver, handleSensorDragOver],
+  )
+
+  // Tries the camera payload first, then the sensor payload, and selects whichever one actually dropped.
   const handleDropOnStage = useCallback(
     (e: DragEvent<HTMLDivElement>) => {
-      const newCameraId = handleDrop(e)
-      if (newCameraId) setSelectedCameraId(newCameraId)
+      const newCameraId = handleCameraDrop(e)
+      if (newCameraId) {
+        setSelectedCameraId(newCameraId)
+        return
+      }
+      const newSensorId = handleSensorDrop(e)
+      if (newSensorId) setSelectedSensorId(newSensorId)
     },
-    [handleDrop, setSelectedCameraId],
+    [handleCameraDrop, handleSensorDrop, setSelectedCameraId, setSelectedSensorId],
   )
 
   const handleCameraDragEnd = useCallback((id: string, x: number, y: number) => updateCamera(id, { x, y }), [updateCamera])
@@ -141,18 +145,22 @@ export function FloorPlanStage() {
             imageHeightPx={image.heightPx}
             cameras={cameras}
             walls={walls}
+            sensors={sensors}
             planPxPerMeter={scale?.planPxPerMeter ?? 1}
             interactive
             selectedCameraId={selectedCameraId}
             selectedWallId={selectedWallId}
+            selectedSensorId={selectedSensorId}
             wallsSelectable={toolMode === 'select'}
             markersListening={toolMode !== 'wall'}
             viewportScale={viewport.scale}
             onSelectCamera={setSelectedCameraId}
             onSelectWall={setSelectedWallId}
+            onSelectSensor={setSelectedSensorId}
             onMoveWallNode={handleMoveWallNode}
             onCameraDragEnd={handleCameraDragEnd}
             onCameraRotateEnd={handleCameraRotateEnd}
+            onSensorCommit={updateSensor}
           />
           {/* One Layer for both editor overlays: with the scene's four that makes five, Konva's recommended maximum. */}
           <Layer>

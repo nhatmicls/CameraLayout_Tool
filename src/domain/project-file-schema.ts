@@ -5,23 +5,25 @@ import {
   TILT_MAX_DEG,
   TILT_MIN_DEG,
 } from './mounted-camera-ground-coverage-calculator'
-import type { PlacedCamera, Project, Wall } from './project-types'
-import { hasAnyProperWallCrossing } from './wall-crossing-detection'
-import { MIN_WALL_LENGTH_PX, wallSegmentLengthPx } from './wall-segment-geometry'
+import type { PlacedCamera, Project } from './project-types'
+import { MAX_SENSORS, normaliseLoadedSensors, placedSensorSchema, type SensorModelLookup } from './project-file-sensor-schema'
+import { MAX_WALLS, normaliseLoadedWalls, wallSchema } from './project-file-wall-schema'
+
+export { MAX_WALLS, WALLS_CROSS_WARNING } from './project-file-wall-schema'
+export { MAX_SENSORS } from './project-file-sensor-schema'
+export type { SensorModelLookup, SensorModelLookupEntry } from './project-file-sensor-schema'
 
 /**
  * Version written to saved files. Bumped whenever a file saved by this build
  * could not be opened by an older one. Version 2 = version 1 plus the optional
  * camera keys `mountHeightM` / `tiltDeg`; version 3 = version 2 plus the
- * optional top-level `walls`. Each is a strict superset, so older files are
- * read with the same schema and need no migration.
+ * optional top-level `walls`; version 4 = version 3 plus the optional
+ * top-level `sensors`. Each is a strict superset, so older files are read
+ * with the same schema and need no migration. The writer always emits v4,
+ * even for a project with no sensors (owner decision: one writer path) - a v4
+ * file will not open in a pre-sensor build.
  */
-export const PROJECT_SCHEMA_VERSION = 3 as const
-
-export const MAX_WALLS = 1000
-
-export const WALLS_CROSS_WARNING =
-  'Some walls cross each other. Coverage is still calculated, but walls are expected to meet at endpoints.'
+export const PROJECT_SCHEMA_VERSION = 4 as const
 
 /** Mirrors `serializeCsv`'s input cap intent: generous for a floor-plan PNG, small enough to reject garbage quickly. */
 const MAX_PROJECT_TEXT_LENGTH_BYTES = 80 * 1024 * 1024 // 80 MB
@@ -70,25 +72,14 @@ const placedCameraSchema = z
 
 const MAX_CAMERAS = 500
 
-const WALL_COORD_LIMIT_PX = 1_000_000
-const wallCoord = z.number().finite().gte(-WALL_COORD_LIMIT_PX).lte(WALL_COORD_LIMIT_PX)
-
-const wallSchema = z.strictObject({
-  id: z.string().min(1).max(100),
-  kind: z.enum(['opaque', 'glass']),
-  x1: wallCoord,
-  y1: wallCoord,
-  x2: wallCoord,
-  y2: wallCoord,
-})
-
 const projectFileSchema = z.strictObject({
   app: z.literal('camera-layout-tool'),
-  schemaVersion: z.union([z.literal(1), z.literal(2), z.literal(PROJECT_SCHEMA_VERSION)]),
+  schemaVersion: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(PROJECT_SCHEMA_VERSION)]),
   image: planImageSchema,
   scale: scaleCalibrationSchema.nullable(),
   cameras: z.array(placedCameraSchema).max(MAX_CAMERAS),
   walls: z.array(wallSchema).max(MAX_WALLS).optional(),
+  sensors: z.array(placedSensorSchema).max(MAX_SENSORS).optional(),
 })
 
 /** Serialises a project to the on-disk JSON shape (adds the `app`/`schemaVersion` envelope). */
@@ -100,26 +91,8 @@ export function serializeProject(project: Project): string {
     scale: project.scale,
     cameras: project.cameras,
     walls: project.walls,
+    sensors: project.sensors,
   })
-}
-
-/** Drops walls a hand-edited file can carry but the app never creates (too short, repeated id), and flags crossings once. */
-function normaliseLoadedWalls(walls: readonly Wall[], warnings: string[]): Wall[] {
-  const seenIds = new Set<string>()
-  const kept = walls.filter((wall) => {
-    if (wallSegmentLengthPx(wall) < MIN_WALL_LENGTH_PX) {
-      warnings.push(`Wall "${wall.id}" is shorter than ${MIN_WALL_LENGTH_PX} px; dropped.`)
-      return false
-    }
-    if (seenIds.has(wall.id)) {
-      warnings.push(`Wall id "${wall.id}" is used more than once; the repeat was dropped.`)
-      return false
-    }
-    seenIds.add(wall.id)
-    return true
-  })
-  if (hasAnyProperWallCrossing(kept)) warnings.push(WALLS_CROSS_WARNING)
-  return kept
 }
 
 function formatZodError(error: z.ZodError): string {
@@ -136,11 +109,16 @@ export type ParseProjectResult =
  * Parses untrusted project-file text. This is the single trust boundary for
  * loaded JSON: size cap, strict schema (rejects unknown keys and any
  * non-finite number), image restricted to inline PNG/JPEG data URLs,
- * camera/model cross-check against the caller's known catalog ids, and wall
- * normalisation (a file without `walls` loads with none). Never
- * throws - every failure mode returns `{ ok: false, error }`.
+ * camera/model cross-check against the caller's known catalog ids, wall
+ * normalisation (a file without `walls` loads with none) and sensor
+ * normalisation against `sensorModelLookup` (a file without `sensors` loads
+ * with none). Never throws - every failure mode returns `{ ok: false, error }`.
  */
-export function parseProjectFile(text: string, knownModelIds: ReadonlySet<string>): ParseProjectResult {
+export function parseProjectFile(
+  text: string,
+  knownModelIds: ReadonlySet<string>,
+  sensorModelLookup: SensorModelLookup,
+): ParseProjectResult {
   try {
     if (text.length > MAX_PROJECT_TEXT_LENGTH_BYTES) {
       return {
@@ -173,6 +151,7 @@ export function parseProjectFile(text: string, knownModelIds: ReadonlySet<string
       scale: result.data.scale,
       cameras,
       walls: normaliseLoadedWalls(result.data.walls ?? [], warnings),
+      sensors: normaliseLoadedSensors(result.data.sensors ?? [], sensorModelLookup, warnings),
     }
 
     return { ok: true, project, warnings }

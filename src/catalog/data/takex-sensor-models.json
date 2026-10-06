@@ -1,0 +1,53 @@
+[
+  {
+    "id": "takex-pb-30tk",
+    "kind": "beam",
+    "brand": "takex",
+    "model": "PB-30TK(K)",
+    "maxDistanceOutdoorM": 30,
+    "maxDistanceIndoorM": 60,
+    "sourceUrl": "https://takex.com/view-pdf?fileName=Cat_PB-TK.pdf",
+    "sourceRetrieved": "2026-10-06",
+    "priceVn": {
+      "amountVnd": 2177000,
+      "sourceUrl": "https://thanhlinh.vn/takex-pb-30tk-k",
+      "retrieved": "2026-10-06"
+    },
+    "purchaseLinks": { "primary": null, "secondary": { "shop": "thanhlinh", "url": "https://thanhlinh.vn/takex-pb-30tk-k", "amountVnd": 2177000, "retrieved": "2026-10-06" } },
+    "notes": "Twin-beam photoelectric detector (TX+RX pair). Datasheet catalogs three models (PB-30TK/PB-60TK/PB-100TK) in one PDF; this record is the shortest-range SKU. Response time 50-700ms and wide-angle adjustment (90 deg horizontal / 10 deg vertical) are printed but not modelled (not drawn/warned/shown). priceVn (C9): the reseller page shows one price for the TX+RX set, matching the datasheet model string '(K)' suffix exactly."
+  },
+  {
+    "id": "takex-pb-60tk",
+    "kind": "beam",
+    "brand": "takex",
+    "model": "PB-60TK(K)",
+    "maxDistanceOutdoorM": 60,
+    "maxDistanceIndoorM": 120,
+    "sourceUrl": "https://takex.com/view-pdf?fileName=Cat_PB-TK.pdf",
+    "sourceRetrieved": "2026-10-06",
+    "priceVn": {
+      "amountVnd": 2700000,
+      "sourceUrl": "https://abaro.vn/san-pham/bo-cam-bien-hong-ngoai-tia-kep-takex-pb-60tk/",
+      "retrieved": "2026-10-06"
+    },
+    "purchaseLinks": { "primary": null, "secondary": { "shop": "abaro", "url": "https://abaro.vn/san-pham/bo-cam-bien-hong-ngoai-tia-kep-takex-pb-60tk/", "amountVnd": 2700000, "retrieved": "2026-10-06" } },
+    "notes": "Same PDF/datasheet as takex-pb-30tk (PB-TK twin-beam series), mid-range SKU. priceVn (C9): reseller page shows one set price for the TX+RX pair; page labels the model 'Takex PB-60TK' without the datasheet's '(K)' variant-code suffix - same core product line, applied with this note per project disclosure convention (cf. camera catalog's -LIUF/-LIU price carryover)."
+  },
+  {
+    "id": "takex-pb-100tk",
+    "kind": "beam",
+    "brand": "takex",
+    "model": "PB-100TK(K)",
+    "maxDistanceOutdoorM": 100,
+    "maxDistanceIndoorM": 200,
+    "sourceUrl": "https://takex.com/view-pdf?fileName=Cat_PB-TK.pdf",
+    "sourceRetrieved": "2026-10-06",
+    "priceVn": {
+      "amountVnd": 3060000,
+      "sourceUrl": "https://abaro.vn/san-pham/bo-cam-bien-hong-ngoai-tia-kep-takex-pb-100tk/",
+      "retrieved": "2026-10-06"
+    },
+    "purchaseLinks": { "primary": null, "secondary": { "shop": "abaro", "url": "https://abaro.vn/san-pham/bo-cam-bien-hong-ngoai-tia-kep-takex-pb-100tk/", "amountVnd": 3060000, "retrieved": "2026-10-06" } },
+    "notes": "Same PDF/datasheet as takex-pb-30tk (PB-TK twin-beam series), longest-range SKU. priceVn (C9): reseller page shows one set price for the TX+RX pair; page labels the model 'PB-100TK' without the '(K)' suffix, same note as takex-pb-60tk."
+  }
+]

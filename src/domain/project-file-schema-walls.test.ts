@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { MAX_WALLS, WALLS_CROSS_WARNING, parseProjectFile, serializeProject } from './project-file-schema'
+import { MAX_WALLS, WALLS_CROSS_WARNING, parseProjectFile, serializeProject, type SensorModelLookup } from './project-file-schema'
 import type { Project, Wall } from './project-types'
 
 // Smallest possible valid PNG (1x1 transparent pixel), as a real base64 data URL.
@@ -7,6 +7,7 @@ const TINY_PNG_DATA_URL =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUAAk6WgQAAAABJRU5ErkJggg=='
 
 const KNOWN_MODEL_IDS = new Set(['model-a'])
+const SENSOR_MODEL_LOOKUP: SensorModelLookup = new Map()
 
 const wall = (id: string, x1: number, y1: number, x2: number, y2: number, kind: Wall['kind'] = 'opaque'): Wall => ({
   id,
@@ -23,6 +24,7 @@ function projectWith(walls: Wall[]): Project {
     scale: null,
     cameras: [{ id: 'cam-1', modelId: 'model-a', x: 10, y: 20, rotationDeg: 45, rangeM: 15 }],
     walls,
+    sensors: [],
   }
 }
 
@@ -31,7 +33,7 @@ function parseRaw(walls: unknown, mutate: (raw: Record<string, unknown>) => void
   const raw = JSON.parse(serializeProject(projectWith([]))) as Record<string, unknown>
   raw.walls = walls
   mutate(raw)
-  return parseProjectFile(JSON.stringify(raw), KNOWN_MODEL_IDS)
+  return parseProjectFile(JSON.stringify(raw), KNOWN_MODEL_IDS, SENSOR_MODEL_LOOKUP)
 }
 
 function expectOk(result: ReturnType<typeof parseProjectFile>) {
@@ -66,7 +68,7 @@ describe('project file walls - back-compat', () => {
 describe('project file walls - round trip', () => {
   it('preserves opaque and glass walls exactly', () => {
     const project = projectWith([wall('w1', 10.5, 20.25, 300, 20.25), wall('w2', 300, 20.25, 300, 400, 'glass')])
-    const result = expectOk(parseProjectFile(serializeProject(project), KNOWN_MODEL_IDS))
+    const result = expectOk(parseProjectFile(serializeProject(project), KNOWN_MODEL_IDS, SENSOR_MODEL_LOOKUP))
     expect(result.project).toEqual(project)
     expect(result.warnings).toEqual([])
   })

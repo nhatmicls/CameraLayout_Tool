@@ -35,6 +35,26 @@ describe('computeBomStripLayout', () => {
     expect(() => computeBomStripLayout(1200, -1)).toThrow()
     expect(() => computeBomStripLayout(NaN, 2)).toThrow()
   })
+
+  it('defaults to legendLineCount 1, identical to the pre-sensor result', () => {
+    expect(computeBomStripLayout(1200, 2, 1)).toEqual(computeBomStripLayout(1200, 2))
+  })
+
+  it('2 legend lines adds exactly one legend height to the strip total', () => {
+    const oneLine = computeBomStripLayout(1200, 2, 1)
+    const twoLines = computeBomStripLayout(1200, 2, 2)
+    expect(twoLines.legendHeightPx).toBe(oneLine.legendHeightPx * 2)
+    expect(twoLines.stripHeightPx - oneLine.stripHeightPx).toBe(oneLine.legendHeightPx)
+    // fontPx/rowHeightPx are unaffected by the legend line count.
+    expect(twoLines.fontPx).toBe(oneLine.fontPx)
+    expect(twoLines.rowHeightPx).toBe(oneLine.rowHeightPx)
+  })
+
+  it('throws on a non-positive or non-integer legendLineCount', () => {
+    expect(() => computeBomStripLayout(1200, 2, 0)).toThrow()
+    expect(() => computeBomStripLayout(1200, 2, -1)).toThrow()
+    expect(() => computeBomStripLayout(1200, 2, 1.5)).toThrow()
+  })
 })
 
 describe('computeExportScale', () => {

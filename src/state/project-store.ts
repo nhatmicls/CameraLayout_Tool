@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import { temporal } from 'zundo'
 import type { PlacedCamera, Project, ScaleCalibration, Wall } from '../domain/project-types'
+import { applyPlacedSensorPatch } from '../domain/placed-sensor-patch'
+import type { PlacedSensor, PlacedSensorPatch } from '../domain/sensor-types'
 import { moveWallNode, type WallNode } from '../domain/wall-node-editing'
 
 /**
@@ -16,10 +18,11 @@ export interface ProjectState {
   scale: ScaleCalibration | null
   cameras: PlacedCamera[]
   walls: Wall[]
+  sensors: PlacedSensor[]
 }
 
 export interface ProjectActions {
-  /** Sets a newly loaded floor-plan image. Always clears cameras, walls + scale: all are meaningless against a different plan. */
+  /** Sets a newly loaded floor-plan image. Always clears cameras, walls, sensors + scale: all are meaningless against a different plan. */
   setImage: (image: Project['image']) => void
   setScale: (scale: ScaleCalibration | null) => void
   addCamera: (camera: PlacedCamera) => void
@@ -33,9 +36,14 @@ export interface ProjectActions {
   deleteWall: (id: string) => void
   /** Moves the wall node at exactly `from` (every wall end on it) to `to`, as one undo step. A refused or empty move leaves the state untouched. */
   moveWallNode: (from: WallNode, to: WallNode) => void
+  addSensor: (sensor: PlacedSensor) => void
+  /** Merges `patch` into the sensor matching `id` via `applyPlacedSensorPatch`. An unknown id leaves the state (and so the undo history) untouched. */
+  updateSensor: (id: string, patch: PlacedSensorPatch) => void
+  /** An unknown id leaves the state (and so the undo history) untouched - the selected id can be stale after an undo. */
+  deleteSensor: (id: string) => void
   /** Replaces the whole project (used when loading a project file, phase 6). */
   replaceProject: (project: Project) => void
-  /** Clears back to the empty-project state (no image, no scale, no cameras, no walls). */
+  /** Clears back to the empty-project state (no image, no scale, no cameras, no walls, no sensors). */
   resetProject: () => void
 }
 
@@ -46,6 +54,7 @@ const INITIAL_STATE: ProjectState = {
   scale: null,
   cameras: [],
   walls: [],
+  sensors: [],
 }
 
 // `setImage`/`replaceProject`/`resetProject` below call `useProjectStore.temporal` -
@@ -66,7 +75,7 @@ export const useProjectStore = create<ProjectStore>()(
       // clearing history outright is simpler and safer than trying to keep
       // it coherent across a swapped plan.
       setImage: (image) => {
-        set({ image, scale: null, cameras: [], walls: [] })
+        set({ image, scale: null, cameras: [], walls: [], sensors: [] })
         useProjectStore.temporal.getState().clear()
       },
 
@@ -100,21 +109,48 @@ export const useProjectStore = create<ProjectStore>()(
         if (walls) set({ walls })
       },
 
+      addSensor: (sensor) => set((state) => ({ sensors: [...state.sensors, sensor] })),
+
+      updateSensor: (id, patch) => {
+        const sensors = get().sensors
+        const index = sensors.findIndex((sensor) => sensor.id === id)
+        if (index === -1) return
+        const updated = applyPlacedSensorPatch(sensors[index], patch)
+        if (updated === sensors[index]) return
+        set({ sensors: sensors.map((sensor, i) => (i === index ? updated : sensor)) })
+      },
+
+      deleteSensor: (id) => {
+        if (!get().sensors.some((sensor) => sensor.id === id)) return
+        set((state) => ({ sensors: state.sensors.filter((sensor) => sensor.id !== id) }))
+      },
+
       replaceProject: (project) => {
-        set({ image: project.image, scale: project.scale, cameras: project.cameras, walls: project.walls })
+        set({
+          image: project.image,
+          scale: project.scale,
+          cameras: project.cameras,
+          walls: project.walls,
+          sensors: project.sensors,
+        })
         useProjectStore.temporal.getState().clear()
       },
 
       resetProject: () => {
-        set({ ...INITIAL_STATE, cameras: [], walls: [] })
+        set({ ...INITIAL_STATE, cameras: [], walls: [], sensors: [] })
         useProjectStore.temporal.getState().clear()
       },
     }),
     {
       // Never track `image`: it can be tens of MB as a data URL, and nobody
-      // expects undo to bring back a different floor plan. Cameras, walls +
-      // scale are the things a user thinks of as "my layout".
-      partialize: (state) => ({ cameras: state.cameras, scale: state.scale, walls: state.walls }),
+      // expects undo to bring back a different floor plan. Cameras, walls,
+      // sensors + scale are the things a user thinks of as "my layout".
+      partialize: (state) => ({
+        cameras: state.cameras,
+        scale: state.scale,
+        walls: state.walls,
+        sensors: state.sensors,
+      }),
       limit: 100,
     },
   ),

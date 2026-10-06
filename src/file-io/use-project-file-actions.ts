@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useRef, type ChangeEvent } from 'react'
 import { cameraModels } from '../catalog/camera-catalog-loader'
+import { sensorModels } from '../catalog/sensor-catalog-loader'
+import type { SensorModelLookup, SensorModelLookupEntry } from '../domain/project-file-schema'
+import { defaultBeamEnvironment, sensorPlacementShape } from '../domain/sensor-types'
 import { useEditorUiStore } from '../state/editor-ui-store'
 import { useProjectStore } from '../state/project-store'
 import { loadProjectFromFile, saveProjectToFile } from './project-file-save-and-load'
@@ -9,6 +12,17 @@ const REPLACE_PROJECT_CONFIRM_MESSAGE = 'Opening a project discards your unsaved
 
 /** Static for the app's lifetime (bundled catalog) - computed once, not per render/load. */
 const KNOWN_MODEL_IDS = new Set(cameraModels.map((m) => m.id))
+
+/** Static for the app's lifetime: what the file parser needs per sensor model (shape + beam default). */
+const KNOWN_SENSOR_MODEL_LOOKUP: SensorModelLookup = new Map(
+  sensorModels.map((model): [string, SensorModelLookupEntry] => [
+    model.id,
+    {
+      shape: sensorPlacementShape(model),
+      defaultBeamEnvironment: model.kind === 'beam' ? defaultBeamEnvironment(model) : undefined,
+    },
+  ]),
+)
 
 /**
  * Everything `app.tsx` needs to wire up the toolbar's "Save project" /
@@ -42,7 +56,13 @@ export function useProjectFileActions() {
     const current = useProjectStore.getState()
     if (!current.image) return
     try {
-      saveProjectToFile({ image: current.image, scale: current.scale, cameras: current.cameras, walls: current.walls })
+      saveProjectToFile({
+        image: current.image,
+        scale: current.scale,
+        cameras: current.cameras,
+        walls: current.walls,
+        sensors: current.sensors,
+      })
       setHasUnsavedChanges(false)
     } catch (err) {
       pushNotification('error', err instanceof Error ? err.message : 'Failed to save the project.')
@@ -54,7 +74,7 @@ export function useProjectFileActions() {
       if (hasUnsavedChanges && !window.confirm(REPLACE_PROJECT_CONFIRM_MESSAGE)) {
         return
       }
-      const outcome = await loadProjectFromFile(file, KNOWN_MODEL_IDS)
+      const outcome = await loadProjectFromFile(file, KNOWN_MODEL_IDS, KNOWN_SENSOR_MODEL_LOOKUP)
       if (!outcome.ok) {
         pushNotification('error', outcome.error)
         return

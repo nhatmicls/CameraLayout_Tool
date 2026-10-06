@@ -46,7 +46,7 @@ describe('groupCamerasIntoBom', () => {
     const rows = groupCamerasIntoBom(cameras, modelById)
     expect(rows).toHaveLength(1)
     expect(rows[0].quantity).toBe(2)
-    expect(rows[0].cameraNumbers).toBe('C1, C2')
+    expect(rows[0].labels).toBe('C1, C2')
     expect(rows[0].lens).toBe('2.8 mm')
   })
 
@@ -74,7 +74,7 @@ describe('groupCamerasIntoBom', () => {
     const rows = groupCamerasIntoBom(cameras, modelById)
     expect(rows).toHaveLength(1)
     // Indices 2 and 4 (1-based) survive; the unknown-model slots keep their position numbering.
-    expect(rows[0].cameraNumbers).toBe('C2, C4')
+    expect(rows[0].labels).toBe('C2, C4')
   })
 
   it('returns an empty array for no cameras', () => {
@@ -86,27 +86,40 @@ describe('bomToTable', () => {
   it('returns header-only table for an empty BOM', () => {
     const table = bomToTable([])
     expect(table).toHaveLength(1)
-    expect(table[0]).toEqual(['Brand', 'Model', 'Form Factor', 'Resolution', 'Lens', 'Quantity', 'Cameras', 'Unit Price (VND)', 'Total (VND)'])
+    expect(table[0]).toEqual([
+      'Type',
+      'Brand',
+      'Model',
+      'Form Factor',
+      'Resolution',
+      'Lens',
+      'Quantity',
+      'Labels',
+      'Unit Price (VND)',
+      'Total (VND)',
+    ])
   })
 
-  it('includes the Cameras column after Quantity, matching the header', () => {
+  it('includes a leading Type column and the Labels column after Quantity, matching the header', () => {
     const rows = groupCamerasIntoBom([camera('hik-dome-2.8'), camera('hik-dome-2.8')], modelById)
     const table = bomToTable(rows)
-    expect(table[0][6]).toBe('Cameras')
-    expect(table[1][6]).toBe('C1, C2')
-    expect(table[1][5]).toBe('2') // Quantity
+    expect(table[0][0]).toBe('Type')
+    expect(table[1][0]).toBe('Camera')
+    expect(table[0][7]).toBe('Labels')
+    expect(table[1][7]).toBe('C1, C2')
+    expect(table[1][6]).toBe('2') // Quantity
   })
 
   it('appends unit price and line total as plain integers, blank when the model has no price', () => {
     const rows = groupCamerasIntoBom([camera('axis-bullet'), camera('hik-dome-2.8'), camera('hik-dome-2.8')], modelById)
     const table = bomToTable(rows)
-    expect(table[1].slice(7)).toEqual(['', '']) // axis: no price
-    expect(table[2].slice(7)).toEqual(['2500000', '5000000'])
+    expect(table[1].slice(8)).toEqual(['', '']) // axis: no price
+    expect(table[2].slice(8)).toEqual(['2500000', '5000000'])
   })
 
   it('uses the supplied price formatter', () => {
     const rows = groupCamerasIntoBom([camera('hik-dome-2.8')], modelById)
-    expect(bomToTable(rows, () => 'X')[1].slice(7)).toEqual(['X', 'X'])
+    expect(bomToTable(rows, () => 'X')[1].slice(8)).toEqual(['X', 'X'])
   })
 })
 

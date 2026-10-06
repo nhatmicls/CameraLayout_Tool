@@ -3,6 +3,7 @@
  * calibration, the placed cameras and the drawn walls. Pure data shapes only - no behaviour,
  * no React/Konva imports. Phase 4 builds the zustand store on top of these.
  */
+import type { PlacedSensor } from './sensor-types'
 
 /** A camera placed on the floor plan. Position/rotation live in image pixel space (y-down, matching canvas + Konva). */
 export interface PlacedCamera {
@@ -63,6 +64,8 @@ export interface Project {
   cameras: PlacedCamera[]
   /** Always present in memory; optional in the file (older files have none). */
   walls: Wall[]
+  /** Always present in memory; optional in the file (v1-v3 files have none). See `sensor-types.ts`. */
+  sensors: PlacedSensor[]
 }
 
 /**

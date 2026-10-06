@@ -2,6 +2,7 @@ import { memo } from 'react'
 import type { KonvaEventObject } from 'konva/lib/Node'
 import { Circle, Group, Text } from 'react-konva'
 import type { FormFactor } from '../catalog/camera-catalog-schema'
+import { clampPointToImageBounds } from '../domain/clamp'
 import type { PlacedCamera } from '../domain/project-types'
 import { CameraFormFactorIconShape } from './camera-form-factor-icon-shape'
 import { CameraRotationHandle } from './camera-rotation-handle'
@@ -26,8 +27,6 @@ interface CameraMarkerNodeProps {
   onRotateLive: (id: string, rotationDeg: number) => void
   onRotateEnd: (id: string, rotationDeg: number) => void
 }
-
-const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value))
 
 /**
  * One camera's draggable icon + label (+ selection ring/rotation handle
@@ -83,10 +82,9 @@ export const CameraMarkerNode = memo(function CameraMarkerNode({
         // Commit-time clamp: cheaper than a dragBoundFunc (which operates in
         // Konva's "absolute"/screen space, not image px) and sufficient to
         // guarantee the stored position stays on the plan.
-        const x = clamp(e.target.x(), 0, imageWidthPx)
-        const y = clamp(e.target.y(), 0, imageHeightPx)
-        e.target.position({ x, y })
-        onDragEnd(camera.id, { x, y })
+        const clamped = clampPointToImageBounds({ x: e.target.x(), y: e.target.y() }, imageWidthPx, imageHeightPx)
+        e.target.position(clamped)
+        onDragEnd(camera.id, clamped)
       }}
     >
       <CameraFormFactorIconShape formFactor={formFactor} tint={tint} radiusPx={iconRadiusPx} />
