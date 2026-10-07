@@ -1,18 +1,15 @@
 import { useCallback, useRef, useState } from 'react'
 import type Konva from 'konva'
 import type { KonvaEventObject } from 'konva/lib/Node'
-import { Layer, Stage } from 'react-konva'
+import { Stage } from 'react-konva'
 import { useProjectStore } from '../../state/project-store'
 import { selectCameras, selectImage, selectScale, selectSensors, selectWalls } from '../../state/project-store-floor-selectors'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useStagePanZoom } from './use-stage-pan-zoom'
-import { ScaleCalibrationOverlay } from './scale-calibration-overlay'
-import { WallDrawingOverlay } from '../wall/wall-drawing-overlay'
+import { PlanEditorOverlaysLayer } from './plan-editor-overlays-layer'
 import { ScaleCalibrationLengthDialog } from '../../panels/app-shell/scale-calibration-length-dialog'
 import { PlanSceneLayers } from './plan-scene-layers'
 import { CameraDebugList } from '../camera/camera-debug-list'
-import { CableDrawingOverlay } from '../cable/cable-drawing-overlay'
-import { HubPlacementOverlay } from '../cable/hub-placement-overlay'
 import { useHubAndCableSelectionKeyboardShortcuts } from '../cable/use-hub-and-cable-selection-keyboard-shortcuts'
 import { useStageCablingSceneProps } from '../cable/use-stage-cabling-scene-props'
 import { useStageCatalogDropHandlers } from './use-stage-catalog-drop-handlers'
@@ -166,28 +163,14 @@ export function FloorPlanStage() {
             onSensorCommit={updateSensor}
             onFireAlarmDeviceCommit={updateFireAlarmDevice}
           />
-          {/* One Layer for every editor overlay: with the scene's four that makes five, Konva's recommended maximum. */}
-          <Layer>
-            <ScaleCalibrationOverlay
-              stageRef={stageRef}
-              viewportScale={viewport.scale}
-              dialogOpen={pendingLine !== null}
-              onLineDrawn={handleLineDrawn}
-            />
-            <WallDrawingOverlay
-              stageRef={stageRef}
-              viewportScale={viewport.scale}
-              imageWidthPx={image.widthPx}
-              imageHeightPx={image.heightPx}
-            />
-            <HubPlacementOverlay stageRef={stageRef} imageWidthPx={image.widthPx} imageHeightPx={image.heightPx} />
-            <CableDrawingOverlay
-              stageRef={stageRef}
-              viewportScale={viewport.scale}
-              imageWidthPx={image.widthPx}
-              imageHeightPx={image.heightPx}
-            />
-          </Layer>
+          <PlanEditorOverlaysLayer
+            stageRef={stageRef}
+            viewportScale={viewport.scale}
+            imageWidthPx={image.widthPx}
+            imageHeightPx={image.heightPx}
+            dialogOpen={pendingLine !== null}
+            onLineDrawn={handleLineDrawn}
+          />
         </Stage>
       )}
 

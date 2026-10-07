@@ -4,6 +4,8 @@
  * `src/domain/project-file/project-file-schema.ts` - this module is pure file/DOM
  * plumbing around it (read file -> validate -> decode every floor's embedded image).
  */
+import { formatMegabytes } from '../../domain/shared/format-megabytes'
+import { MAX_PROJECT_TEXT_LENGTH_BYTES } from '../../domain/project-file/project-file-floor-schema'
 import type { Floor } from '../../domain/floor/floor-types'
 import { parseProjectFile, serializeProject, type ProjectFileLookups } from '../../domain/project-file/project-file-schema'
 import type { Project } from '../../domain/project-file/project-types'
@@ -13,22 +15,48 @@ import { sanitiseDownloadFileName, triggerBrowserFileDownload } from '../browser
 /** Guards against reading a huge file into memory at all; matches the schema's own text-length cap. */
 const MAX_LOAD_FILE_SIZE_BYTES = 80 * 1024 * 1024 // 80 MB
 
-function formatMegabytes(bytes: number): string {
-  return (bytes / (1024 * 1024)).toFixed(1)
-}
-
 /** `<image-base-name>-camera-layout.json`, per the phase spec. */
 export function deriveProjectFileName(imageFileName: string): string {
   const base = imageFileName.replace(/\.[^./\\]+$/, '').trim()
   return `${base.length > 0 ? base : 'project'}-camera-layout.json`
 }
 
-/** Serialises `project` and triggers a browser download of it. The file name comes from the first floor (in tab order) that has an image. */
-export function saveProjectToFile(project: Project): void {
+export type SaveProjectResult = { ok: true } | { ok: false; error: string }
+
+/** Real UTF-8 byte length of `text` (NOT JS string `.length`, which counts UTF-16 code units) - exported for its own unit test; a multi-byte character (e.g. in a Vietnamese floor/camera name) needs more UTF-8 bytes than UTF-16 units. */
+export function utf8ByteLength(text: string): number {
+  return new TextEncoder().encode(text).length
+}
+
+/**
+ * Serialises `project` and triggers a browser download of it. Refuses (no
+ * download) rather than writing a file this same app's own loader would
+ * then reject: the multi-floor image budget (`floor-image-budget.ts`)
+ * guards adding an image, but several floors' images can still add up past
+ * the schema's `MAX_PROJECT_TEXT_LENGTH_BYTES` cap one small edit at a time
+ * (another camera, a longer cable route...), so the save path checks the
+ * SAME limit the reader enforces, one last time, right before download.
+ *
+ * Measured in real UTF-8 BYTES (`TextEncoder`), not JS string `.length`
+ * (UTF-16 code units): a floor/camera name with non-ASCII characters (a
+ * Vietnamese name, say) can need more UTF-8 bytes than UTF-16 units, and
+ * `MAX_LOAD_FILE_SIZE_BYTES` below - the gate that actually decides whether
+ * a reopened file is even read at all - is real bytes too (`File.size`), so
+ * this check must use the same unit to be a reliable predictor of it.
+ */
+export function saveProjectToFile(project: Project): SaveProjectResult {
   const json = serializeProject(project)
+  const byteLength = utf8ByteLength(json)
+  if (byteLength > MAX_PROJECT_TEXT_LENGTH_BYTES) {
+    return {
+      ok: false,
+      error: `This project file would be ${formatMegabytes(byteLength)} MB; the maximum is ${formatMegabytes(MAX_PROJECT_TEXT_LENGTH_BYTES)} MB. Remove or replace a floor's image to shrink it.`,
+    }
+  }
   const sourceImageFileName = project.floors.find((floor) => floor.image !== null)?.image?.fileName ?? ''
   const fileName = sanitiseDownloadFileName(deriveProjectFileName(sourceImageFileName))
   triggerBrowserFileDownload(json, fileName, 'application/json')
+  return { ok: true }
 }
 
 export type LoadProjectOutcome =

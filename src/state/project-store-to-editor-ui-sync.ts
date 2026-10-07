@@ -18,9 +18,19 @@ export function installProjectStoreToEditorUiSync(): void {
       useEditorUiStore.getState().setHasUnsavedChanges(true)
     }
 
-    if (state.activeFloorId !== prevState.activeFloorId) {
+    // M2 fix: a plain `activeFloorId` comparison misses a project load whose new active floor
+    // happens to share an id with the old one (two legacy, pre-v7 files BOTH wrap their one
+    // floor as `LEGACY_FLOOR_ID` - opening one right after the other left selection/tool/the
+    // stage itself untouched). `loadSeq` changes on EVERY `replaceProject`/`resetProject` call
+    // regardless, so it is checked independently and ALSO forces a stage remount via
+    // `projectLoadEpoch` (`app.tsx`'s key) - a floor switch alone still only resets selection/tool.
+    const isProjectLoad = state.loadSeq !== prevState.loadSeq
+    if (state.activeFloorId !== prevState.activeFloorId || isProjectLoad) {
       useEditorUiStore.getState().clearSelection()
       useEditorUiStore.getState().setToolMode('select')
+    }
+    if (isProjectLoad) {
+      useEditorUiStore.getState().bumpProjectLoadEpoch()
     }
 
     // Keyed on the data URL STRING, not the `PlanImage` object reference, and must match the

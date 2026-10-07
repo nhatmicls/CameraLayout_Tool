@@ -12,9 +12,19 @@
  */
 import { MAX_FLOORS, type Floor } from './floor-types'
 
-/** `Floor N`, N = the 1-based position the new floor would take. Not deduplicated against existing names - names are free text (CLAUDE.md puts no uniqueness requirement on them, unlike ids). */
+/**
+ * The lowest-numbered unused "Floor N" - NOT just `floors.length + 1`
+ * (Low item: that could collide with an existing floor literally named
+ * "Floor 2" after a delete/rename/reorder leaves the count out of step
+ * with the names already in use). Names are still free text otherwise
+ * (CLAUDE.md puts no uniqueness requirement on them, unlike ids) - this
+ * only keeps the AUTOMATIC suggestion from duplicating one.
+ */
 export function defaultFloorName(floors: Floor[]): string {
-  return `Floor ${floors.length + 1}`
+  const usedNames = new Set(floors.map((floor) => floor.name))
+  let n = 1
+  while (usedNames.has(`Floor ${n}`)) n++
+  return `Floor ${n}`
 }
 
 /** Appends `newFloor`. No-op (same array) at `MAX_FLOORS`. */
@@ -48,6 +58,19 @@ export function moveFloorInList(floors: Floor[], id: string, toIndex: number): F
 export function removeFloorFromList(floors: Floor[], id: string): Floor[] {
   if (floors.length <= 1 || !floors.some((floor) => floor.id === id)) return floors
   return floors.filter((floor) => floor.id !== id)
+}
+
+/**
+ * "Nearest neighbour by index" after a floor at `removedIndex` is gone from
+ * a list that now has `remainingCount` floors (`remainingCount` >= 1 - a
+ * floor list is never empty): the floor that slides into the removed one's
+ * slot, or the new last floor if it was already at the end. Shared by
+ * `deleteFloor` (H2: picking the next active floor when you delete the one
+ * you are looking at) and the undo/redo auto-switch's rule (iii) in
+ * `project-store.ts` (the same situation, reached a different way).
+ */
+export function nearestFloorIndexAfterRemoval(removedIndex: number, remainingCount: number): number {
+  return Math.min(Math.max(removedIndex, 0), remainingCount - 1)
 }
 
 /**

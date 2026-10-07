@@ -6,6 +6,7 @@ import { getActiveFloor } from './state/project-store-floor-selectors'
 import { useEditorUiStore, type UiNotification, type Viewport } from './state/editor-ui-store'
 import { PlanSceneLayers } from './canvas/stage/plan-scene-layers'
 import type { Cable, Hub } from './domain/cable/cable-layout-types'
+import type { Floor } from './domain/floor/floor-types'
 import type { PlacedCamera, ScaleCalibration, Wall } from './domain/project-file/project-types'
 import type { FireAlarmSettings, PlacedFireAlarmDevice } from './domain/fire-alarm/fire-alarm-device-types'
 import type { PlacedSensor } from './domain/sensor/sensor-types'
@@ -23,6 +24,13 @@ declare global {
       getCables: () => Cable[]
       getFireAlarmDevices: () => PlacedFireAlarmDevice[]
       getSelectedCameraId: () => string | null
+      /** Phase 3 (multi-floor tabs): the whole floor list and which one is active, for an e2e spec to assert per-floor counts/order without re-deriving them from the DOM. */
+      getFloors: () => Floor[]
+      getActiveFloorId: () => string
+      /** Adds a floor the same way the "+" tab button does (auto-named when `name` is omitted) and returns its id. */
+      seedFloor: (name?: string) => string
+      /** M4: the REAL on-screen bitmap's native size (not just the active floor's own stored `image.widthPx/heightPx`) - lets an e2e spec confirm the pixels actually painted match the floor it expects, catching a C2-style "right floor, wrong bitmap" regression a mere "a canvas exists" check would miss. `null` while nothing is decoded yet. */
+      getDecodedImageInfo: () => { widthPx: number; heightPx: number } | null
       pushNotification: (kind: UiNotification['kind'], message: string) => void
       /** Sets the scale directly, skipping the two-click calibration UI - needed by a browser check that must draw a metres-derived shape (a camera cone, a sensor band, a fire-detector circle) without drawing a reference line by hand. */
       setScale: (scale: ScaleCalibration) => void
@@ -151,6 +159,16 @@ export function installDevTestHooks(): void {
     getCables: () => getActiveFloor(useProjectStore.getState()).cables,
     getFireAlarmDevices: () => getActiveFloor(useProjectStore.getState()).fireAlarmDevices,
     getSelectedCameraId: () => useEditorUiStore.getState().selectedCameraId,
+    getFloors: () => useProjectStore.getState().floors,
+    getActiveFloorId: () => useProjectStore.getState().activeFloorId,
+    seedFloor: (name) => {
+      useProjectStore.getState().addFloor(name)
+      return useProjectStore.getState().activeFloorId // addFloor always activates the floor it just added
+    },
+    getDecodedImageInfo: () => {
+      const decodedImage = useEditorUiStore.getState().decodedImage
+      return decodedImage ? { widthPx: decodedImage.naturalWidth, heightPx: decodedImage.naturalHeight } : null
+    },
     pushNotification: (kind, message) => useEditorUiStore.getState().pushNotification(kind, message),
     setScale: (scale) => useProjectStore.getState().setScale(scale),
     seedCamera: (camera) => useProjectStore.getState().addCamera({ id: crypto.randomUUID(), ...camera }),

@@ -6,6 +6,7 @@ import {
   defaultFloorName,
   findSingleChangedFloorId,
   moveFloorInList,
+  nearestFloorIndexAfterRemoval,
   removeFloorFromList,
   renameFloorInList,
 } from './floor-list-editing'
@@ -15,9 +16,25 @@ const floorB = () => buildFloor({ id: 'b', name: 'Floor B' })
 const floorC = () => buildFloor({ id: 'c', name: 'Floor C' })
 
 describe('defaultFloorName', () => {
-  it('is "Floor N" for the next 1-based position', () => {
+  it('is "Floor 1" for an empty list', () => {
     expect(defaultFloorName([])).toBe('Floor 1')
-    expect(defaultFloorName([floorA(), floorB()])).toBe('Floor 3')
+  })
+
+  it('is the lowest unused "Floor N" - NOT just count + 1 (Low item fix)', () => {
+    // Neither existing floor is actually named "Floor 1" or "Floor 2" (they're "Floor A"/"Floor
+    // B") - the OLD `floors.length + 1` behaviour would have returned "Floor 3" here, which is
+    // fine in THIS case but wrong in the next one.
+    expect(defaultFloorName([floorA(), floorB()])).toBe('Floor 1')
+  })
+
+  it('never produces a name that collides with an existing one, even out of numeric order', () => {
+    const floors = [buildFloor({ id: 'x', name: 'Floor 1' }), buildFloor({ id: 'y', name: 'Floor 3' })]
+    expect(defaultFloorName(floors)).toBe('Floor 2') // "Floor 1" and "Floor 3" taken; "Floor 2" is free
+  })
+
+  it('counts up past every consecutively-used name', () => {
+    const floors = [buildFloor({ id: 'x', name: 'Floor 1' }), buildFloor({ id: 'y', name: 'Floor 2' })]
+    expect(defaultFloorName(floors)).toBe('Floor 3')
   })
 })
 
@@ -97,6 +114,24 @@ describe('removeFloorFromList', () => {
   it('is a no-op (same array) for an unknown id', () => {
     const floors = [floorA(), floorB()]
     expect(removeFloorFromList(floors, 'unknown')).toBe(floors)
+  })
+})
+
+describe('nearestFloorIndexAfterRemoval', () => {
+  it('returns the same index (the floor that slides into the removed slot) when not at the end', () => {
+    expect(nearestFloorIndexAfterRemoval(1, 2)).toBe(1) // removed index 1 of 3 -> 2 remain, index 1 still valid
+  })
+
+  it('clamps to the new last index when the removed floor was last', () => {
+    expect(nearestFloorIndexAfterRemoval(2, 2)).toBe(1) // removed the last of 3 -> 2 remain, last index is 1
+  })
+
+  it('clamps to 0 when only one floor remains', () => {
+    expect(nearestFloorIndexAfterRemoval(0, 1)).toBe(0)
+  })
+
+  it('clamps a negative (not-found) index up to 0', () => {
+    expect(nearestFloorIndexAfterRemoval(-1, 3)).toBe(0)
   })
 })
 

@@ -45,6 +45,15 @@ export interface EditorUiState {
   stageSize: { width: number; height: number }
   notifications: UiNotification[]
   /**
+   * M2 fix: bumped once per `replaceProject`/`resetProject` (mirroring
+   * `ProjectState.loadSeq`, which the sync below watches) - included in the
+   * stage's React `key` (`app.tsx`) so a project load ALWAYS forces a
+   * remount, even when `activeFloorId` happens not to change (two legacy
+   * files both wrap their one floor under the same id). Not persisted, not
+   * itself project data.
+   */
+  projectLoadEpoch: number
+  /**
    * True whenever the project store has changed since the last save/load.
    * Set automatically by the `project-store` subscription below;
    * save/load call sites clear it themselves right after succeeding. Drives
@@ -74,6 +83,8 @@ export interface EditorUiActions {
   pushNotification: (kind: UiNotification['kind'], message: string) => void
   dismissNotification: (id: string) => void
   setHasUnsavedChanges: (hasUnsavedChanges: boolean) => void
+  /** Called only from `project-store-to-editor-ui-sync.ts`, once per detected project load. */
+  bumpProjectLoadEpoch: () => void
 }
 
 export type EditorUiStore = EditorUiState & EditorUiActions
@@ -106,6 +117,7 @@ export const useEditorUiStore = create<EditorUiStore>((set) => ({
   stageSize: { width: 0, height: 0 },
   notifications: [],
   hasUnsavedChanges: false,
+  projectLoadEpoch: 0,
 
   setToolMode: (toolMode) => set({ toolMode }),
 
@@ -140,6 +152,8 @@ export const useEditorUiStore = create<EditorUiStore>((set) => ({
     set((state) => ({ notifications: state.notifications.filter((n) => n.id !== id) })),
 
   setHasUnsavedChanges: (hasUnsavedChanges) => set({ hasUnsavedChanges }),
+
+  bumpProjectLoadEpoch: () => set((state) => ({ projectLoadEpoch: state.projectLoadEpoch + 1 })),
 }))
 
 // Any project-store mutation to a tracked field (camera add/move/rotate/

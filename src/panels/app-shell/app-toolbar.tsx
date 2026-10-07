@@ -6,6 +6,8 @@ import { WallToolControls } from './wall-tool-controls'
 
 interface AppToolbarProps {
   hasImage: boolean
+  /** H1: whether ANY floor has a plan image - gates Save, independently of `hasImage` (the ACTIVE floor only), so other floors' work can still be saved while viewing an image-less one. */
+  canSaveProject: boolean
   scale: ScaleCalibration | null
   toolMode: ToolMode
   zoomPercent: number
@@ -36,6 +38,7 @@ const buttonClass =
 /** Top toolbar: open image, project save/load, calibration tool + status, wall tool, hub + cable tools, fire-detector coverage mode, export, undo/redo, zoom controls. Wraps onto a second row in a narrow window instead of clipping. */
 export function AppToolbar({
   hasImage,
+  canSaveProject,
   scale,
   toolMode,
   zoomPercent,
@@ -75,8 +78,8 @@ export function AppToolbar({
         type="button"
         data-testid="save-project-button"
         onClick={onSaveProject}
-        disabled={!hasImage}
-        title={hasImage ? 'Download the project as a .json file' : 'Load a floor plan first'}
+        disabled={!canSaveProject}
+        title={canSaveProject ? 'Download the project as a .json file' : 'Load a floor plan on at least one floor first'}
         className={buttonClass}
       >
         Save project

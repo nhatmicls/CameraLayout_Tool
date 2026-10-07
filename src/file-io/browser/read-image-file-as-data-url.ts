@@ -5,6 +5,7 @@
  * with a user-displayable message - callers show it in the notification
  * banner, nothing here touches the DOM beyond `FileReader`/`Image`.
  */
+import { formatMegabytes } from '../../domain/shared/format-megabytes'
 
 export interface DecodedPlanImage {
   dataUrl: string
@@ -25,10 +26,6 @@ const ACCEPTED_MIME_TYPES = new Set(['image/png', 'image/jpeg'])
 const MAX_FILE_SIZE_BYTES = 40 * 1024 * 1024 // 40 MB
 const MAX_TOTAL_PIXELS = 100_000_000 // reject above this
 const SAFARI_SAFE_PIXELS = 16_700_000 // warn above this (Safari canvas cap, see docs/tech-stack.md)
-
-function formatMegabytes(bytes: number): string {
-  return (bytes / (1024 * 1024)).toFixed(1)
-}
 
 function formatMegapixels(pixels: number): string {
   return (pixels / 1_000_000).toFixed(1)

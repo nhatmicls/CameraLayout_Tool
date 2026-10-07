@@ -7,11 +7,10 @@ import { defaultBeamEnvironment, sensorPlacementShape } from '../../domain/senso
 import { DEFAULT_VIEW_CONFIG } from '../../domain/view/view-config-types'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
-import { getActiveFloor } from '../../state/project-store-floor-selectors'
 import { loadProjectFromFile, saveProjectToFile } from './project-file-save-and-load'
 import { summariseProjectLoadWarnings } from './summarise-project-load-warnings'
 
-const FLOOR_ZERO_HAS_NO_IMAGE_ERROR = "This project's first floor has no plan image; open a file whose first floor has one."
+const NO_FLOOR_HAS_AN_IMAGE_ERROR = "This project file has no plan image on any floor; open a file with at least one."
 
 const REPLACE_PROJECT_CONFIRM_MESSAGE = 'Opening a project discards your unsaved changes. Continue?'
 
@@ -68,15 +67,21 @@ export function useProjectFileActions() {
 
   const handleSaveProject = useCallback(() => {
     const current = useProjectStore.getState()
-    if (!getActiveFloor(current).image) return
+    // H1: gate on ANY floor having an image, not just the active one - other floors can hold
+    // real work even while you happen to be looking at an image-less one.
+    if (!current.floors.some((floor) => floor.image !== null)) return
     try {
-      saveProjectToFile({
+      const result = saveProjectToFile({
         floors: current.floors,
         shafts: current.shafts,
         cableTypes: current.cableTypes,
         cableSettings: current.cableSettings,
         fireAlarmSettings: current.fireAlarmSettings,
       })
+      if (!result.ok) {
+        pushNotification('error', result.error)
+        return
+      }
       setHasUnsavedChanges(false)
     } catch (err) {
       pushNotification('error', err instanceof Error ? err.message : 'Failed to save the project.')
@@ -93,11 +98,11 @@ export function useProjectFileActions() {
         pushNotification('error', outcome.error)
         return
       }
-      // Tab 1 = the lowest floor = `floors[0]` (CLAUDE.md); `replaceProject`
-      // makes it the active floor. No floor-tabs UI yet (phase 3), so a file
-      // whose first floor has no image can't be shown at all.
-      if (outcome.project.floors[0].image === null) {
-        pushNotification('error', FLOOR_ZERO_HAS_NO_IMAGE_ERROR)
+      // C1: tab 1 (`floors[0]`) need not be the floor with an image - `replaceProject` itself
+      // picks the first floor that actually HAS one to activate (defensive here too: the schema
+      // already guarantees at least one floor has an image, so this should never fire).
+      if (!outcome.project.floors.some((floor) => floor.image !== null)) {
+        pushNotification('error', NO_FLOOR_HAS_AN_IMAGE_ERROR)
         return
       }
       replaceProject(outcome.project)

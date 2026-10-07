@@ -1,9 +1,62 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { MAX_PROJECT_TEXT_LENGTH_BYTES } from '../../domain/project-file/project-file-floor-schema'
 import { serializeProject, type ProjectFileLookups, type SensorModelLookup } from '../../domain/project-file/project-file-schema'
 import { buildFloor, buildProject, buildProjectWithFloors, TINY_PNG_DATA_URL } from '../../domain/project-file/project-file-test-fixtures'
-import { deriveProjectFileName, loadProjectFromFile } from './project-file-save-and-load'
+import { deriveProjectFileName, loadProjectFromFile, saveProjectToFile, utf8ByteLength } from './project-file-save-and-load'
 
 const EMPTY_LOOKUPS: ProjectFileLookups = { cameraModelIds: new Set(), sensorModelLookup: new Map(), fireAlarmModelIds: new Set() }
+
+describe('utf8ByteLength', () => {
+  it('matches JS .length for pure ASCII', () => {
+    expect(utf8ByteLength('abc')).toBe(3)
+  })
+
+  it('counts a multi-byte character as more than one byte (unlike JS string .length)', () => {
+    // "ầ" (a with circumflex and grave) is one UTF-16 code unit but multiple UTF-8 bytes.
+    const vietnamese = 'Tầng trệt'
+    expect(utf8ByteLength(vietnamese)).toBeGreaterThan(vietnamese.length)
+  })
+})
+
+describe('saveProjectToFile - size guard (low: Low item, must measure real UTF-8 bytes)', () => {
+  it('refuses (no download attempted) a project whose serialised JSON exceeds the 80 MB cap', () => {
+    // A valid-looking (regex-passing) but oversized base64 payload - cheap to build, and the
+    // refuse path returns before `triggerBrowserFileDownload` ever touches the DOM, so this is
+    // safe to run in this suite's `node` test environment (see the class comment below).
+    const hugeDataUrl = 'data:image/png;base64,' + 'A'.repeat(MAX_PROJECT_TEXT_LENGTH_BYTES)
+    const project = buildProject({ image: { dataUrl: hugeDataUrl, widthPx: 10, heightPx: 10, fileName: 'huge.png' } })
+
+    const result = saveProjectToFile(project)
+
+    expect(result.ok).toBe(false)
+    if (result.ok) throw new Error('expected ok: false')
+    expect(result.error).toContain('MB')
+  })
+
+  it('succeeds (download attempted) for an ordinary small project', () => {
+    // `triggerBrowserFileDownload` needs `document`/`URL` - stub just enough of the DOM surface
+    // it touches rather than switching this whole suite to a jsdom environment.
+    const originalDocument = globalThis.document
+    const originalUrl = globalThis.URL
+    const originalWindow = globalThis.window
+    const stubLink = { href: '', download: '', rel: '', click: () => {}, remove: () => {} }
+    try {
+      // @ts-expect-error - minimal stub, not a full Document
+      globalThis.document = { createElement: () => stubLink, body: { appendChild: () => {} } }
+      // @ts-expect-error - minimal stub, not the full URL API
+      globalThis.URL = { createObjectURL: () => 'blob:stub', revokeObjectURL: () => {} }
+      // @ts-expect-error - minimal stub: `triggerBrowserFileDownload` calls `window.setTimeout`
+      globalThis.window = { setTimeout: () => 0 }
+
+      const result = saveProjectToFile(buildProject())
+      expect(result.ok).toBe(true)
+    } finally {
+      globalThis.document = originalDocument
+      globalThis.URL = originalUrl
+      globalThis.window = originalWindow
+    }
+  })
+})
 
 describe('deriveProjectFileName', () => {
   it('replaces the image extension with -camera-layout.json', () => {

@@ -2,6 +2,7 @@ import {
   addFloorToList,
   defaultFloorName,
   moveFloorInList,
+  nearestFloorIndexAfterRemoval,
   removeFloorFromList,
   renameFloorInList,
 } from '../domain/floor/floor-list-editing'
@@ -31,7 +32,7 @@ export interface FloorListActions {
   renameFloor: (id: string, name: string) => void
   /** `toIndex` is clamped to the list's bounds. No-op if `id` is unknown or it is already there. */
   moveFloor: (id: string, toIndex: number) => void
-  /** No-op on the last remaining floor or an unknown id. Deleting the active floor reassigns `activeFloorId` to the first remaining floor. */
+  /** No-op on the last remaining floor or an unknown id. Deleting the active floor reassigns `activeFloorId` to its nearest neighbour by index (H2) - not always the first floor. */
   deleteFloor: (id: string) => void
   /** No-op if `id` is unknown or the value is unchanged. */
   setFloorHeight: (id: string, floorHeightM: number) => void
@@ -74,9 +75,12 @@ export function createFloorActions(
 
     deleteFloor: (id) => {
       const { floors, activeFloorId } = get()
+      const deletedIndex = floors.findIndex((floor) => floor.id === id)
       const next = removeFloorFromList(floors, id)
       if (next === floors) return
-      set({ floors: next, activeFloorId: activeFloorId === id ? next[0].id : activeFloorId })
+      // H2: nearest neighbour by index when deleting the ACTIVE floor, not always `next[0]`.
+      const nextActiveFloorId = activeFloorId === id ? next[nearestFloorIndexAfterRemoval(deletedIndex, next.length)].id : activeFloorId
+      set({ floors: next, activeFloorId: nextActiveFloorId })
     },
 
     setFloorHeight: (id, floorHeightM) => {

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { Hub } from '../domain/cable/cable-layout-types'
 import { MAX_FLOORS } from '../domain/floor/floor-types'
+import { buildFloor, buildProjectWithFloors } from '../domain/project-file/project-file-test-fixtures'
 import type { PlacedCamera, PlanImage } from '../domain/project-file/project-types'
 import { useEditorUiStore } from './editor-ui-store'
 import { redoProject, undoProject, useProjectStore } from './project-store'
@@ -214,6 +215,154 @@ describe('undo/redo auto-switch + clamp', () => {
     undoProject() // undoes the add: floor B no longer exists, but activeFloorId still pointed at it
     expect(store().floors).toHaveLength(1)
     expect(store().floors.some((f) => f.id === store().activeFloorId)).toBe(true)
+  })
+
+  it('undo of a floor delete switches back to the restored floor (phase 3 decision)', () => {
+    store().addFloor('Floor B')
+    const floorAId = store().floors[0].id
+    const floorBId = store().activeFloorId
+    store().setActiveFloor(floorAId) // move away from B before deleting it, so the switch is observable
+    history().clear()
+
+    store().deleteFloor(floorBId)
+    expect(store().activeFloorId).toBe(floorAId) // deleteFloor only reassigns when the DELETED floor was active
+
+    undoProject()
+    expect(store().floors.some((f) => f.id === floorBId)).toBe(true)
+    expect(store().activeFloorId).toBe(floorBId)
+  })
+
+  // H2 fix: dropped the module-level "remember where I came from" heuristic entirely. Three
+  // deterministic rules instead (see `project-store.ts`'s `autoSwitchAndClamp`): (i) one floor's
+  // content changed, (ii) undoING a delete restores a floor - switch to it, (iii) the floor the
+  // user is ACTUALLY on vanished (either direction) - go to its nearest neighbour by index.
+
+  it('redo of addFloor does NOT auto-switch (growth during a REDO is not rule ii - nothing was just restored)', () => {
+    store().addFloor('Floor B') // active = B
+    const floorAId = store().floors[0].id
+    store().setActiveFloor(floorAId)
+    undoProject() // rule iii: B (active) vanished -> switched to A
+    expect(store().floors).toHaveLength(1)
+    expect(store().activeFloorId).toBe(floorAId)
+
+    redoProject() // B reappears, but this is a redo of an ADD, not an undo of a DELETE
+    expect(store().floors).toHaveLength(2)
+    expect(store().activeFloorId).toBe(floorAId) // still A - redo did not pull the view away
+  })
+
+  it('undo of addFloor returns to the floor that was active right before the add (rule iii)', () => {
+    const floorAId = store().activeFloorId
+    store().addFloor('Floor B') // active = B now
+    expect(store().activeFloorId).not.toBe(floorAId)
+
+    undoProject() // B (active) vanishes -> its nearest neighbour (the only one left) is A
+    expect(store().floors).toHaveLength(1)
+    expect(store().activeFloorId).toBe(floorAId)
+  })
+
+  it('H2 bug (a): add, undo, redo, undo - the final undo leaves exactly one floor, still active (no stale "previous active" memory to misfire)', () => {
+    const floorAId = store().activeFloorId
+    store().addFloor('Floor B')
+    undoProject()
+    expect(store().activeFloorId).toBe(floorAId)
+
+    redoProject() // does not auto-switch (see the test above)
+    expect(store().activeFloorId).toBe(floorAId)
+
+    undoProject() // the (inactive) floor B vanishes again - A (active) is untouched either way
+    expect(store().floors).toHaveLength(1)
+    expect(store().activeFloorId).toBe(floorAId)
+  })
+
+  it('H2 bug (b): add, then click to a DIFFERENT existing floor, then undo - stays on the floor the user is looking at', () => {
+    store().addFloor('Floor B') // floors = [A, B], active = B
+    store().addFloor('Floor C') // floors = [A, B, C], active = C
+    const [floorAId, floorBId] = store().floors.map((f) => f.id)
+
+    store().setActiveFloor(floorAId) // the user deliberately looks at A, not the floor they just added
+    expect(store().activeFloorId).toBe(floorAId)
+
+    undoProject() // undoes addFloor('Floor C'): C vanishes, but A (active) did not - untouched
+    expect(store().floors.map((f) => f.id)).toEqual([floorAId, floorBId])
+    expect(store().activeFloorId).toBe(floorAId) // NOT pulled onto B by any remembered "previous active"
+  })
+
+  it('neighbour rule: deleteFloor of the active MIDDLE floor lands on the floor that slides into its slot, not floors[0]', () => {
+    store().addFloor('Floor B')
+    store().addFloor('Floor C') // floors = [A, B, C], active = C
+    const [floorAId, floorBId, floorCId] = store().floors.map((f) => f.id)
+    store().setActiveFloor(floorBId) // active = B, the middle floor
+
+    store().deleteFloor(floorBId)
+    expect(store().floors.map((f) => f.id)).toEqual([floorAId, floorCId])
+    expect(store().activeFloorId).toBe(floorCId) // slid into B's slot - not A (floors[0])
+  })
+
+  it('neighbour rule: deleteFloor of the active LAST floor lands on the new last floor, not floors[0]', () => {
+    store().addFloor('Floor B')
+    store().addFloor('Floor C') // floors = [A, B, C], active = C
+    const [floorAId, floorBId, floorCId] = store().floors.map((f) => f.id)
+    expect(store().activeFloorId).toBe(floorCId)
+
+    store().deleteFloor(floorCId)
+    expect(store().floors.map((f) => f.id)).toEqual([floorAId, floorBId])
+    expect(store().activeFloorId).toBe(floorBId) // new last floor, not A (floors[0])
+  })
+
+  it('neighbour rule via undo/redo: redoing the delete of a MIDDLE floor (rule iii) lands on its neighbour, not floors[0]', () => {
+    store().addFloor('Floor B')
+    store().addFloor('Floor C') // floors = [A, B, C], active = C
+    const [floorAId, floorBId, floorCId] = store().floors.map((f) => f.id)
+    store().setActiveFloor(floorBId) // active = B, the middle floor
+    history().clear()
+
+    store().deleteFloor(floorBId) // floors = [A, C], active = C (deleteFloor's own neighbour rule)
+    undoProject() // rule ii: B reappears (back in its original middle slot) - switch to it
+    expect(store().floors.map((f) => f.id)).toEqual([floorAId, floorBId, floorCId])
+    expect(store().activeFloorId).toBe(floorBId)
+
+    redoProject() // rule iii: B (active, at middle index 1) vanishes again -> nearest neighbour
+    expect(store().floors.map((f) => f.id)).toEqual([floorAId, floorCId])
+    expect(store().activeFloorId).toBe(floorCId) // not A (floors[0])
+  })
+})
+
+// M2 fix: a plain `activeFloorId` comparison misses a project load that lands on the SAME id
+// as before (two legacy, pre-v7 files BOTH wrap their one floor as `LEGACY_FLOOR_ID`) - `loadSeq`
+// changes on every `replaceProject`/`resetProject` call regardless, independently of whether the
+// id happens to repeat, and also drives `editor-ui-store`'s `projectLoadEpoch` (the stage's
+// remount key in `app.tsx`).
+describe('project load (M2): resets view state and bumps the remount epoch even when activeFloorId repeats', () => {
+  it('two loads that both land on the SAME floor id still reset selection/tool and bump the epoch', () => {
+    const projectA = buildProjectWithFloors([buildFloor({ id: 'shared-id', name: 'From file A' })])
+    const projectB = buildProjectWithFloors([buildFloor({ id: 'shared-id', name: 'From file B' })])
+
+    store().replaceProject(projectA)
+    expect(store().activeFloorId).toBe('shared-id')
+    const epochAfterFirstLoad = useEditorUiStore.getState().projectLoadEpoch
+
+    useEditorUiStore.getState().setSelectedCameraId('some-camera')
+    useEditorUiStore.getState().setToolMode('wall')
+
+    store().replaceProject(projectB) // SAME activeFloorId as before - a plain id check would miss this load
+    expect(store().activeFloorId).toBe('shared-id') // confirms the id really did not change
+    expect(store().floors[0].name).toBe('From file B') // but the floor's own content did
+    expect(useEditorUiStore.getState().selectedCameraId).toBeNull()
+    expect(useEditorUiStore.getState().toolMode).toBe('select')
+    expect(useEditorUiStore.getState().projectLoadEpoch).toBe(epochAfterFirstLoad + 1)
+  })
+
+  it('resetProject also bumps the epoch (treated the same as a project load)', () => {
+    const epochBefore = useEditorUiStore.getState().projectLoadEpoch
+    store().resetProject()
+    expect(useEditorUiStore.getState().projectLoadEpoch).toBe(epochBefore + 1)
+  })
+
+  it('a plain floor switch (setActiveFloor) does NOT bump the epoch - only a project load does', () => {
+    store().addFloor('Floor B')
+    const epochBefore = useEditorUiStore.getState().projectLoadEpoch
+    store().setActiveFloor(store().floors[0].id)
+    expect(useEditorUiStore.getState().projectLoadEpoch).toBe(epochBefore)
   })
 })
 

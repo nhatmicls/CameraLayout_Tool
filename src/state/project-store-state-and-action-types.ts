@@ -32,6 +32,18 @@ export interface ProjectState {
   cableTypes: CableType[]
   cableSettings: CableSettings
   fireAlarmSettings: FireAlarmSettings
+  /**
+   * M2 fix: bumped by `replaceProject`/`resetProject` ONLY. Two legacy
+   * (pre-v7) files both wrap their one floor under the SAME id
+   * (`LEGACY_FLOOR_ID`), so opening one right after the other can leave
+   * `activeFloorId` unchanged across the load - the plain "did
+   * `activeFloorId` change" check `project-store-to-editor-ui-sync.ts` used
+   * for selection/tool reset then misses it entirely. This counter changes
+   * on every load regardless, and also drives a forced stage remount (see
+   * `editor-ui-store`'s `projectLoadEpoch`). Not tracked by undo/redo, not
+   * part of the saved project file - a view-reset signal only.
+   */
+  loadSeq: number
 }
 
 export interface ProjectActions extends FloorListActions, PlacedItemActions, CablingActions, FireAlarmActions {
@@ -54,5 +66,6 @@ export const createInitialProjectState = (): ProjectState => {
     cableTypes,
     cableSettings,
     fireAlarmSettings: { ...DEFAULT_FIRE_ALARM_SETTINGS },
+    loadSeq: 0,
   }
 }

@@ -1,5 +1,14 @@
-import { test, expect, type Page } from '@playwright/test'
-import { deflateSync } from 'node:zlib'
+import { test, expect } from '@playwright/test'
+import { buildSolidColorPng } from './helpers/build-solid-color-png'
+import {
+  CAMERA_MODEL_ID,
+  FIRE_PANEL_MODEL_ID,
+  PIR_SENSOR_MODEL_ID,
+  canvasCount,
+  clickButtonTimes,
+  loadImage,
+  waitForTestHooks,
+} from './helpers/test-hooks'
 
 /**
  * Single-floor editing smoke test (multi-floor phase 2). Runs against the
@@ -20,89 +29,8 @@ import { deflateSync } from 'node:zlib'
  *  6. open a legacy flat v6 JSON derived from the saved one -> loads as one floor, canvas renders
  */
 
-// ---------------------------------------------------------------------------
-// Minimal valid PNG builder (no external deps): a solid-colour, uncompressed-
-// filter RGB image. Hand-typed base64 PNGs are easy to get subtly wrong;
-// building real bytes with Node's own `zlib` guarantees a real browser can
-// decode them.
-// ---------------------------------------------------------------------------
-function crc32(buf: Buffer): number {
-  let crc = 0xffffffff
-  for (const byte of buf) {
-    crc ^= byte
-    for (let bit = 0; bit < 8; bit++) {
-      crc = crc & 1 ? (crc >>> 1) ^ 0xedb88320 : crc >>> 1
-    }
-  }
-  return (crc ^ 0xffffffff) >>> 0
-}
-
-function pngChunk(type: string, data: Buffer): Buffer {
-  const typeBuf = Buffer.from(type, 'ascii')
-  const lengthBuf = Buffer.alloc(4)
-  lengthBuf.writeUInt32BE(data.length, 0)
-  const crcInput = Buffer.concat([typeBuf, data])
-  const crcBuf = Buffer.alloc(4)
-  crcBuf.writeUInt32BE(crc32(crcInput), 0)
-  return Buffer.concat([lengthBuf, typeBuf, data, crcBuf])
-}
-
-function buildSolidColorPng(width: number, height: number, rgb: [number, number, number]): Buffer {
-  const signature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
-  const ihdrData = Buffer.alloc(13)
-  ihdrData.writeUInt32BE(width, 0)
-  ihdrData.writeUInt32BE(height, 4)
-  ihdrData[8] = 8 // bit depth
-  ihdrData[9] = 2 // colour type: RGB
-  ihdrData[10] = 0 // compression
-  ihdrData[11] = 0 // filter
-  ihdrData[12] = 0 // interlace
-  const ihdr = pngChunk('IHDR', ihdrData)
-
-  const [r, g, b] = rgb
-  const rows: Buffer[] = []
-  for (let y = 0; y < height; y++) {
-    const row = Buffer.alloc(1 + width * 3)
-    row[0] = 0 // per-row filter: none
-    for (let x = 0; x < width; x++) {
-      row[1 + x * 3] = r
-      row[1 + x * 3 + 1] = g
-      row[1 + x * 3 + 2] = b
-    }
-    rows.push(row)
-  }
-  const idat = pngChunk('IDAT', deflateSync(Buffer.concat(rows)))
-  const iend = pngChunk('IEND', Buffer.alloc(0))
-  return Buffer.concat([signature, ihdr, idat, iend])
-}
-
 const IMAGE_1 = buildSolidColorPng(20, 16, [220, 20, 20]) // red
 const IMAGE_2 = buildSolidColorPng(24, 18, [20, 20, 220]) // blue, different size too - a genuinely different plan
-
-// ---------------------------------------------------------------------------
-// Dev-only test hook shapes actually used here (mirrors `dev-test-hooks.tsx`).
-// Declared loosely (not imported from `src/`) - this spec runs outside the
-// app's own tsconfig project and Playwright transpiles without type-checking.
-// ---------------------------------------------------------------------------
-interface TestHooks {
-  getScale: () => { planPxPerMeter: number } | null
-  getCameras: () => Array<{ id: string }>
-  getSensors: () => Array<{ id: string }>
-  getHubs: () => Array<{ id: string }>
-  getCables: () => Array<{ id: string }>
-  getFireAlarmDevices: () => Array<{ id: string }>
-  setScale: (scale: { planPxPerMeter: number; refLine: { x1: number; y1: number; x2: number; y2: number }; refLengthM: number }) => void
-  seedCamera: (camera: { modelId: string; x: number; y: number; rotationDeg: number; rangeM: number }) => void
-  seedSensor: (sensor: { modelId: string; shape: 'sector'; x: number; y: number; rotationDeg: number; rangeM: number }) => void
-  seedHub: (hub: { x: number; y: number; mountHeightM: number }) => void
-  seedCable: (cable: { device: { kind: 'camera'; id: string }; hubId: string; typeId: string; points: Array<{ x: number; y: number }> }) => void
-  seedFireAlarmDevice: (device: { modelId: string; x: number; y: number }) => void
-}
-declare global {
-  interface Window {
-    __cameraLayoutToolTestHooks?: TestHooks
-  }
-}
 
 /** The subset of the saved v7 project file this spec reads back - loose on purpose (full validation is the domain schema's job, covered by Vitest). */
 interface SavedFloor {
@@ -122,32 +50,6 @@ interface SavedProject {
   cableTypes: unknown
   cableSettings: unknown
   fireAlarmSettings: unknown
-}
-
-/** Real catalog model ids (verified against `data/`) - the broken draft this replaces used placeholders that do not exist in the catalog. */
-const CAMERA_MODEL_ID = 'hikvision-ds-2cd2t47g2-l-2.8mm'
-const PIR_SENSOR_MODEL_ID = 'hikvision-ds-pdpg12p-eg2-pir'
-const FIRE_PANEL_MODEL_ID = 'hikvision-ds-pha48-ep'
-
-async function waitForTestHooks(page: Page): Promise<void> {
-  await page.waitForFunction(() => !!window.__cameraLayoutToolTestHooks, { timeout: 10_000 })
-}
-
-async function loadImage(page: Page, buffer: Buffer, fileName: string): Promise<void> {
-  await page.locator('[data-testid="load-image-input"]').setInputFiles({ name: fileName, mimeType: 'image/png', buffer })
-}
-
-async function canvasCount(page: Page): Promise<number> {
-  return page.locator('[data-testid="stage-container"] canvas').count()
-}
-
-/** Clicks the button `times` times, confirming it is enabled before each click (does not require it to become disabled after the last one). */
-async function clickButtonTimes(page: Page, testId: string, times: number): Promise<void> {
-  for (let i = 0; i < times; i++) {
-    const button = page.locator(`[data-testid="${testId}"]`)
-    await expect(button).toBeEnabled()
-    await button.click()
-  }
 }
 
 test.describe('single-floor-editing-smoke', () => {
