@@ -4,8 +4,8 @@ interface BillOfMaterialsRowProps {
   row: BomRow
   /** Stable per-row id, see `bomRowSlug` in `bill-of-materials-panel.tsx`. */
   slug: string
-  /** 'cameras' for a camera row (keeps the pre-existing `bom-cameras-*` testid); 'labels' for a sensor row (new `bom-labels-*` testid). */
-  labelsTestIdPrefix: 'cameras' | 'labels'
+  /** 'cameras' for a camera row (keeps the pre-existing `bom-cameras-*` testid); 'labels' for a sensor row; 'fire-alarm' for a fire-alarm row. */
+  labelsTestIdPrefix: 'cameras' | 'labels' | 'fire-alarm'
 }
 
 /** One BOM table row - shared by the camera and sensor tables in `bill-of-materials-panel.tsx` (extracted so that file stays under the project's line-count guideline). */

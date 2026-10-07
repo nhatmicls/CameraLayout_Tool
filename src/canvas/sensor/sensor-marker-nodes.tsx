@@ -7,7 +7,6 @@ import type { PlacedSensor, PlacedSensorPatch } from '../../domain/sensor/sensor
 import { selectBlockingWallSegments } from '../../domain/wall/wall-segment-geometry'
 import { SensorBeamNode } from '../beam/sensor-beam-node'
 import { SensorMarkerNode } from './sensor-marker-node'
-import { SENSOR_MARKER_TINT } from './sensor-kind-color-palette'
 
 export interface SensorMarkerNodesProps {
   sensors: PlacedSensor[]
@@ -110,11 +109,11 @@ export function SensorMarkerNodes({
           <SensorMarkerNode
             key={sensor.id}
             sensor={sensor}
-            label={label}
             kind={spec.kind}
-            tint={SENSOR_MARKER_TINT[spec.kind]}
+            label={label}
             iconRadiusPx={iconRadiusPx}
             selected={selected}
+            rotationDeg={sensor.shape === 'sector' ? sensor.rotationDeg : undefined}
             rotatable={rotatable}
             interactive={interactive}
             viewportScale={viewportScale}

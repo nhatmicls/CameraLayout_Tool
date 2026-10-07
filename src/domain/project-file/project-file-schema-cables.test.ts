@@ -7,8 +7,8 @@ import {
   type Hub,
 } from '../cable/cable-layout-types'
 import type { PlacedBeamSensor, PlacedSectorSensor } from '../sensor/sensor-types'
-import { parseProjectFile, serializeProject, type SensorModelLookup } from './project-file-schema'
-import type { Project } from './project-types'
+import { parseProjectFile, serializeProject, type ProjectFileLookups, type SensorModelLookup } from './project-file-schema'
+import { createEmptyFireAlarmLayout, type Project } from './project-types'
 
 // Smallest possible valid PNG (1x1 transparent pixel), as a real base64 data URL.
 const TINY_PNG_DATA_URL =
@@ -19,6 +19,11 @@ const SENSOR_MODEL_LOOKUP: SensorModelLookup = new Map([
   ['pir-1', { shape: 'sector' }],
   ['beam-1', { shape: 'beam', defaultBeamEnvironment: 'indoor' }],
 ])
+const LOOKUPS: ProjectFileLookups = {
+  cameraModelIds: KNOWN_MODEL_IDS,
+  sensorModelLookup: SENSOR_MODEL_LOOKUP,
+  fireAlarmModelIds: new Set(),
+}
 
 const pir: PlacedSectorSensor = { id: 'pir-s1', modelId: 'pir-1', shape: 'sector', x: 10, y: 10, rotationDeg: 0, rangeM: 12 }
 const beam: PlacedBeamSensor = { id: 'beam-s1', modelId: 'beam-1', shape: 'beam', x: 0, y: 0, x2: 100, y2: 0, environment: 'indoor' }
@@ -50,6 +55,7 @@ const project: Project = {
   ...createEmptyCableLayout(),
   hubs: [hub],
   cables: [cameraCable, beamRxCable],
+  ...createEmptyFireAlarmLayout(),
 }
 
 type Raw = Record<string, unknown> & { hubs: Hub[]; cables: Cable[]; cameras: Array<Record<string, unknown>> }
@@ -57,7 +63,7 @@ type Raw = Record<string, unknown> & { hubs: Hub[]; cables: Cable[]; cameras: Ar
 function parseRaw(mutate: (raw: Raw) => void) {
   const raw = JSON.parse(serializeProject(project)) as Raw
   mutate(raw)
-  return parseProjectFile(JSON.stringify(raw), KNOWN_MODEL_IDS, SENSOR_MODEL_LOOKUP)
+  return parseProjectFile(JSON.stringify(raw), LOOKUPS)
 }
 
 function expectOk(result: ReturnType<typeof parseProjectFile>) {
@@ -95,8 +101,8 @@ describe('project file cables - round trip and back-compat', () => {
     expect(result.warnings).toEqual([])
   })
 
-  it('rejects schemaVersion 6', () => {
-    expect(parseRaw((raw) => void (raw.schemaVersion = 6)).ok).toBe(false)
+  it('rejects schemaVersion 7', () => {
+    expect(parseRaw((raw) => void (raw.schemaVersion = 7)).ok).toBe(false)
   })
 
   it('reseeds the default types when the file carries an empty list', () => {

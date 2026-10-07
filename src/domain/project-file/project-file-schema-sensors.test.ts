@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { parseProjectFile, serializeProject, type SensorModelLookup } from './project-file-schema'
-import type { Project } from './project-types'
+import { parseProjectFile, serializeProject, type ProjectFileLookups, type SensorModelLookup } from './project-file-schema'
+import { createEmptyFireAlarmLayout, type Project } from './project-types'
 import { createEmptyCableLayout } from '../cable/cable-layout-types'
 import type { PlacedBeamSensor, PlacedCircleSensor, PlacedSectorSensor } from '../sensor/sensor-types'
 
@@ -17,6 +17,11 @@ const SENSOR_MODEL_LOOKUP: SensorModelLookup = new Map([
   ['beam-1', { shape: 'beam', defaultBeamEnvironment: 'indoor' }],
   ['beam-2', { shape: 'beam', defaultBeamEnvironment: 'outdoor' }],
 ])
+const LOOKUPS: ProjectFileLookups = {
+  cameraModelIds: KNOWN_MODEL_IDS,
+  sensorModelLookup: SENSOR_MODEL_LOOKUP,
+  fireAlarmModelIds: new Set(),
+}
 
 const sector: PlacedSectorSensor = { id: 'sec-1', modelId: 'pir-1', shape: 'sector', x: 10, y: 10, rotationDeg: 0, rangeM: 12 }
 const circle: PlacedCircleSensor = { id: 'cir-1', modelId: 'vib-1', shape: 'circle', x: 20, y: 20, radiusM: 6 }
@@ -39,18 +44,19 @@ function projectWith(sensors: Project['sensors']): Project {
     walls: [],
     sensors,
     ...createEmptyCableLayout(),
+    ...createEmptyFireAlarmLayout(),
   }
 }
 
 function parse(project: Project) {
-  return parseProjectFile(serializeProject(project), KNOWN_MODEL_IDS, SENSOR_MODEL_LOOKUP)
+  return parseProjectFile(serializeProject(project), LOOKUPS)
 }
 
 function parseRaw(sensors: unknown, mutate: (raw: Record<string, unknown>) => void = () => {}) {
   const raw = JSON.parse(serializeProject(projectWith([]))) as Record<string, unknown>
   raw.sensors = sensors
   mutate(raw)
-  return parseProjectFile(JSON.stringify(raw), KNOWN_MODEL_IDS, SENSOR_MODEL_LOOKUP)
+  return parseProjectFile(JSON.stringify(raw), LOOKUPS)
 }
 
 function expectOk(result: ReturnType<typeof parseProjectFile>) {
@@ -101,8 +107,8 @@ describe('project file sensors - v4 round trip per shape', () => {
     expect(result.project).toEqual(project)
   })
 
-  it('writes schemaVersion 5', () => {
-    expect(JSON.parse(serializeProject(projectWith([sector]))).schemaVersion).toBe(5)
+  it('writes schemaVersion 6', () => {
+    expect(JSON.parse(serializeProject(projectWith([sector]))).schemaVersion).toBe(6)
   })
 })
 
@@ -110,7 +116,7 @@ describe('project file sensors - beam environment default on load', () => {
   it('fills the model default when the file omits environment', () => {
     const raw = JSON.parse(serializeProject(projectWith([beam]))) as { sensors: Array<Record<string, unknown>> }
     delete raw.sensors[0].environment
-    const result = expectOk(parseProjectFile(JSON.stringify(raw), KNOWN_MODEL_IDS, SENSOR_MODEL_LOOKUP))
+    const result = expectOk(parseProjectFile(JSON.stringify(raw), LOOKUPS))
     expect(result.project.sensors[0]).toMatchObject({ environment: 'indoor' })
   })
 
@@ -118,7 +124,7 @@ describe('project file sensors - beam environment default on load', () => {
     const outdoorDefaultBeam: PlacedBeamSensor = { ...beam, id: 'beam-s2', modelId: 'beam-2' }
     const raw = JSON.parse(serializeProject(projectWith([outdoorDefaultBeam]))) as { sensors: Array<Record<string, unknown>> }
     delete raw.sensors[0].environment
-    const result = expectOk(parseProjectFile(JSON.stringify(raw), KNOWN_MODEL_IDS, SENSOR_MODEL_LOOKUP))
+    const result = expectOk(parseProjectFile(JSON.stringify(raw), LOOKUPS))
     expect(result.project.sensors[0]).toMatchObject({ environment: 'outdoor' })
   })
 })
@@ -158,8 +164,8 @@ describe('project file sensors - rejected input', () => {
 
   it('rejects an unknown/future schemaVersion', () => {
     const raw = JSON.parse(serializeProject(projectWith([]))) as Record<string, unknown>
-    raw.schemaVersion = 6
-    expect(parseProjectFile(JSON.stringify(raw), KNOWN_MODEL_IDS, SENSOR_MODEL_LOOKUP).ok).toBe(false)
+    raw.schemaVersion = 7
+    expect(parseProjectFile(JSON.stringify(raw), LOOKUPS).ok).toBe(false)
   })
 })
 

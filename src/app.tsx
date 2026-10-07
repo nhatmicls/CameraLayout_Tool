@@ -18,7 +18,7 @@ import { FloorPlanStage } from './canvas/stage/floor-plan-stage'
 import { installDevTestHooks } from './dev-test-hooks'
 
 const REPLACE_IMAGE_CONFIRM_MESSAGE =
-  'Replacing the floor plan clears all placed cameras, sensors, hubs, cables and the scale calibration. Continue?'
+  'Replacing the floor plan clears all placed cameras, sensors, fire-alarm devices, hubs, cables and the scale calibration. Continue?'
 
 installDevTestHooks()
 
@@ -33,6 +33,7 @@ export function App() {
   const scale = useProjectStore((s) => s.scale)
   const cameras = useProjectStore((s) => s.cameras)
   const sensors = useProjectStore((s) => s.sensors)
+  const fireAlarmDevices = useProjectStore((s) => s.fireAlarmDevices)
   const cables = useProjectStore((s) => s.cables)
   const setImage = useProjectStore((s) => s.setImage)
 
@@ -54,8 +55,8 @@ export function App() {
 
   const loadImageFile = useCallback(
     async (file: File) => {
-      const { cameras, sensors, hubs, cables } = useProjectStore.getState()
-      const hasLayout = cameras.length > 0 || sensors.length > 0 || hubs.length > 0 || cables.length > 0
+      const { cameras, sensors, fireAlarmDevices, hubs, cables } = useProjectStore.getState()
+      const hasLayout = cameras.length > 0 || sensors.length > 0 || fireAlarmDevices.length > 0 || hubs.length > 0 || cables.length > 0
       if (hasLayout && !window.confirm(REPLACE_IMAGE_CONFIRM_MESSAGE)) {
         return
       }
@@ -107,7 +108,7 @@ export function App() {
         onZoomOut={zoomOut}
         onFit={fitToView}
         onToggleShowCalibrationLine={() => setShowCalibrationLine(!showCalibrationLine)}
-        hasCameras={cameras.length > 0 || sensors.length > 0 || cables.length > 0}
+        hasCameras={cameras.length > 0 || sensors.length > 0 || fireAlarmDevices.length > 0 || cables.length > 0}
         isExportingPng={isExportingPng}
         onExportPng={handleExportPng}
         onExportCsv={handleExportCsv}

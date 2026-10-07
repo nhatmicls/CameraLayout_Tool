@@ -1,19 +1,20 @@
 import { useMemo } from 'react'
 import { Image as KonvaImage, Layer } from 'react-konva'
+import type { FireAlarmSettings, PlacedFireAlarmDevice } from '../../domain/fire-alarm/fire-alarm-device-types'
+import type { PlacedFireAlarmDevicePatch } from '../../domain/fire-alarm/placed-fire-alarm-device-builder-and-patch'
 import type { PlacedCamera, Wall } from '../../domain/project-file/project-types'
 import { metersToPlanPx } from '../../domain/shared/scale-calibration-calculator'
 import type { PlacedSensor, PlacedSensorPatch } from '../../domain/sensor/sensor-types'
 import type { WallNode } from '../../domain/wall/wall-node-editing'
 import { WALL_MOUNT_CLEARANCE_M } from '../../domain/wall/wall-segment-geometry'
 import { CameraFovConesLayer } from '../camera/camera-fov-cones-layer'
-import { CameraMarkerNodes } from '../camera/camera-marker-nodes'
+import { FireDetectorCoverageShapes } from '../fire-alarm/fire-detector-coverage-shapes'
 import { SensorCoverageShapes } from '../sensor/sensor-coverage-shapes'
-import { SensorMarkerNodes } from '../sensor/sensor-marker-nodes'
 import { useConeLiveHandles } from '../camera/use-cone-live-handles'
 import { WallSegmentsLayer } from '../wall/wall-segments-layer'
 import { computeIconRadiusPx, computeWallStrokeWidthPx } from '../shared/brand-and-dori-color-palette'
-import { HubAndSelectedCableNodes } from '../cable/hub-and-selected-cable-nodes'
 import { usePlanSceneCabling, type PlanSceneCabling, type PlanSceneCablingInteraction } from '../cable/use-plan-scene-cabling'
+import { PlanSceneMarkersLayer } from './plan-scene-markers-layer'
 
 export interface PlanSceneLayersProps {
   decodedImage: HTMLImageElement
@@ -22,18 +23,23 @@ export interface PlanSceneLayersProps {
   cameras: PlacedCamera[]
   walls: Wall[]
   sensors: PlacedSensor[]
+  fireAlarmDevices: PlacedFireAlarmDevice[]
+  fireAlarmSettings: FireAlarmSettings
   planPxPerMeter: number
+  /** True only with a real scale set - gates fire-detector coverage circles (never drawn against the `planPxPerMeter ?? 1` drawing fallback the caller uses for cameras/sensors). */
+  scaleIsSet: boolean
   /** Hubs, cables, cable types + settings and the real scale (null = no over-length styling). */
   cabling: PlanSceneCabling
   /** Hub / cable selection and editing. Omitted (export, dev spike) = hubs and cables are a static render. */
   cablingInteraction?: PlanSceneCablingInteraction
-  /** False hides every camera cone and sensor coverage shape (the cable tool: routes are drawn on a clear plan). Default true. */
+  /** False hides every camera cone, sensor coverage shape and fire-detector coverage circle (the cable tool: routes are drawn on a clear plan). Default true. */
   coverageVisible?: boolean
   /** False strips drag/selection/rotation-handle wiring for a pure static render - the PNG export reuses this component that way. */
   interactive: boolean
   selectedCameraId: string | null
   selectedWallId: string | null
   selectedSensorId: string | null
+  selectedFireAlarmDeviceId: string | null
   /** True only in select mode: walls can be clicked. Ignored when `interactive` is false. */
   wallsSelectable: boolean
   /** False while a drawing tool (walls, hubs, cables) is on, so a click on a camera (cameras sit ON walls) reaches the Stage as a tool click instead of grabbing the camera. Ignored when `interactive` is false. */
@@ -43,31 +49,29 @@ export interface PlanSceneLayersProps {
   onSelectCamera: (id: string | null) => void
   onSelectWall: (id: string) => void
   onSelectSensor: (id: string) => void
+  onSelectFireAlarmDevice: (id: string) => void
   onMoveWallNode: (from: WallNode, to: WallNode) => void
   onCameraDragEnd: (id: string, x: number, y: number) => void
   onCameraRotateEnd: (id: string, rotationDeg: number) => void
   /** One commit callback covering a sensor's move, rotate and (for a beam) either end's drag. */
   onSensorCommit: (id: string, patch: PlacedSensorPatch) => void
+  onFireAlarmDeviceCommit: (id: string, patch: PlacedFireAlarmDevicePatch) => void
 }
 
 /**
  * The single renderer of the plan image + every camera's FOV cone + every
- * sensor's coverage/beam + the walls + marker icons, parameterised by
- * `interactive`. The PNG export mounts this same component on a detached,
- * non-interactive stage at image-native size instead of duplicating the
- * drawing code.
+ * sensor's coverage/beam + every fire-detector's coverage circle + the
+ * walls + marker icons, parameterised by `interactive`. The PNG export
+ * mounts this same component on a detached, non-interactive stage at
+ * image-native size instead of duplicating the drawing code.
  *
- * Four layers, in paint order: image (non-listening) -> cones (camera FOV
- * cones, then `SensorCoverageShapes` - both non-listening, so clicks always
- * pass through to what is above) -> walls (wall lines, then the cable
- * routes, then the wall node handles) -> markers (camera markers,
- * `SensorMarkerNodes`/beams, hubs, then the selected cable's editor;
- * listening only when interactive). Every icon is above every wall, cable
- * and cone/coverage shape regardless of placement order, so a camera or
- * sensor on a wall wins the click. Sensors and cables add zero Konva
- * Layers: they live inside the cones, walls and markers Layers - the scene
- * stays at Konva's recommended five-Layer maximum (comment in
- * `floor-plan-stage.tsx`).
+ * Four layers: image -> cones (camera cones, `SensorCoverageShapes`,
+ * `FireDetectorCoverageShapes`, all non-listening) -> walls (lines, cable
+ * routes, node handles) -> `PlanSceneMarkersLayer` (every marker kind +
+ * hubs + the selected cable's editor). Every icon sits above every wall/
+ * cable/cone regardless of placement order. Sensors, fire-alarm devices and
+ * cables add zero Konva Layers - the scene stays at Konva's recommended
+ * five-Layer maximum (comment in `floor-plan-stage.tsx`).
  */
 export function PlanSceneLayers({
   decodedImage,
@@ -76,7 +80,10 @@ export function PlanSceneLayers({
   cameras,
   walls,
   sensors,
+  fireAlarmDevices,
+  fireAlarmSettings,
   planPxPerMeter,
+  scaleIsSet,
   cabling,
   cablingInteraction,
   coverageVisible = true,
@@ -84,23 +91,25 @@ export function PlanSceneLayers({
   selectedCameraId,
   selectedWallId,
   selectedSensorId,
+  selectedFireAlarmDeviceId,
   wallsSelectable,
   markersListening = true,
   viewportScale,
   onSelectCamera,
   onSelectWall,
   onSelectSensor,
+  onSelectFireAlarmDevice,
   onMoveWallNode,
   onCameraDragEnd,
   onCameraRotateEnd,
   onSensorCommit,
+  onFireAlarmDeviceCommit,
 }: PlanSceneLayersProps) {
   const iconRadiusPx = useMemo(() => computeIconRadiusPx(Math.max(imageWidthPx, imageHeightPx)), [imageWidthPx, imageHeightPx])
   const wallClearancePx = useMemo(() => metersToPlanPx(WALL_MOUNT_CLEARANCE_M, planPxPerMeter), [planPxPerMeter])
-  // Perf: no wall can be farther than this from anything else on the image.
-  const maxClipRadiusPx = useMemo(() => Math.hypot(imageWidthPx, imageHeightPx), [imageWidthPx, imageHeightPx])
-  // Shared camera+sensor live-handle registry and its eight drag/rotate wrapper callbacks - see `use-cone-live-handles.ts`.
-  const live = useConeLiveHandles(onCameraDragEnd, onCameraRotateEnd, onSensorCommit)
+  const maxClipRadiusPx = useMemo(() => Math.hypot(imageWidthPx, imageHeightPx), [imageWidthPx, imageHeightPx]) // perf cap, image diagonal
+  // Shared live-handle registry + drag/rotate wrapper callbacks - see `use-cone-live-handles.ts`.
+  const live = useConeLiveHandles(onCameraDragEnd, onCameraRotateEnd, onSensorCommit, onFireAlarmDeviceCommit)
   const { coneLiveHandles } = live
   const cablingInteractionIfInteractive = interactive ? cablingInteraction : undefined
   const {
@@ -132,6 +141,17 @@ export function PlanSceneLayers({
           wallClearancePx={wallClearancePx}
           maxClipRadiusPx={maxClipRadiusPx}
         />
+        <FireDetectorCoverageShapes
+          devices={fireAlarmDevices}
+          settings={fireAlarmSettings}
+          walls={walls}
+          scaleIsSet={scaleIsSet}
+          planPxPerMeter={planPxPerMeter}
+          selectedFireAlarmDeviceId={interactive ? selectedFireAlarmDeviceId : null}
+          nodeRegistry={coneLiveHandles}
+          wallClearancePx={wallClearancePx}
+          maxClipRadiusPx={maxClipRadiusPx}
+        />
       </CameraFovConesLayer>
 
       <WallSegmentsLayer
@@ -148,52 +168,32 @@ export function PlanSceneLayers({
         {cableLines}
       </WallSegmentsLayer>
 
-      <Layer listening={interactive && markersListening}>
-        <CameraMarkerNodes
-          cameras={cameras}
-          iconRadiusPx={iconRadiusPx}
-          selectedCameraId={selectedCameraId}
-          interactive={interactive}
-          viewportScale={viewportScale}
-          imageWidthPx={imageWidthPx}
-          imageHeightPx={imageHeightPx}
-          onSelectCamera={onSelectCamera}
-          onDragMove={live.handleCameraDragMove}
-          onDragEnd={live.handleCameraDragEnd}
-          onRotateLive={live.handleCameraRotateLive}
-          onRotateEnd={live.handleCameraRotateEnd}
-        />
-
-        <SensorMarkerNodes
-          sensors={sensors}
-          walls={walls}
-          iconRadiusPx={iconRadiusPx}
-          planPxPerMeter={planPxPerMeter}
-          selectedSensorId={interactive ? selectedSensorId : null}
-          interactive={interactive}
-          viewportScale={viewportScale}
-          imageWidthPx={imageWidthPx}
-          imageHeightPx={imageHeightPx}
-          wallClearancePx={wallClearancePx}
-          onSelectSensor={onSelectSensor}
-          onDragMove={live.handleSensorDragMove}
-          onDragEnd={live.handleSensorDragEnd}
-          onRotateLive={live.handleSensorRotateLive}
-          onRotateEnd={live.handleSensorRotateEnd}
-          onCommit={onSensorCommit}
-        />
-
-        <HubAndSelectedCableNodes
-          cabling={cabling}
-          index={cableEndpointIndex}
-          limitStatusById={limitStatusById}
-          interaction={cablingInteractionIfInteractive}
-          iconRadiusPx={iconRadiusPx}
-          viewportScale={viewportScale}
-          imageWidthPx={imageWidthPx}
-          imageHeightPx={imageHeightPx}
-        />
-      </Layer>
+      <PlanSceneMarkersLayer
+        cameras={cameras}
+        sensors={sensors}
+        fireAlarmDevices={fireAlarmDevices}
+        walls={walls}
+        cabling={cabling}
+        cablingInteraction={cablingInteractionIfInteractive}
+        cableEndpointIndex={cableEndpointIndex}
+        limitStatusById={limitStatusById}
+        iconRadiusPx={iconRadiusPx}
+        planPxPerMeter={planPxPerMeter}
+        wallClearancePx={wallClearancePx}
+        interactive={interactive}
+        listening={interactive && markersListening}
+        viewportScale={viewportScale}
+        imageWidthPx={imageWidthPx}
+        imageHeightPx={imageHeightPx}
+        selectedCameraId={selectedCameraId}
+        selectedSensorId={interactive ? selectedSensorId : null}
+        selectedFireAlarmDeviceId={interactive ? selectedFireAlarmDeviceId : null}
+        onSelectCamera={onSelectCamera}
+        onSelectSensor={onSelectSensor}
+        onSelectFireAlarmDevice={onSelectFireAlarmDevice}
+        onSensorCommit={onSensorCommit}
+        live={live}
+      />
     </>
   )
 }

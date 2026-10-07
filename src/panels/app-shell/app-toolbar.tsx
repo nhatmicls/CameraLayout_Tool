@@ -1,5 +1,6 @@
 import type { ScaleCalibration } from '../../domain/project-file/project-types'
 import type { ToolMode } from '../../state/editor-ui-store'
+import { FireCoverageModeControls } from '../fire-alarm/fire-coverage-mode-controls'
 import { CableToolControls } from './cable-tool-controls'
 import { WallToolControls } from './wall-tool-controls'
 
@@ -15,7 +16,7 @@ interface AppToolbarProps {
   onZoomOut: () => void
   onFit: () => void
   onToggleShowCalibrationLine: () => void
-  /** PNG/CSV export: disabled with a tooltip until an image is loaded; CSV also needs at least one placed camera, sensor or cable (the prop name predates sensors and cables). */
+  /** PNG/CSV export: disabled with a tooltip until an image is loaded; CSV also needs at least one placed camera, sensor, fire-alarm device or cable (the prop name predates sensors, fire-alarm devices and cables). */
   hasCameras: boolean
   isExportingPng: boolean
   onExportPng: () => void
@@ -32,7 +33,7 @@ interface AppToolbarProps {
 const buttonClass =
   'rounded px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:text-neutral-400 disabled:hover:bg-transparent focus:outline focus:outline-2 focus:outline-blue-600'
 
-/** Top toolbar: open image, project save/load, calibration tool + status, wall tool, hub + cable tools, export, undo/redo, zoom controls. Wraps onto a second row in a narrow window instead of clipping. */
+/** Top toolbar: open image, project save/load, calibration tool + status, wall tool, hub + cable tools, fire-detector coverage mode, export, undo/redo, zoom controls. Wraps onto a second row in a narrow window instead of clipping. */
 export function AppToolbar({
   hasImage,
   scale,
@@ -113,6 +114,8 @@ export function AppToolbar({
 
       <CableToolControls hasImage={hasImage} buttonClass={buttonClass} />
 
+      <FireCoverageModeControls hasImage={hasImage} />
+
       <div className="h-6 w-px bg-neutral-200" />
 
       <button
@@ -131,7 +134,7 @@ export function AppToolbar({
         data-testid="export-csv-button"
         onClick={onExportCsv}
         disabled={!hasImage || !hasCameras}
-        title={hasCameras ? 'Export the BOM as a CSV' : 'Place at least one camera, sensor or cable first'}
+        title={hasCameras ? 'Export the BOM as a CSV' : 'Place at least one camera, sensor, fire-alarm device or cable first'}
         className={buttonClass}
       >
         Export CSV

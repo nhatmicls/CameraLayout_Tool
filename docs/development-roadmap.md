@@ -8,9 +8,14 @@
 - Walls: opaque and glass segments with camera cone occlusion and sensor wall blocking; live redraw, endpoint snap, undo/redo.
 - Camera mounting + floor coverage: optional per-camera height and tilt with blind spot, far edge and DORI floor distances on the panel.
 - Cables: hand-drawn routes from devices to hubs; cable types with optional length limit and user-entered VND/m prices; provisional length estimate (route + vertical runs + slack + waste %) with scale-click-error range; over-length warnings; vertex editing; BOM rows; PNG legend; project schema v5.
+- Fire alarm / alarm panels: 12 Hikvision records (AX Hybrid PRO / AX PRO panels, hubs, detectors, expander, keypad, sounder, panic button); placement with F labels; coverage modes (datasheet or TCVN 5738:2021 circles with ceiling height); compatibility warnings (controller records only, "not listed" = no official source); BOM rows; CSV `Notes` column (breaking change); project schema v6.
 
 ## Open
 
+- **Cabling fire-alarm devices**: extend cable routes to include fire-alarm devices as endpoints (currently camera/sensor only).
+- **Dedicated fire-alarm panels**: Hikvision HF-C series (HF-C108, etc.) once official datasheets are available; wireless and wired detectors for them.
+- **More AX PRO peripherals**: wireless repeaters, additional detector models (DS-PDSMK-E-WE, DS-PS1-I-WE, DS-PS1-EV-WE) once datasheets obtained.
+- **Fire-alarm prices**: Vietnamese shop prices for remaining records as they become available.
 - **Hub-to-hub uplinks**: cables from hub to hub for daisy-chaining recorders or network switches.
 - **Live cable follow during drag**: cable route updates in real time while dragging a device, not only when dropped.
 - **Reel/box rounding**: round cable metres per type to reel or box multiples (e.g. 50 m reels, 1000 m boxes).

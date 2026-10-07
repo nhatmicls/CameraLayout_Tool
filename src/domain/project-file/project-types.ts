@@ -4,6 +4,7 @@
  * no React/Konva imports. Phase 4 builds the zustand store on top of these.
  */
 import type { CableLayout } from '../cable/cable-layout-types'
+import { DEFAULT_FIRE_ALARM_SETTINGS, type FireAlarmSettings, type PlacedFireAlarmDevice } from '../fire-alarm/fire-alarm-device-types'
 import type { PlacedSensor } from '../sensor/sensor-types'
 
 /** A camera placed on the floor plan. Position/rotation live in image pixel space (y-down, matching canvas + Konva). */
@@ -59,8 +60,19 @@ export interface Wall {
   y2: number
 }
 
-/** The cable fields (`hubs`, `cables`, `cableTypes`, `cableSettings`) are always present in memory; optional in the file (v1-v4 files have none). */
-export interface Project extends CableLayout {
+/** The two fire-alarm fields, always present in memory; optional in the file (pre-v6 files have neither). Combinator mirrors `CableLayout` (`cable-layout-types.ts`). */
+export interface FireAlarmLayout {
+  fireAlarmDevices: PlacedFireAlarmDevice[]
+  fireAlarmSettings: FireAlarmSettings
+}
+
+/** Fresh empty state for a new/reset project - a defensive clone of `DEFAULT_FIRE_ALARM_SETTINGS` so no two callers ever share one mutable reference (mirrors `createEmptyCableLayout`'s `{ ...DEFAULT_CABLE_SETTINGS }`). */
+export function createEmptyFireAlarmLayout(): FireAlarmLayout {
+  return { fireAlarmDevices: [], fireAlarmSettings: { ...DEFAULT_FIRE_ALARM_SETTINGS } }
+}
+
+/** The cable and fire-alarm fields are always present in memory; optional in the file (v1-v4 files have no cable keys, v1-v5 have no fire-alarm keys). */
+export interface Project extends CableLayout, FireAlarmLayout {
   image: PlanImage
   scale: ScaleCalibration | null
   cameras: PlacedCamera[]

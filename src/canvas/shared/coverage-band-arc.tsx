@@ -12,6 +12,8 @@ export interface CoverageBandArcProps {
   color: string
   opacity: number
   strokeWidth: number
+  /** Stroke dash pattern, image px (e.g. `[10, 6]`) - a standard-derived (not datasheet-printed) band draws dashed so it reads as an approximation. Omitted = solid. */
+  dash?: number[]
 }
 
 /**
@@ -31,12 +33,14 @@ export function CoverageBandArc({
   color,
   opacity,
   strokeWidth,
+  dash,
 }: CoverageBandArcProps) {
   const shared = {
     fill: color,
     opacity,
     stroke: color,
     strokeWidth,
+    dash,
     // Perf: large scenes with many cameras/sensors stay interactive.
     perfectDrawEnabled: false,
     shadowForStrokeEnabled: false,

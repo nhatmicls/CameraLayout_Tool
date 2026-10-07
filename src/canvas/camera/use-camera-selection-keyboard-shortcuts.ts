@@ -3,9 +3,9 @@ import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
 
 /**
- * Delete/Backspace removes the selected camera; Esc deselects. Ignored
- * while the user is typing in an input/textarea elsewhere on the page
- * (e.g. the calibration-length dialog).
+ * Delete/Backspace removes the selected camera (select mode only); Esc
+ * deselects in every mode. Ignored while focus is in an input / textarea /
+ * select elsewhere on the page (e.g. the calibration-length dialog).
  */
 export function useCameraSelectionKeyboardShortcuts(): void {
   const deleteCamera = useProjectStore((s) => s.deleteCamera)
@@ -14,10 +14,12 @@ export function useCameraSelectionKeyboardShortcuts(): void {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target
-      const isTyping = target instanceof HTMLElement && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')
+      const isTyping = target instanceof HTMLElement && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT')
       if (isTyping) return
 
       if (e.key === 'Delete' || e.key === 'Backspace') {
+        // Select mode only: in a drawing tool Backspace belongs to the overlay (e.g. remove a route vertex).
+        if (useEditorUiStore.getState().toolMode !== 'select') return
         const id = useEditorUiStore.getState().selectedCameraId
         if (id) {
           deleteCamera(id)

@@ -2,12 +2,14 @@ import { computeBomStripLayout, computeExportScale } from '../../domain/export/e
 import { resolveEffectiveHfovDeg } from '../../domain/camera/camera-coverage-resolver'
 import { isApproximateDoriModel } from '../../domain/camera/dori-zone-distance-calculator'
 import type { CableLayout } from '../../domain/cable/cable-layout-types'
+import type { FireAlarmSettings, PlacedFireAlarmDevice } from '../../domain/fire-alarm/fire-alarm-device-types'
 import type { PlacedCamera, PlanImage, ScaleCalibration, Wall } from '../../domain/project-file/project-types'
 import { SENSOR_KIND_DISPLAY_ORDER, type PlacedSensor, type SensorKind, type SensorModelSpec } from '../../domain/sensor/sensor-types'
 import { hasGlassWallClippingAnySensor } from '../../domain/sensor/sensor-wall-blocking-rules'
 import { triggerBrowserFileDownload } from '../../file-io/browser/trigger-browser-file-download'
 import { buildCombinedBomRows } from '../shared/build-combined-bom-rows'
 import { buildCameraModelByIdRecord } from '../shared/camera-model-by-id-record'
+import { fireAlarmModelSpecById } from '../shared/fire-alarm-compatibility-index-singleton'
 import { buildSensorModelByIdRecord } from '../shared/sensor-model-by-id-record'
 import { canAllocateCanvas, SAFARI_SAFE_MAX_CANVAS_PIXELS, SAFARI_SAFE_MAX_CANVAS_SIDE_PX } from './probe-max-canvas-size'
 import { renderPlanToOffscreenCanvas } from './render-plan-to-offscreen-canvas'
@@ -15,6 +17,7 @@ import { drawBomTableAndLegendStrip, legendLineCountFor } from './draw-bom-table
 import { buildCableLegend } from './draw-export-cable-legend-line'
 import { canvasToPngBlob, sampleCanvasPixels } from './export-canvas-pixel-helpers'
 import { isPixelDataBlank } from './is-pixel-data-blank'
+import { resolveCompatibilityWarningText, resolveFireAlarmLegend } from './resolve-fire-alarm-export-legend'
 import { sanitizeExportFileName } from '../shared/sanitize-export-file-name'
 
 /** Unique kinds among `sensors` whose model is known (skips a dangling `modelId`, same as the BOM grouping), in `SENSOR_KIND_DISPLAY_ORDER`. */
@@ -33,7 +36,9 @@ export interface ExportPlanPngOptions extends CableLayout {
   cameras: PlacedCamera[]
   walls: Wall[]
   sensors: PlacedSensor[]
-  /** Null is valid (e.g. exporting before calibrating) - the plan still renders at a 1:1 pixel/unit fallback, matching `floor-plan-stage.tsx`'s own `scale?.planPxPerMeter ?? 1`. */
+  fireAlarmDevices: PlacedFireAlarmDevice[]
+  fireAlarmSettings: FireAlarmSettings
+  /** Null is valid (e.g. exporting before calibrating) - the plan still renders at a 1:1 pixel/unit fallback, matching `floor-plan-stage.tsx`'s own `scale?.planPxPerMeter ?? 1`. Fire-detector coverage circles draw only when non-null (`renderPlanToOffscreenCanvas`'s `scaleIsSet`). */
   scale: ScaleCalibration | null
   /** Injectable for deterministic tests; defaults to "now". */
   now?: Date
@@ -62,11 +67,14 @@ function formatIsoDate(date: Date): string {
 export async function exportPlanPng(options: ExportPlanPngOptions): Promise<void> {
   const modelById = buildCameraModelByIdRecord()
   const sensorModelById = buildSensorModelByIdRecord()
-  const { allRows: rows, cableEstimate } = buildCombinedBomRows(options)
+  const { allRows: rows, cableEstimate, fireAlarmWarnings } = buildCombinedBomRows(options)
+  const scaleIsSet = options.scale !== null
   // Built before the layout: the strip's height depends on how many legend lines its content draws.
   const legends = {
     sensorKindsPresent: resolveSensorKindsPresent(options.sensors, sensorModelById),
     cableLegend: buildCableLegend(options.cables, options.cableTypes, options.cableSettings, cableEstimate),
+    fireAlarmLegend: resolveFireAlarmLegend(options.fireAlarmDevices, fireAlarmModelSpecById, options.fireAlarmSettings, scaleIsSet),
+    compatibilityWarningText: resolveCompatibilityWarningText(options.fireAlarmDevices, fireAlarmWarnings),
   }
   const layout = computeBomStripLayout(options.image.widthPx, rows.length, legendLineCountFor(legends))
 
@@ -95,6 +103,8 @@ export async function exportPlanPng(options: ExportPlanPngOptions): Promise<void
       cameras: options.cameras,
       walls: options.walls,
       sensors: options.sensors,
+      fireAlarmDevices: options.fireAlarmDevices,
+      fireAlarmSettings: options.fireAlarmSettings,
       planPxPerMeter: options.scale?.planPxPerMeter ?? 1,
       cabling: {
         hubs: options.hubs,

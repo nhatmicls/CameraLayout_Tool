@@ -1,10 +1,9 @@
 import type { DragEvent } from 'react'
 import type { SensorModel } from '../../catalog/sensor/sensor-catalog-loader'
-import type { PurchaseChannel } from '../../catalog/shared/catalog-shared-price-and-provenance-schema'
 import { printedVfovDeg, SENSOR_KIND_LABELS } from '../../domain/sensor/sensor-types'
 import { SENSOR_MODEL_DRAG_MIME_TYPE } from '../../canvas/sensor/use-sensor-drag-drop-target'
-import { formatVnd } from '../../domain/bom/bill-of-materials-grouping'
 import { capitalizeFirstLetter } from '../shared/capitalize-first-letter'
+import { IndicativePrice, PurchaseChannelRow } from '../shared/catalog-card-price-and-purchase-rows'
 import { sensorCoverageSummary } from './sensor-coverage-summary-text'
 
 interface SensorCatalogModelCardProps {
@@ -77,7 +76,7 @@ export function SensorCatalogModelCard({ model, disabled }: SensorCatalogModelCa
         >
           datasheet
         </a>
-        {!model.purchaseLinks && <IndicativePrice model={model} />}
+        {!model.purchaseLinks && <IndicativePrice testId={`sensor-catalog-price-${model.id}`} priceVn={model.priceVn} />}
       </div>
       {model.purchaseLinks?.primary && (
         <PurchaseChannelRow testId={`sensor-catalog-buy-primary-${model.id}`} channel={model.purchaseLinks.primary} />
@@ -85,54 +84,6 @@ export function SensorCatalogModelCard({ model, disabled }: SensorCatalogModelCa
       {model.purchaseLinks?.secondary && (
         <PurchaseChannelRow testId={`sensor-catalog-buy-secondary-${model.id}`} channel={model.purchaseLinks.secondary} />
       )}
-    </div>
-  )
-}
-
-/** The single indicative price, for records with no per-shop sales channels - same wording as the camera card. */
-function IndicativePrice({ model }: { model: SensorModel }) {
-  if (!model.priceVn) {
-    return (
-      <span className="text-neutral-400" title="No Vietnam reseller publishes a price for this model">
-        price on request
-      </span>
-    )
-  }
-  return (
-    <a
-      data-testid={`sensor-catalog-price-${model.id}`}
-      href={model.priceVn.sourceUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      onClick={(e) => e.stopPropagation()}
-      title={`Vietnam reseller price, checked ${model.priceVn.retrieved}`}
-      className="font-semibold text-neutral-800 hover:underline"
-    >
-      ~{formatVnd(model.priceVn.amountVnd)}
-    </a>
-  )
-}
-
-/** One sales channel: that shop's price and a "buy (shop)" link; the click never starts a card drag. */
-function PurchaseChannelRow({ testId, channel }: { testId: string; channel: PurchaseChannel }) {
-  return (
-    <div className="mt-1 flex items-baseline justify-between gap-2">
-      <span
-        className={channel.amountVnd ? 'font-semibold text-neutral-800' : 'text-neutral-400'}
-        title={`${channel.shop} price, checked ${channel.retrieved}`}
-      >
-        {channel.amountVnd ? `~${formatVnd(channel.amountVnd)}` : 'price on request'}
-      </span>
-      <a
-        data-testid={testId}
-        href={channel.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={(e) => e.stopPropagation()}
-        className="text-blue-600 hover:underline"
-      >
-        buy ({channel.shop})
-      </a>
     </div>
   )
 }

@@ -29,7 +29,8 @@ export function usePlanExportActions() {
     }
     setIsExportingPng(true)
     try {
-      const { cameras, walls, sensors, hubs, cables, cableTypes, cableSettings } = useProjectStore.getState()
+      const { cameras, walls, sensors, hubs, cables, cableTypes, cableSettings, fireAlarmDevices, fireAlarmSettings } =
+        useProjectStore.getState()
       await exportPlanPng({
         decodedImage,
         image,
@@ -40,6 +41,8 @@ export function usePlanExportActions() {
         cables,
         cableTypes,
         cableSettings,
+        fireAlarmDevices,
+        fireAlarmSettings,
         scale,
         onDownscaled: (widthPx, heightPx, scaleFactor) =>
           pushNotification(
@@ -57,8 +60,8 @@ export function usePlanExportActions() {
   const handleExportCsv = useCallback(() => {
     if (!image) return
     try {
-      const { cameras, sensors, hubs, cables, cableTypes, cableSettings, scale: currentScale } = useProjectStore.getState()
-      exportBomCsv({ image, cameras, sensors, hubs, cables, cableTypes, cableSettings, scale: currentScale })
+      const { cameras, sensors, fireAlarmDevices, hubs, cables, cableTypes, cableSettings, scale: currentScale } = useProjectStore.getState()
+      exportBomCsv({ image, cameras, sensors, fireAlarmDevices, hubs, cables, cableTypes, cableSettings, scale: currentScale })
       if (cables.length > 0 && !currentScale) {
         pushNotification('warning', 'Cable rows were left out of the CSV: set the scale first.')
       }

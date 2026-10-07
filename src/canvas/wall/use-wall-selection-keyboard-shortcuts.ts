@@ -15,7 +15,7 @@ export function useWallSelectionKeyboardShortcuts(): void {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target
-      const isTyping = target instanceof HTMLElement && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')
+      const isTyping = target instanceof HTMLElement && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT')
       if (isTyping) return
 
       if (e.key === 'Delete' || e.key === 'Backspace') {

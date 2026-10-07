@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { serializeProject, type SensorModelLookup } from '../../domain/project-file/project-file-schema'
+import { serializeProject, type ProjectFileLookups, type SensorModelLookup } from '../../domain/project-file/project-file-schema'
 import { createEmptyCableLayout } from '../../domain/cable/cable-layout-types'
-import type { Project } from '../../domain/project-file/project-types'
+import { createEmptyFireAlarmLayout, type Project } from '../../domain/project-file/project-types'
 import { deriveProjectFileName, loadProjectFromFile } from './project-file-save-and-load'
 
 describe('deriveProjectFileName', () => {
@@ -61,15 +61,19 @@ describe('loadProjectFromFile - sensor model lookup pass-through', () => {
     walls: [],
     sensors: [{ id: 's1', modelId: 'pir-1', shape: 'sector', x: 0, y: 0, rotationDeg: 0, rangeM: 5 }],
     ...createEmptyCableLayout(),
+    ...createEmptyFireAlarmLayout(),
   }
 
   function makeFile(): File {
     return new File([serializeProject(project)], 'plan-camera-layout.json', { type: 'application/json' })
   }
 
+  function lookupsWith(sensorModelLookup: SensorModelLookup): ProjectFileLookups {
+    return { cameraModelIds: new Set(), sensorModelLookup, fireAlarmModelIds: new Set() }
+  }
+
   it('keeps a sensor whose model and shape the lookup recognises', async () => {
-    const lookup: SensorModelLookup = new Map([['pir-1', { shape: 'sector' }]])
-    const outcome = await loadProjectFromFile(makeFile(), new Set(), lookup)
+    const outcome = await loadProjectFromFile(makeFile(), lookupsWith(new Map([['pir-1', { shape: 'sector' }]])))
     expect(outcome.ok).toBe(true)
     if (!outcome.ok) throw new Error('expected ok')
     expect(outcome.project.sensors).toHaveLength(1)
@@ -77,7 +81,7 @@ describe('loadProjectFromFile - sensor model lookup pass-through', () => {
   })
 
   it('drops a sensor whose modelId the lookup does not know, with a warning', async () => {
-    const outcome = await loadProjectFromFile(makeFile(), new Set(), new Map())
+    const outcome = await loadProjectFromFile(makeFile(), lookupsWith(new Map()))
     expect(outcome.ok).toBe(true)
     if (!outcome.ok) throw new Error('expected ok')
     expect(outcome.project.sensors).toHaveLength(0)

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { bomToTable } from '../../domain/bom/bill-of-materials-grouping'
+import type { SensorKind } from '../../domain/sensor/sensor-types'
 import { COLUMN_WEIGHTS, legendLineCountFor } from './draw-bom-table-and-legend-strip'
 
 describe('PNG strip column weights', () => {
@@ -20,14 +21,18 @@ describe('PNG strip column weights', () => {
 
 describe('legendLineCountFor', () => {
   const cableLegend = { types: [], hasDashedCable: false, noteText: '' }
+  const fireAlarmLegend = { kindCounts: [{ kind: 'smoke-detector' as const, count: 1 }], coverageBasisText: null }
+  const base = { sensorKindsPresent: [] as SensorKind[], cableLegend: null, fireAlarmLegend: null, compatibilityWarningText: null }
 
-  it('is 1 for a plan with no sensors and no cables (strip height unchanged)', () => {
-    expect(legendLineCountFor({ sensorKindsPresent: [], cableLegend: null })).toBe(1)
+  it('is 1 for a plan with no sensors, cables or fire-alarm devices (strip height unchanged)', () => {
+    expect(legendLineCountFor(base)).toBe(1)
   })
 
-  it('adds a line for sensors and a line for cables', () => {
-    expect(legendLineCountFor({ sensorKindsPresent: ['pir'], cableLegend: null })).toBe(2)
-    expect(legendLineCountFor({ sensorKindsPresent: [], cableLegend })).toBe(2)
-    expect(legendLineCountFor({ sensorKindsPresent: ['pir', 'beam'], cableLegend })).toBe(3)
+  it('adds a line for sensors, cables, fire-alarm devices and a compatibility warning', () => {
+    expect(legendLineCountFor({ ...base, sensorKindsPresent: ['pir'] })).toBe(2)
+    expect(legendLineCountFor({ ...base, cableLegend })).toBe(2)
+    expect(legendLineCountFor({ ...base, fireAlarmLegend })).toBe(2)
+    expect(legendLineCountFor({ ...base, compatibilityWarningText: 'Compatibility: 1 device(s) not listed for a placed panel/hub: F1' })).toBe(2)
+    expect(legendLineCountFor({ ...base, sensorKindsPresent: ['pir', 'beam'], cableLegend, fireAlarmLegend, compatibilityWarningText: 'x' })).toBe(5)
   })
 })

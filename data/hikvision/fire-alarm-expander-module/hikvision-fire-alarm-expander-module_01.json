@@ -1,0 +1,15 @@
+[
+  {
+    "id": "hikvision-ds-pm1-i8o2-h",
+    "kind": "expander-module",
+    "brand": "hikvision",
+    "model": "DS-PM1-I8O2-H",
+    "productLine": "ax-hybrid",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000057668/DS-PM1-I8O2-H_Datasheet.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": null
+  }
+]

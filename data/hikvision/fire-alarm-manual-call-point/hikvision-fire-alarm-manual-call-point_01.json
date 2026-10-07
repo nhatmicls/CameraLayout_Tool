@@ -1,0 +1,16 @@
+[
+  {
+    "id": "hikvision-ds-pdebp1-eg2-we",
+    "kind": "manual-call-point",
+    "brand": "hikvision",
+    "model": "DS-PDEBP1-EG2-WE",
+    "productLine": "ax-pro",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000034527/DS-PDEBP1-EG2-WE_Datasheet.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": null,
+    "notes": "Portable emergency (panic) button, not a fire manual call point."
+  }
+]

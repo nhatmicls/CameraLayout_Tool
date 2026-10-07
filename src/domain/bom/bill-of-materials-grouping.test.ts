@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { bomToTable, computeBomTotal, formatVnd, groupCamerasIntoBom } from './bill-of-materials-grouping'
+import { bomToCsvTable, bomToTable, computeBomTotal, formatVnd, groupCamerasIntoBom } from './bill-of-materials-grouping'
 import type { CameraModelSpec, PlacedCamera } from '../project-file/project-types'
 
 const domeFixed: CameraModelSpec = {
@@ -124,6 +124,34 @@ describe('bomToTable', () => {
   it('uses the supplied price formatter', () => {
     const rows = groupCamerasIntoBom([camera('hik-dome-2.8')], modelById)
     expect(bomToTable(rows, () => 'X')[1].slice(9)).toEqual(['X', 'X'])
+  })
+})
+
+describe('bomToCsvTable', () => {
+  it('appends a trailing Notes column to the PNG table header', () => {
+    const header = bomToCsvTable([])[0]
+    expect(header).toEqual([...bomToTable([])[0], 'Notes'])
+    expect(header).toHaveLength(12)
+  })
+
+  it('leaves Notes empty for a row with no notes set', () => {
+    const rows = groupCamerasIntoBom([camera('hik-dome-2.8')], modelById)
+    const table = bomToCsvTable(rows)
+    expect(table[1]).toHaveLength(12)
+    expect(table[1][11]).toBe('')
+  })
+
+  it('writes a row-supplied notes string into the 12th column', () => {
+    const rows = groupCamerasIntoBom([camera('hik-dome-2.8')], modelById)
+    rows[0].notes = 'Not listed for a placed panel/hub: F3, F7'
+    const table = bomToCsvTable(rows)
+    expect(table[1][11]).toBe('Not listed for a placed panel/hub: F3, F7')
+  })
+
+  it('does not add a Notes column to the PNG table (bomToTable stays 11 columns)', () => {
+    const rows = groupCamerasIntoBom([camera('hik-dome-2.8')], modelById)
+    rows[0].notes = 'should never reach the PNG table'
+    expect(bomToTable(rows)[1]).toHaveLength(11)
   })
 })
 

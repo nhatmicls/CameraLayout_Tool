@@ -9,6 +9,7 @@ describe('useEditorUiStore camera / wall / sensor selection', () => {
       selectedSensorId: null,
       selectedHubId: null,
       selectedCableId: null,
+      selectedFireAlarmDeviceId: null,
       wallDrawKind: 'opaque',
       toolMode: 'select',
     })
@@ -59,23 +60,39 @@ describe('useEditorUiStore camera / wall / sensor selection', () => {
   })
 
   const selectedIds = () => {
-    const { selectedCameraId, selectedWallId, selectedSensorId, selectedHubId, selectedCableId } = useEditorUiStore.getState()
-    return { selectedCameraId, selectedWallId, selectedSensorId, selectedHubId, selectedCableId }
-  }
-  const NONE = { selectedCameraId: null, selectedWallId: null, selectedSensorId: null, selectedHubId: null, selectedCableId: null }
-
-  it('at most one of the five selection ids is ever set, across an interleaved sequence', () => {
-    const { setSelectedCameraId, setSelectedWallId, setSelectedSensorId, setSelectedHubId, setSelectedCableId } =
+    const { selectedCameraId, selectedWallId, selectedSensorId, selectedHubId, selectedCableId, selectedFireAlarmDeviceId } =
       useEditorUiStore.getState()
+    return { selectedCameraId, selectedWallId, selectedSensorId, selectedHubId, selectedCableId, selectedFireAlarmDeviceId }
+  }
+  const NONE = {
+    selectedCameraId: null,
+    selectedWallId: null,
+    selectedSensorId: null,
+    selectedHubId: null,
+    selectedCableId: null,
+    selectedFireAlarmDeviceId: null,
+  }
+
+  it('at most one of the six selection ids is ever set, across an interleaved sequence', () => {
+    const {
+      setSelectedCameraId,
+      setSelectedWallId,
+      setSelectedSensorId,
+      setSelectedHubId,
+      setSelectedCableId,
+      setSelectedFireAlarmDeviceId,
+    } = useEditorUiStore.getState()
     const sequence: Array<() => void> = [
       () => setSelectedCameraId('cam-1'),
       () => setSelectedHubId('hub-1'),
       () => setSelectedSensorId('sensor-1'),
       () => setSelectedCableId('cable-1'),
+      () => setSelectedFireAlarmDeviceId('fire-1'),
       () => setSelectedWallId('wall-1'),
       () => setSelectedCameraId('cam-2'),
       () => setSelectedCableId('cable-2'),
       () => setSelectedHubId('hub-2'),
+      () => setSelectedFireAlarmDeviceId('fire-2'),
       () => setSelectedSensorId('sensor-2'),
     ]
     for (const step of sequence) {
@@ -84,13 +101,15 @@ describe('useEditorUiStore camera / wall / sensor selection', () => {
     }
   })
 
-  it('selecting a hub or a cable clears the other four ids', () => {
-    const { setSelectedCameraId, setSelectedHubId, setSelectedCableId } = useEditorUiStore.getState()
+  it('selecting a hub, a cable or a fire-alarm device clears the other five ids', () => {
+    const { setSelectedCameraId, setSelectedHubId, setSelectedCableId, setSelectedFireAlarmDeviceId } = useEditorUiStore.getState()
     setSelectedCameraId('cam-1')
     setSelectedHubId('hub-1')
     expect(selectedIds()).toEqual({ ...NONE, selectedHubId: 'hub-1' })
     setSelectedCableId('cable-1')
     expect(selectedIds()).toEqual({ ...NONE, selectedCableId: 'cable-1' })
+    setSelectedFireAlarmDeviceId('fire-1')
+    expect(selectedIds()).toEqual({ ...NONE, selectedFireAlarmDeviceId: 'fire-1' })
     setSelectedCameraId('cam-1')
     expect(selectedIds()).toEqual({ ...NONE, selectedCameraId: 'cam-1' })
   })
@@ -101,7 +120,7 @@ describe('useEditorUiStore camera / wall / sensor selection', () => {
     expect(selectedIds()).toEqual({ ...NONE, selectedCableId: 'cable-1' })
   })
 
-  it('clearSelection sets all five ids to null', () => {
+  it('clearSelection sets all six ids to null', () => {
     useEditorUiStore.getState().setSelectedCableId('cable-1')
     useEditorUiStore.getState().clearSelection()
     expect(selectedIds()).toEqual(NONE)
@@ -123,45 +142,3 @@ describe('useEditorUiStore camera / wall / sensor selection', () => {
   })
 })
 
-describe('useEditorUiStore catalog tab and sensor kind filter', () => {
-  beforeEach(() => {
-    useEditorUiStore.setState({ catalogTab: 'cameras', sensorCatalogKindFilter: 'all' })
-  })
-
-  it('defaults to the cameras tab and no kind filter', () => {
-    expect(useEditorUiStore.getState()).toMatchObject({ catalogTab: 'cameras', sensorCatalogKindFilter: 'all' })
-  })
-
-  it('switches tab and sensor kind filter independently', () => {
-    useEditorUiStore.getState().setCatalogTab('sensors')
-    useEditorUiStore.getState().setSensorCatalogKindFilter('pir')
-    expect(useEditorUiStore.getState()).toMatchObject({ catalogTab: 'sensors', sensorCatalogKindFilter: 'pir' })
-  })
-})
-
-describe('useEditorUiStore catalog feature filters', () => {
-  beforeEach(() => {
-    useEditorUiStore.setState({ catalogFeatureFilters: [] })
-  })
-
-  it('starts with no feature filter selected', () => {
-    expect(useEditorUiStore.getState().catalogFeatureFilters).toEqual([])
-  })
-
-  it('adds a key that is absent and removes one that is present', () => {
-    const { toggleCatalogFeatureFilter } = useEditorUiStore.getState()
-    toggleCatalogFeatureFilter('built-in-mic')
-    toggleCatalogFeatureFilter('outdoor-rated')
-    expect(useEditorUiStore.getState().catalogFeatureFilters).toEqual(['built-in-mic', 'outdoor-rated'])
-
-    toggleCatalogFeatureFilter('built-in-mic')
-    expect(useEditorUiStore.getState().catalogFeatureFilters).toEqual(['outdoor-rated'])
-  })
-
-  it('replaces the array instead of mutating it', () => {
-    const before = useEditorUiStore.getState().catalogFeatureFilters
-    useEditorUiStore.getState().toggleCatalogFeatureFilter('human-detection')
-    expect(useEditorUiStore.getState().catalogFeatureFilters).not.toBe(before)
-    expect(before).toEqual([])
-  })
-})

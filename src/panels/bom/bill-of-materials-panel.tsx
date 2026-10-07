@@ -3,6 +3,7 @@ import { computeBomTotal, formatVnd, type BomRow } from '../../domain/bom/bill-o
 import { formatBomUnpricedNote } from '../../domain/bom/cable-bill-of-materials-grouping'
 import { SCALE_NOT_SET_CABLE_MESSAGE } from '../../domain/cable/cable-layout-estimate'
 import { buildCombinedBomRows } from '../../export/shared/build-combined-bom-rows'
+import { FireAlarmCompatibilityWarningsBlock } from '../fire-alarm/fire-alarm-compatibility-warnings-block'
 import { useProjectStore } from '../../state/project-store'
 import { BillOfMaterialsCableRowsTable } from './bill-of-materials-cable-rows-table'
 import { BillOfMaterialsRow } from './bill-of-materials-row'
@@ -25,39 +26,42 @@ const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ?
 export function BillOfMaterialsPanel() {
   const cameras = useProjectStore((s) => s.cameras)
   const sensors = useProjectStore((s) => s.sensors)
+  const fireAlarmDevices = useProjectStore((s) => s.fireAlarmDevices)
   const hubs = useProjectStore((s) => s.hubs)
   const cables = useProjectStore((s) => s.cables)
   const cableTypes = useProjectStore((s) => s.cableTypes)
   const cableSettings = useProjectStore((s) => s.cableSettings)
   const scale = useProjectStore((s) => s.scale)
 
-  const { cameraRows, sensorRows, cableRows, allRows } = useMemo(
-    () => buildCombinedBomRows({ cameras, sensors, hubs, cables, cableTypes, cableSettings, scale }),
-    [cameras, sensors, hubs, cables, cableTypes, cableSettings, scale],
+  const { cameraRows, sensorRows, fireAlarmRows, cableRows, allRows, fireAlarmWarnings } = useMemo(
+    () => buildCombinedBomRows({ cameras, sensors, fireAlarmDevices, hubs, cables, cableTypes, cableSettings, scale }),
+    [cameras, sensors, fireAlarmDevices, hubs, cables, cableTypes, cableSettings, scale],
   )
   const cameraCount = cameraRows.reduce((sum, row) => sum + row.quantity, 0)
   const sensorCount = sensorRows.reduce((sum, row) => sum + row.quantity, 0)
+  const fireAlarmCount = fireAlarmRows.reduce((sum, row) => sum + row.quantity, 0)
   const total = useMemo(() => computeBomTotal(allRows), [allRows])
   const unpricedNote = formatBomUnpricedNote(total)
 
   const hasCameras = cameraRows.length > 0
   const hasSensors = sensorRows.length > 0
+  const hasFireAlarm = fireAlarmRows.length > 0
   const hasCables = cables.length > 0
-  const showSubHeadings = [hasCameras, hasSensors, hasCables].filter(Boolean).length > 1
+  const showSubHeadings = [hasCameras, hasSensors, hasFireAlarm, hasCables].filter(Boolean).length > 1
 
   return (
     <div data-testid="bom-panel" className="mt-4 border-t border-neutral-200 pt-3">
       <div className="flex items-baseline justify-between">
         <h2 className="text-sm font-semibold text-neutral-700">Bill of materials</h2>
         <span data-testid="bom-total-count" className="text-xs text-neutral-500">
-          {plural(cameraCount, 'camera')}, {plural(sensorCount, 'sensor')}
+          {plural(cameraCount, 'camera')}, {plural(sensorCount, 'sensor')}, {plural(fireAlarmCount, 'fire-alarm device')}
           {hasCables && `, ${plural(cables.length, 'cable')}`}
         </span>
       </div>
 
-      {!hasCameras && !hasSensors && !hasCables ? (
+      {!hasCameras && !hasSensors && !hasFireAlarm && !hasCables ? (
         <p data-testid="bom-empty-state" className="mt-2 text-xs text-neutral-400">
-          No cameras, sensors or cables placed yet.
+          No cameras, sensors, fire-alarm devices or cables placed yet.
         </p>
       ) : (
         <div className="mt-2 overflow-x-auto">
@@ -93,6 +97,22 @@ export function BillOfMaterialsPanel() {
             </>
           )}
 
+          {hasFireAlarm && (
+            <>
+              {showSubHeadings && <h3 className="mt-3 text-xs font-semibold text-neutral-600">Fire alarm</h3>}
+              <table className="w-full min-w-[400px] text-left text-xs">
+                <thead>
+                  <BillOfMaterialsTableHeaderRow />
+                </thead>
+                <tbody>
+                  {fireAlarmRows.map((row) => (
+                    <BillOfMaterialsRow key={bomRowSlug(row)} row={row} slug={bomRowSlug(row)} labelsTestIdPrefix="fire-alarm" />
+                  ))}
+                </tbody>
+              </table>
+            </>
+          )}
+
           {hasCables && (
             <>
               {showSubHeadings && <h3 className="mt-3 text-xs font-semibold text-neutral-600">Cables</h3>}
@@ -113,6 +133,8 @@ export function BillOfMaterialsPanel() {
           <p className="mt-0.5 text-right text-[10px] text-neutral-400">
             Indicative Vietnam reseller prices{hasCables ? '; cable prices as you entered them' : ''} - confirm with your supplier.
           </p>
+
+          <FireAlarmCompatibilityWarningsBlock devices={fireAlarmDevices} warnings={fireAlarmWarnings} />
         </div>
       )}
     </div>

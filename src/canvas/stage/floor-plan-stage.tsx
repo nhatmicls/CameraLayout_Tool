@@ -20,6 +20,7 @@ import { useWallSelectionKeyboardShortcuts } from '../wall/use-wall-selection-ke
 import { useSensorSelectionKeyboardShortcuts } from '../sensor/use-sensor-selection-keyboard-shortcuts'
 import { useWallNodeMoveHandler } from '../wall/use-wall-node-move-handler'
 import { useStageContainerResizeAndInitialFit } from './use-stage-container-resize-and-initial-fit'
+import { useFireAlarmStageProps } from './use-fire-alarm-stage-props'
 import { computePlanPxPerMeter, type RefLine } from '../../domain/shared/scale-calibration-calculator'
 
 /**
@@ -37,6 +38,8 @@ export function FloorPlanStage() {
   const walls = useProjectStore((s) => s.walls)
   const sensors = useProjectStore((s) => s.sensors)
   const updateSensor = useProjectStore((s) => s.updateSensor)
+  const { fireAlarmDevices, fireAlarmSettings, updateFireAlarmDevice, selectedFireAlarmDeviceId, setSelectedFireAlarmDeviceId } =
+    useFireAlarmStageProps()
   const decodedImage = useEditorUiStore((s) => s.decodedImage)
   const toolMode = useEditorUiStore((s) => s.toolMode)
   const setToolMode = useEditorUiStore((s) => s.setToolMode)
@@ -129,7 +132,10 @@ export function FloorPlanStage() {
             cameras={cameras}
             walls={walls}
             sensors={sensors}
+            fireAlarmDevices={fireAlarmDevices}
+            fireAlarmSettings={fireAlarmSettings}
             planPxPerMeter={scale?.planPxPerMeter ?? 1}
+            scaleIsSet={scale !== null}
             cabling={cabling}
             cablingInteraction={cablingInteraction}
             coverageVisible={toolMode !== 'cable'}
@@ -137,16 +143,19 @@ export function FloorPlanStage() {
             selectedCameraId={selectedCameraId}
             selectedWallId={selectedWallId}
             selectedSensorId={selectedSensorId}
+            selectedFireAlarmDeviceId={selectedFireAlarmDeviceId}
             wallsSelectable={toolMode === 'select'}
             markersListening={!isDrawingTool}
             viewportScale={viewport.scale}
             onSelectCamera={setSelectedCameraId}
             onSelectWall={setSelectedWallId}
             onSelectSensor={setSelectedSensorId}
+            onSelectFireAlarmDevice={setSelectedFireAlarmDeviceId}
             onMoveWallNode={handleMoveWallNode}
             onCameraDragEnd={handleCameraDragEnd}
             onCameraRotateEnd={handleCameraRotateEnd}
             onSensorCommit={updateSensor}
+            onFireAlarmDeviceCommit={updateFireAlarmDevice}
           />
           {/* One Layer for every editor overlay: with the scene's four that makes five, Konva's recommended maximum. */}
           <Layer>

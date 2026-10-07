@@ -1,23 +1,17 @@
 import { memo } from 'react'
-import type { KonvaEventObject } from 'konva/lib/Node'
-import { Circle, Group, Text } from 'react-konva'
-import { clampPointToImageBounds } from '../../domain/shared/clamp'
 import type { PlacedCircleSensor, PlacedSectorSensor, SensorKind } from '../../domain/sensor/sensor-types'
-import { CameraRotationHandle } from '../camera/camera-rotation-handle'
+import { DraggableIconMarkerNode } from '../shared/draggable-icon-marker-node'
 import { SensorKindIconShape } from './sensor-kind-icon-shape'
-import { SELECTION_RING_PADDING_PX } from '../shared/brand-and-dori-color-palette'
+import { SENSOR_MARKER_TINT } from './sensor-kind-color-palette'
 
-interface SensorMarkerNodeProps {
+export interface SensorMarkerNodeProps {
   sensor: PlacedSectorSensor | PlacedCircleSensor
-  /** "S{n}", derived by the caller from the sensor's position in `sensors[]` - independent of camera labels. */
+  kind: SensorKind
   label: string
-  kind: Exclude<SensorKind, 'beam'>
-  tint: string
   iconRadiusPx: number
   selected: boolean
-  /** Sector sensors whose effective angle is 360deg (a full circle) have nothing to rotate - computed by the caller (`sensor-marker-nodes.tsx`) via `resolveSensorAreaCoverage`. Always false for a circle sensor. */
+  rotationDeg?: number
   rotatable: boolean
-  /** False in export mode: no dragging, no selection ring, no rotation handle - a pure static render (see `plan-scene-layers.tsx`). */
   interactive: boolean
   viewportScale: number
   imageWidthPx: number
@@ -30,21 +24,25 @@ interface SensorMarkerNodeProps {
 }
 
 /**
- * One PIR/thermal/vibration sensor's draggable icon + label (+ selection
- * ring, + rotation handle when selected/interactive/rotatable). Modelled on
- * `camera-marker-node.tsx`: same click-select with `cancelBubble`, same
- * `e.target === e.currentTarget` drag-bubble guard (the rotation handle is a
- * draggable child of this Group), same commit-time clamp to the image.
- * Lives in the markers Layer, paired with `sensor-coverage-shape.tsx` in the
- * cones Layer through the shared live-handle registry (`plan-scene-layers.tsx`).
+ * One sector/circle sensor's marker: a thin memoised wrapper around the
+ * generic `DraggableIconMarkerNode` that builds the sensor's icon element
+ * internally, from primitive props (`kind` -> tint lookup) only. Without
+ * this, `sensor-marker-nodes.tsx` would have to build `icon={<.../>}` itself
+ * and pass it down as a prop - a fresh element every render, which defeats
+ * `DraggableIconMarkerNode`'s own `memo` even for sensors that did not
+ * change (an unrelated sibling sensor's move still re-renders the whole
+ * `sensors[]`-mapped list). Keeping the icon construction INSIDE a memoised
+ * component whose own props are primitives means this sensor's subtree is
+ * skipped entirely when nothing about it changed. Twin of
+ * `fire-alarm-marker-node.tsx`.
  */
 export const SensorMarkerNode = memo(function SensorMarkerNode({
   sensor,
-  label,
   kind,
-  tint,
+  label,
   iconRadiusPx,
   selected,
+  rotationDeg,
   rotatable,
   interactive,
   viewportScale,
@@ -56,57 +54,24 @@ export const SensorMarkerNode = memo(function SensorMarkerNode({
   onRotateLive,
   onRotateEnd,
 }: SensorMarkerNodeProps) {
-  const handleSelect = (e: KonvaEventObject<Event>) => {
-    e.cancelBubble = true // don't let it reach the Stage's own "click empty area -> deselect" handler
-    onSelect(sensor.id)
-  }
-
   return (
-    <Group
-      x={sensor.x}
-      y={sensor.y}
-      draggable={interactive}
-      onClick={handleSelect}
-      onTap={handleSelect}
-      onDragMove={(e) => {
-        if (e.target !== e.currentTarget) return // bubbled from the rotation handle
-        onDragMove(sensor.id, { x: e.target.x(), y: e.target.y() })
-      }}
-      onDragEnd={(e) => {
-        if (e.target !== e.currentTarget) return
-        const clamped = clampPointToImageBounds({ x: e.target.x(), y: e.target.y() }, imageWidthPx, imageHeightPx)
-        e.target.position(clamped)
-        onDragEnd(sensor.id, clamped)
-      }}
-    >
-      <SensorKindIconShape kind={kind} tint={tint} radiusPx={iconRadiusPx} />
-
-      {selected && (
-        <Circle
-          radius={iconRadiusPx + SELECTION_RING_PADDING_PX / viewportScale}
-          stroke="#2563eb"
-          strokeWidth={2 / viewportScale}
-          listening={false}
-        />
-      )}
-
-      <Text
-        text={label}
-        fontSize={Math.max(12, iconRadiusPx * 0.9)}
-        fill="#111827"
-        y={iconRadiusPx * 1.3}
-        offsetX={label.length * Math.max(12, iconRadiusPx * 0.9) * 0.3}
-        listening={false}
-      />
-
-      {selected && interactive && rotatable && sensor.shape === 'sector' && (
-        <CameraRotationHandle
-          rotationDeg={sensor.rotationDeg}
-          viewportScale={viewportScale}
-          onRotateLive={(deg) => onRotateLive(sensor.id, deg)}
-          onRotateEnd={(deg) => onRotateEnd(sensor.id, deg)}
-        />
-      )}
-    </Group>
+    <DraggableIconMarkerNode
+      item={sensor}
+      icon={<SensorKindIconShape kind={kind} tint={SENSOR_MARKER_TINT[kind]} radiusPx={iconRadiusPx} />}
+      label={label}
+      iconRadiusPx={iconRadiusPx}
+      selected={selected}
+      rotationDeg={rotationDeg}
+      rotatable={rotatable}
+      interactive={interactive}
+      viewportScale={viewportScale}
+      imageWidthPx={imageWidthPx}
+      imageHeightPx={imageHeightPx}
+      onSelect={onSelect}
+      onDragMove={onDragMove}
+      onDragEnd={onDragEnd}
+      onRotateLive={onRotateLive}
+      onRotateEnd={onRotateEnd}
+    />
   )
 })

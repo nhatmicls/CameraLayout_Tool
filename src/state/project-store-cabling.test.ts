@@ -7,7 +7,7 @@ import {
   type Cable,
   type Hub,
 } from '../domain/cable/cable-layout-types'
-import type { PlacedCamera } from '../domain/project-file/project-types'
+import { createEmptyFireAlarmLayout, type PlacedCamera } from '../domain/project-file/project-types'
 import type { PlacedBeamSensor } from '../domain/sensor/sensor-types'
 import { useProjectStore } from './project-store'
 
@@ -226,6 +226,7 @@ describe('project store image / project replacement', () => {
       cables: [cable],
       cableTypes,
       cableSettings: { ...DEFAULT_CABLE_SETTINGS, clickErrorPx: 5 },
+      ...createEmptyFireAlarmLayout(),
     })
     expect(store()).toMatchObject({ hubs: [hub], cables: [cable], cableTypes, cableSettings: { clickErrorPx: 5 } })
   })

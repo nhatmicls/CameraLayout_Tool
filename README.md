@@ -23,6 +23,43 @@ calls once the page has loaded.
   from the official datasheet or the manufacturer's install manual. Thermal cameras live
   here, not in the camera catalog. Drag a card onto the plan like a camera; sensors are
   numbered S1, S2... and have their own properties panel.
+- **Fire alarm / alarm panels**: the sidebar's Fire alarm tab holds 12 Hikvision records (2 AX
+  Hybrid PRO control panels, 1 wired expander, 1 keypad, 2 AX PRO wireless hubs, 3 wireless
+  detectors (smoke / heat / CO), 1 manual call point / emergency button, 1 wireless sounder,
+  1 standalone smoke detector), every spec copied from the official Hikvision datasheet or
+  the AX PRO user manual. The AX lines are intrusion alarm systems (the AX PRO manual lists
+  smoke, heat and CO detectors as peripherals), not certified fire-alarm control panels; the
+  emergency button is a portable panic button, not a fire call point. Drag a card onto the plan (scale required); devices
+  are numbered F1, F2... Placement: select, drag, delete, undo/redo.
+  - **Coverage modes** (toolbar control, shown when the Fire alarm tab is active or a device
+    is placed): "Datasheet" draws markers only (no detector prints a protection area). "TCVN
+    5738" mode (Vietnam standard, clause 6.13 Bảng 1 for smoke up to 12 m, clause 6.15.1 Bảng 2
+    for heat up to 9 m) draws, for smoke and heat detectors, a dashed circle of equal area to
+    the standard's "average protected area per detector" (`r = sqrt(A / pi)`). The circle
+    approximates an area + spacing-grid rule, so circles on a compliant grid leave gaps at the
+    corners. Ceiling beams, projections, narrow rooms and the condition "not larger than the
+    detector's own documents" are not modelled. No circle is drawn for CO detectors, for a
+    ceiling height above the table's last band, or when no scale is set. Circles are clipped by opaque and
+    glass walls (same 0.3 m mounting-wall rule); hidden in cable mode. Limits: the circles
+    are planning aids, not a fire-safety design or a compliance check. The shipped detectors
+    are intrusion-system or standalone smoke alarms, not certified to TCVN 5738; verify
+    against the official standard text. The table numbers were read from the full-text
+    reprint on dulieuphapluat.vn; the toolbar control and the properties panel link to that
+    page so you can open the document the circles are based on.
+  - **Compatibility**: stored only on controller records (AX Hybrid PRO panels, AX PRO hubs),
+    each entry a row of one of Hikvision's two official model-by-model lists (AXPRO Series
+    Compatibility List, AX HYBRID PRO Device Compatibility List), linked from the card with
+    the minimum firmware the list prints. As listed on 2026-10-07: the 868 MHz hub
+    DS-PWA96-M-WE supports all five wireless peripherals in the catalog; the AX Hybrid PRO
+    panels support the keypad, the expander and, through a bus wireless receiver that is not
+    in the catalog, the heat detector, CO detector, emergency button and sounder - but the
+    smoke detector DS-PDSMK-S-WE has no version on that list, so it shows as "not listed"
+    for them; the 433 MHz hub DS-PWA96-M2H-WB has no entries because the catalog holds only
+    the 868 MHz (`-WE`) peripherals. Cards show "Compatible devices in this catalog".
+    Warnings appear when a device is "not listed" for any placed panel / hub (one aggregated
+    line when no panel / hub is placed). "Not listed" means no official statement was found,
+    not proof of incompatibility. Standalone devices are never warned. Capacity is shown as
+    printed on the datasheet (display only; no assignment or capacity checks).
   - PIR: a sector at the datasheet range and angle (a ceiling PIR is a full 360° circle).
     Range and angle can be reduced, never raised above the datasheet.
   - IR beam: a straight line between two draggable ends (transmitter and receiver). An
@@ -70,11 +107,12 @@ calls once the page has loaded.
   For sensors: opaque walls clip PIR, thermal and vibration / glass-break coverage; glass is
   also treated as blocking PIR and thermal (long-wave IR does not pass ordinary glass) but
   not vibration / glass-break circles; an IR beam is not clipped, it is flagged as blocked
-  when an opaque wall crosses it. There are no low
+  when an opaque wall crosses it. For fire-alarm detectors: fire detector coverage circles (in
+  TCVN 5738 mode only) are clipped by both opaque and glass walls. There are no low
   obstacles and no furniture. Walls are drawn by hand, not detected from the image. A wall
   within 0.3 m of a camera is treated as the wall it is mounted on and ignored for that
   camera - so a camera aimed back through its mounting wall is shown seeing into the next
-  room. The same 0.3 m rule applies to sensors and to both ends of a beam.
+  room. The same 0.3 m rule applies to sensors, fire-alarm detectors, and to both ends of a beam.
 - **Cables**: a provisional cable-length estimate from routes you draw by hand.
   - Hubs: click "Add hub" and click the plan to place a hub (switch, recorder, alarm panel);
     hubs are numbered H1, H2... and can be dragged. A hub has a mount height (default 1.5 m)
@@ -119,17 +157,19 @@ calls once the page has loaded.
     hub when the drag is dropped, not while dragging. There are no hub-to-hub links. A cable
     type's colour is its position in the type list. Measure on site before ordering.
 - **Bill of materials**: camera rows grouped by model + lens, then sensor rows grouped by
-  model, then one cable row per cable type in use, with quantity, labels (C1, C3 / S2, S5 /
-  C1-H1), unit price, line total and one estimated grand total. One placed beam counts as one
-  transmitter + receiver set. A cable row's quantity is whole metres to buy.
-  The CSV and the PNG table have the columns `Type, Brand, Model, Form Factor, Resolution,
-  Lens, Quantity, Unit, Labels, Unit Price (VND), Total (VND)`. Breaking change for anything
-  that parses the CSV: `Unit` is new, after `Quantity` (`pcs` for cameras and sensors, `m`
-  for cables); earlier, `Type` was added first and `Cameras` was renamed `Labels`. For
-  sensors `Form Factor` is empty, and `Resolution` / `Lens` are filled for thermal only. A
-  cable row has Type `Cable`, the type name in `Model` and the price per metre in `Unit
-  Price`. Cable rows need a scale: a CSV exported before the scale is set leaves them out
-  and says so.
+  model, then fire-alarm rows grouped by kind (unit `pcs`, labels F1, F2...), then one cable
+  row per cable type in use, with quantity, labels, unit price, line total and one estimated
+  grand total. One placed beam counts as one transmitter + receiver set. A cable row's quantity
+  is whole metres to buy.
+  The PNG table has 11 columns: `Type, Brand, Model, Form Factor, Resolution, Lens,
+  Quantity, Unit, Labels, Unit Price (VND), Total (VND)`. The CSV has the same 11 columns
+  plus a 12th trailing column `Notes` (breaking change for strict CSV parsers), filled only on
+  fire-alarm rows with a compatibility warning if the device is "not listed" for a placed
+  panel/hub, or "No panel/hub placed". For sensors `Form Factor` is empty, `Resolution` /
+  `Lens` filled for thermal only. For fire-alarm devices `Type` is the device kind (e.g.
+  "Smoke detector") and `Form Factor`, `Resolution` and `Lens` are empty. A cable row has Type `Cable`, the type name in
+  `Model` and the price per metre in `Unit Price`. Cable rows need a scale: a CSV exported
+  before the scale is set leaves them out and says so.
 - **Export**: PNG at image resolution with a legend + BOM strip (downscaled with a notice above
   ~16.7 M pixels), and a BOM CSV. The PNG draws hubs and cables and, when the plan has
   cables, a legend line with the cable types and the provisional total. The PNG needs a
@@ -140,9 +180,10 @@ calls once the page has loaded.
 Prices are indicative Vietnam street prices in VND, read from a Vietnamese reseller's product
 page on the date stored with each record; each catalog card links to its source. Models with
 no published Vietnam price show "price on request" and are excluded from the estimated total
-(the total says how many cameras or sensors it leaves out). Axis camera prices come from a
-cross-border marketplace, not an authorised distributor. Takex beam prices are set prices
-(TX+RX pair). Always confirm with your supplier.
+(the total says how many cameras, sensors or fire devices it leaves out). Axis camera prices
+come from a cross-border marketplace, not an authorised distributor. Takex beam prices are set
+prices (TX+RX pair). Fire-alarm devices are mostly "price on request" (only 1 record has a
+Vietnamese price). Always confirm with your supplier.
 
 Cable prices are the one price you type yourself: VND per metre, per cable type, saved with
 the project. Nothing is prefilled. A type with no price shows "price on request" and is left
@@ -160,6 +201,7 @@ varifocal lens); the pan sweep is not modelled.
 
 Camera sources and method: [`docs/camera-catalog-sources.md`](./docs/camera-catalog-sources.md).
 Sensor sources: [`docs/sensor-catalog-sources.md`](./docs/sensor-catalog-sources.md).
+Fire-alarm sources: [`docs/fire-alarm-catalog-sources.md`](./docs/fire-alarm-catalog-sources.md).
 
 ## Prerequisites
 
@@ -191,11 +233,11 @@ is still running - stop it first.
 
 | Path | Contents |
 |---|---|
-| `data/` | Camera and sensor catalog JSON: `data/<brand>/<device-type>/<brand>-<device-type>_<NN>.json`, device type = `camera-<form factor>` or `sensor-<kind>` |
-| `src/catalog/` | Zod schemas and loaders for the camera and sensor catalogs |
-| `src/domain/` | Pure logic: FOV geometry, DORI distances, mounted-camera floor coverage, sensor coverage (resolver, thermal bands, beam line check, wall-blocking table), wall visibility geometry (occlusion polygon, endpoint snap, crossing detection), cable layout (types, length + range estimate, snap lookup, drawing chain, vertex editing), scale, BOM grouping, CSV, project file schema (no React/Konva imports) |
-| `src/canvas/` | Konva stage, pan/zoom, camera and sensor markers, cones, sensor coverage, walls + wall drawing tool, hubs, cable lines + cable drawing tool + vertex editor, calibration overlay |
-| `src/panels/` | Toolbar, catalog sidebar (Cameras / Sensors tabs), camera, sensor, hub and cable properties panels, cable estimate panel, BOM panel |
+| `data/` | Catalog JSON: `data/<brand>/<device-type>/<brand>-<device-type>_<NN>.json`; device type = `camera-<form factor>`, `sensor-<kind>`, or `fire-alarm-<kind>` (control-panel, wireless-hub, smoke-detector, heat-detector, co-detector, keypad, expander-module, manual-call-point, sounder) |
+| `src/catalog/` | Zod schemas and loaders for the camera, sensor and fire-alarm catalogs |
+| `src/domain/` | Pure logic: FOV geometry, DORI distances, mounted-camera floor coverage, sensor coverage (resolver, thermal bands, beam line check, wall-blocking table), fire-alarm coverage (resolver, TCVN 5738 table, wall-blocking table), wall visibility geometry (occlusion polygon, endpoint snap, crossing detection), cable layout (types, length + range estimate, snap lookup, drawing chain, vertex editing), compatibility checker (fire devices), scale, BOM grouping, CSV, project file schema (no React/Konva imports) |
+| `src/canvas/` | Konva stage, pan/zoom, camera, sensor and fire-alarm markers, cones, sensor/fire coverage, walls + wall drawing tool, hubs, cable lines + cable drawing tool + vertex editor, calibration overlay |
+| `src/panels/` | Toolbar, catalog sidebar (Cameras / Sensors / Fire alarm tabs), camera, sensor, fire-alarm, hub and cable properties panels, cable estimate panel, BOM panel |
 | `src/export/` | PNG and CSV export |
 | `src/file-io/`, `src/state/` | Project save/load, zustand stores, undo/redo |
 
@@ -207,16 +249,19 @@ Every `src/` folder except `state/` is split into feature subfolders (`beam`, `b
 - [`docs/tech-stack.md`](./docs/tech-stack.md) - approved stack, versions, decisions
 - [`docs/camera-catalog-sources.md`](./docs/camera-catalog-sources.md) - datasheet and price provenance for every camera catalog record
 - [`docs/sensor-catalog-sources.md`](./docs/sensor-catalog-sources.md) - the same for the sensor catalog
+- [`docs/fire-alarm-catalog-sources.md`](./docs/fire-alarm-catalog-sources.md) - the same for the fire-alarm catalog
 - [`docs/project-changelog.md`](./docs/project-changelog.md) - dated record of features and breaking changes
 - [`docs/development-roadmap.md`](./docs/development-roadmap.md) - what is done and what is open
 
 ## Status
 
-v1 in progress. Working: image load, calibration, camera + sensor catalogs, placement, DORI
-cones, sensor coverage (PIR sectors / beams / thermal), properties, BOM with prices, mounting
-height + tilt floor coverage, walls with camera cone occlusion and sensor wall blocking, hubs
-and cable routes with a cable-length estimate, save/load, PNG + CSV export (verified in
-Chromium). Project files are saved as schema version 5: files from earlier versions (1-4)
-still open, but a file saved by this version needs this version or newer. Known limit: on a very dense plan (about 100 sensors and 300 walls) moving
-a wall or a sensor can take a few tenths of a second to redraw. Not done yet: Playwright
-end-to-end suite, Firefox/Safari export checks, full documentation set.
+v1 in progress. Working: image load, calibration, camera + sensor + fire-alarm catalogs,
+placement, DORI cones, sensor coverage (PIR sectors / beams / thermal), fire-alarm marker and
+coverage (datasheet mode or TCVN 5738 circles with ceiling height), compatibility warnings,
+properties, BOM with prices, mounting height + tilt floor coverage, walls with camera cone
+occlusion and sensor/fire-alarm wall blocking, hubs and cable routes with a cable-length
+estimate, save/load, PNG + CSV export (verified in Chromium). Project files are saved as
+schema version 6: files from earlier versions (1-5) still open, but a file saved by this
+version needs this version or newer. Known limit: on a very dense plan (about 100 sensors and
+300 walls) moving a wall or a sensor can take a few tenths of a second to redraw. Not done yet:
+cabling fire devices, Playwright end-to-end suite, Firefox/Safari export checks.

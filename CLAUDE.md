@@ -15,20 +15,24 @@ Layout: `data/` (catalog JSON, repo root), `src/catalog` (schema, loader), `src/
 `src/canvas` (Konva), `src/panels` (UI), `src/export` (PNG/CSV), `src/file-io`, `src/state`.
 Every `src` folder except `state` is grouped into feature subfolders - put a new file in the
 matching one, never loose at the folder root:
-- `catalog/`: `camera`, `sensor`, `shared`
-- `domain/`: `beam`, `bom`, `cable`, `camera`, `export`, `project-file`, `sensor`, `wall`, `shared`
-- `canvas/`: `beam`, `cable`, `camera`, `sensor`, `wall`, `stage`, `shared`
-- `panels/`: `app-shell`, `bom`, `cable`, `camera`, `sensor`, `shared`
+- `catalog/`: `camera`, `sensor`, `fire-alarm`, `shared`
+- `domain/`: `beam`, `bom`, `cable`, `camera`, `export`, `fire-alarm`, `project-file`, `sensor`, `wall`, `shared`
+- `canvas/`: `beam`, `cable`, `camera`, `fire-alarm`, `sensor`, `wall`, `stage`, `shared`
+- `panels/`: `app-shell`, `bom`, `cable`, `camera`, `fire-alarm`, `sensor`, `shared`
 - `export/`: `csv`, `png`, `shared`
 - `file-io/`: `browser`, `project-file`
-A new feature (fire alarm, ...) gets its own subfolder where it adds files.
+A new feature gets its own subfolder where it adds files.
 Catalog data: `data/<brand>/<device-type>/<brand>-<device-type>_<NN>.json`, where `device-type`
-is `camera-<formFactor>` (bullet, dome, turret, ptz, fisheye) or `sensor-<kind>` (pir, beam,
-vibration, thermal); e.g. `data/hikvision/camera-bullet/hikvision-camera-bullet_02.json`. A record
-must sit in the folder of its own brand and form factor / kind (tested). Loaders glob
-`data/*/camera-*/*.json` and `data/*/sensor-*/*.json`, so a new numbered file, type folder or
-brand folder needs no loader edit. Keep a file to about 25 records and keep lens variants of one model in one file;
-start `_<NN+1>` when full. Only `src/catalog` loaders read `data/`.
+is `camera-<formFactor>` (bullet, dome, turret, ptz, fisheye), `sensor-<kind>` (pir, beam,
+vibration, thermal), or `fire-alarm-<kind>` (control-panel, wireless-hub, smoke-detector,
+heat-detector, co-detector, keypad, expander-module, manual-call-point, sounder); e.g.
+`data/hikvision/camera-bullet/hikvision-camera-bullet_02.json` or
+`data/hikvision/fire-alarm-smoke-detector/hikvision-fire-alarm-smoke-detector_01.json`. A
+record must sit in the folder of its own brand and form factor / kind (tested). Loaders glob
+`data/*/camera-*/*.json`, `data/*/sensor-*/*.json` and `data/*/fire-alarm-*/*.json`, so a new
+numbered file, type folder or brand folder needs no loader edit. Keep a file to about 25
+records and keep variants of one model in one file; start `_<NN+1>` when full. Only
+`src/catalog` loaders read `data/`.
 
 Project rules:
 - `src/domain/**` must not import React, Konva (enforced by `no-react-konva-imports.test.ts`)
@@ -51,6 +55,27 @@ Project rules:
   ships zero records - never a placeholder. `priceVn` as for cameras; a beam price only when
   the page shows the TX+RX set price. Record every source in
   `./docs/sensor-catalog-sources.md`.
+- Fire-alarm catalog (`data/hikvision/fire-alarm-<kind>/*.json`) is a third catalog; ids are
+  disjoint from cameras and sensors. Hikvision only. Specs come only from official Hikvision
+  datasheets (hosts `hikvision.com` + subdomains, or `hikvision.vn`) or the AX PRO user manual,
+  copied as printed. A kind with no official PDF ships zero records - never a placeholder.
+  `priceVn` as for cameras. Record every source in `./docs/fire-alarm-catalog-sources.md`.
+- Compatibility (fire alarm): stored only on controller records (`compatibleDevices[]`), each
+  with `sourceUrl` and `sourceRetrieved` date. Only pairs whose both ends are in this catalog
+  and whose both ends appear in an official Hikvision source are stored - today the two
+  official lists (AXPRO Series Compatibility List, AX HYBRID PRO Device Compatibility List);
+  the printed minimum firmware goes in the entry `note`, and a row whose cells are all "—"
+  is not stored. Never inferred from protocol, series name or memory. UI says "not listed", never "incompatible". Placed device is
+  `{ id, modelId, x, y }`; circle is computed at draw time and never stored.
+- Fire detector coverage: one project setting (`fireAlarmSettings { coverageMode, ceilingHeightM }`),
+  modes "datasheet" or "tcvn-5738". TCVN 5738:2021 numbers and clause citations live only in
+  `src/domain/fire-alarm/tcvn-5738-detector-protection-table.ts`. Circle radius derivation
+  (`r = sqrt(A / pi)`) lives only in `src/domain/fire-alarm/fire-detector-coverage-resolver.ts`.
+  Circle never stored or user-adjustable. Detector kind that has no protection area in TCVN
+  (CO, above ceiling height, or no scale set) draws no circle. Wall blocking table
+  `FIRE_DETECTOR_BLOCKING_WALL_KINDS` in `src/domain/fire-alarm/fire-detector-wall-blocking-rules.ts`
+  is the single source; detectors drawn inside the cones Layer and the markers Layer - no new
+  Konva Layer.
 - Thermal is a sensor, banded by the datasheet's detection / recognition / identification
   distances - never DORI px/m, never `computeDoriBands` - and drawn as a flat cone only.
   Sensor coverage is clamped to the datasheet at draw time (`sensor-coverage-resolver.ts`).
@@ -65,8 +90,8 @@ Project rules:
   and both-or-neither. Unset must draw and save exactly like the flat cone. Floor-coverage math
   lives in `src/domain/camera/mounted-camera-ground-coverage-calculator.ts` (metres only; slant model,
   centre-line arcs, fisheye HFOV >= 180 ignores tilt) - keep it out of components.
-- Project files: `PROJECT_SCHEMA_VERSION` is 5 (v4 + optional `hubs`, `cables`, `cableTypes`,
-  `cableSettings`); the reader accepts 1 to 5, the writer always emits 5.
+- Project files: `PROJECT_SCHEMA_VERSION` is 6 (v5 + optional `fireAlarmDevices`,
+  `fireAlarmSettings`); the reader accepts 1 to 6, the writer always emits 6.
 - Cables: a cable is `{ device, hubId, typeId, points }` - `device` is a `{ kind, id, end? }`
   ref (`end` = `tx` / `rx`, for a beam only), `points` are the INTERMEDIATE vertices in image
   px, device -> hub; both ends derive from the live device / hub position
@@ -90,7 +115,9 @@ Project rules:
   and cable tools share the one editor-overlay Layer - no sixth Konva Layer.
 - Cable prices (VND/m per type) are user input: never invented, never prefilled. BOM rows
   carry `unit` (`pcs` / `m`); metres never count as unpriced items. BOM rows for the panel,
-  CSV and PNG all come from `src/export/shared/build-combined-bom-rows.ts`.
+  CSV and PNG all come from `src/export/shared/build-combined-bom-rows.ts`. CSV gains a 12th
+  trailing column `Notes` (breaking change for strict parsers), filled only on fire-alarm rows
+  with a compatibility warning or "No panel/hub placed"; PNG table stays 11 columns.
 - Walls are single segments in image px. For cameras `opaque` blocks and `glass` never does.
   For sensors the table `SENSOR_BLOCKING_WALL_KINDS` in
   `src/domain/sensor/sensor-wall-blocking-rules.ts` is the single source: PIR and thermal are clipped

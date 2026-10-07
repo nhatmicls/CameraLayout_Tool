@@ -6,6 +6,7 @@ import { useEditorUiStore, type UiNotification, type Viewport } from './state/ed
 import { PlanSceneLayers } from './canvas/stage/plan-scene-layers'
 import type { Cable, Hub } from './domain/cable/cable-layout-types'
 import type { PlacedCamera, ScaleCalibration, Wall } from './domain/project-file/project-types'
+import type { FireAlarmSettings, PlacedFireAlarmDevice } from './domain/fire-alarm/fire-alarm-device-types'
 import type { PlacedSensor } from './domain/sensor/sensor-types'
 
 declare global {
@@ -19,13 +20,18 @@ declare global {
       getSensors: () => PlacedSensor[]
       getHubs: () => Hub[]
       getCables: () => Cable[]
+      getFireAlarmDevices: () => PlacedFireAlarmDevice[]
       getSelectedCameraId: () => string | null
       pushNotification: (kind: UiNotification['kind'], message: string) => void
+      /** Sets the scale directly, skipping the two-click calibration UI - needed by a browser check that must draw a metres-derived shape (a camera cone, a sensor band, a fire-detector circle) without drawing a reference line by hand. */
+      setScale: (scale: ScaleCalibration) => void
       seedCamera: (camera: Omit<PlacedCamera, 'id'>) => void
       seedWall: (wall: Omit<Wall, 'id'>) => void
       seedSensor: (sensor: Omit<PlacedSensor, 'id'>) => void
       seedHub: (hub: Omit<Hub, 'id'>) => void
       seedCable: (cable: Omit<Cable, 'id'>) => void
+      seedFireAlarmDevice: (device: Omit<PlacedFireAlarmDevice, 'id'>) => void
+      setFireAlarmSettings: (patch: Partial<FireAlarmSettings>) => void
       runExportSpike: () => Promise<{ dataUrlLength: number; widthPx: number; heightPx: number }>
     }
   }
@@ -43,7 +49,8 @@ declare global {
  */
 function runExportSpike(): Promise<{ dataUrlLength: number; widthPx: number; heightPx: number }> {
   return new Promise((resolve, reject) => {
-    const { image, scale, cameras, walls, sensors, hubs, cables, cableTypes, cableSettings } = useProjectStore.getState()
+    const { image, scale, cameras, walls, sensors, hubs, cables, cableTypes, cableSettings, fireAlarmDevices, fireAlarmSettings } =
+      useProjectStore.getState()
     const decodedImage = useEditorUiStore.getState().decodedImage
     if (!image || !scale || !decodedImage) {
       reject(new Error('runExportSpike: no calibrated project to export'))
@@ -71,21 +78,27 @@ function runExportSpike(): Promise<{ dataUrlLength: number; widthPx: number; hei
           cameras={cameras}
           walls={walls}
           sensors={sensors}
+          fireAlarmDevices={fireAlarmDevices}
+          fireAlarmSettings={fireAlarmSettings}
           planPxPerMeter={scale.planPxPerMeter}
+          scaleIsSet
           cabling={{ hubs, cables, cableTypes, cableSettings, scale }}
           interactive={false}
           selectedCameraId={null}
           selectedWallId={null}
           selectedSensorId={null}
+          selectedFireAlarmDeviceId={null}
           wallsSelectable={false}
           viewportScale={1}
           onSelectCamera={() => {}}
           onSelectWall={() => {}}
           onSelectSensor={() => {}}
+          onSelectFireAlarmDevice={() => {}}
           onMoveWallNode={() => {}}
           onCameraDragEnd={() => {}}
           onCameraRotateEnd={() => {}}
           onSensorCommit={() => {}}
+          onFireAlarmDeviceCommit={() => {}}
         />
       </Stage>,
     )
@@ -134,8 +147,10 @@ export function installDevTestHooks(): void {
     getSensors: () => useProjectStore.getState().sensors,
     getHubs: () => useProjectStore.getState().hubs,
     getCables: () => useProjectStore.getState().cables,
+    getFireAlarmDevices: () => useProjectStore.getState().fireAlarmDevices,
     getSelectedCameraId: () => useEditorUiStore.getState().selectedCameraId,
     pushNotification: (kind, message) => useEditorUiStore.getState().pushNotification(kind, message),
+    setScale: (scale) => useProjectStore.getState().setScale(scale),
     seedCamera: (camera) => useProjectStore.getState().addCamera({ id: crypto.randomUUID(), ...camera }),
     seedWall: (wall) => useProjectStore.getState().addWall({ id: crypto.randomUUID(), ...wall }),
     // Cast needed: spreading a discriminated union inside an object literal loses the
@@ -144,6 +159,8 @@ export function installDevTestHooks(): void {
     seedSensor: (sensor) => useProjectStore.getState().addSensor({ id: crypto.randomUUID(), ...sensor } as PlacedSensor),
     seedHub: (hub) => useProjectStore.getState().addHub({ id: crypto.randomUUID(), ...hub }),
     seedCable: (cable) => useProjectStore.getState().addCable({ id: crypto.randomUUID(), ...cable }),
+    seedFireAlarmDevice: (device) => useProjectStore.getState().addFireAlarmDevice({ id: crypto.randomUUID(), ...device }),
+    setFireAlarmSettings: (patch) => useProjectStore.getState().setFireAlarmSettings(patch),
     runExportSpike,
   }
 }

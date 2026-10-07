@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { cameraModels } from '../../catalog/camera/camera-catalog-loader'
 import { BRANDS, FORM_FACTORS, type Brand, type FormFactor } from '../../catalog/camera/camera-catalog-schema'
 import { CATALOG_FEATURE_FILTERS, matchesCatalogFilters, type CatalogFilterCriteria } from '../../catalog/camera/camera-catalog-feature-filters'
-import { useEditorUiStore } from '../../state/editor-ui-store'
+import { useCatalogSidebarFilterStore } from '../../state/catalog-sidebar-filter-store'
 import { CameraCatalogModelCard } from './camera-catalog-model-card'
 import { capitalizeFirstLetter } from '../shared/capitalize-first-letter'
 
@@ -21,14 +21,14 @@ interface CameraCatalogListProps {
  * `data-testid` and filter unchanged (phase 6).
  */
 export function CameraCatalogList({ disabled }: CameraCatalogListProps) {
-  const brandFilter = useEditorUiStore((s) => s.catalogBrandFilter)
-  const formFactorFilter = useEditorUiStore((s) => s.catalogFormFactorFilter)
-  const setBrandFilter = useEditorUiStore((s) => s.setCatalogBrandFilter)
-  const setFormFactorFilter = useEditorUiStore((s) => s.setCatalogFormFactorFilter)
-  const pricedOnlyFilter = useEditorUiStore((s) => s.catalogPricedOnlyFilter)
-  const setPricedOnlyFilter = useEditorUiStore((s) => s.setCatalogPricedOnlyFilter)
-  const featureFilters = useEditorUiStore((s) => s.catalogFeatureFilters)
-  const toggleFeatureFilter = useEditorUiStore((s) => s.toggleCatalogFeatureFilter)
+  const brandFilter = useCatalogSidebarFilterStore((s) => s.catalogBrandFilter)
+  const formFactorFilter = useCatalogSidebarFilterStore((s) => s.catalogFormFactorFilter)
+  const setBrandFilter = useCatalogSidebarFilterStore((s) => s.setCatalogBrandFilter)
+  const setFormFactorFilter = useCatalogSidebarFilterStore((s) => s.setCatalogFormFactorFilter)
+  const pricedOnlyFilter = useCatalogSidebarFilterStore((s) => s.catalogPricedOnlyFilter)
+  const setPricedOnlyFilter = useCatalogSidebarFilterStore((s) => s.setCatalogPricedOnlyFilter)
+  const featureFilters = useCatalogSidebarFilterStore((s) => s.catalogFeatureFilters)
+  const toggleFeatureFilter = useCatalogSidebarFilterStore((s) => s.toggleCatalogFeatureFilter)
 
   const filteredModels = useMemo(() => {
     const criteria: CatalogFilterCriteria = {

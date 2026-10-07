@@ -1,0 +1,15 @@
+[
+  {
+    "id": "hikvision-ds-ps1-e-we",
+    "kind": "sounder",
+    "brand": "hikvision",
+    "model": "DS-PS1-E-WE",
+    "productLine": "ax-pro",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://www.hikvision.com/content/dam/hikvision/products/S000000001/S000000601/S000000933/S000000935/OFR000967/M000034336/Data_Sheet/DS-PS1-E-WE_Datasheet.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": null
+  }
+]

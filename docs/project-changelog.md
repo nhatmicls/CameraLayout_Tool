@@ -1,5 +1,15 @@
 # Project Changelog
 
+## 2026-10-07
+
+**Fire alarm / alarm panels**: third device family (Hikvision only, 12 records). Feature set:
+- **Catalog**: 2 AX Hybrid PRO control panels, 1 wired expander, 1 keypad, 2 AX PRO 868 MHz wireless hubs, wireless detectors (smoke / heat / CO, one each), 1 wireless sounder, 1 emergency button, 1 standalone smoke alarm. Specs from official Hikvision datasheets (hikvision.com / hikvision.vn) and AX PRO user manual, copied as printed. One record has a Vietnamese price; the rest "price on request".
+- **Placement**: drag card onto plan (scale required like sensors); devices numbered F1, F2...
+- **Coverage modes**: "Datasheet" (markers only, no detector prints a protection area); "TCVN 5738" (dashed circle for smoke / heat from table, equal-area radius `r = sqrt(A / pi)`, ceiling height input, smoke up to 12 m, heat up to 9 m per clauses 6.13 Bảng 1 and 6.15.1 Bảng 2). Circle approximates area + spacing-grid (corners leave gaps), omits beams/projections/room shape/document conditions. CO, above ceiling height, or no scale: no circle. Circles clipped by opaque + glass walls (0.3 m rule).
+- **Compatibility**: stored on controller records (panels, hubs) only, with official source URL per entry. Cards show "Compatible devices in this catalog". Warnings: "not listed" for any placed panel/hub, aggregated "No panel/hub placed" when none. "Not listed" = no official statement, not incompatibility proof. Standalone devices exempt. Capacity shown as printed (display only).
+- **BOM**: fire rows after sensors, grouped by kind, unit `pcs`, labels F1, F4. CSV trailing column `Notes` (breaking change for strict parsers) filled with compatibility warning or "No panel/hub placed". PNG legend gains fire line. PNG table unchanged (11 cols).
+- **BREAKING**: Project schema version 6 (reader 1-6; v6 file needs this build+). CSV gained 12th trailing `Notes` column.
+
 ## 2026-10-06
 
 **Cables**: hand-drawn cable routes from devices (cameras/sensors) or hubs to hubs (switches, recorders, alarm panels). Feature set:

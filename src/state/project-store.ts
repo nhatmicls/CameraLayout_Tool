@@ -1,67 +1,26 @@
 import { create } from 'zustand'
 import { temporal } from 'zundo'
-import { createEmptyCableLayout } from '../domain/cable/cable-layout-types'
+import { DEFAULT_FIRE_ALARM_SETTINGS } from '../domain/fire-alarm/fire-alarm-device-types'
 import { removeCablesOfDevice } from '../domain/cable/cable-reference-integrity'
-import type { PlacedCamera, Project, ScaleCalibration, Wall } from '../domain/project-file/project-types'
 import { applyPlacedSensorPatch } from '../domain/sensor/placed-sensor-patch'
-import type { PlacedSensor, PlacedSensorPatch } from '../domain/sensor/sensor-types'
-import { moveWallNode, type WallNode } from '../domain/wall/wall-node-editing'
-import { createCablingActions, type CablingActions, type CablingState } from './project-store-cabling-actions'
+import { moveWallNode } from '../domain/wall/wall-node-editing'
+import { createCablingActions } from './project-store-cabling-actions'
+import { createFireAlarmActions } from './project-store-fire-alarm-actions'
+import {
+  createInitialProjectState,
+  type ProjectStore,
+} from './project-store-state-and-action-types'
+
+export type { ProjectState, ProjectActions, ProjectStore } from './project-store-state-and-action-types'
 
 /**
  * The project store: the floor-plan image, its scale calibration, the
- * placed cameras and the drawn walls. This is the thing that gets saved to / loaded from disk
- * (phase 6) and undone/redone (phase 6, via zundo - see the `temporal(...)`
- * wrapper below). View-only state (pan/zoom, tool mode, selection) lives in
- * `editor-ui-store.ts` instead, so it never pollutes the save payload or
- * undo history.
+ * placed cameras, sensors, fire-alarm devices and the drawn walls. This is
+ * the thing that gets saved to / loaded from disk and undone/redone (via
+ * zundo - see the `temporal(...)` wrapper below). View-only state (pan/zoom,
+ * tool mode, selection) lives in `editor-ui-store.ts` instead, so it never
+ * pollutes the save payload or undo history.
  */
-export interface ProjectState extends CablingState {
-  image: Project['image'] | null
-  scale: ScaleCalibration | null
-  cameras: PlacedCamera[]
-  walls: Wall[]
-  sensors: PlacedSensor[]
-}
-
-export interface ProjectActions extends CablingActions {
-  /** Sets a newly loaded floor-plan image. Always clears cameras, walls, sensors, hubs, cables + scale: all are meaningless against a different plan. Cable types and settings are kept. */
-  setImage: (image: Project['image']) => void
-  setScale: (scale: ScaleCalibration | null) => void
-  addCamera: (camera: PlacedCamera) => void
-  /** Merges `patch` into the camera matching `id`. No-op if the id is unknown. */
-  updateCamera: (id: string, patch: Partial<Omit<PlacedCamera, 'id'>>) => void
-  /** Also removes the camera's cables, in the same undo step. */
-  deleteCamera: (id: string) => void
-  addWall: (wall: Wall) => void
-  /** Merges `patch` into the wall matching `id`. An unknown id leaves the state (and so the undo history) untouched. */
-  updateWall: (id: string, patch: Partial<Omit<Wall, 'id'>>) => void
-  /** An unknown id leaves the state (and so the undo history) untouched - the selected id can be stale after an undo. */
-  deleteWall: (id: string) => void
-  /** Moves the wall node at exactly `from` (every wall end on it) to `to`, as one undo step. A refused or empty move leaves the state untouched. */
-  moveWallNode: (from: WallNode, to: WallNode) => void
-  addSensor: (sensor: PlacedSensor) => void
-  /** Merges `patch` into the sensor matching `id` via `applyPlacedSensorPatch`. An unknown id leaves the state (and so the undo history) untouched. */
-  updateSensor: (id: string, patch: PlacedSensorPatch) => void
-  /** Also removes the sensor's cables, in the same undo step. An unknown id leaves the state (and so the undo history) untouched - the selected id can be stale after an undo. */
-  deleteSensor: (id: string) => void
-  /** Replaces the whole project (used when loading a project file, phase 6). */
-  replaceProject: (project: Project) => void
-  /** Clears back to the empty-project state (no image, no scale, no cameras, no walls, no sensors). */
-  resetProject: () => void
-}
-
-export type ProjectStore = ProjectState & ProjectActions
-
-/** A function, not a constant: every reset needs fresh arrays (and fresh default cable types). */
-const createInitialState = (): ProjectState => ({
-  image: null,
-  scale: null,
-  cameras: [],
-  walls: [],
-  sensors: [],
-  ...createEmptyCableLayout(),
-})
 
 // `setImage`/`replaceProject`/`resetProject` below call `useProjectStore.temporal` -
 // a reference to the store this very `create()(...)` call produces. That's safe
@@ -74,7 +33,7 @@ const createInitialState = (): ProjectState => ({
 export const useProjectStore = create<ProjectStore>()(
   temporal(
     (set, get) => ({
-      ...createInitialState(),
+      ...createInitialProjectState(),
 
       // A new/replaced image or project makes every prior undo step point at
       // cameras/scale that no longer belong to the picture on screen -
@@ -82,7 +41,17 @@ export const useProjectStore = create<ProjectStore>()(
       // it coherent across a swapped plan.
       setImage: (image) => {
         // Cable types + allowances are kept: typed prices are not plan geometry.
-        set({ image, scale: null, cameras: [], walls: [], sensors: [], hubs: [], cables: [] })
+        set({
+          image,
+          scale: null,
+          cameras: [],
+          walls: [],
+          sensors: [],
+          hubs: [],
+          cables: [],
+          fireAlarmDevices: [],
+          fireAlarmSettings: { ...DEFAULT_FIRE_ALARM_SETTINGS },
+        })
         useProjectStore.temporal.getState().clear()
       },
 
@@ -140,8 +109,12 @@ export const useProjectStore = create<ProjectStore>()(
         }))
       },
 
-      // Thin lambdas: zundo's `set` / `get` are typed for the whole store, the slice only needs its own keys.
+      // Thin lambdas: zundo's `set` / `get` are typed for the whole store, each slice only needs its own keys.
       ...createCablingActions(
+        (partial) => set(partial),
+        () => get(),
+      ),
+      ...createFireAlarmActions(
         (partial) => set(partial),
         () => get(),
       ),
@@ -157,19 +130,22 @@ export const useProjectStore = create<ProjectStore>()(
           cables: project.cables,
           cableTypes: project.cableTypes,
           cableSettings: project.cableSettings,
+          fireAlarmDevices: project.fireAlarmDevices,
+          fireAlarmSettings: project.fireAlarmSettings,
         })
         useProjectStore.temporal.getState().clear()
       },
 
       resetProject: () => {
-        set(createInitialState())
+        set(createInitialProjectState())
         useProjectStore.temporal.getState().clear()
       },
     }),
     {
       // Never track `image`: it can be tens of MB as a data URL, and nobody
       // expects undo to bring back a different floor plan. Cameras, walls,
-      // sensors + scale are the things a user thinks of as "my layout".
+      // sensors, fire-alarm devices/settings + scale are the things a user
+      // thinks of as "my layout".
       partialize: (state) => ({
         cameras: state.cameras,
         scale: state.scale,
@@ -179,6 +155,8 @@ export const useProjectStore = create<ProjectStore>()(
         cables: state.cables,
         cableTypes: state.cableTypes,
         cableSettings: state.cableSettings,
+        fireAlarmDevices: state.fireAlarmDevices,
+        fireAlarmSettings: state.fireAlarmSettings,
       }),
       limit: 100,
     },

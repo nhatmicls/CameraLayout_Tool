@@ -2,6 +2,7 @@ import { createRoot } from 'react-dom/client'
 import { flushSync } from 'react-dom'
 import type Konva from 'konva'
 import { Stage } from 'react-konva'
+import type { FireAlarmSettings, PlacedFireAlarmDevice } from '../../domain/fire-alarm/fire-alarm-device-types'
 import type { PlacedCamera, Wall } from '../../domain/project-file/project-types'
 import type { PlacedSensor } from '../../domain/sensor/sensor-types'
 import type { PlanSceneCabling } from '../../canvas/cable/use-plan-scene-cabling'
@@ -14,6 +15,8 @@ export interface RenderPlanToOffscreenCanvasOptions {
   cameras: PlacedCamera[]
   walls: Wall[]
   sensors: PlacedSensor[]
+  fireAlarmDevices: PlacedFireAlarmDevice[]
+  fireAlarmSettings: FireAlarmSettings
   planPxPerMeter: number
   /** Hubs + cables are drawn like on screen, without selection or handles. */
   cabling: PlanSceneCabling
@@ -88,21 +91,27 @@ export async function renderPlanToOffscreenCanvas(
             cameras={options.cameras}
             walls={options.walls}
             sensors={options.sensors}
+            fireAlarmDevices={options.fireAlarmDevices}
+            fireAlarmSettings={options.fireAlarmSettings}
             planPxPerMeter={options.planPxPerMeter}
+            scaleIsSet={options.cabling.scale !== null}
             cabling={options.cabling}
             interactive={false}
             selectedCameraId={null}
             selectedWallId={null}
             selectedSensorId={null}
+            selectedFireAlarmDeviceId={null}
             wallsSelectable={false}
             viewportScale={1}
             onSelectCamera={() => {}}
             onSelectWall={() => {}}
             onSelectSensor={() => {}}
+            onSelectFireAlarmDevice={() => {}}
             onMoveWallNode={() => {}}
             onCameraDragEnd={() => {}}
             onCameraRotateEnd={() => {}}
             onSensorCommit={() => {}}
+            onFireAlarmDeviceCommit={() => {}}
           />
         </Stage>,
       )

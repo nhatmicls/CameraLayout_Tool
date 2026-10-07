@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, type ChangeEvent } from 'react'
 import { cameraModels } from '../../catalog/camera/camera-catalog-loader'
+import { fireAlarmModels } from '../../catalog/fire-alarm/fire-alarm-catalog-loader'
 import { sensorModels } from '../../catalog/sensor/sensor-catalog-loader'
-import type { SensorModelLookup, SensorModelLookupEntry } from '../../domain/project-file/project-file-schema'
+import type { ProjectFileLookups, SensorModelLookup, SensorModelLookupEntry } from '../../domain/project-file/project-file-schema'
 import { defaultBeamEnvironment, sensorPlacementShape } from '../../domain/sensor/sensor-types'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
@@ -9,9 +10,6 @@ import { loadProjectFromFile, saveProjectToFile } from './project-file-save-and-
 import { summariseProjectLoadWarnings } from './summarise-project-load-warnings'
 
 const REPLACE_PROJECT_CONFIRM_MESSAGE = 'Opening a project discards your unsaved changes. Continue?'
-
-/** Static for the app's lifetime (bundled catalog) - computed once, not per render/load. */
-const KNOWN_MODEL_IDS = new Set(cameraModels.map((m) => m.id))
 
 /** Static for the app's lifetime: what the file parser needs per sensor model (shape + beam default). */
 const KNOWN_SENSOR_MODEL_LOOKUP: SensorModelLookup = new Map(
@@ -23,6 +21,13 @@ const KNOWN_SENSOR_MODEL_LOOKUP: SensorModelLookup = new Map(
     },
   ]),
 )
+
+/** Static for the app's lifetime (bundled catalogs) - computed once, not per render/load. */
+const PROJECT_FILE_LOOKUPS: ProjectFileLookups = {
+  cameraModelIds: new Set(cameraModels.map((m) => m.id)),
+  sensorModelLookup: KNOWN_SENSOR_MODEL_LOOKUP,
+  fireAlarmModelIds: new Set(fireAlarmModels.map((m) => m.id)),
+}
 
 /**
  * Everything `app.tsx` needs to wire up the toolbar's "Save project" /
@@ -66,6 +71,8 @@ export function useProjectFileActions() {
         cables: current.cables,
         cableTypes: current.cableTypes,
         cableSettings: current.cableSettings,
+        fireAlarmDevices: current.fireAlarmDevices,
+        fireAlarmSettings: current.fireAlarmSettings,
       })
       setHasUnsavedChanges(false)
     } catch (err) {
@@ -78,7 +85,7 @@ export function useProjectFileActions() {
       if (hasUnsavedChanges && !window.confirm(REPLACE_PROJECT_CONFIRM_MESSAGE)) {
         return
       }
-      const outcome = await loadProjectFromFile(file, KNOWN_MODEL_IDS, KNOWN_SENSOR_MODEL_LOOKUP)
+      const outcome = await loadProjectFromFile(file, PROJECT_FILE_LOOKUPS)
       if (!outcome.ok) {
         pushNotification('error', outcome.error)
         return

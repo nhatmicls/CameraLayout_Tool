@@ -1,10 +1,10 @@
 interface CameraUnknownModelNoticeProps {
-  /** Number label, e.g. "C3" for a camera or "S2" for a sensor. */
+  /** Number label, e.g. "C3" for a camera, "S2" for a sensor or "F1" for a fire-alarm device. */
   label: string
   modelId: string
   onDelete: () => void
-  /** What to call the placed item in the message/button, e.g. "camera" or "sensor". Default "camera". */
-  itemNoun?: string
+  /** What to call the placed item in the message/button. Default "camera". */
+  itemNoun?: 'camera' | 'sensor' | 'fire-alarm device'
 }
 
 /**

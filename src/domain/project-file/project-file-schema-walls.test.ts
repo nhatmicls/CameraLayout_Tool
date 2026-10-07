@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { MAX_WALLS, WALLS_CROSS_WARNING, parseProjectFile, serializeProject, type SensorModelLookup } from './project-file-schema'
-import type { Project, Wall } from './project-types'
+import { MAX_WALLS, WALLS_CROSS_WARNING, parseProjectFile, serializeProject, type ProjectFileLookups, type SensorModelLookup } from './project-file-schema'
+import { createEmptyFireAlarmLayout, type Project, type Wall } from './project-types'
 import { createEmptyCableLayout } from '../cable/cable-layout-types'
 
 // Smallest possible valid PNG (1x1 transparent pixel), as a real base64 data URL.
@@ -9,6 +9,11 @@ const TINY_PNG_DATA_URL =
 
 const KNOWN_MODEL_IDS = new Set(['model-a'])
 const SENSOR_MODEL_LOOKUP: SensorModelLookup = new Map()
+const LOOKUPS: ProjectFileLookups = {
+  cameraModelIds: KNOWN_MODEL_IDS,
+  sensorModelLookup: SENSOR_MODEL_LOOKUP,
+  fireAlarmModelIds: new Set(),
+}
 
 const wall = (id: string, x1: number, y1: number, x2: number, y2: number, kind: Wall['kind'] = 'opaque'): Wall => ({
   id,
@@ -27,6 +32,7 @@ function projectWith(walls: Wall[]): Project {
     walls,
     sensors: [],
     ...createEmptyCableLayout(),
+    ...createEmptyFireAlarmLayout(),
   }
 }
 
@@ -35,7 +41,7 @@ function parseRaw(walls: unknown, mutate: (raw: Record<string, unknown>) => void
   const raw = JSON.parse(serializeProject(projectWith([]))) as Record<string, unknown>
   raw.walls = walls
   mutate(raw)
-  return parseProjectFile(JSON.stringify(raw), KNOWN_MODEL_IDS, SENSOR_MODEL_LOOKUP)
+  return parseProjectFile(JSON.stringify(raw), LOOKUPS)
 }
 
 function expectOk(result: ReturnType<typeof parseProjectFile>) {
@@ -70,7 +76,7 @@ describe('project file walls - back-compat', () => {
 describe('project file walls - round trip', () => {
   it('preserves opaque and glass walls exactly', () => {
     const project = projectWith([wall('w1', 10.5, 20.25, 300, 20.25), wall('w2', 300, 20.25, 300, 400, 'glass')])
-    const result = expectOk(parseProjectFile(serializeProject(project), KNOWN_MODEL_IDS, SENSOR_MODEL_LOOKUP))
+    const result = expectOk(parseProjectFile(serializeProject(project), LOOKUPS))
     expect(result.project).toEqual(project)
     expect(result.warnings).toEqual([])
   })

@@ -2,6 +2,7 @@ import { bomToTable, formatVndNumber, type BomRow } from '../../domain/bom/bill-
 import type { BomStripLayout } from '../../domain/export/export-image-layout-calculator'
 import type { SensorKind } from '../../domain/sensor/sensor-types'
 import { drawCableLegendLine, type CableLegend } from './draw-export-cable-legend-line'
+import { drawCompatibilityWarningLine, drawFireAlarmLegendLine, type FireAlarmLegend } from './draw-export-fire-alarm-legend-lines'
 import { drawDoriLegendLine, drawSensorLegendLine } from './draw-export-legend-lines'
 import { truncateCanvasTextToWidth } from './truncate-canvas-text-to-width'
 
@@ -16,6 +17,10 @@ export interface BomStripContent {
   sensorKindsPresent: SensorKind[]
   /** Null (a plan without cables) draws no cable legend line. */
   cableLegend: CableLegend | null
+  /** Null (no fire-alarm device with a known model) draws no fire-alarm legend line. */
+  fireAlarmLegend: FireAlarmLegend | null
+  /** Null (no `checkFireAlarmCompatibility` warning) draws no compatibility-warning line. */
+  compatibilityWarningText: string | null
 }
 
 // Type, Brand, Model, Form Factor, Resolution, Lens, Quantity, Unit, Labels, Unit Price, Total - sums to 1, proportional to
@@ -75,20 +80,33 @@ function drawTableRow(
 
 /**
  * How many legend lines the strip draws: the DORI line, plus one when the
- * plan has a sensor whose model is known, plus one when it has cables. The
- * ONE definition: the caller feeds this to `computeBomStripLayout`, so the
- * strip's reserved legend height and what gets drawn into it cannot disagree.
+ * plan has a sensor whose model is known, plus one when it has cables, plus
+ * one when it has a fire-alarm device whose model is known, plus one when
+ * there is a compatibility warning. The ONE definition: the caller feeds
+ * this to `computeBomStripLayout`, so the strip's reserved legend height and
+ * what gets drawn into it cannot disagree.
  */
-export function legendLineCountFor(content: Pick<BomStripContent, 'sensorKindsPresent' | 'cableLegend'>): number {
-  return 1 + (content.sensorKindsPresent.length > 0 ? 1 : 0) + (content.cableLegend ? 1 : 0)
+export function legendLineCountFor(
+  content: Pick<BomStripContent, 'sensorKindsPresent' | 'cableLegend' | 'fireAlarmLegend' | 'compatibilityWarningText'>,
+): number {
+  return (
+    1 +
+    (content.sensorKindsPresent.length > 0 ? 1 : 0) +
+    (content.cableLegend ? 1 : 0) +
+    (content.fireAlarmLegend ? 1 : 0) +
+    (content.compatibilityWarningText ? 1 : 0)
+  )
 }
 
 /**
- * Draws the export strip below the plan: one to three legend lines (DORI
+ * Draws the export strip below the plan: one to five legend lines (DORI
  * swatches + scale note + export date, a sensor-kind line when the plan has
- * sensors, a cable line when it has cables) followed by the BOM table (same
- * columns as the CSV export's `bomToTable` - cameras, sensors, then cables,
- * one source so CSV and PNG can never drift). `scale` is the export's overall downscale
+ * sensors, a cable line when it has cables, a fire-alarm kind/coverage line
+ * when it has fire-alarm devices, a compatibility-warning line when one
+ * exists) followed by the BOM table (same columns as `bomToTable` - also
+ * used, with a trailing `Notes` column, by the CSV export's `bomToCsvTable` -
+ * cameras, sensors, fire-alarm devices, then cables, one source so CSV and
+ * PNG can never drift on the row data). `scale` is the export's overall downscale
  * factor (1 = full resolution): every metric here is the phase-3 `layout`
  * value times `scale`, so the strip shrinks in lockstep with the plan above
  * it instead of overflowing a downscaled canvas. Assumes the caller already
@@ -136,6 +154,14 @@ export function drawBomTableAndLegendStrip(
   }
   if (content.cableLegend) {
     drawCableLegendLine(ctx, lineCenterY(nextLineIndex), widthPx, fontPx, cellPaddingPx, content.cableLegend)
+    nextLineIndex += 1
+  }
+  if (content.fireAlarmLegend) {
+    drawFireAlarmLegendLine(ctx, lineCenterY(nextLineIndex), widthPx, fontPx, cellPaddingPx, content.fireAlarmLegend)
+    nextLineIndex += 1
+  }
+  if (content.compatibilityWarningText) {
+    drawCompatibilityWarningLine(ctx, lineCenterY(nextLineIndex), widthPx, fontPx, cellPaddingPx, content.compatibilityWarningText)
   }
 
   let rowTop = stripOriginY + legendHeightPx

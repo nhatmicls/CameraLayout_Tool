@@ -4,7 +4,7 @@
  * `src/domain/project-file/project-file-schema.ts` - this module is pure file/DOM
  * plumbing around it (read file -> validate -> decode embedded image).
  */
-import { parseProjectFile, serializeProject, type SensorModelLookup } from '../../domain/project-file/project-file-schema'
+import { parseProjectFile, serializeProject, type ProjectFileLookups } from '../../domain/project-file/project-file-schema'
 import type { Project } from '../../domain/project-file/project-types'
 import { sanitiseDownloadFileName, triggerBrowserFileDownload } from '../browser/trigger-browser-file-download'
 
@@ -55,11 +55,7 @@ function decodeEmbeddedImage(dataUrl: string): Promise<HTMLImageElement> {
  * `widthPx`/`heightPx` are the decoded element's real dimensions, not
  * whatever the file claimed (the decode is the source of truth).
  */
-export async function loadProjectFromFile(
-  file: File,
-  knownModelIds: ReadonlySet<string>,
-  sensorModelLookup: SensorModelLookup,
-): Promise<LoadProjectOutcome> {
+export async function loadProjectFromFile(file: File, lookups: ProjectFileLookups): Promise<LoadProjectOutcome> {
   if (file.size > MAX_LOAD_FILE_SIZE_BYTES) {
     return {
       ok: false,
@@ -74,7 +70,7 @@ export async function loadProjectFromFile(
     return { ok: false, error: 'Failed to read the project file. It may be locked or unreadable.' }
   }
 
-  const parsed = parseProjectFile(text, knownModelIds, sensorModelLookup)
+  const parsed = parseProjectFile(text, lookups)
   if (!parsed.ok) {
     return { ok: false, error: parsed.error }
   }

@@ -6,8 +6,10 @@ import {
   TILT_MIN_DEG,
 } from '../camera/mounted-camera-ground-coverage-calculator'
 import { MAX_CABLES, MAX_CABLE_TYPES, MAX_HUBS } from '../cable/cable-layout-types'
+import { DEFAULT_FIRE_ALARM_SETTINGS } from '../fire-alarm/fire-alarm-device-types'
 import type { PlacedCamera, Project } from './project-types'
 import { cableSchema, cableSettingsSchema, cableTypeSchema, hubSchema, normaliseLoadedCabling } from './project-file-cable-schema'
+import { MAX_FIRE_ALARM_DEVICES, fireAlarmSettingsSchema, normaliseLoadedFireAlarmDevices, placedFireAlarmDeviceSchema } from './project-file-fire-alarm-schema'
 import { MAX_SENSORS, normaliseLoadedSensors, placedSensorSchema, type SensorModelLookup } from './project-file-sensor-schema'
 import { MAX_WALLS, normaliseLoadedWalls, wallSchema } from './project-file-wall-schema'
 
@@ -21,13 +23,21 @@ export type { SensorModelLookup, SensorModelLookupEntry } from './project-file-s
  * camera keys `mountHeightM` / `tiltDeg`; version 3 = version 2 plus the
  * optional top-level `walls`; version 4 = version 3 plus the optional
  * top-level `sensors`; version 5 = version 4 plus the optional top-level
- * `hubs` / `cables` / `cableTypes` / `cableSettings`. Each is a strict
- * superset, so older files are read with the same schema and need no
- * migration. The writer always emits v5, even for a project with no cables
- * (owner decision: one writer path) - a v5 file will not open in a pre-cable
- * build.
+ * `hubs` / `cables` / `cableTypes` / `cableSettings`; version 6 = version 5
+ * plus the optional top-level `fireAlarmDevices` / `fireAlarmSettings`. Each
+ * is a strict superset, so older files are read with the same schema and
+ * need no migration. The writer always emits v6, even for a project with no
+ * fire-alarm devices (owner decision: one writer path) - a v6 file will not
+ * open in a pre-fire-alarm build.
  */
-export const PROJECT_SCHEMA_VERSION = 5 as const
+export const PROJECT_SCHEMA_VERSION = 6 as const
+
+/** What the file parser needs to know per model family, so callers (file I/O, tests) pass one object instead of a positional tail that grows with every new device family. */
+export interface ProjectFileLookups {
+  cameraModelIds: ReadonlySet<string>
+  sensorModelLookup: SensorModelLookup
+  fireAlarmModelIds: ReadonlySet<string>
+}
 
 /** Mirrors `serializeCsv`'s input cap intent: generous for a floor-plan PNG, small enough to reject garbage quickly. */
 const MAX_PROJECT_TEXT_LENGTH_BYTES = 80 * 1024 * 1024 // 80 MB
@@ -78,7 +88,7 @@ const MAX_CAMERAS = 500
 
 const projectFileSchema = z.strictObject({
   app: z.literal('camera-layout-tool'),
-  schemaVersion: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(PROJECT_SCHEMA_VERSION)]),
+  schemaVersion: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal(PROJECT_SCHEMA_VERSION)]),
   image: planImageSchema,
   scale: scaleCalibrationSchema.nullable(),
   cameras: z.array(placedCameraSchema).max(MAX_CAMERAS),
@@ -88,6 +98,8 @@ const projectFileSchema = z.strictObject({
   cables: z.array(cableSchema).max(MAX_CABLES).optional(),
   cableTypes: z.array(cableTypeSchema).max(MAX_CABLE_TYPES).optional(),
   cableSettings: cableSettingsSchema.optional(),
+  fireAlarmDevices: z.array(placedFireAlarmDeviceSchema).max(MAX_FIRE_ALARM_DEVICES).optional(),
+  fireAlarmSettings: fireAlarmSettingsSchema.optional(),
 })
 
 /** Serialises a project to the on-disk JSON shape (adds the `app`/`schemaVersion` envelope). */
@@ -104,6 +116,8 @@ export function serializeProject(project: Project): string {
     cables: project.cables,
     cableTypes: project.cableTypes,
     cableSettings: project.cableSettings,
+    fireAlarmDevices: project.fireAlarmDevices,
+    fireAlarmSettings: project.fireAlarmSettings,
   })
 }
 
@@ -118,20 +132,15 @@ export type ParseProjectResult =
   | { ok: false; error: string }
 
 /**
- * Parses untrusted project-file text. This is the single trust boundary for
- * loaded JSON: size cap, strict schema (rejects unknown keys and any
- * non-finite number), image restricted to inline PNG/JPEG data URLs,
- * camera/model cross-check against the caller's known catalog ids, wall
- * normalisation (a file without `walls` loads with none) and sensor
- * normalisation against `sensorModelLookup` (a file without `sensors` loads
- * with none) and cable normalisation against the cameras / sensors that were
- * kept (`normaliseLoadedCabling`). Never throws - every failure mode returns `{ ok: false, error }`.
+ * Parses untrusted project-file text. Single trust boundary for loaded JSON:
+ * size cap, strict schema, image restricted to inline PNG/JPEG data URLs,
+ * cameras/sensors/fire-alarm devices cross-checked and normalised against
+ * `lookups` (a file missing any of `walls`/`sensors`/`fireAlarmDevices`
+ * loads with none; `fireAlarmSettings` defaults when absent), cables
+ * normalised against the cameras/sensors that survived
+ * (`normaliseLoadedCabling`). Never throws - every failure returns `{ ok: false, error }`.
  */
-export function parseProjectFile(
-  text: string,
-  knownModelIds: ReadonlySet<string>,
-  sensorModelLookup: SensorModelLookup,
-): ParseProjectResult {
+export function parseProjectFile(text: string, lookups: ProjectFileLookups): ParseProjectResult {
   try {
     if (text.length > MAX_PROJECT_TEXT_LENGTH_BYTES) {
       return {
@@ -154,13 +163,14 @@ export function parseProjectFile(
 
     const warnings: string[] = []
     const cameras: PlacedCamera[] = result.data.cameras.filter((camera) => {
-      if (knownModelIds.has(camera.modelId)) return true
+      if (lookups.cameraModelIds.has(camera.modelId)) return true
       warnings.push(`Camera "${camera.id}" references unknown model "${camera.modelId}"; dropped.`)
       return false
     })
 
     const walls = normaliseLoadedWalls(result.data.walls ?? [], warnings)
-    const sensors = normaliseLoadedSensors(result.data.sensors ?? [], sensorModelLookup, warnings)
+    const sensors = normaliseLoadedSensors(result.data.sensors ?? [], lookups.sensorModelLookup, warnings)
+    const fireAlarmDevices = normaliseLoadedFireAlarmDevices(result.data.fireAlarmDevices ?? [], lookups.fireAlarmModelIds, warnings)
     const project: Project = {
       image: result.data.image,
       scale: result.data.scale,
@@ -168,6 +178,8 @@ export function parseProjectFile(
       walls,
       sensors,
       ...normaliseLoadedCabling(result.data, { cameras, sensors }, warnings),
+      fireAlarmDevices,
+      fireAlarmSettings: result.data.fireAlarmSettings ?? { ...DEFAULT_FIRE_ALARM_SETTINGS },
     }
 
     return { ok: true, project, warnings }

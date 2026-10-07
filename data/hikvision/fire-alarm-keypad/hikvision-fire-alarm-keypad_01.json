@@ -1,0 +1,15 @@
+[
+  {
+    "id": "hikvision-ds-pk1-lrt-hwe",
+    "kind": "keypad",
+    "brand": "hikvision",
+    "model": "DS-PK1-LRT-HWE",
+    "productLine": "ax-hybrid",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://www.hikvision.com/content/dam/hikvision/products/S000000001/S000000601/S000000937/S000000934/OFR001816/M000053265/Data_Sheet/DS-PK1-LRT-HWEHWB_Datasheet.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": null
+  }
+]

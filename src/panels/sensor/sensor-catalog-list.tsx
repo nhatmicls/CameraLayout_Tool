@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { sensorModels } from '../../catalog/sensor/sensor-catalog-loader'
 import { SENSOR_KIND_DISPLAY_ORDER, SENSOR_KIND_LABELS } from '../../domain/sensor/sensor-types'
-import { useEditorUiStore } from '../../state/editor-ui-store'
+import { useCatalogSidebarFilterStore } from '../../state/catalog-sidebar-filter-store'
 import { SensorCatalogModelCard } from './sensor-catalog-model-card'
 
 interface SensorCatalogListProps {
@@ -16,8 +16,8 @@ interface SensorCatalogListProps {
  * zero is expected here (not every kind has a verified datasheet yet).
  */
 export function SensorCatalogList({ disabled }: SensorCatalogListProps) {
-  const kindFilter = useEditorUiStore((s) => s.sensorCatalogKindFilter)
-  const setKindFilter = useEditorUiStore((s) => s.setSensorCatalogKindFilter)
+  const kindFilter = useCatalogSidebarFilterStore((s) => s.sensorCatalogKindFilter)
+  const setKindFilter = useCatalogSidebarFilterStore((s) => s.setSensorCatalogKindFilter)
 
   const filteredModels = useMemo(
     () => sensorModels.filter((model) => kindFilter === 'all' || model.kind === kindFilter),

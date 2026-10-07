@@ -1,0 +1,29 @@
+[
+  {
+    "id": "hikvision-ds-pdsmk-s-we",
+    "kind": "smoke-detector",
+    "brand": "hikvision",
+    "model": "DS-PDSMK-S-WE",
+    "productLine": "ax-pro",
+    "worksStandalone": false,
+    "certificationsAsPrinted": ["EN 14604 Certified"],
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000038138/DS-PDSMK-S-WE_Datasheet.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": null
+  },
+  {
+    "id": "hikvision-hf-s2",
+    "kind": "smoke-detector",
+    "brand": "hikvision",
+    "model": "HF-S2",
+    "productLine": "standalone",
+    "worksStandalone": true,
+    "certificationsAsPrinted": ["Executive standard EN14604:2005"],
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000053750/HF-S2_datasheet_20230417.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": null,
+    "notes": "Datasheet also covers HF-S2E."
+  }
+]

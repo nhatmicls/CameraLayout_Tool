@@ -1,0 +1,81 @@
+[
+  {
+    "id": "hikvision-ds-pwa96-m-we",
+    "kind": "wireless-hub",
+    "brand": "hikvision",
+    "model": "DS-PWA96-M-WE",
+    "productLine": "ax-pro",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "capacityAsPrinted": [
+      { "label": "Tag", "value": "48" },
+      { "label": "PIR cam", "value": "Supported" },
+      { "label": "Zones", "value": "96 (up to 48 PIRCAMs)" },
+      { "label": "Keypad", "value": "8 (including tag reader)" },
+      { "label": "Wireless sounder", "value": "6 (3 internal+3 external)" },
+      { "label": "Wireless repeater", "value": "4" },
+      { "label": "Keyfob", "value": "48" },
+      { "label": "Multi Transmitter", "value": "6" }
+    ],
+    "compatibleDevices": [
+      {
+        "modelId": "hikvision-ds-ps1-e-we",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PS1-E-WE/WB(red)/(blue)/(amber)\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names DS-PWA96-M-WE in that series."
+      },
+      {
+        "modelId": "hikvision-ds-pdebp1-eg2-we",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PDEBP1-EG2-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names DS-PWA96-M-WE in that series."
+      },
+      {
+        "modelId": "hikvision-ds-pdsmk-s-we",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PDSMK-S-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names DS-PWA96-M-WE in that series."
+      },
+      {
+        "modelId": "hikvision-ds-pdht-e-we",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PDHT-E-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names DS-PWA96-M-WE in that series."
+      },
+      {
+        "modelId": "hikvision-ds-pdco-e-we",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PDCO-E-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names DS-PWA96-M-WE in that series."
+      }
+    ],
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/sm000090683/DS-PWA96-M-WE_Datasheet_20240322.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": null
+  },
+  {
+    "id": "hikvision-ds-pwa96-m2h-wb",
+    "kind": "wireless-hub",
+    "brand": "hikvision",
+    "model": "DS-PWA96-M2H-WB",
+    "productLine": "ax-pro",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "capacityAsPrinted": [
+      { "label": "Zones", "value": "Up to 96 (including 48 PIRCAMs & 16 onboard Wired Zones & 2 onboard Wired Outputs)" },
+      { "label": "Keyfob", "value": "48" },
+      { "label": "Wireless sounder", "value": "6 (3 internal+3 External)" },
+      { "label": "Keypad", "value": "8 (Including Tag reader)" },
+      { "label": "Wireless Repeater", "value": "4" },
+      { "label": "Multi Transmitter", "value": "5" },
+      { "label": "PIR Cam", "value": "Supported" }
+    ],
+    "compatibleDevices": [],
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000052448/DS-PWA96-M2H-WB_Datasheet_20240322.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": { "amountVnd": 7350000, "sourceUrl": "https://vuhoangtelecom.vn/san-pham/tu-bao-dong-ax-hybrid-panel-96-vung-hikvision-ds-pwa96-m2h-wb/", "retrieved": "2026-10-07" },
+    "purchaseLinks": { "primary": null, "secondary": { "shop": "vuhoangtelecom", "url": "https://vuhoangtelecom.vn/san-pham/tu-bao-dong-ax-hybrid-panel-96-vung-hikvision-ds-pwa96-m2h-wb/", "amountVnd": 7350000, "retrieved": "2026-10-07" } },
+    "notes": "433 MHz hub. The official AXPRO Series Compatibility List covers it with the -WB (433 MHz) variants of the peripherals; this catalog holds the -WE (868 MHz) variants, so none is listed here."
+  }
+]

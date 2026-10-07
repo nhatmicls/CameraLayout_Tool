@@ -66,6 +66,11 @@ export function sensorLiveHandleKey(id: string): string {
   return `sensor:${id}`
 }
 
+/** Fire-alarm-device twin of `cameraLiveHandleKey` - see its docstring. */
+export function fireAlarmDeviceLiveHandleKey(id: string): string {
+  return `fire:${id}`
+}
+
 /** What a marker's drag / rotate uses to move its cone mid-gesture, with no store write and no React render. */
 export interface ConeLiveHandle {
   /** Moves the cone and re-clips it against the walls at the new position. */

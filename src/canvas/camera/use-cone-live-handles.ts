@@ -1,6 +1,12 @@
 import { useCallback, useRef } from 'react'
+import type { PlacedFireAlarmDevicePatch } from '../../domain/fire-alarm/placed-fire-alarm-device-builder-and-patch'
 import type { PlacedSensorPatch } from '../../domain/sensor/sensor-types'
-import { cameraLiveHandleKey, sensorLiveHandleKey, type ConeLiveHandle } from '../wall/wall-occlusion-cone-clip'
+import {
+  cameraLiveHandleKey,
+  fireAlarmDeviceLiveHandleKey,
+  sensorLiveHandleKey,
+  type ConeLiveHandle,
+} from '../wall/wall-occlusion-cone-clip'
 
 export interface PositionCallback {
   (id: string, pos: { x: number; y: number }): void
@@ -36,6 +42,7 @@ export function useConeLiveHandles(
   onCameraDragEnd: (id: string, x: number, y: number) => void,
   onCameraRotateEnd: (id: string, rotationDeg: number) => void,
   onSensorCommit: (id: string, patch: PlacedSensorPatch) => void,
+  onFireAlarmDeviceCommit: (id: string, patch: PlacedFireAlarmDevicePatch) => void,
 ) {
   const coneLiveHandles = useRef(new Map<string, ConeLiveHandle>())
 
@@ -99,6 +106,21 @@ export function useConeLiveHandles(
     [rotateLive, onSensorCommit],
   )
 
+  // Fire-alarm devices never rotate (CLAUDE.md: `PlacedFireAlarmDevice` has no bearing field), so
+  // only a drag-move/drag-end pair is needed here - no rotate handlers.
+  const handleFireAlarmDeviceDragMove: PositionCallback = useCallback(
+    (id, pos) => moveLive(fireAlarmDeviceLiveHandleKey(id), pos),
+    [moveLive],
+  )
+
+  const handleFireAlarmDeviceDragEnd: PositionCallback = useCallback(
+    (id, pos) => {
+      moveLive(fireAlarmDeviceLiveHandleKey(id), pos)
+      onFireAlarmDeviceCommit(id, { x: pos.x, y: pos.y })
+    },
+    [moveLive, onFireAlarmDeviceCommit],
+  )
+
   return {
     coneLiveHandles,
     handleCameraDragMove,
@@ -109,5 +131,10 @@ export function useConeLiveHandles(
     handleSensorDragEnd,
     handleSensorRotateLive,
     handleSensorRotateEnd,
+    handleFireAlarmDeviceDragMove,
+    handleFireAlarmDeviceDragEnd,
   }
 }
+
+/** The handler bundle above, as a type - lets a prop-threading wrapper (`plan-scene-markers-layer.tsx`) accept it as one prop instead of eleven. */
+export type ConeLiveHandlers = ReturnType<typeof useConeLiveHandles>

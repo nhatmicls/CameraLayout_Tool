@@ -46,7 +46,3 @@ react-konva 19.3.0 (peer-requires react/react-dom `^19.3.0`), zustand 5.0.15, zu
 22.12+, this machine runs Node 20.19.6), @playwright/test 1.63.0, @vitejs/plugin-react 6.1.1, eslint 10.12.0 +
 typescript-eslint 8.71.0 + eslint-plugin-react-hooks 7.1.1 + eslint-plugin-react-refresh 0.5.7.
 
-## Research reports
-
-- `plans/reports/researcher-261005-1146-canvas-rendering-library-comparison.md`
-- `plans/reports/researcher-261005-1157-ui-framework-state-tooling-stack.md`
