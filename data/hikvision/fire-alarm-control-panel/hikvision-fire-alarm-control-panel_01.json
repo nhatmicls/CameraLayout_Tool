@@ -971,50 +971,5 @@
         "retrieved": "2026-10-07"
       }
     }
-  },
-  {
-    "id": "hikvision-ds-pha20-w2p",
-    "kind": "control-panel",
-    "brand": "hikvision",
-    "model": "DS-PHA20-W2P",
-    "productLine": "ax-hybrid",
-    "worksStandalone": false,
-    "certificationsAsPrinted": [],
-    "capacityAsPrinted": [
-      {
-        "label": "Zones",
-        "value": "20"
-      },
-      {
-        "label": "Tag",
-        "value": "12 (with DS-PK-LRT keypad)"
-      },
-      {
-        "label": "Keypad",
-        "value": "9"
-      },
-      {
-        "label": "Wireless sounder",
-        "value": "2"
-      },
-      {
-        "label": "Keyfob",
-        "value": "8"
-      }
-    ],
-    "compatibleDevices": [],
-    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000006930/DS-PHA20-W2P_Datasheet.pdf",
-    "sourceRetrieved": "2026-10-07",
-    "priceVn": null,
-    "purchaseLinks": {
-      "primary": null,
-      "secondary": {
-        "shop": "mastery",
-        "url": "https://mastery.vn/sanpham/bang-dieu-khien-ax-hikvision-ds-pha20-w2p/",
-        "amountVnd": null,
-        "retrieved": "2026-10-07"
-      }
-    },
-    "notes": "Older AX Hybrid panel (datasheet title \"Hybrid Control Panel\"): Hikvision's AX HYBRID PRO compatibility list does not cover it, so no compatibility entries are recorded."
   }
 ]

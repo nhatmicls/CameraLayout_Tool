@@ -85,8 +85,7 @@ calls once the page has loaded.
     Standalone devices are never flagged, and placed coverage sensors (S-numbered) are never
     flagged - for them compatibility is a catalog filter only. Capacity is shown as printed on
     the datasheet (display only; no assignment or capacity checks).
-- **Control panel tab**: the alarm system's own hardware - 4 control panels (3 AX Hybrid PRO, and the older
-  AX Hybrid DS-PHA20-W2P, which has no official compatibility list) and 2 AX PRO hubs (868 MHz and 433 MHz), plus their modules: expanders / the bus wireless
+- **Control panel tab**: the alarm system's own hardware - 3 AX Hybrid PRO control panels and 2 AX PRO hubs (868 MHz and 433 MHz), plus their modules: expanders / the bus wireless
   receiver, keypads, a keyfob, relay modules, a repeater and communicator modules (tag
   reader, power supply and accessory kinds exist but have no records yet). All are placed as
   markers.
@@ -97,8 +96,8 @@ calls once the page has loaded.
     stays visible); the choice carries across the three tabs. A hidden device is "not
     listed", not proven incompatible - with a panel chosen, the Sensors tab therefore hides
     every sensor that panel's list does not name, including all other brands.
-- **Alarm-device prices**: 11 of the 43 alarm-catalog records have a Vietnamese price
-  (vuhoangtelecom.vn); 24 more link to a contact-for-price page on mastery.vn; the rest are
+- **Alarm-device prices**: 11 of the 42 alarm-catalog records have a Vietnamese price
+  (vuhoangtelecom.vn); 23 more link to a contact-for-price page on mastery.vn; the rest are
   "price on request". No Shopee listing could be verified.
 - **Placement**: drag from the catalog, move, rotate with the handle, adjust range and (for
   varifocal lenses) HFOV in the properties panel. Undo/redo.
@@ -206,7 +205,7 @@ page on the date stored with each record; each catalog card links to its source.
 no published Vietnam price show "price on request" and are excluded from the estimated total
 (the total says how many cameras, sensors or fire devices it leaves out). Axis camera prices
 come from a cross-border marketplace, not an authorised distributor. Takex beam prices are set
-prices (TX+RX pair). Fire-alarm devices are mostly "price on request" (11 of 43 have a Vietnamese price (vuhoangtelecom.vn); 24 more link to a contact-for-price page on mastery.vn; no Shopee listing could be verified).
+prices (TX+RX pair). Fire-alarm devices are mostly "price on request" (11 of 42 have a Vietnamese price (vuhoangtelecom.vn); 23 more link to a contact-for-price page on mastery.vn; no Shopee listing could be verified).
 Sensor cards: the 8 priced records carry a secondary channel (the shop their price was read
 from); none has a Shopee listing. Always confirm with your supplier.
 

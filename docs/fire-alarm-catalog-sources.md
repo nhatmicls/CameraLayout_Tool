@@ -351,15 +351,16 @@ search) could be downloaded.
 |---|---|---|---|---|---|---|
 | `hikvision-ds-pd1-mc-rs` | DS-PD1-MC-RS | magnetic-contact | - | https://www.hikvision.com/content/dam/hikvision/products/S000000001/S000000601/S000000937/S000000934/OFR000943/M000004980/Data_Sheet/DS-PD1-MC-RS.pdf | `eecc15f018a9c05e577b7fb8218ff57ed6aa50b0acae14f164796ef4d7aef9a4` | contact for price (mastery) https://mastery.vn/sanpham/cam-bien-tu-co-day-hikvision-ds-pd1-mc-rs/ |
 | `hikvision-ds-pha48-ep-b` | DS-PHA48-EP(B) | control-panel | capacity: "Zones 48(8 on-board zones, max 4 wired PIRCAM)", "Tag 48", "Keyfob 48", "Keypad 4", "Wireless sounder 8" | https://assets.hikvision.com/prd/public/all/doc/m000138168/DS-PHA48-EPB_Datasheet_20240401.pdf | `8c4b595d8358abb35f42318657ca1af25e3d9cc8992310e500d045a6460ed222` | contact for price (mastery) https://mastery.vn/sanpham/bang-dieu-khien-ax-hybrid-pro-hikvision-ds-pha48-epb/ |
-| `hikvision-ds-pha20-w2p` | DS-PHA20-W2P | control-panel | capacity: "Zones 20", "Tag 12 (with DS-PK-LRT keypad)", "Keypad 9", "Wireless sounder 2", "Keyfob 8" | https://assets.hikvision.com/prd/public/all/doc/m000006930/DS-PHA20-W2P_Datasheet.pdf | `2a155faf91439728a6dd1443744fea60fd33ed20f7843548d13de64270cb47c9` | contact for price (mastery) https://mastery.vn/sanpham/bang-dieu-khien-ax-hikvision-ds-pha20-w2p/ |
 
 - DS-PHA48-EP(B) is the second-column panel of the AX HYBRID PRO list; its compatibility entries
   are built from that column, like DS-PHA64-LP(B).
-- DS-PHA20-W2P is an older AX Hybrid panel that the list does not cover: no entries.
+- DS-PHA20-W2P (older AX Hybrid panel, datasheet downloaded) was entered and then removed on
+  the owner's decision: the list does not cover it, so it would flag every device as "not listed".
 - DS-PD1-MC-RS is a wired zone device that is on neither official list: no panel lists it, so
   the app shows it as "not listed" next to any panel.
 - The three wired motion detectors of this pass are in `sensor-catalog-sources.md`.
 
-Sold in Vietnam but NOT added (no datasheet for the exact model could be downloaded this pass;
+Sold in Vietnam but NOT added - owner decision 2026-10-07: treated as having no valid datasheet
+(none could be downloaded for the exact model;
 DS-PDD12-EG2 was rejected because the only PDF found is the DS-PDD12P-EG2 datasheet):
 DS-PD1-BG9, DS-PD1-EB, DS-PD1-MC-MS, DS-PD1-SKM, DS-PDBG8-EG2, DS-PDCL12-EG2, DS-PDCL12DT-EG2, DS-PDD12-EG2, DS-PDP18-EG2, DS-PDSKM-VG3, DS-PDSMK-4, DS-PHA64-M, DS-PK-L, DS-PK-LRT, DS-PKG-H4L, DS-PKG-H8L, DS-PM-RSI8, DS-PM-RSO8, DS-PM-RSO8-H, DS-PMA-BELL, DS-PMA-G2, DS-PMA-P, DS-PMA-S1, DS-PS1-R, DS-19K00-Y.
