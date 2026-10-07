@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import type { WallKind } from '../domain/project-file/project-types'
 import { DEFAULT_VIEW_CONFIG, type ViewConfig } from '../domain/view/view-config-types'
-import { useProjectStore } from './project-store'
+import { installProjectStoreToEditorUiSync } from './project-store-to-editor-ui-sync'
 
 /** `select`: default, drag/pan/select cameras, sensors, walls, hubs, cables and fire-alarm devices. `calibrate`: next two clicks on the stage draw a reference line. `wall`: clicks draw a chain of wall segments. `hub` / `riser` / `drop`: each click places a hub / a riser / a drop (the point where cables go up to the floor above / down to the floor below). `cable`: clicks draw one cable route from a device to a hub (or the reverse). */
 export type ToolMode = 'select' | 'calibrate' | 'wall' | 'hub' | 'riser' | 'drop' | 'cable'
@@ -142,8 +142,11 @@ export const useEditorUiStore = create<EditorUiStore>((set) => ({
   setHasUnsavedChanges: (hasUnsavedChanges) => set({ hasUnsavedChanges }),
 }))
 
-// Any project-store mutation (camera add/move/rotate/delete, scale set, new
-// image, project load) marks the project dirty. Save/load call sites clear
-// the flag themselves immediately after succeeding, so this fires-then-gets-
-// overwritten in that case rather than needing to special-case it here.
-useProjectStore.subscribe(() => useEditorUiStore.getState().setHasUnsavedChanges(true))
+// Any project-store mutation to a tracked field (camera add/move/rotate/
+// delete, scale set, new image, project load - but NOT a floor switch)
+// marks the project dirty, resets selection/tool on a floor switch, and
+// nulls `decodedImage` when the active floor's image identity changes. Save/
+// load call sites clear the dirty flag themselves immediately after
+// succeeding, so this fires-then-gets-overwritten in that case rather than
+// needing to special-case it here.
+installProjectStoreToEditorUiSync()

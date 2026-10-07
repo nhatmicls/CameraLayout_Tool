@@ -7,6 +7,7 @@ import { countWallsProperlyCrossedBySegment } from '../../domain/wall/wall-cross
 import { MIN_WALL_LENGTH_PX, isSameWallSegment } from '../../domain/wall/wall-segment-geometry'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
+import { selectImage, selectWalls } from '../../state/project-store-floor-selectors'
 import {
   WALL_GLASS_COLOR,
   WALL_OPAQUE_COLOR,
@@ -75,7 +76,7 @@ export function WallDrawingOverlay({ stageRef, viewportScale, imageWidthPx, imag
       return resolveWallDrawingPoint(raw, {
         imageWidthPx,
         imageHeightPx,
-        walls: useProjectStore.getState().walls,
+        walls: selectWalls(useProjectStore.getState()),
         anchor: anchorRef.current,
         snapTolerancePx: WALL_SNAP_TOLERANCE_SCREEN_PX / viewportScaleRef.current,
       })
@@ -85,7 +86,7 @@ export function WallDrawingOverlay({ stageRef, viewportScale, imageWidthPx, imag
     let isOwnWallWrite = false
     const unsubscribeFromProject = useProjectStore.subscribe((state, previous) => {
       if (isOwnWallWrite) return
-      if (state.walls !== previous.walls || state.image !== previous.image) endChain()
+      if (selectWalls(state) !== selectWalls(previous) || selectImage(state) !== selectImage(previous)) endChain()
     })
 
     const handleClick = (e: KonvaEventObject<MouseEvent>) => {
@@ -104,7 +105,9 @@ export function WallDrawingOverlay({ stageRef, viewportScale, imageWidthPx, imag
         return
       }
 
-      const { walls, addWall } = useProjectStore.getState()
+      const store = useProjectStore.getState()
+      const walls = selectWalls(store)
+      const { addWall } = store
       const { wallDrawKind: kind, pushNotification } = useEditorUiStore.getState()
       if (walls.length >= MAX_WALLS) {
         pushNotification('error', `A project can hold at most ${MAX_WALLS} walls.`)

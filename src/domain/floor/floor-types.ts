@@ -22,10 +22,10 @@ export const FLOOR_HEIGHT_BOUNDS = { min: 0.5, max: 30 }
 
 /**
  * The single floor's id/name a legacy (pre-v7) flat file is wrapped into
- * (`project-file-legacy-flat-migration.ts`) and the one the still-flat
- * store's save bridge writes back out (`use-project-file-actions.ts`,
- * phase 1 only - phase 2 removes the bridge). One shared constant pair so
- * the two phase-1-only call sites and tests can't drift apart.
+ * (`project-file-legacy-flat-migration.ts`). Phase 1 also had the still-flat
+ * store's save bridge write this id/name back out; phase 2 removed that
+ * bridge (the store now holds the real multi-floor `Project` shape), so
+ * only the legacy-migration reader uses this constant pair today.
  */
 export const LEGACY_FLOOR_ID = 'floor-1'
 export const LEGACY_FLOOR_NAME = 'Floor 1'

@@ -1,8 +1,18 @@
 import { useCallback, useRef, type ChangeEvent } from 'react'
 import { useProjectStore } from './state/project-store'
+import {
+  getActiveFloor,
+  selectCables,
+  selectCameras,
+  selectFireAlarmDevices,
+  selectImage,
+  selectScale,
+  selectSensors,
+} from './state/project-store-floor-selectors'
 import { useEditorUiStore } from './state/editor-ui-store'
 import { useProjectUndoRedo } from './state/use-project-undo-redo'
 import { useUndoRedoKeyboardShortcuts } from './state/use-undo-redo-keyboard-shortcuts'
+import { useActiveFloorDecodedImageSync } from './canvas/floor/use-active-floor-decoded-image-sync'
 import { useStagePanZoom } from './canvas/stage/use-stage-pan-zoom'
 import { readImageFileAsDataUrl } from './file-io/browser/read-image-file-as-data-url'
 import { useProjectFileActions } from './file-io/project-file/use-project-file-actions'
@@ -31,17 +41,16 @@ installDevTestHooks()
  * empty-state's own button trigger it via `openFileDialog`.
  */
 export function App() {
-  const image = useProjectStore((s) => s.image)
-  const scale = useProjectStore((s) => s.scale)
-  const cameras = useProjectStore((s) => s.cameras)
-  const sensors = useProjectStore((s) => s.sensors)
-  const fireAlarmDevices = useProjectStore((s) => s.fireAlarmDevices)
-  const cables = useProjectStore((s) => s.cables)
+  const image = useProjectStore(selectImage)
+  const scale = useProjectStore(selectScale)
+  const cameras = useProjectStore(selectCameras)
+  const sensors = useProjectStore(selectSensors)
+  const fireAlarmDevices = useProjectStore(selectFireAlarmDevices)
+  const cables = useProjectStore(selectCables)
   const setImage = useProjectStore((s) => s.setImage)
 
   const toolMode = useEditorUiStore((s) => s.toolMode)
   const setToolMode = useEditorUiStore((s) => s.setToolMode)
-  const setDecodedImage = useEditorUiStore((s) => s.setDecodedImage)
   const setViewConfig = useEditorUiStore((s) => s.setViewConfig)
   const showCalibrationLine = useEditorUiStore((s) => s.showCalibrationLine)
   const setShowCalibrationLine = useEditorUiStore((s) => s.setShowCalibrationLine)
@@ -50,6 +59,7 @@ export function App() {
   const { viewport, zoomIn, zoomOut, fitToView } = useStagePanZoom()
   const { canUndo, canRedo, undo, redo } = useProjectUndoRedo()
   useUndoRedoKeyboardShortcuts()
+  useActiveFloorDecodedImageSync()
   const { projectFileInputRef, openProjectFileDialog, handleSaveProject, handleProjectFileInputChange } = useProjectFileActions()
   const { isExportingPng, handleExportPng, handleExportCsv } = usePlanExportActions()
 
@@ -58,12 +68,17 @@ export function App() {
 
   const loadImageFile = useCallback(
     async (file: File) => {
-      const { cameras, sensors, fireAlarmDevices, hubs, cables } = useProjectStore.getState()
+      const activeFloor = getActiveFloor(useProjectStore.getState())
+      const { cameras, sensors, fireAlarmDevices, hubs, cables } = activeFloor
       const hasLayout = cameras.length > 0 || sensors.length > 0 || fireAlarmDevices.length > 0 || hubs.length > 0 || cables.length > 0
       if (hasLayout && !window.confirm(REPLACE_IMAGE_CONFIRM_MESSAGE)) {
         return
       }
       try {
+        // `decoded.element` goes unused here: `useActiveFloorDecodedImageSync`
+        // re-decodes from the data URL it sets below, the ONLY writer of
+        // `decodedImage` (so a floor switch and a replace-on-the-same-floor
+        // go through one code path).
         const { image: decoded, warning } = await readImageFileAsDataUrl(file)
         setImage({
           dataUrl: decoded.dataUrl,
@@ -71,14 +86,13 @@ export function App() {
           heightPx: decoded.heightPx,
           fileName: decoded.fileName,
         })
-        setDecodedImage(decoded.element)
         setViewConfig(DEFAULT_VIEW_CONFIG) // a new plan always starts with everything shown
         if (warning) pushNotification('warning', warning)
       } catch (err) {
         pushNotification('error', err instanceof Error ? err.message : 'Failed to load the image file.')
       }
     },
-    [setImage, setDecodedImage, setViewConfig, pushNotification],
+    [setImage, setViewConfig, pushNotification],
   )
 
   const handleFileInputChange = useCallback(

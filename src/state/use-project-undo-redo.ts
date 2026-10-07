@@ -1,5 +1,5 @@
 import { useStore } from 'zustand'
-import { useProjectStore } from './project-store'
+import { redoProject, undoProject, useProjectStore } from './project-store'
 
 /**
  * Subscribes a component to the zundo temporal store (`useProjectStore.temporal`,
@@ -7,7 +7,9 @@ import { useProjectStore } from './project-store'
  * `canUndo`/`canRedo` plus the `undo`/`redo` actions themselves. The single
  * place both the toolbar buttons and the global keyboard shortcut
  * (`use-undo-redo-keyboard-shortcuts.ts`) go through, so they can never
- * drift apart.
+ * drift apart. `undo`/`redo` go through `undoProject`/`redoProject`, not the
+ * temporal store directly, so a multi-floor project auto-switches to
+ * whichever floor the step changed.
  */
 export function useProjectUndoRedo() {
   const temporalStore = useProjectStore.temporal
@@ -17,7 +19,7 @@ export function useProjectUndoRedo() {
   return {
     canUndo,
     canRedo,
-    undo: () => temporalStore.getState().undo(),
-    redo: () => temporalStore.getState().redo(),
+    undo: undoProject,
+    redo: redoProject,
   }
 }

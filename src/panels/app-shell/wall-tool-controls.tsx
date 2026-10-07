@@ -1,6 +1,7 @@
 import type { WallKind } from '../../domain/project-file/project-types'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
+import { selectWalls } from '../../state/project-store-floor-selectors'
 
 interface WallToolControlsProps {
   hasImage: boolean
@@ -31,7 +32,7 @@ export function WallToolControls({ hasImage, buttonClass }: WallToolControlsProp
   const setSelectedCameraId = useEditorUiStore((s) => s.setSelectedCameraId)
   const pushNotification = useEditorUiStore((s) => s.pushNotification)
   // Looked up rather than trusted: an undo can remove the wall while its id is still selected.
-  const selectedWall = useProjectStore((s) => (selectedWallId ? (s.walls.find((w) => w.id === selectedWallId) ?? null) : null))
+  const selectedWall = useProjectStore((s) => (selectedWallId ? (selectWalls(s).find((w) => w.id === selectedWallId) ?? null) : null))
   const updateWall = useProjectStore((s) => s.updateWall)
   const deleteWall = useProjectStore((s) => s.deleteWall)
 

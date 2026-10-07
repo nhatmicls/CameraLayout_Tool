@@ -2,6 +2,7 @@ import { createRoot } from 'react-dom/client'
 import type Konva from 'konva'
 import { Stage } from 'react-konva'
 import { useProjectStore } from './state/project-store'
+import { getActiveFloor } from './state/project-store-floor-selectors'
 import { useEditorUiStore, type UiNotification, type Viewport } from './state/editor-ui-store'
 import { PlanSceneLayers } from './canvas/stage/plan-scene-layers'
 import type { Cable, Hub } from './domain/cable/cable-layout-types'
@@ -49,8 +50,9 @@ declare global {
  */
 function runExportSpike(): Promise<{ dataUrlLength: number; widthPx: number; heightPx: number }> {
   return new Promise((resolve, reject) => {
-    const { image, scale, cameras, walls, sensors, hubs, cables, cableTypes, cableSettings, fireAlarmDevices, fireAlarmSettings } =
-      useProjectStore.getState()
+    const store = useProjectStore.getState()
+    const { image, scale, cameras, walls, sensors, hubs, cables, fireAlarmDevices } = getActiveFloor(store)
+    const { cableTypes, cableSettings, fireAlarmSettings } = store
     const decodedImage = useEditorUiStore.getState().decodedImage
     if (!image || !scale || !decodedImage) {
       reject(new Error('runExportSpike: no calibrated project to export'))
@@ -141,13 +143,13 @@ export function installDevTestHooks(): void {
 
   window.__cameraLayoutToolTestHooks = {
     getViewport: () => useEditorUiStore.getState().viewport,
-    getScale: () => useProjectStore.getState().scale,
-    getCameras: () => useProjectStore.getState().cameras,
-    getWalls: () => useProjectStore.getState().walls,
-    getSensors: () => useProjectStore.getState().sensors,
-    getHubs: () => useProjectStore.getState().hubs,
-    getCables: () => useProjectStore.getState().cables,
-    getFireAlarmDevices: () => useProjectStore.getState().fireAlarmDevices,
+    getScale: () => getActiveFloor(useProjectStore.getState()).scale,
+    getCameras: () => getActiveFloor(useProjectStore.getState()).cameras,
+    getWalls: () => getActiveFloor(useProjectStore.getState()).walls,
+    getSensors: () => getActiveFloor(useProjectStore.getState()).sensors,
+    getHubs: () => getActiveFloor(useProjectStore.getState()).hubs,
+    getCables: () => getActiveFloor(useProjectStore.getState()).cables,
+    getFireAlarmDevices: () => getActiveFloor(useProjectStore.getState()).fireAlarmDevices,
     getSelectedCameraId: () => useEditorUiStore.getState().selectedCameraId,
     pushNotification: (kind, message) => useEditorUiStore.getState().pushNotification(kind, message),
     setScale: (scale) => useProjectStore.getState().setScale(scale),

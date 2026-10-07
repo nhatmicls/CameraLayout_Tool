@@ -3,6 +3,7 @@ import type Konva from 'konva'
 import type { KonvaEventObject } from 'konva/lib/Node'
 import { Layer, Stage } from 'react-konva'
 import { useProjectStore } from '../../state/project-store'
+import { selectCameras, selectImage, selectScale, selectSensors, selectWalls } from '../../state/project-store-floor-selectors'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useStagePanZoom } from './use-stage-pan-zoom'
 import { ScaleCalibrationOverlay } from './scale-calibration-overlay'
@@ -31,13 +32,13 @@ import { computePlanPxPerMeter, type RefLine } from '../../domain/shared/scale-c
  * positions painted here are always in image pixels (see `project-types.ts`).
  */
 export function FloorPlanStage() {
-  const image = useProjectStore((s) => s.image)
-  const scale = useProjectStore((s) => s.scale)
+  const image = useProjectStore(selectImage)
+  const scale = useProjectStore(selectScale)
   const setScale = useProjectStore((s) => s.setScale)
-  const cameras = useProjectStore((s) => s.cameras)
+  const cameras = useProjectStore(selectCameras)
   const updateCamera = useProjectStore((s) => s.updateCamera)
-  const walls = useProjectStore((s) => s.walls)
-  const sensors = useProjectStore((s) => s.sensors)
+  const walls = useProjectStore(selectWalls)
+  const sensors = useProjectStore(selectSensors)
   const updateSensor = useProjectStore((s) => s.updateSensor)
   const { fireAlarmDevices, fireAlarmSettings, updateFireAlarmDevice, selectedFireAlarmDeviceId, setSelectedFireAlarmDeviceId } =
     useFireAlarmStageProps()
@@ -100,10 +101,15 @@ export function FloorPlanStage() {
     [updateCamera],
   )
 
-  if (!image || !decodedImage) return null
+  if (!image) return null
   // The drawing tools place points with a click, so they get the crosshair.
   const isDrawingTool = toolMode !== 'select' && toolMode !== 'calibrate'
 
+  // The container div must mount as soon as there is an image, NOT once it is decoded: the
+  // ResizeObserver effect (`use-stage-container-resize-and-initial-fit.ts`) only attaches on
+  // mount, so delaying this div until `decodedImage` arrives (a bug fixed here) left
+  // `containerRef.current` null forever and the stage permanently 0x0. `<Stage>` itself still
+  // waits for `decodedImage` (and a measured size) - `PlanSceneLayers` needs a real bitmap.
   return (
     <div
       ref={containerRef}
@@ -112,7 +118,7 @@ export function FloorPlanStage() {
       onDragOver={handleDragOver}
       onDrop={handleDropOnStage}
     >
-      {stageSize.width > 0 && stageSize.height > 0 && (
+      {decodedImage && stageSize.width > 0 && stageSize.height > 0 && (
         <Stage
           ref={stageRef}
           width={stageSize.width}

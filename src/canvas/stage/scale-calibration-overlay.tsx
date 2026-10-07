@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type RefObject } from 'react'
 import type Konva from 'konva'
 import { Circle, Group, Line, Text } from 'react-konva'
 import { useProjectStore } from '../../state/project-store'
+import { selectScale } from '../../state/project-store-floor-selectors'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import type { RefLine } from '../../domain/shared/scale-calibration-calculator'
 
@@ -24,7 +25,7 @@ interface ScaleCalibrationOverlayProps {
  * Stage itself is the one node that always receives clicks on empty canvas.
  */
 export function ScaleCalibrationOverlay({ stageRef, viewportScale, dialogOpen, onLineDrawn }: ScaleCalibrationOverlayProps) {
-  const scale = useProjectStore((s) => s.scale)
+  const scale = useProjectStore(selectScale)
   const toolMode = useEditorUiStore((s) => s.toolMode)
   const showCalibrationLine = useEditorUiStore((s) => s.showCalibrationLine)
 

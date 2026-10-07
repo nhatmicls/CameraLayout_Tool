@@ -4,6 +4,7 @@ import { SCALE_NOT_SET_CABLE_MESSAGE } from '../../domain/cable/cable-layout-est
 import { formatMeters, formatMetersInterval } from '../../domain/cable/cable-length-format'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
+import { selectCables, selectCameras, selectHubs, selectSensors } from '../../state/project-store-floor-selectors'
 import { useCableLayoutEstimate } from '../../state/use-cable-layout-estimate'
 import { fieldLabelClass, inputClass } from '../camera/camera-properties-form-helpers'
 import { cableLimitStatusText } from './cable-limit-status-text'
@@ -18,10 +19,10 @@ const LIMIT_STATUS_CLASS = { ok: 'text-neutral-600', 'no-limit': 'text-neutral-4
  * prompt to calibrate.
  */
 export function CablePropertiesPanel() {
-  const cameras = useProjectStore((s) => s.cameras)
-  const sensors = useProjectStore((s) => s.sensors)
-  const hubs = useProjectStore((s) => s.hubs)
-  const cables = useProjectStore((s) => s.cables)
+  const cameras = useProjectStore(selectCameras)
+  const sensors = useProjectStore(selectSensors)
+  const hubs = useProjectStore(selectHubs)
+  const cables = useProjectStore(selectCables)
   const cableTypes = useProjectStore((s) => s.cableTypes)
   const updateCable = useProjectStore((s) => s.updateCable)
   const deleteCable = useProjectStore((s) => s.deleteCable)

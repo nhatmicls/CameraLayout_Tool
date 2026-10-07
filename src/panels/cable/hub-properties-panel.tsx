@@ -2,6 +2,7 @@ import { hubLabels } from '../../domain/cable/cable-endpoint-index'
 import { HUB_EXTRA_LENGTH_BOUNDS, HUB_MOUNT_HEIGHT_BOUNDS } from '../../domain/cable/cable-layout-types'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
+import { selectCables, selectHubs } from '../../state/project-store-floor-selectors'
 import { fieldLabelClass, inputClass } from '../camera/camera-properties-form-helpers'
 import { NullableNumberInput } from '../shared/nullable-number-input'
 
@@ -20,8 +21,8 @@ const WORDING = {
 }
 
 export function HubPropertiesPanel() {
-  const hubs = useProjectStore((s) => s.hubs)
-  const cables = useProjectStore((s) => s.cables)
+  const hubs = useProjectStore(selectHubs)
+  const cables = useProjectStore(selectCables)
   const updateHub = useProjectStore((s) => s.updateHub)
   const deleteHub = useProjectStore((s) => s.deleteHub)
   const selectedHubId = useEditorUiStore((s) => s.selectedHubId)

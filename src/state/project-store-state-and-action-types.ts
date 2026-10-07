@@ -1,65 +1,58 @@
 import { createEmptyCableLayout } from '../domain/cable/cable-layout-types'
-import { createEmptyFireAlarmLayout } from '../domain/project-file/project-types'
-import type { LegacyFlatProject, PlacedCamera, PlanImage, ScaleCalibration, Wall } from '../domain/project-file/project-types'
-import type { PlacedSensor, PlacedSensorPatch } from '../domain/sensor/sensor-types'
-import type { WallNode } from '../domain/wall/wall-node-editing'
-import type { CablingActions, CablingState } from './project-store-cabling-actions'
-import type { FireAlarmActions, FireAlarmState } from './project-store-fire-alarm-actions'
+import type { CableType, CableSettings, Shaft } from '../domain/cable/cable-layout-types'
+import { defaultFloorName } from '../domain/floor/floor-list-editing'
+import { createEmptyFloor, type Floor } from '../domain/floor/floor-types'
+import { DEFAULT_FIRE_ALARM_SETTINGS, type FireAlarmSettings } from '../domain/fire-alarm/fire-alarm-device-types'
+import type { Project } from '../domain/project-file/project-types'
+import type { CablingActions } from './project-store-cabling-actions'
+import type { FireAlarmActions } from './project-store-fire-alarm-actions'
+import type { FloorListActions } from './project-store-floor-actions'
+import type { PlacedItemActions } from './project-store-placed-item-actions'
 
 /**
  * `ProjectState`/`ProjectActions`/`ProjectStore` and the initial-state
  * factory, extracted out of `project-store.ts` to keep that file under 200
- * lines (mirrors how the cabling and fire-alarm slices already live in
- * their own action files).
+ * lines.
  *
- * The store stays flat in this phase (phase 2 restructures it to
- * `floors[]`); `replaceProject`/`setImage` use `PlanImage`/`LegacyFlatProject`
- * - the pre-v7 one-floor shapes - not the new multi-floor `Project`.
+ * Schema v7 (multi-floor, see CLAUDE.md + the plan's drift addendum): the
+ * store holds `floors[]` + `activeFloorId` instead of a flat
+ * image/scale/cameras/walls/sensors/hubs/cables/fireAlarmDevices. Every
+ * placed-item/cabling/fire-alarm-device action now acts on the ACTIVE
+ * floor (see `project-store-floor-selectors.ts` for reads and
+ * `project-store-active-floor-update.ts` for writes).
+ * `cableTypes`/`cableSettings`/`fireAlarmSettings` stay project-level - one
+ * procurement convention and one coverage-mode setting for the whole
+ * building, not per floor.
  */
-export interface ProjectState extends CablingState, FireAlarmState {
-  image: PlanImage | null
-  scale: ScaleCalibration | null
-  cameras: PlacedCamera[]
-  walls: Wall[]
-  sensors: PlacedSensor[]
+export interface ProjectState {
+  floors: Floor[]
+  /** The floor every placed-item/cabling/fire-alarm action reads and writes. Always an id present in `floors` (every mutation clamps it) - not tracked by undo/redo (see `project-store.ts`'s `equality` option) and not part of the saved project file. */
+  activeFloorId: string
+  shafts: Shaft[]
+  cableTypes: CableType[]
+  cableSettings: CableSettings
+  fireAlarmSettings: FireAlarmSettings
 }
 
-export interface ProjectActions extends CablingActions, FireAlarmActions {
-  /** Sets a newly loaded floor-plan image. Always clears cameras, walls, sensors, hubs, cables, fire-alarm devices + scale, and RESETS fire-alarm settings to `DEFAULT_FIRE_ALARM_SETTINGS`: all are meaningless against a different plan (CLAUDE.md). Only cable types + cable settings are kept - they describe a procurement convention, not plan geometry (see `project-store.ts`'s `setImage`). */
-  setImage: (image: PlanImage) => void
-  setScale: (scale: ScaleCalibration | null) => void
-  addCamera: (camera: PlacedCamera) => void
-  /** Merges `patch` into the camera matching `id`. No-op if the id is unknown. */
-  updateCamera: (id: string, patch: Partial<Omit<PlacedCamera, 'id'>>) => void
-  /** Also removes the camera's cables, in the same undo step. */
-  deleteCamera: (id: string) => void
-  addWall: (wall: Wall) => void
-  /** Merges `patch` into the wall matching `id`. An unknown id leaves the state (and so the undo history) untouched. */
-  updateWall: (id: string, patch: Partial<Omit<Wall, 'id'>>) => void
-  /** An unknown id leaves the state (and so the undo history) untouched - the selected id can be stale after an undo. */
-  deleteWall: (id: string) => void
-  /** Moves the wall node at exactly `from` (every wall end on it) to `to`, as one undo step. A refused or empty move leaves the state untouched. */
-  moveWallNode: (from: WallNode, to: WallNode) => void
-  addSensor: (sensor: PlacedSensor) => void
-  /** Merges `patch` into the sensor matching `id` via `applyPlacedSensorPatch`. An unknown id leaves the state (and so the undo history) untouched. */
-  updateSensor: (id: string, patch: PlacedSensorPatch) => void
-  /** Also removes the sensor's cables, in the same undo step. An unknown id leaves the state (and so the undo history) untouched - the selected id can be stale after an undo. */
-  deleteSensor: (id: string) => void
-  /** Replaces the whole project (used when loading a project file). */
-  replaceProject: (project: LegacyFlatProject) => void
-  /** Clears back to the empty-project state (no image, no scale, no cameras, no walls, no sensors, no fire-alarm devices). */
+export interface ProjectActions extends FloorListActions, PlacedItemActions, CablingActions, FireAlarmActions {
+  /** Replaces the whole project (used when loading a project file). Sets the active floor to `project.floors[0]` (tab 1 = lowest floor) and clears undo history. */
+  replaceProject: (project: Project) => void
+  /** Clears back to the empty-project state: one empty floor, no shafts, default cable types/settings/fire-alarm settings. Clears undo history. */
   resetProject: () => void
 }
 
 export type ProjectStore = ProjectState & ProjectActions
 
-/** A function, not a constant: every reset needs fresh arrays (and fresh default cable types / fire-alarm settings). */
-export const createInitialProjectState = (): ProjectState => ({
-  image: null,
-  scale: null,
-  cameras: [],
-  walls: [],
-  sensors: [],
-  ...createEmptyCableLayout(),
-  ...createEmptyFireAlarmLayout(),
-})
+/** A function, not a constant: every reset needs fresh arrays/objects (and a fresh floor id). */
+export const createInitialProjectState = (): ProjectState => {
+  const floor = createEmptyFloor(crypto.randomUUID(), defaultFloorName([]))
+  const { cableTypes, cableSettings } = createEmptyCableLayout()
+  return {
+    floors: [floor],
+    activeFloorId: floor.id,
+    shafts: [],
+    cableTypes,
+    cableSettings,
+    fireAlarmSettings: { ...DEFAULT_FIRE_ALARM_SETTINGS },
+  }
+}

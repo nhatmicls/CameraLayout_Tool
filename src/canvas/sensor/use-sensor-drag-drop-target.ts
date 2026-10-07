@@ -3,6 +3,7 @@ import type Konva from 'konva'
 import { sensorModelById } from '../../catalog/sensor/sensor-catalog-loader'
 import { buildPlacedSensorAtDrop } from '../../domain/sensor/sensor-default-placement-builder'
 import { useProjectStore } from '../../state/project-store'
+import { getActiveFloor } from '../../state/project-store-floor-selectors'
 
 /** Custom MIME type set by a sensor catalog card's `dragstart` (phase 6) - parallel to `CAMERA_MODEL_DRAG_MIME_TYPE`. */
 export const SENSOR_MODEL_DRAG_MIME_TYPE = 'application/x-sensor-model-id'
@@ -33,7 +34,7 @@ export function useSensorDragDropTarget(stageRef: RefObject<Konva.Stage | null>)
 
       const model = sensorModelById(modelId)
       const stage = stageRef.current
-      const { scale, image } = useProjectStore.getState()
+      const { scale, image } = getActiveFloor(useProjectStore.getState())
       if (!model || !scale || !stage || !image) return null
 
       stage.setPointersPositions(e)

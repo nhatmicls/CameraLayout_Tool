@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react'
 import { useProjectStore } from '../../state/project-store'
+import { selectScale } from '../../state/project-store-floor-selectors'
 import { useCatalogSidebarFilterStore, type CatalogTab } from '../../state/catalog-sidebar-filter-store'
 import { CameraCatalogList } from '../camera/camera-catalog-list'
 import { SensorCatalogList } from '../sensor/sensor-catalog-list'
@@ -41,7 +42,7 @@ const TAB_LEGEND: Record<CatalogTab, ComponentType | null> = {
  * lookups, not nested ternaries - the fire-alarm tab has no legend).
  */
 export function CatalogSidebar() {
-  const scale = useProjectStore((s) => s.scale)
+  const scale = useProjectStore(selectScale)
   const catalogTab = useCatalogSidebarFilterStore((s) => s.catalogTab)
   const setCatalogTab = useCatalogSidebarFilterStore((s) => s.setCatalogTab)
 

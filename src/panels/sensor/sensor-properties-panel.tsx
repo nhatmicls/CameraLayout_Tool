@@ -1,6 +1,7 @@
 import { sensorModelById } from '../../catalog/sensor/sensor-catalog-loader'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
+import { selectImage, selectScale, selectSensors, selectWalls } from '../../state/project-store-floor-selectors'
 import { CameraUnknownModelNotice } from '../camera/camera-unknown-model-notice'
 import { SensorBeamStatusReadout } from './sensor-beam-status-readout'
 import { SensorCircleCoverageInputs } from './sensor-circle-coverage-inputs'
@@ -19,10 +20,10 @@ import { ThermalDetectionRangeTable } from './thermal-detection-range-table'
  * which of the two is mounted.
  */
 export function SensorPropertiesPanel() {
-  const sensors = useProjectStore((s) => s.sensors)
-  const walls = useProjectStore((s) => s.walls)
-  const scale = useProjectStore((s) => s.scale)
-  const image = useProjectStore((s) => s.image)
+  const sensors = useProjectStore(selectSensors)
+  const walls = useProjectStore(selectWalls)
+  const scale = useProjectStore(selectScale)
+  const image = useProjectStore(selectImage)
   const updateSensor = useProjectStore((s) => s.updateSensor)
   const deleteSensor = useProjectStore((s) => s.deleteSensor)
   const selectedSensorId = useEditorUiStore((s) => s.selectedSensorId)

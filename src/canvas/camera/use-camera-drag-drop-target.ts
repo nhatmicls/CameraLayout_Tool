@@ -3,6 +3,7 @@ import type Konva from 'konva'
 import { cameraModelById } from '../../catalog/camera/camera-catalog-loader'
 import { resolveEffectiveHfovDeg, resolveDefaultRangeM } from '../../domain/camera/camera-coverage-resolver'
 import { useProjectStore } from '../../state/project-store'
+import { selectScale } from '../../state/project-store-floor-selectors'
 import { CAMERA_MODEL_DRAG_MIME_TYPE } from '../../panels/camera/camera-catalog-model-card'
 import type { PlacedCamera } from '../../domain/project-file/project-types'
 
@@ -30,7 +31,7 @@ export function useCameraDragDropTarget(stageRef: RefObject<Konva.Stage | null>)
 
       const model = cameraModelById(modelId)
       const stage = stageRef.current
-      const currentScale = useProjectStore.getState().scale
+      const currentScale = selectScale(useProjectStore.getState())
       if (!model || !currentScale || !stage) return null
 
       stage.setPointersPositions(e)

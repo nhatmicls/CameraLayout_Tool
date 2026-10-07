@@ -1,11 +1,15 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { createEmptyCableLayout } from '../domain/cable/cable-layout-types'
+import { buildFloor, buildProjectWithFloors } from '../domain/project-file/project-file-test-fixtures'
 import { DEFAULT_FIRE_ALARM_SETTINGS, type PlacedFireAlarmDevice } from '../domain/fire-alarm/fire-alarm-device-types'
 import { useProjectStore } from './project-store'
+import { getActiveFloor } from './project-store-floor-selectors'
 
 const device: PlacedFireAlarmDevice = { id: 'f1', modelId: 'panel-1', x: 10, y: 20 }
+const IMAGE = { dataUrl: 'data:image/png;base64,AA==', widthPx: 10, heightPx: 10, fileName: 'other.png' }
 
 const store = () => useProjectStore.getState()
+/** The active floor's own `fireAlarmDevices` - `fireAlarmSettings` stays project-level, read straight off `store()`. */
+const floor = () => getActiveFloor(store())
 const history = () => useProjectStore.temporal.getState()
 const steps = () => history().pastStates.length
 
@@ -17,37 +21,37 @@ beforeEach(() => {
 describe('project store fire-alarm devices', () => {
   it('adds, updates and deletes a device, each undoable and redoable', () => {
     store().addFireAlarmDevice(device)
-    expect(store().fireAlarmDevices).toEqual([device])
+    expect(floor().fireAlarmDevices).toEqual([device])
 
     store().updateFireAlarmDevice('f1', { x: 99 })
-    expect(store().fireAlarmDevices[0]).toMatchObject({ x: 99 })
+    expect(floor().fireAlarmDevices[0]).toMatchObject({ x: 99 })
 
     store().deleteFireAlarmDevice('f1')
-    expect(store().fireAlarmDevices).toEqual([])
+    expect(floor().fireAlarmDevices).toEqual([])
     expect(steps()).toBe(3)
 
     history().undo()
-    expect(store().fireAlarmDevices[0]).toMatchObject({ x: 99 })
+    expect(floor().fireAlarmDevices[0]).toMatchObject({ x: 99 })
     history().undo()
-    expect(store().fireAlarmDevices[0]).toMatchObject({ x: 10 })
+    expect(floor().fireAlarmDevices[0]).toMatchObject({ x: 10 })
     history().undo()
-    expect(store().fireAlarmDevices).toEqual([])
+    expect(floor().fireAlarmDevices).toEqual([])
 
     history().redo()
     history().redo()
     history().redo()
-    expect(store().fireAlarmDevices).toEqual([])
+    expect(floor().fireAlarmDevices).toEqual([])
   })
 
   it('ignores an unknown id on updateFireAlarmDevice/deleteFireAlarmDevice and adds no history step', () => {
     store().addFireAlarmDevice(device)
     const before = steps()
-    const devicesBefore = store().fireAlarmDevices
+    const devicesBefore = floor().fireAlarmDevices
 
     store().updateFireAlarmDevice('missing', { x: 5 })
     store().deleteFireAlarmDevice('missing')
 
-    expect(store().fireAlarmDevices).toBe(devicesBefore)
+    expect(floor().fireAlarmDevices).toBe(devicesBefore)
     expect(steps()).toBe(before)
   })
 
@@ -60,34 +64,45 @@ describe('project store fire-alarm devices', () => {
     expect(steps()).toBe(before)
   })
 
-  it('clears devices and settings and history on setImage and on resetProject', () => {
+  // Rewritten for the floors restructure (drift addendum): `setImage` clears the active
+  // floor's `fireAlarmDevices` (like cameras/sensors/hubs/cables) but `fireAlarmSettings` is
+  // now PROJECT-level (shared by every floor), so it is no longer reset here, and `setImage`
+  // is one ordinary undo step - it no longer clears history (only `resetProject`/
+  // `replaceProject` do).
+  it('setImage clears the active floor\'s devices but keeps fireAlarmSettings and history', () => {
     store().addFireAlarmDevice(device)
     store().setFireAlarmSettings({ coverageMode: 'tcvn-5738', ceilingHeightM: 3 })
-    store().setImage({ dataUrl: 'data:image/png;base64,AA==', widthPx: 10, heightPx: 10, fileName: 'other.png' })
-    expect(store().fireAlarmDevices).toEqual([])
-    expect(store().fireAlarmSettings).toEqual(DEFAULT_FIRE_ALARM_SETTINGS)
-    expect(history().pastStates).toHaveLength(0)
+    const stepsBeforeSetImage = steps()
 
+    store().setImage(IMAGE)
+
+    expect(floor().fireAlarmDevices).toEqual([])
+    expect(store().fireAlarmSettings).toEqual({ coverageMode: 'tcvn-5738', ceilingHeightM: 3 })
+    expect(steps()).toBe(stepsBeforeSetImage + 1)
+
+    history().undo()
+    expect(floor().fireAlarmDevices).toEqual([device])
+  })
+
+  it('resetProject clears devices, settings and history', () => {
     store().addFireAlarmDevice(device)
+    store().setFireAlarmSettings({ coverageMode: 'tcvn-5738', ceilingHeightM: 3 })
+
     store().resetProject()
-    expect(store().fireAlarmDevices).toEqual([])
+
+    expect(floor().fireAlarmDevices).toEqual([])
     expect(store().fireAlarmSettings).toEqual(DEFAULT_FIRE_ALARM_SETTINGS)
     expect(history().pastStates).toHaveLength(0)
   })
 
   it('takes its devices and settings from replaceProject', () => {
     store().addFireAlarmDevice({ ...device, id: 'old' })
-    store().replaceProject({
-      image: { dataUrl: 'data:image/png;base64,AA==', widthPx: 10, heightPx: 10, fileName: 'other.png' },
-      scale: null,
-      cameras: [],
-      walls: [],
-      sensors: [],
-      ...createEmptyCableLayout(),
-      fireAlarmDevices: [{ ...device, id: 'new' }],
-      fireAlarmSettings: { coverageMode: 'tcvn-5738', ceilingHeightM: 2.8 },
-    })
-    expect(store().fireAlarmDevices.map((d) => d.id)).toEqual(['new'])
+    store().replaceProject(
+      buildProjectWithFloors([buildFloor({ image: IMAGE, fireAlarmDevices: [{ ...device, id: 'new' }] })], {
+        fireAlarmSettings: { coverageMode: 'tcvn-5738', ceilingHeightM: 2.8 },
+      }),
+    )
+    expect(floor().fireAlarmDevices.map((d) => d.id)).toEqual(['new'])
     expect(store().fireAlarmSettings).toEqual({ coverageMode: 'tcvn-5738', ceilingHeightM: 2.8 })
   })
 })

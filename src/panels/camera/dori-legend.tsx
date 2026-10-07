@@ -1,4 +1,5 @@
 import { useProjectStore } from '../../state/project-store'
+import { selectCameras, selectScale, selectWalls } from '../../state/project-store-floor-selectors'
 import { cameraModelById } from '../../catalog/camera/camera-catalog-loader'
 import { resolveEffectiveHfovDeg } from '../../domain/camera/camera-coverage-resolver'
 import { isApproximateDoriModel } from '../../domain/camera/dori-zone-distance-calculator'
@@ -26,9 +27,9 @@ const WALL_LEGEND_ENTRIES = [
  * does not do, right where the user reads the colours.
  */
 export function DoriLegend() {
-  const scale = useProjectStore((s) => s.scale)
-  const cameras = useProjectStore((s) => s.cameras)
-  const hasWalls = useProjectStore((s) => s.walls.length > 0)
+  const scale = useProjectStore(selectScale)
+  const cameras = useProjectStore(selectCameras)
+  const hasWalls = useProjectStore((s) => selectWalls(s).length > 0)
 
   const hasApproximateModel = cameras.some((camera) => {
     const model = cameraModelById(camera.modelId)

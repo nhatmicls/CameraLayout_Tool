@@ -3,13 +3,14 @@ import {
   DEFAULT_CABLE_SETTINGS,
   MAX_HUBS,
   createDefaultCableTypes,
-  createEmptyCableLayout,
   type Cable,
   type Hub,
 } from '../domain/cable/cable-layout-types'
-import { createEmptyFireAlarmLayout, type PlacedCamera } from '../domain/project-file/project-types'
+import { buildFloor, buildProjectWithFloors } from '../domain/project-file/project-file-test-fixtures'
+import type { PlacedCamera } from '../domain/project-file/project-types'
 import type { PlacedBeamSensor } from '../domain/sensor/sensor-types'
 import { useProjectStore } from './project-store'
+import { getActiveFloor } from './project-store-floor-selectors'
 
 const camera: PlacedCamera = { id: 'dev-1', modelId: 'm', x: 10, y: 10, rotationDeg: 0, rangeM: 10 }
 // Same id string as the camera on purpose: ids are unique only within a kind.
@@ -22,6 +23,8 @@ function makeCable(id: string, device: Cable['device'], hubId = 'hub-1'): Cable 
 }
 
 const store = () => useProjectStore.getState()
+/** The active floor's own fields (hubs/cables/cameras/sensors) - `cableTypes`/`cableSettings` stay project-level, read straight off `store()`. */
+const floor = () => getActiveFloor(store())
 const history = () => useProjectStore.temporal.getState()
 const steps = () => history().pastStates.length
 
@@ -46,37 +49,37 @@ describe('project store hubs', () => {
     store().addHub(hub)
     expect(steps()).toBe(1)
     store().updateHub('hub-1', { mountHeightM: 2 })
-    expect(store().hubs[0].mountHeightM).toBe(2)
+    expect(floor().hubs[0].mountHeightM).toBe(2)
     expect(steps()).toBe(2)
     store().deleteHub('hub-1')
-    expect(store().hubs).toEqual([])
+    expect(floor().hubs).toEqual([])
     expect(steps()).toBe(3)
 
     history().undo()
-    expect(store().hubs[0].mountHeightM).toBe(2)
+    expect(floor().hubs[0].mountHeightM).toBe(2)
     history().undo()
-    expect(store().hubs).toEqual([hub])
+    expect(floor().hubs).toEqual([hub])
     history().redo()
     history().redo()
-    expect(store().hubs).toEqual([])
+    expect(floor().hubs).toEqual([])
   })
 
   it('deletes a hub with its cables in ONE step', () => {
     seedLayout()
     store().deleteHub('hub-1')
-    expect(store().hubs).toEqual([])
-    expect(store().cables).toEqual([])
+    expect(floor().hubs).toEqual([])
+    expect(floor().cables).toEqual([])
     expect(steps()).toBe(1)
     history().undo()
-    expect(store().hubs).toEqual([hub])
-    expect(store().cables.map((cable) => cable.id)).toEqual(['k-cam', 'k-tx', 'k-rx'])
+    expect(floor().hubs).toEqual([hub])
+    expect(floor().cables.map((cable) => cable.id)).toEqual(['k-cam', 'k-tx', 'k-rx'])
   })
 
   it('ignores a hub past MAX_HUBS', () => {
     for (let i = 0; i < MAX_HUBS; i++) store().addHub({ ...hub, id: `hub-${i}` })
     const before = steps()
     store().addHub({ ...hub, id: 'one-too-many' })
-    expect(store().hubs).toHaveLength(MAX_HUBS)
+    expect(floor().hubs).toHaveLength(MAX_HUBS)
     expect(steps()).toBe(before)
   })
 })
@@ -85,28 +88,28 @@ describe('project store cascade deletes', () => {
   it('deleteCamera removes its cable but not the cables of a sensor with the same id; one undo restores both', () => {
     seedLayout()
     store().deleteCamera('dev-1')
-    expect(store().cables.map((cable) => cable.id)).toEqual(['k-tx', 'k-rx'])
+    expect(floor().cables.map((cable) => cable.id)).toEqual(['k-tx', 'k-rx'])
     expect(steps()).toBe(1)
     history().undo()
-    expect(store().cameras).toEqual([camera])
-    expect(store().cables).toHaveLength(3)
+    expect(floor().cameras).toEqual([camera])
+    expect(floor().cables).toHaveLength(3)
   })
 
   it('deleteSensor removes both the tx and rx cables of a beam; one undo restores them', () => {
     seedLayout()
     store().deleteSensor('dev-1')
-    expect(store().cables.map((cable) => cable.id)).toEqual(['k-cam'])
+    expect(floor().cables.map((cable) => cable.id)).toEqual(['k-cam'])
     expect(steps()).toBe(1)
     history().undo()
-    expect(store().sensors).toEqual([beam])
-    expect(store().cables).toHaveLength(3)
+    expect(floor().sensors).toEqual([beam])
+    expect(floor().cables).toHaveLength(3)
   })
 
   it('keeps the cables array identity when the deleted camera has no cable', () => {
     store().addCamera(camera)
-    const cables = store().cables
+    const cables = floor().cables
     store().deleteCamera('dev-1')
-    expect(store().cables).toBe(cables)
+    expect(floor().cables).toBe(cables)
   })
 })
 
@@ -115,7 +118,7 @@ describe('project store cables', () => {
     seedLayout()
     store().addCable(makeCable('bad-hub', { kind: 'camera', id: 'dev-1' }, 'nope'))
     store().addCable({ ...makeCable('bad-type', { kind: 'camera', id: 'dev-1' }), typeId: 'nope' })
-    expect(store().cables).toHaveLength(3)
+    expect(floor().cables).toHaveLength(3)
     expect(steps()).toBe(0)
   })
 
@@ -123,7 +126,7 @@ describe('project store cables', () => {
     seedLayout()
     store().updateCable('k-cam', { typeId: 'alarm-signal' })
     store().updateCable('k-cam', { points: [{ x: 1, y: 2 }] })
-    expect(store().cables[0]).toMatchObject({ typeId: 'alarm-signal', points: [{ x: 1, y: 2 }] })
+    expect(floor().cables[0]).toMatchObject({ typeId: 'alarm-signal', points: [{ x: 1, y: 2 }] })
     expect(steps()).toBe(2)
     store().updateCable('k-cam', { typeId: 'nope' })
     expect(steps()).toBe(2)
@@ -132,7 +135,7 @@ describe('project store cables', () => {
   it('deletes a cable in one step', () => {
     seedLayout()
     store().deleteCable('k-tx')
-    expect(store().cables.map((cable) => cable.id)).toEqual(['k-cam', 'k-rx'])
+    expect(floor().cables.map((cable) => cable.id)).toEqual(['k-cam', 'k-rx'])
     expect(steps()).toBe(1)
   })
 })
@@ -158,7 +161,7 @@ describe('project store guards: no history step for a refused or empty edit', ()
     store().updateHub('hub-1', { mountHeightM: hub.mountHeightM })
     store().updateCableSettings({ wastePercent: DEFAULT_CABLE_SETTINGS.wastePercent })
     store().updateCableType('cat6-utp', { name: 'Cat6 UTP' })
-    store().updateCable('k-cam', { points: store().cables[0].points })
+    store().updateCable('k-cam', { points: floor().cables[0].points })
     expect(steps()).toBe(0)
   })
 })
@@ -192,16 +195,24 @@ describe('project store cable types and settings', () => {
 })
 
 describe('project store image / project replacement', () => {
-  it('setImage clears hubs + cables, keeps types + settings, clears history', () => {
+  // Rewritten for the floors restructure (drift addendum): `setImage` is now ONE
+  // ordinary undo step on the active floor and NEVER clears history (only
+  // `resetProject`/`replaceProject` do) - it used to clear history outright.
+  it('setImage clears hubs + cables (one undo step, history kept), keeps types + settings', () => {
     seedLayout()
     store().updateCableType('cat6-utp', { pricePerMeterVnd: 8000 })
     store().updateCableSettings({ wastePercent: 10 })
+    const stepsBeforeSetImage = steps()
     store().setImage(IMAGE)
-    expect(store().hubs).toEqual([])
-    expect(store().cables).toEqual([])
+    expect(floor().hubs).toEqual([])
+    expect(floor().cables).toEqual([])
     expect(store().cableTypes[0].pricePerMeterVnd).toBe(8000)
     expect(store().cableSettings.wastePercent).toBe(10)
-    expect(steps()).toBe(0)
+    expect(steps()).toBe(stepsBeforeSetImage + 1)
+
+    history().undo()
+    expect(floor().hubs).toEqual([hub])
+    expect(floor().cables).toHaveLength(3)
   })
 
   it('resetProject restores the default types and settings', () => {
@@ -215,19 +226,13 @@ describe('project store image / project replacement', () => {
   it('replaceProject takes all four cable fields from the project', () => {
     const cableTypes = [{ id: 'only', name: 'Only', lengthLimitM: 50, pricePerMeterVnd: 1000 }]
     const cable: Cable = { id: 'k', device: { kind: 'camera', id: 'dev-1' }, hubId: 'hub-1', typeId: 'only', points: [] }
-    store().replaceProject({
-      image: IMAGE,
-      scale: null,
-      cameras: [camera],
-      walls: [],
-      sensors: [],
-      ...createEmptyCableLayout(),
-      hubs: [hub],
-      cables: [cable],
-      cableTypes,
-      cableSettings: { ...DEFAULT_CABLE_SETTINGS, clickErrorPx: 5 },
-      ...createEmptyFireAlarmLayout(),
-    })
-    expect(store()).toMatchObject({ hubs: [hub], cables: [cable], cableTypes, cableSettings: { clickErrorPx: 5 } })
+    store().replaceProject(
+      buildProjectWithFloors([buildFloor({ image: IMAGE, cameras: [camera], hubs: [hub], cables: [cable] })], {
+        cableTypes,
+        cableSettings: { ...DEFAULT_CABLE_SETTINGS, clickErrorPx: 5 },
+      }),
+    )
+    expect(floor()).toMatchObject({ hubs: [hub], cables: [cable] })
+    expect(store()).toMatchObject({ cableTypes, cableSettings: { clickErrorPx: 5 } })
   })
 })

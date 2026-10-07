@@ -1,136 +1,94 @@
 import { create } from 'zustand'
 import { temporal } from 'zundo'
-import { DEFAULT_FIRE_ALARM_SETTINGS } from '../domain/fire-alarm/fire-alarm-device-types'
-import { removeCablesOfDevice } from '../domain/cable/cable-reference-integrity'
-import { applyPlacedSensorPatch } from '../domain/sensor/placed-sensor-patch'
-import { moveWallNode } from '../domain/wall/wall-node-editing'
+import type { CableLayout } from '../domain/cable/cable-layout-types'
+import { findSingleChangedFloorId } from '../domain/floor/floor-list-editing'
+import type { Floor } from '../domain/floor/floor-types'
+import type { FireAlarmLayout } from '../domain/project-file/project-types'
+import { patchActiveFloor, type FloorContent } from './project-store-active-floor-update'
 import { createCablingActions } from './project-store-cabling-actions'
 import { createFireAlarmActions } from './project-store-fire-alarm-actions'
-import {
-  createInitialProjectState,
-  type ProjectStore,
-} from './project-store-state-and-action-types'
+import { createFloorActions } from './project-store-floor-actions'
+import { selectActiveFloor } from './project-store-floor-selectors'
+import { createPlacedItemActions } from './project-store-placed-item-actions'
+import { createInitialProjectState, type ProjectState, type ProjectStore } from './project-store-state-and-action-types'
 
 export type { ProjectState, ProjectActions, ProjectStore } from './project-store-state-and-action-types'
 
 /**
- * The project store: the floor-plan image, its scale calibration, the
- * placed cameras, sensors, fire-alarm devices and the drawn walls. This is
- * the thing that gets saved to / loaded from disk and undone/redone (via
- * zundo - see the `temporal(...)` wrapper below). View-only state (pan/zoom,
- * tool mode, selection) lives in `editor-ui-store.ts` instead, so it never
- * pollutes the save payload or undo history.
+ * The project store: ordered floors, the active one, the project-wide
+ * shafts/cable types/cable settings/fire-alarm settings. This is the thing
+ * that gets saved to / loaded from disk and undone/redone (via zundo - see
+ * the `temporal(...)` wrapper below). View-only state (pan/zoom, tool mode,
+ * selection, which floor's image is decoded) lives in `editor-ui-store.ts`
+ * instead, so it never pollutes the save payload or undo history.
  */
 
-// `setImage`/`replaceProject`/`resetProject` below call `useProjectStore.temporal` -
-// a reference to the store this very `create()(...)` call produces. That's safe
-// despite looking circular: these are closures that only run once a caller
-// invokes the action, by which time module evaluation (and so this
-// assignment) has already completed. This is zundo's own documented pattern
-// for clearing history (see its README's "access temporal functions" section) -
-// the alternative (a `StateCreator`'s third `api` argument) does not carry
-// enough type information for `api.temporal` to type-check.
+/** Routes a cabling-slice partial (`hubs`/`cables` -> the active floor, `cableTypes`/`cableSettings` -> project level) into one `ProjectState` patch, so `createCablingActions`'s single `set()` call still produces one undo step. No call ever mixes the two groups (see `project-store-cabling-actions.ts`). */
+function routeCablingPartial(
+  state: Pick<ProjectState, 'floors' | 'activeFloorId'>,
+  partial: Partial<CableLayout>,
+): Partial<ProjectState> {
+  const floorPatch: Partial<FloorContent> = {}
+  if (partial.hubs !== undefined) floorPatch.hubs = partial.hubs
+  if (partial.cables !== undefined) floorPatch.cables = partial.cables
+  const patch: Partial<ProjectState> = Object.keys(floorPatch).length > 0 ? patchActiveFloor(state, floorPatch) : {}
+  if (partial.cableTypes !== undefined) patch.cableTypes = partial.cableTypes
+  if (partial.cableSettings !== undefined) patch.cableSettings = partial.cableSettings
+  return patch
+}
+
+/** Same routing for the fire-alarm slice: `fireAlarmDevices` -> the active floor, `fireAlarmSettings` -> project level. */
+function routeFireAlarmPartial(
+  state: Pick<ProjectState, 'floors' | 'activeFloorId'>,
+  partial: Partial<FireAlarmLayout>,
+): Partial<ProjectState> {
+  const patch: Partial<ProjectState> =
+    partial.fireAlarmDevices !== undefined ? patchActiveFloor(state, { fireAlarmDevices: partial.fireAlarmDevices }) : {}
+  if (partial.fireAlarmSettings !== undefined) patch.fireAlarmSettings = partial.fireAlarmSettings
+  return patch
+}
+
+// `replaceProject`/`resetProject` below call `useProjectStore.temporal` - a
+// reference to the store this very `create()(...)` call produces. That's
+// safe despite looking circular: see the long-standing comment this phase
+// carried over from before the floors restructure - it's zundo's own
+// documented pattern for clearing history.
 export const useProjectStore = create<ProjectStore>()(
   temporal(
     (set, get) => ({
       ...createInitialProjectState(),
 
-      // A new/replaced image or project makes every prior undo step point at
-      // cameras/scale that no longer belong to the picture on screen -
-      // clearing history outright is simpler and safer than trying to keep
-      // it coherent across a swapped plan.
-      setImage: (image) => {
-        // Cable types + allowances are kept: typed prices are not plan geometry.
-        set({
-          image,
-          scale: null,
-          cameras: [],
-          walls: [],
-          sensors: [],
-          hubs: [],
-          cables: [],
-          fireAlarmDevices: [],
-          fireAlarmSettings: { ...DEFAULT_FIRE_ALARM_SETTINGS },
-        })
-        useProjectStore.temporal.getState().clear()
-      },
-
-      setScale: (scale) => set({ scale }),
-
-      addCamera: (camera) => set((state) => ({ cameras: [...state.cameras, camera] })),
-
-      updateCamera: (id, patch) =>
-        set((state) => ({
-          cameras: state.cameras.map((camera) => (camera.id === id ? { ...camera, ...patch } : camera)),
-        })),
-
-      // One `set()` = one undo step for the camera and its cables. `removeCablesOf*` return the same
-      // array when nothing matched, so a cable-free project keeps its `cables` identity.
-      deleteCamera: (id) =>
-        set((state) => ({
-          cameras: state.cameras.filter((camera) => camera.id !== id),
-          cables: removeCablesOfDevice(state.cables, 'camera', id),
-        })),
-
-      addWall: (wall) => set((state) => ({ walls: [...state.walls, wall] })),
-
-      // zundo records a step for every `set` call, changed or not, so an unknown id must not reach `set`.
-      updateWall: (id, patch) => {
-        if (!get().walls.some((wall) => wall.id === id)) return
-        set((state) => ({ walls: state.walls.map((wall) => (wall.id === id ? { ...wall, ...patch } : wall)) }))
-      },
-
-      deleteWall: (id) => {
-        if (!get().walls.some((wall) => wall.id === id)) return
-        set((state) => ({ walls: state.walls.filter((wall) => wall.id !== id) }))
-      },
-
-      moveWallNode: (from, to) => {
-        const walls = moveWallNode(get().walls, from, to)
-        if (walls) set({ walls })
-      },
-
-      addSensor: (sensor) => set((state) => ({ sensors: [...state.sensors, sensor] })),
-
-      updateSensor: (id, patch) => {
-        const sensors = get().sensors
-        const index = sensors.findIndex((sensor) => sensor.id === id)
-        if (index === -1) return
-        const updated = applyPlacedSensorPatch(sensors[index], patch)
-        if (updated === sensors[index]) return
-        set({ sensors: sensors.map((sensor, i) => (i === index ? updated : sensor)) })
-      },
-
-      deleteSensor: (id) => {
-        if (!get().sensors.some((sensor) => sensor.id === id)) return
-        set((state) => ({
-          sensors: state.sensors.filter((sensor) => sensor.id !== id),
-          cables: removeCablesOfDevice(state.cables, 'sensor', id),
-        }))
-      },
-
-      // Thin lambdas: zundo's `set` / `get` are typed for the whole store, each slice only needs its own keys.
-      ...createCablingActions(
+      ...createFloorActions(
         (partial) => set(partial),
         () => get(),
       ),
+
+      ...createPlacedItemActions(
+        (partial) => set(patchActiveFloor(get(), partial)),
+        () => selectActiveFloor(get()),
+      ),
+
+      // Thin lambdas: zundo's `set`/`get` are typed for the whole store, each slice only needs its own keys.
+      ...createCablingActions(
+        (partial) => set(routeCablingPartial(get(), partial)),
+        () => {
+          const state = get()
+          const floor = selectActiveFloor(state)
+          return { hubs: floor.hubs, cables: floor.cables, cableTypes: state.cableTypes, cableSettings: state.cableSettings }
+        },
+      ),
       ...createFireAlarmActions(
-        (partial) => set(partial),
-        () => get(),
+        (partial) => set(routeFireAlarmPartial(get(), partial)),
+        () => ({ fireAlarmDevices: selectActiveFloor(get()).fireAlarmDevices, fireAlarmSettings: get().fireAlarmSettings }),
       ),
 
       replaceProject: (project) => {
         set({
-          image: project.image,
-          scale: project.scale,
-          cameras: project.cameras,
-          walls: project.walls,
-          sensors: project.sensors,
-          hubs: project.hubs,
-          cables: project.cables,
+          floors: project.floors,
+          activeFloorId: project.floors[0].id,
+          shafts: project.shafts,
           cableTypes: project.cableTypes,
           cableSettings: project.cableSettings,
-          fireAlarmDevices: project.fireAlarmDevices,
           fireAlarmSettings: project.fireAlarmSettings,
         })
         useProjectStore.temporal.getState().clear()
@@ -142,23 +100,56 @@ export const useProjectStore = create<ProjectStore>()(
       },
     }),
     {
-      // Never track `image`: it can be tens of MB as a data URL, and nobody
-      // expects undo to bring back a different floor plan. Cameras, walls,
-      // sensors, fire-alarm devices/settings + scale are the things a user
-      // thinks of as "my layout".
+      // `floors` IS tracked whole, image included - unlike the old flat
+      // single-image store, replacing a floor's plan is now an ordinary
+      // undoable step (phase 2 decision j). Snapshots hold references, not
+      // copies (see `project-store-floors.test.ts`'s zundo proof), so this
+      // costs no extra cloning; the accepted tradeoff is that a replaced or
+      // deleted floor's image data URL stays alive in memory for as long as
+      // any of the `limit` history steps below can still reach it.
+      // `activeFloorId` is deliberately excluded: a floor switch is not an
+      // undo step. `equality` is what makes that work - without it, zundo
+      // records a step for every `set()` call, changed or not, so a `set()`
+      // that only touches `activeFloorId` would still add an empty step.
       partialize: (state) => ({
-        cameras: state.cameras,
-        scale: state.scale,
-        walls: state.walls,
-        sensors: state.sensors,
-        hubs: state.hubs,
-        cables: state.cables,
+        floors: state.floors,
+        shafts: state.shafts,
         cableTypes: state.cableTypes,
         cableSettings: state.cableSettings,
-        fireAlarmDevices: state.fireAlarmDevices,
         fireAlarmSettings: state.fireAlarmSettings,
       }),
+      equality: (a, b) =>
+        a.floors === b.floors &&
+        a.shafts === b.shafts &&
+        a.cableTypes === b.cableTypes &&
+        a.cableSettings === b.cableSettings &&
+        a.fireAlarmSettings === b.fireAlarmSettings,
       limit: 100,
     },
   ),
 )
+
+/** Switches to the floor `before -> after` auto-switch finds changed (if exactly one did), then clamps `activeFloorId` to an existing floor - undo/redo can restore or remove floors, and `activeFloorId` itself is never part of what they restore. */
+function autoSwitchAndClamp(before: Floor[]): void {
+  const changedFloorId = findSingleChangedFloorId(before, useProjectStore.getState().floors)
+  if (changedFloorId !== null) useProjectStore.getState().setActiveFloor(changedFloorId)
+
+  const { floors, activeFloorId } = useProjectStore.getState()
+  if (!floors.some((floor) => floor.id === activeFloorId)) {
+    useProjectStore.setState({ activeFloorId: floors[0].id })
+  }
+}
+
+/** Undoes one step, then auto-switches to the floor it changed and clamps `activeFloorId` - the one place every undo trigger (toolbar button, keyboard shortcut) goes through. */
+export function undoProject(): void {
+  const before = useProjectStore.getState().floors
+  useProjectStore.temporal.getState().undo()
+  autoSwitchAndClamp(before)
+}
+
+/** Redo counterpart of `undoProject`. */
+export function redoProject(): void {
+  const before = useProjectStore.getState().floors
+  useProjectStore.temporal.getState().redo()
+  autoSwitchAndClamp(before)
+}

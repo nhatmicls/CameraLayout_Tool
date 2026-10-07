@@ -32,7 +32,7 @@ export function saveProjectToFile(project: Project): void {
 }
 
 export type LoadProjectOutcome =
-  | { ok: true; project: Project; decodedImage: HTMLImageElement | null; warnings: string[] }
+  | { ok: true; project: Project; warnings: string[] }
   | { ok: false; error: string }
 
 /**
@@ -40,11 +40,13 @@ export type LoadProjectOutcome =
  * failure path (oversized file, unreadable file, invalid JSON/schema,
  * corrupt embedded image on ANY floor) resolves to `{ ok: false, error }`,
  * leaving the caller's current project untouched. Decodes every floor's
- * image sequentially (so each floor's `widthPx`/`heightPx` become the
- * decoded element's real dimensions, not whatever the file claimed); the
- * still-flat store's bridge (`use-project-file-actions.ts`, phase 1 only)
- * only needs floor 0's, so that one is also returned directly as
- * `decodedImage` (null when floor 0 itself has no image).
+ * image sequentially so each floor's `widthPx`/`heightPx` become the
+ * decoded element's real dimensions, not whatever the file claimed - the
+ * decoded `HTMLImageElement`s themselves are discarded here;
+ * `use-active-floor-decoded-image-sync.ts` is the only place that keeps one,
+ * decoding the active floor's data URL again once `replaceProject` lands it
+ * in the store (phase 2 removed the one-floor bridge that used to return it
+ * from here).
  */
 export async function loadProjectFromFile(file: File, lookups: ProjectFileLookups): Promise<LoadProjectOutcome> {
   if (file.size > MAX_LOAD_FILE_SIZE_BYTES) {
@@ -66,10 +68,8 @@ export async function loadProjectFromFile(file: File, lookups: ProjectFileLookup
     return { ok: false, error: parsed.error }
   }
 
-  let decodedImage: HTMLImageElement | null = null
   const floors: Floor[] = []
-  for (let index = 0; index < parsed.project.floors.length; index++) {
-    const floor = parsed.project.floors[index]
+  for (const floor of parsed.project.floors) {
     if (floor.image === null) {
       floors.push(floor)
       continue
@@ -82,9 +82,8 @@ export async function loadProjectFromFile(file: File, lookups: ProjectFileLookup
       return { ok: false, error: err instanceof Error ? err.message : 'Failed to decode the embedded image.' }
     }
     floors.push({ ...floor, image: { ...floor.image, widthPx: decoded.naturalWidth, heightPx: decoded.naturalHeight } })
-    if (index === 0) decodedImage = decoded
   }
 
   const project: Project = { ...parsed.project, floors }
-  return { ok: true, project, decodedImage, warnings: parsed.warnings }
+  return { ok: true, project, warnings: parsed.warnings }
 }

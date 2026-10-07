@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import { useProjectStore } from '../../state/project-store'
+import { getActiveFloor, selectImage, selectScale } from '../../state/project-store-floor-selectors'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { resolveEffectiveViewConfig } from '../../domain/view/view-config-tool-mode-overrides'
 import { exportPlanPng } from '../png/export-plan-png'
@@ -15,8 +16,8 @@ import { exportBomCsv } from '../csv/export-bom-csv'
  * these callbacks to be recreated.
  */
 export function usePlanExportActions() {
-  const image = useProjectStore((s) => s.image)
-  const scale = useProjectStore((s) => s.scale)
+  const image = useProjectStore(selectImage)
+  const scale = useProjectStore(selectScale)
   const decodedImage = useEditorUiStore((s) => s.decodedImage)
   const pushNotification = useEditorUiStore((s) => s.pushNotification)
 
@@ -30,8 +31,9 @@ export function usePlanExportActions() {
     }
     setIsExportingPng(true)
     try {
-      const { cameras, walls, sensors, hubs, cables, cableTypes, cableSettings, fireAlarmDevices, fireAlarmSettings } =
-        useProjectStore.getState()
+      const store = useProjectStore.getState()
+      const { cameras, walls, sensors, hubs, cables, fireAlarmDevices } = getActiveFloor(store)
+      const { cableTypes, cableSettings, fireAlarmSettings } = store
       // The drawing shows what is on screen: the stored view config with the active tool's layers forced on.
       const { viewConfig, toolMode } = useEditorUiStore.getState()
       await exportPlanPng({
@@ -64,7 +66,9 @@ export function usePlanExportActions() {
   const handleExportCsv = useCallback(() => {
     if (!image) return
     try {
-      const { cameras, sensors, fireAlarmDevices, hubs, cables, cableTypes, cableSettings, scale: currentScale } = useProjectStore.getState()
+      const store = useProjectStore.getState()
+      const { cameras, sensors, fireAlarmDevices, hubs, cables, scale: currentScale } = getActiveFloor(store)
+      const { cableTypes, cableSettings } = store
       exportBomCsv({ image, cameras, sensors, fireAlarmDevices, hubs, cables, cableTypes, cableSettings, scale: currentScale })
       if (cables.length > 0 && !currentScale) {
         pushNotification('warning', 'Cable rows were left out of the CSV: set the scale first.')

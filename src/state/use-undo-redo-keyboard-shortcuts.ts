@@ -1,11 +1,13 @@
 import { useEffect } from 'react'
-import { useProjectStore } from './project-store'
+import { redoProject, undoProject } from './project-store'
 
 /**
  * Global Ctrl/Cmd+Z (undo), Ctrl/Cmd+Shift+Z and Ctrl/Cmd+Y (redo) shortcuts.
  * Ignored while the user is typing in a form field (e.g. the properties
  * panel's range/rotation inputs), matching
- * `use-camera-selection-keyboard-shortcuts.ts`'s convention.
+ * `use-camera-selection-keyboard-shortcuts.ts`'s convention. Goes through
+ * `undoProject`/`redoProject` (not the temporal store directly) so a
+ * multi-floor project auto-switches to whichever floor the step changed.
  */
 export function useUndoRedoKeyboardShortcuts(): void {
   useEffect(() => {
@@ -16,17 +18,16 @@ export function useUndoRedoKeyboardShortcuts(): void {
       if (!(e.ctrlKey || e.metaKey)) return
 
       const key = e.key.toLowerCase()
-      const temporal = useProjectStore.temporal.getState()
 
       if (key === 'z' && e.shiftKey) {
         e.preventDefault()
-        temporal.redo()
+        redoProject()
       } else if (key === 'z') {
         e.preventDefault()
-        temporal.undo()
+        undoProject()
       } else if (key === 'y') {
         e.preventDefault()
-        temporal.redo()
+        redoProject()
       }
     }
     window.addEventListener('keydown', handleKeyDown)

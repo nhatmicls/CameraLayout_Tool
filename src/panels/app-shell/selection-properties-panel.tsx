@@ -1,5 +1,6 @@
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
+import { selectCables, selectFireAlarmDevices, selectHubs, selectSensors } from '../../state/project-store-floor-selectors'
 import { CablePropertiesPanel } from '../cable/cable-properties-panel'
 import { HubPropertiesPanel } from '../cable/hub-properties-panel'
 import { CameraPropertiesPanel } from '../camera/camera-properties-panel'
@@ -23,10 +24,10 @@ export function SelectionPropertiesPanel() {
   const selectedCableId = useEditorUiStore((s) => s.selectedCableId)
   const selectedSensorId = useEditorUiStore((s) => s.selectedSensorId)
   const selectedFireAlarmDeviceId = useEditorUiStore((s) => s.selectedFireAlarmDeviceId)
-  const hubExists = useProjectStore((s) => s.hubs.some((hub) => hub.id === selectedHubId))
-  const cableExists = useProjectStore((s) => s.cables.some((cable) => cable.id === selectedCableId))
-  const sensorExists = useProjectStore((s) => s.sensors.some((sensor) => sensor.id === selectedSensorId))
-  const fireAlarmDeviceExists = useProjectStore((s) => s.fireAlarmDevices.some((device) => device.id === selectedFireAlarmDeviceId))
+  const hubExists = useProjectStore((s) => selectHubs(s).some((hub) => hub.id === selectedHubId))
+  const cableExists = useProjectStore((s) => selectCables(s).some((cable) => cable.id === selectedCableId))
+  const sensorExists = useProjectStore((s) => selectSensors(s).some((sensor) => sensor.id === selectedSensorId))
+  const fireAlarmDeviceExists = useProjectStore((s) => selectFireAlarmDevices(s).some((device) => device.id === selectedFireAlarmDeviceId))
 
   if (hubExists) return <HubPropertiesPanel />
   if (cableExists) return <CablePropertiesPanel />

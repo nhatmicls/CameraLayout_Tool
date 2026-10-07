@@ -6,6 +6,7 @@ import { VIEW_TOGGLES, isViewToggleOn } from '../../domain/view/view-config-togg
 import { revealCameraFormFactorInView, revealSensorKindInView, type ViewConfig } from '../../domain/view/view-config-types'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
+import { selectCameras, selectSensors } from '../../state/project-store-floor-selectors'
 import { useCameraDragDropTarget } from '../camera/use-camera-drag-drop-target'
 import { useFireAlarmDeviceDragDropTarget } from '../fire-alarm/use-fire-alarm-device-drag-drop-target'
 import { useSensorDragDropTarget } from '../sensor/use-sensor-drag-drop-target'
@@ -57,14 +58,14 @@ export function useStageCatalogDropHandlers(stageRef: RefObject<Konva.Stage | nu
       const canSelect = useEditorUiStore.getState().toolMode === 'select'
       const newCameraId = handleCameraDrop(e)
       if (newCameraId) {
-        const modelId = useProjectStore.getState().cameras.find((camera) => camera.id === newCameraId)?.modelId
+        const modelId = selectCameras(useProjectStore.getState()).find((camera) => camera.id === newCameraId)?.modelId
         if (modelId) revealDroppedItemInView((config) => revealCameraFormFactorInView(config, cameraFormFactorOf(modelId)))
         if (canSelect) setSelectedCameraId(newCameraId)
         return
       }
       const newSensorId = handleSensorDrop(e)
       if (newSensorId) {
-        const modelId = useProjectStore.getState().sensors.find((sensor) => sensor.id === newSensorId)?.modelId
+        const modelId = selectSensors(useProjectStore.getState()).find((sensor) => sensor.id === newSensorId)?.modelId
         if (modelId) revealDroppedItemInView((config) => revealSensorKindInView(config, sensorKindOf(modelId)))
         if (canSelect) setSelectedSensorId(newSensorId)
         return

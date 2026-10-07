@@ -1,4 +1,5 @@
 import { useProjectStore } from '../../state/project-store'
+import { selectFireAlarmDevices } from '../../state/project-store-floor-selectors'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useFireAlarmDeviceSelectionKeyboardShortcuts } from '../fire-alarm/use-fire-alarm-device-selection-keyboard-shortcuts'
 
@@ -11,7 +12,7 @@ import { useFireAlarmDeviceSelectionKeyboardShortcuts } from '../fire-alarm/use-
  * guideline, same reasoning as `use-cone-live-handles.ts`).
  */
 export function useFireAlarmStageProps() {
-  const fireAlarmDevices = useProjectStore((s) => s.fireAlarmDevices)
+  const fireAlarmDevices = useProjectStore(selectFireAlarmDevices)
   const fireAlarmSettings = useProjectStore((s) => s.fireAlarmSettings)
   const updateFireAlarmDevice = useProjectStore((s) => s.updateFireAlarmDevice)
   const selectedFireAlarmDeviceId = useEditorUiStore((s) => s.selectedFireAlarmDeviceId)

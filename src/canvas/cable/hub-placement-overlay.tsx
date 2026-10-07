@@ -5,6 +5,7 @@ import { DEFAULT_HUB_MOUNT_HEIGHT_M, MAX_HUBS } from '../../domain/cable/cable-l
 import { clampPointToImageBounds } from '../../domain/shared/clamp'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
+import { getActiveFloor } from '../../state/project-store-floor-selectors'
 
 interface HubPlacementOverlayProps {
   stageRef: RefObject<Konva.Stage | null>
@@ -36,7 +37,9 @@ export function HubPlacementOverlay({ stageRef, imageWidthPx, imageHeightPx }: H
       if (e.evt.button !== 0 || e.evt.detail > 1) return
       const raw = stage.getRelativePointerPosition()
       if (!raw) return
-      const { hubs, addHub, cableSettings } = useProjectStore.getState()
+      const store = useProjectStore.getState()
+      const { hubs } = getActiveFloor(store)
+      const { addHub, cableSettings } = store
       if (hubs.length >= MAX_HUBS) {
         useEditorUiStore.getState().pushNotification('error', `A project can hold at most ${MAX_HUBS} hubs, risers and drops.`)
         return

@@ -1,6 +1,7 @@
 import { useCallback } from 'react'
 import type { KonvaEventObject } from 'konva/lib/Node'
 import { useProjectStore } from '../../state/project-store'
+import { selectImage } from '../../state/project-store-floor-selectors'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { BUTTON_ZOOM_FACTOR, WHEEL_ZOOM_FACTOR, computeFitViewport, zoomViewportAboutPoint } from './stage-viewport-math'
 
@@ -20,7 +21,7 @@ export function useStagePanZoom() {
   const toolMode = useEditorUiStore((s) => s.toolMode)
   const stageSize = useEditorUiStore((s) => s.stageSize)
   const setViewport = useEditorUiStore((s) => s.setViewport)
-  const image = useProjectStore((s) => s.image)
+  const image = useProjectStore(selectImage)
 
   // Pan by dragging is off only in calibrate mode, which wants every press
   // interpreted as a reference-line point. Wall mode keeps it: Konva cancels

@@ -5,6 +5,14 @@ import { SCALE_NOT_SET_CABLE_MESSAGE } from '../../domain/cable/cable-layout-est
 import { buildCombinedBomRows } from '../../export/shared/build-combined-bom-rows'
 import { FireAlarmCompatibilityWarningsBlock } from '../fire-alarm/fire-alarm-compatibility-warnings-block'
 import { useProjectStore } from '../../state/project-store'
+import {
+  selectCables,
+  selectCameras,
+  selectFireAlarmDevices,
+  selectHubs,
+  selectScale,
+  selectSensors,
+} from '../../state/project-store-floor-selectors'
 import { BillOfMaterialsCableRowsTable } from './bill-of-materials-cable-rows-table'
 import { BillOfMaterialsRow } from './bill-of-materials-row'
 import { BillOfMaterialsTableHeaderRow } from './bill-of-materials-table-header-row'
@@ -24,14 +32,14 @@ const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ?
  * one of them); cable rows need a scale, since their quantity is metres.
  */
 export function BillOfMaterialsPanel() {
-  const cameras = useProjectStore((s) => s.cameras)
-  const sensors = useProjectStore((s) => s.sensors)
-  const fireAlarmDevices = useProjectStore((s) => s.fireAlarmDevices)
-  const hubs = useProjectStore((s) => s.hubs)
-  const cables = useProjectStore((s) => s.cables)
+  const cameras = useProjectStore(selectCameras)
+  const sensors = useProjectStore(selectSensors)
+  const fireAlarmDevices = useProjectStore(selectFireAlarmDevices)
+  const hubs = useProjectStore(selectHubs)
+  const cables = useProjectStore(selectCables)
   const cableTypes = useProjectStore((s) => s.cableTypes)
   const cableSettings = useProjectStore((s) => s.cableSettings)
-  const scale = useProjectStore((s) => s.scale)
+  const scale = useProjectStore(selectScale)
 
   const { cameraRows, sensorRows, fireAlarmRows, cableRows, allRows, fireAlarmWarnings } = useMemo(
     () => buildCombinedBomRows({ cameras, sensors, fireAlarmDevices, hubs, cables, cableTypes, cableSettings, scale }),

@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react'
 import type { CablePoint } from '../../domain/cable/cable-layout-types'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
+import { selectCables, selectHubs, selectScale } from '../../state/project-store-floor-selectors'
 import type { PlanSceneCabling, PlanSceneCablingInteraction } from './use-plan-scene-cabling'
 
 /**
@@ -10,11 +11,11 @@ import type { PlanSceneCabling, PlanSceneCablingInteraction } from './use-plan-s
  * identity until something they hold changes, so the scene's memos work.
  */
 export function useStageCablingSceneProps(): { cabling: PlanSceneCabling; cablingInteraction: PlanSceneCablingInteraction } {
-  const hubs = useProjectStore((s) => s.hubs)
-  const cables = useProjectStore((s) => s.cables)
+  const hubs = useProjectStore(selectHubs)
+  const cables = useProjectStore(selectCables)
   const cableTypes = useProjectStore((s) => s.cableTypes)
   const cableSettings = useProjectStore((s) => s.cableSettings)
-  const scale = useProjectStore((s) => s.scale)
+  const scale = useProjectStore(selectScale)
   const updateHub = useProjectStore((s) => s.updateHub)
   const updateCable = useProjectStore((s) => s.updateCable)
   const selectedHubId = useEditorUiStore((s) => s.selectedHubId)

@@ -1,4 +1,5 @@
 import { useProjectStore } from '../../state/project-store'
+import { selectScale } from '../../state/project-store-floor-selectors'
 import { SENSOR_KIND_LABELS } from '../../domain/sensor/sensor-types'
 import type { ThermalDriZone } from '../../domain/sensor/thermal-dri-band-calculator'
 import {
@@ -33,7 +34,7 @@ const BEAM_STATE_ENTRIES = [
  * (`src/canvas/**` is phase 5's ownership; this file never edits it).
  */
 export function SensorCoverageLegend() {
-  const scale = useProjectStore((s) => s.scale)
+  const scale = useProjectStore(selectScale)
 
   return (
     <div data-testid="sensor-coverage-legend" className="border-t border-neutral-200 p-3 text-xs text-neutral-600">

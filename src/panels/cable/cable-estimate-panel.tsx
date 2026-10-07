@@ -1,6 +1,7 @@
 import { DEFAULT_CABLE_SETTINGS } from '../../domain/cable/cable-layout-types'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
+import { selectCables, selectHubs } from '../../state/project-store-floor-selectors'
 import { useCableLayoutEstimate } from '../../state/use-cable-layout-estimate'
 import { CableEstimateTotalsTable } from './cable-estimate-totals-table'
 import { CableSettingsInputs } from './cable-settings-inputs'
@@ -15,8 +16,8 @@ const summaryClass = 'cursor-pointer select-none text-xs font-semibold text-neut
  * and they need no state of their own.
  */
 export function CableEstimatePanel() {
-  const hubs = useProjectStore((s) => s.hubs)
-  const cables = useProjectStore((s) => s.cables)
+  const hubs = useProjectStore(selectHubs)
+  const cables = useProjectStore(selectCables)
   const cableTypes = useProjectStore((s) => s.cableTypes)
   const cableSettings = useProjectStore((s) => s.cableSettings)
   const addCableType = useProjectStore((s) => s.addCableType)

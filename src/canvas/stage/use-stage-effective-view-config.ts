@@ -6,6 +6,7 @@ import type { ViewConfig } from '../../domain/view/view-config-types'
 import { isSelectionHiddenByView } from '../../domain/view/view-hidden-selection'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
+import { getActiveFloor } from '../../state/project-store-floor-selectors'
 
 /**
  * The view config the stage draws with: the stored one with the current
@@ -30,7 +31,7 @@ export function useStageEffectiveViewConfig(): ViewConfig {
   // `cameras` / `sensors` are read at run time, not subscribed: a placed item's `modelId` (the
   // only thing its visibility depends on) never changes. Add them to the deps if that ever does.
   useEffect(() => {
-    const { cameras, sensors } = useProjectStore.getState()
+    const { cameras, sensors } = getActiveFloor(useProjectStore.getState())
     const selection = { selectedCameraId, selectedSensorId, selectedHubId, selectedCableId, selectedWallId }
     if (isSelectionHiddenByView(selection, effectiveViewConfig, cameras, sensors, cameraFormFactorOf, sensorKindOf)) clearSelection()
   }, [effectiveViewConfig, selectedCameraId, selectedSensorId, selectedHubId, selectedCableId, selectedWallId, clearSelection])

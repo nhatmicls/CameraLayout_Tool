@@ -1,13 +1,13 @@
 /**
  * Core domain types for a saved project: the floor-plan image, its scale
  * calibration, the placed cameras and the drawn walls. Pure data shapes only - no behaviour,
- * no React/Konva imports. Phase 4 builds the zustand store on top of these.
+ * no React/Konva imports.
  *
  * Schema v7 made the project multi-floor (`Project.floors`, see `Floor` in
  * `domain/floor/floor-types.ts`); `LegacyFlatProject` below is the pre-v7
- * flat shape (one floor's worth of data at the top level) that the legacy
- * reader still produces and that the still-flat store (phase 2 replaces it)
- * uses as its bridge type.
+ * flat shape (one floor's worth of data at the top level) the legacy reader
+ * still produces, now used only by `project-file-legacy-flat-migration.ts`
+ * (the store itself holds `floors[]` directly since phase 2).
  */
 import type { CableLayout, CableSettings, CableType, Shaft } from '../cable/cable-layout-types'
 import type { Floor } from '../floor/floor-types'
@@ -71,8 +71,11 @@ export interface Wall {
  * The two fire-alarm fields, always present in memory; optional in the file
  * (pre-v6 files have neither). Combinator mirrors `CableLayout`
  * (`cable-layout-types.ts`). Used by the pre-v7 flat shape (`LegacyFlatProject`)
- * and the still-flat store (phase 1) - v7's `Project` keeps `fireAlarmSettings`
- * at project level and moves `fireAlarmDevices` onto each `Floor` instead.
+ * and by the store's fire-alarm action slice (`FireAlarmState`, routed onto
+ * the active floor's `fireAlarmDevices` + the project-level `fireAlarmSettings`
+ * - see `project-store.ts`'s `routeFireAlarmPartial`); v7's `Project` itself
+ * keeps `fireAlarmSettings` at project level and moves `fireAlarmDevices`
+ * onto each `Floor` instead.
  */
 export interface FireAlarmLayout {
   fireAlarmDevices: PlacedFireAlarmDevice[]
@@ -87,9 +90,10 @@ export function createEmptyFireAlarmLayout(): FireAlarmLayout {
 /**
  * Pre-v7 flat shape: one floor's worth of data at the top level. The cable
  * and fire-alarm fields are always present in memory; optional in the file
- * (v1-v4 files have no cable keys, v1-v5 have no fire-alarm keys). Used by
- * the legacy (v1-v6) reader and, in phase 1 only, by the still-flat store as
- * its save/load bridge type - phase 2 removes it from the store.
+ * (v1-v4 files have no cable keys, v1-v5 have no fire-alarm keys). Used only
+ * by the legacy (v1-v6) reader today (`project-file-legacy-flat-migration.ts`
+ * wraps it into one `Floor`) - phase 1 also had the still-flat store use it
+ * as a save/load bridge type; phase 2 removed that bridge.
  */
 export interface LegacyFlatProject extends CableLayout, FireAlarmLayout {
   image: PlanImage

@@ -1,9 +1,11 @@
 import { fireAlarmModelById, type FireAlarmModel } from '../../catalog/fire-alarm/fire-alarm-catalog-loader'
+import type { Floor } from '../../domain/floor/floor-types'
 import { checkFireAlarmCompatibility, type CompatibilityWarning } from '../../domain/fire-alarm/fire-alarm-compatibility-checker'
 import { FIRE_ALARM_KIND_LABELS, isFireAlarmControllerKind, isFireDetectorKind } from '../../domain/fire-alarm/fire-alarm-device-types'
 import type { PlacedFireAlarmDevice } from '../../domain/fire-alarm/fire-alarm-device-types'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
+import { selectFireAlarmDevices, selectScale } from '../../state/project-store-floor-selectors'
 import { CameraUnknownModelNotice } from '../camera/camera-unknown-model-notice'
 import { capitalizeFirstLetter } from '../shared/capitalize-first-letter'
 import { fireAlarmCompatibilityIndex, fireAlarmModelSpecById } from '../../export/shared/fire-alarm-compatibility-index-singleton'
@@ -22,14 +24,22 @@ interface CompatibilityStatus {
   isWarning: boolean
 }
 
-/** First placed controller this device is listed as compatible with, as "F{n} {model}" - null when none is placed or listed for. */
-function findCompatiblePlacedControllerLabel(device: PlacedFireAlarmDevice, devices: readonly PlacedFireAlarmDevice[]): string | null {
+/**
+ * First placed controller this device is listed as compatible with, as
+ * "F{n} {model}" - null when none is placed or listed for. One panel/hub
+ * can serve the whole building, so every floor's controllers count (drift
+ * addendum); `n` is still that controller's own position among its OWN
+ * floor's fire-alarm devices (marker numbering stays per floor).
+ */
+function findCompatiblePlacedControllerLabel(device: PlacedFireAlarmDevice, floors: readonly Floor[]): string | null {
   const links = fireAlarmCompatibilityIndex.controllersByDeviceModelId.get(device.modelId) ?? []
   if (links.length === 0) return null
-  for (let i = 0; i < devices.length; i++) {
-    const candidateSpec = fireAlarmModelSpecById[devices[i].modelId]
-    if (!candidateSpec || !isFireAlarmControllerKind(candidateSpec.kind)) continue
-    if (links.some((link) => link.controllerModelId === candidateSpec.id)) return `F${i + 1} ${candidateSpec.model}`
+  for (const floor of floors) {
+    for (let i = 0; i < floor.fireAlarmDevices.length; i++) {
+      const candidateSpec = fireAlarmModelSpecById[floor.fireAlarmDevices[i].modelId]
+      if (!candidateSpec || !isFireAlarmControllerKind(candidateSpec.kind)) continue
+      if (links.some((link) => link.controllerModelId === candidateSpec.id)) return `F${i + 1} ${candidateSpec.model}`
+    }
   }
   return null
 }
@@ -45,7 +55,7 @@ function findCompatiblePlacedControllerLabel(device: PlacedFireAlarmDevice, devi
 function resolveCompatibilityStatus(
   device: PlacedFireAlarmDevice,
   model: FireAlarmModel,
-  devices: readonly PlacedFireAlarmDevice[],
+  floors: readonly Floor[],
   warnings: readonly CompatibilityWarning[],
 ): CompatibilityStatus | null {
   if (isFireAlarmControllerKind(model.kind)) return null
@@ -59,7 +69,7 @@ function resolveCompatibilityStatus(
   if (warning?.code === 'no-controller-placed') return { text: FIRE_COMPATIBILITY_NO_CONTROLLER_PLACED, isWarning: true }
   if (warning?.code === 'not-listed-for-placed-controllers') return { text: FIRE_COMPATIBILITY_NOT_LISTED, isWarning: true }
 
-  const controllerLabel = findCompatiblePlacedControllerLabel(device, devices)
+  const controllerLabel = findCompatiblePlacedControllerLabel(device, floors)
   return controllerLabel ? { text: `Compatible with placed ${controllerLabel}.`, isWarning: false } : null
 }
 
@@ -74,9 +84,10 @@ function resolveCompatibilityStatus(
  * (`fire-alarm-device-types.ts`).
  */
 export function FireAlarmDevicePropertiesPanel() {
-  const fireAlarmDevices = useProjectStore((s) => s.fireAlarmDevices)
+  const fireAlarmDevices = useProjectStore(selectFireAlarmDevices)
+  const floors = useProjectStore((s) => s.floors)
   const fireAlarmSettings = useProjectStore((s) => s.fireAlarmSettings)
-  const scale = useProjectStore((s) => s.scale)
+  const scale = useProjectStore(selectScale)
   const deleteFireAlarmDevice = useProjectStore((s) => s.deleteFireAlarmDevice)
   const selectedFireAlarmDeviceId = useEditorUiStore((s) => s.selectedFireAlarmDeviceId)
   const setSelectedFireAlarmDeviceId = useEditorUiStore((s) => s.setSelectedFireAlarmDeviceId)
@@ -100,8 +111,11 @@ export function FireAlarmDevicePropertiesPanel() {
     return <CameraUnknownModelNotice label={label} modelId={device.modelId} onDelete={handleDelete} itemNoun="fire-alarm device" />
   }
 
-  const warnings = checkFireAlarmCompatibility(fireAlarmDevices, fireAlarmModelSpecById, fireAlarmCompatibilityIndex)
-  const status = resolveCompatibilityStatus(device, model, fireAlarmDevices, warnings)
+  // "Not listed" / "no controller placed" considers a controller on ANY floor (one panel/hub
+  // serves the whole building - drift addendum), not just the active floor's own devices.
+  const allFireAlarmDevices = floors.flatMap((floor) => floor.fireAlarmDevices)
+  const warnings = checkFireAlarmCompatibility(allFireAlarmDevices, fireAlarmModelSpecById, fireAlarmCompatibilityIndex)
+  const status = resolveCompatibilityStatus(device, model, floors, warnings)
   const positionLabel = scale
     ? `${(device.x / scale.planPxPerMeter).toFixed(2)} m, ${(device.y / scale.planPxPerMeter).toFixed(2)} m`
     : `${device.x.toFixed(0)} px, ${device.y.toFixed(0)} px`

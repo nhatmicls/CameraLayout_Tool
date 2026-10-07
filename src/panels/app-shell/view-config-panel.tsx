@@ -18,6 +18,7 @@ import { resolveEffectiveViewConfig } from '../../domain/view/view-config-tool-m
 import { DEFAULT_VIEW_CONFIG } from '../../domain/view/view-config-types'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
+import { selectCables, selectCameras, selectHubs, selectSensors, selectWalls } from '../../state/project-store-floor-selectors'
 import { secondaryButtonClass } from '../camera/camera-properties-form-helpers'
 
 const GROUP_ORDER: readonly ViewToggleGroup[] = ['cameras', 'sensors', 'cabling', 'walls']
@@ -48,11 +49,11 @@ export function ViewConfigPanel() {
   const viewConfig = useEditorUiStore((s) => s.viewConfig)
   const setViewConfig = useEditorUiStore((s) => s.setViewConfig)
   const toolMode = useEditorUiStore((s) => s.toolMode)
-  const cameras = useProjectStore((s) => s.cameras)
-  const sensors = useProjectStore((s) => s.sensors)
-  const hubs = useProjectStore((s) => s.hubs)
-  const cables = useProjectStore((s) => s.cables)
-  const walls = useProjectStore((s) => s.walls)
+  const cameras = useProjectStore(selectCameras)
+  const sensors = useProjectStore(selectSensors)
+  const hubs = useProjectStore(selectHubs)
+  const cables = useProjectStore(selectCables)
+  const walls = useProjectStore(selectWalls)
 
   const counts = useMemo(
     () => countPlanItemsForView({ cameras, sensors, hubs, cables, walls }, cameraFormFactorOf, sensorKindOf),

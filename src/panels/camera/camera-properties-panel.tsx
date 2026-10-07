@@ -15,6 +15,7 @@ import {
 } from '../../domain/camera/mounted-camera-ground-coverage-calculator'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
+import { selectCameras, selectScale } from '../../state/project-store-floor-selectors'
 import { CameraDoriDistanceTable } from './camera-dori-distance-table'
 import { CameraGroundCoverageReadout } from './camera-ground-coverage-readout'
 import { CameraMountingHeightTiltInputs } from './camera-mounting-height-tilt-inputs'
@@ -32,8 +33,8 @@ import { CameraVarifocalHfovSlider } from './camera-varifocal-hfov-slider'
  * `dori-zone-distance-calculator.ts`, `mounted-camera-ground-coverage-calculator.ts`).
  */
 export function CameraPropertiesPanel() {
-  const cameras = useProjectStore((s) => s.cameras)
-  const scale = useProjectStore((s) => s.scale)
+  const cameras = useProjectStore(selectCameras)
+  const scale = useProjectStore(selectScale)
   const updateCamera = useProjectStore((s) => s.updateCamera)
   const deleteCamera = useProjectStore((s) => s.deleteCamera)
   const selectedCameraId = useEditorUiStore((s) => s.selectedCameraId)

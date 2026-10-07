@@ -14,6 +14,7 @@ import { findNearestCableSnapTarget, type CableSnapTarget } from '../../domain/c
 import { clampPointToImageBounds } from '../../domain/shared/clamp'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
+import { getActiveFloor, selectCameras, selectHubs, selectImage, selectSensors } from '../../state/project-store-floor-selectors'
 import { WALL_SELECTED_COLOR, computeIconRadiusPx } from '../shared/brand-and-dori-color-palette'
 import { cableTypeColor, resolveCableSnapTolerancePx } from './cable-type-color-palette'
 
@@ -72,7 +73,8 @@ export function CableDrawingOverlay({ stageRef, viewportScale, imageWidthPx, ima
       const raw = stage.getRelativePointerPosition()
       if (!raw) return null
       const { x, y } = clampPointToImageBounds(raw, imageWidthPx, imageHeightPx)
-      const { cameras, sensors, hubs } = useProjectStore.getState()
+      const activeFloor = getActiveFloor(useProjectStore.getState())
+      const { cameras, sensors, hubs } = activeFloor
       const snapTarget = findNearestCableSnapTarget(
         x,
         y,
@@ -84,8 +86,11 @@ export function CableDrawingOverlay({ stageRef, viewportScale, imageWidthPx, ima
     }
 
     const unsubscribeFromProject = useProjectStore.subscribe((state, previous) => {
-      const endsChanged = state.cameras !== previous.cameras || state.sensors !== previous.sensors || state.hubs !== previous.hubs
-      if (endsChanged || state.image !== previous.image) moveChain(null)
+      const endsChanged =
+        selectCameras(state) !== selectCameras(previous) ||
+        selectSensors(state) !== selectSensors(previous) ||
+        selectHubs(state) !== selectHubs(previous)
+      if (endsChanged || selectImage(state) !== selectImage(previous)) moveChain(null)
     })
 
     const handleClick = (e: KonvaEventObject<MouseEvent>) => {
@@ -97,7 +102,9 @@ export function CableDrawingOverlay({ stageRef, viewportScale, imageWidthPx, ima
       if (step.kind === 'continue') {
         moveChain(step.chain)
       } else if (step.kind === 'commit') {
-        const { cables, cableTypes: types, addCable } = useProjectStore.getState()
+        const store = useProjectStore.getState()
+        const { cables } = getActiveFloor(store)
+        const { cableTypes: types, addCable } = store
         const type = types.find((candidate) => candidate.id === typeId) ?? types[0]
         if (cables.length >= MAX_CABLES) pushNotification('error', `A project can hold at most ${MAX_CABLES} cables.`)
         else if (type) addCable({ id: crypto.randomUUID(), ...step.cable, typeId: type.id })

@@ -68,7 +68,6 @@ describe('loadProjectFromFile - sensor model lookup pass-through', () => {
     expect(outcome.ok).toBe(true)
     if (!outcome.ok) throw new Error('expected ok')
     expect(outcome.project.floors[0].sensors).toHaveLength(1)
-    expect(outcome.decodedImage).not.toBeNull()
     expect(outcome.warnings).toEqual([])
   })
 
@@ -105,8 +104,6 @@ describe('loadProjectFromFile - decodes every floor image', () => {
     expect(outcome.project.floors[0].image).toMatchObject({ widthPx: 1, heightPx: 1 })
     expect(outcome.project.floors[1].image).toBeNull()
     expect(outcome.project.floors[2].image).toMatchObject({ widthPx: 1, heightPx: 1 })
-    // Floor 0's decoded element is the one the phase-1 store bridge uses.
-    expect(outcome.decodedImage).not.toBeNull()
   })
 
   it("fails the whole load, as { ok: false }, when a LATER floor's embedded image fails to decode", async () => {

@@ -2,19 +2,14 @@ import { useCallback, useEffect, useRef, type ChangeEvent } from 'react'
 import { cameraModels } from '../../catalog/camera/camera-catalog-loader'
 import { fireAlarmModels } from '../../catalog/fire-alarm/fire-alarm-catalog-loader'
 import { sensorModels } from '../../catalog/sensor/sensor-catalog-loader'
-import { DEFAULT_FLOOR_HEIGHT_M, LEGACY_FLOOR_ID, LEGACY_FLOOR_NAME } from '../../domain/floor/floor-types'
 import type { ProjectFileLookups, SensorModelLookup, SensorModelLookupEntry } from '../../domain/project-file/project-file-schema'
-import type { Project } from '../../domain/project-file/project-types'
 import { defaultBeamEnvironment, sensorPlacementShape } from '../../domain/sensor/sensor-types'
 import { DEFAULT_VIEW_CONFIG } from '../../domain/view/view-config-types'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
+import { getActiveFloor } from '../../state/project-store-floor-selectors'
 import { loadProjectFromFile, saveProjectToFile } from './project-file-save-and-load'
 import { summariseProjectLoadWarnings } from './summarise-project-load-warnings'
-
-/** `floors.length > 1` is a file this build cannot fully open yet - only the first floor loads. */
-const EXTRA_FLOORS_DROPPED_WARNING = (floorCount: number, firstFloorName: string) =>
-  `This project has ${floorCount} floors; only the first ("${firstFloorName}") was opened - multi-floor projects are not supported yet.`
 
 const FLOOR_ZERO_HAS_NO_IMAGE_ERROR = "This project's first floor has no plan image; open a file whose first floor has one."
 
@@ -44,10 +39,14 @@ const PROJECT_FILE_LOOKUPS: ProjectFileLookups = {
  * save handler, and the `beforeunload` guard - all driven by
  * `editor-ui-store`'s `hasUnsavedChanges` flag. Pulled out of `app.tsx` to
  * keep that file under the project's line-count guideline.
+ *
+ * Phase 2 removed the phase-1 one-floor bridge: the store now holds the
+ * real multi-floor `Project` shape directly, so save/load pass it straight
+ * through. `decodedImage` is no longer set here -
+ * `use-active-floor-decoded-image-sync.ts` is the only place that does.
  */
 export function useProjectFileActions() {
   const replaceProject = useProjectStore((s) => s.replaceProject)
-  const setDecodedImage = useEditorUiStore((s) => s.setDecodedImage)
   const setViewConfig = useEditorUiStore((s) => s.setViewConfig)
   const hasUnsavedChanges = useEditorUiStore((s) => s.hasUnsavedChanges)
   const setHasUnsavedChanges = useEditorUiStore((s) => s.setHasUnsavedChanges)
@@ -67,34 +66,17 @@ export function useProjectFileActions() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [hasUnsavedChanges])
 
-  // Bridge (phase 1 only, deleted once the store itself holds `floors[]` - phase 2): the store
-  // stays flat, so save wraps it as a one-floor `Project` and load unwraps `floors[0]`.
   const handleSaveProject = useCallback(() => {
     const current = useProjectStore.getState()
-    if (!current.image) return
+    if (!getActiveFloor(current).image) return
     try {
-      const project: Project = {
-        floors: [
-          {
-            id: LEGACY_FLOOR_ID,
-            name: LEGACY_FLOOR_NAME,
-            floorHeightM: DEFAULT_FLOOR_HEIGHT_M,
-            image: current.image,
-            scale: current.scale,
-            cameras: current.cameras,
-            walls: current.walls,
-            sensors: current.sensors,
-            hubs: current.hubs,
-            cables: current.cables,
-            fireAlarmDevices: current.fireAlarmDevices,
-          },
-        ],
-        shafts: [],
+      saveProjectToFile({
+        floors: current.floors,
+        shafts: current.shafts,
         cableTypes: current.cableTypes,
         cableSettings: current.cableSettings,
         fireAlarmSettings: current.fireAlarmSettings,
-      }
-      saveProjectToFile(project)
+      })
       setHasUnsavedChanges(false)
     } catch (err) {
       pushNotification('error', err instanceof Error ? err.message : 'Failed to save the project.')
@@ -111,36 +93,21 @@ export function useProjectFileActions() {
         pushNotification('error', outcome.error)
         return
       }
-      const floor = outcome.project.floors[0]
-      if (floor.image === null || outcome.decodedImage === null) {
+      // Tab 1 = the lowest floor = `floors[0]` (CLAUDE.md); `replaceProject`
+      // makes it the active floor. No floor-tabs UI yet (phase 3), so a file
+      // whose first floor has no image can't be shown at all.
+      if (outcome.project.floors[0].image === null) {
         pushNotification('error', FLOOR_ZERO_HAS_NO_IMAGE_ERROR)
         return
       }
-      replaceProject({
-        image: floor.image,
-        scale: floor.scale,
-        cameras: floor.cameras,
-        walls: floor.walls,
-        sensors: floor.sensors,
-        hubs: floor.hubs,
-        cables: floor.cables,
-        cableTypes: outcome.project.cableTypes,
-        cableSettings: outcome.project.cableSettings,
-        fireAlarmDevices: floor.fireAlarmDevices,
-        fireAlarmSettings: outcome.project.fireAlarmSettings,
-      })
-      setDecodedImage(outcome.decodedImage)
+      replaceProject(outcome.project)
       setViewConfig(DEFAULT_VIEW_CONFIG) // the view is not in the file: an opened project always starts with everything shown
       setHasUnsavedChanges(false)
-      const warnings =
-        outcome.project.floors.length > 1
-          ? [EXTRA_FLOORS_DROPPED_WARNING(outcome.project.floors.length, floor.name), ...outcome.warnings]
-          : outcome.warnings
-      if (warnings.length > 0) {
-        pushNotification('warning', summariseProjectLoadWarnings(warnings))
+      if (outcome.warnings.length > 0) {
+        pushNotification('warning', summariseProjectLoadWarnings(outcome.warnings))
       }
     },
-    [hasUnsavedChanges, replaceProject, setDecodedImage, setViewConfig, setHasUnsavedChanges, pushNotification],
+    [hasUnsavedChanges, replaceProject, setViewConfig, setHasUnsavedChanges, pushNotification],
   )
 
   const handleProjectFileInputChange = useCallback(

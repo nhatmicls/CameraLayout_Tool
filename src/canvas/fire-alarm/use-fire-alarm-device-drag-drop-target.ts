@@ -4,6 +4,7 @@ import { fireAlarmModelById } from '../../catalog/fire-alarm/fire-alarm-catalog-
 import { buildPlacedFireAlarmDeviceAtDrop } from '../../domain/fire-alarm/placed-fire-alarm-device-builder-and-patch'
 import { clampPointToImageBounds } from '../../domain/shared/clamp'
 import { useProjectStore } from '../../state/project-store'
+import { getActiveFloor } from '../../state/project-store-floor-selectors'
 
 /** Custom MIME type set by a fire-alarm catalog card's `dragstart` (phase 7) - parallel to `CAMERA_MODEL_DRAG_MIME_TYPE`/`SENSOR_MODEL_DRAG_MIME_TYPE`. */
 export const FIRE_ALARM_MODEL_DRAG_MIME_TYPE = 'application/x-fire-alarm-model-id'
@@ -37,7 +38,7 @@ export function useFireAlarmDeviceDragDropTarget(stageRef: RefObject<Konva.Stage
 
       const model = fireAlarmModelById(modelId)
       const stage = stageRef.current
-      const { scale, image } = useProjectStore.getState()
+      const { scale, image } = getActiveFloor(useProjectStore.getState())
       if (!model || !scale || !stage || !image) return null
 
       stage.setPointersPositions(e)

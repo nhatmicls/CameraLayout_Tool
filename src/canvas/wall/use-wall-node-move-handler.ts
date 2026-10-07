@@ -3,6 +3,7 @@ import { countWallsProperlyCrossedBySegment } from '../../domain/wall/wall-cross
 import type { WallNode } from '../../domain/wall/wall-node-editing'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
+import { selectWalls } from '../../state/project-store-floor-selectors'
 
 /**
  * Commits a dragged wall node to the store (one undo step) and, like the
@@ -11,9 +12,9 @@ import { useProjectStore } from '../../state/project-store'
  */
 export function useWallNodeMoveHandler(): (from: WallNode, to: WallNode) => void {
   return useCallback((from, to) => {
-    const before = useProjectStore.getState().walls
+    const before = selectWalls(useProjectStore.getState())
     useProjectStore.getState().moveWallNode(from, to)
-    const after = useProjectStore.getState().walls
+    const after = selectWalls(useProjectStore.getState())
     if (after === before) return // refused (would collapse a wall) or not moved
 
     const movedWalls = after.filter((wall, index) => wall !== before[index])

@@ -2,6 +2,7 @@ import type { FireCoverageMode } from '../../domain/fire-alarm/fire-alarm-device
 import { CEILING_HEIGHT_MAX_M, isTcvn5738TableAvailable } from '../../domain/fire-alarm/tcvn-5738-detector-protection-table'
 import { useCatalogSidebarFilterStore } from '../../state/catalog-sidebar-filter-store'
 import { useProjectStore } from '../../state/project-store'
+import { selectFireAlarmDevices } from '../../state/project-store-floor-selectors'
 import { NullableNumberInput } from '../shared/nullable-number-input'
 import { FIRE_COVERAGE_MODE_TCVN_HINT, FIRE_COVERAGE_NEEDS_CEILING_HEIGHT } from './fire-alarm-ui-wording'
 import { Tcvn5738SourceLink } from './tcvn-5738-source-link'
@@ -27,7 +28,7 @@ const CEILING_HEIGHT_MIN_M = 0.1
 export function FireCoverageModeControls({ hasImage }: FireCoverageModeControlsProps) {
   const fireAlarmSettings = useProjectStore((s) => s.fireAlarmSettings)
   const setFireAlarmSettings = useProjectStore((s) => s.setFireAlarmSettings)
-  const fireAlarmDeviceCount = useProjectStore((s) => s.fireAlarmDevices.length)
+  const fireAlarmDeviceCount = useProjectStore((s) => selectFireAlarmDevices(s).length)
   const catalogTab = useCatalogSidebarFilterStore((s) => s.catalogTab)
 
   const visible = hasImage && (catalogTab === 'fire-alarm' || fireAlarmDeviceCount > 0)
