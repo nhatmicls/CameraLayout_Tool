@@ -20,8 +20,8 @@ export interface RotationCallback {
  * The single live-handle registry (`coneLiveHandles`) a camera cone
  * (`camera-fov-cone-shape.tsx`) or a sector/circle sensor coverage shape
  * (`sensor-coverage-shape.tsx`) registers itself into, plus the eight
- * drag/rotate wrapper callbacks `plan-scene-layers.tsx` hands to the marker
- * components. Cameras and sensors share one map, keyed through
+ * drag/rotate wrapper callbacks `plan-scene-layers.tsx` hands (through
+ * `plan-scene-markers-layer.tsx`) to the marker components. Cameras and sensors share one map, keyed through
  * `cameraLiveHandleKey`/`sensorLiveHandleKey` (a raw id is only guaranteed
  * unique within its own kind, not across a camera and a sensor, so the raw
  * id alone would let a hand-edited file's same-id pair collide) - pulled

@@ -5,16 +5,19 @@ import type { PlacedFireAlarmDevicePatch } from '../../domain/fire-alarm/placed-
 import type { PlacedCamera, Wall } from '../../domain/project-file/project-types'
 import { metersToPlanPx } from '../../domain/shared/scale-calibration-calculator'
 import type { PlacedSensor, PlacedSensorPatch } from '../../domain/sensor/sensor-types'
+import { DEFAULT_VIEW_CONFIG, type ViewConfig } from '../../domain/view/view-config-types'
 import type { WallNode } from '../../domain/wall/wall-node-editing'
 import { WALL_MOUNT_CLEARANCE_M } from '../../domain/wall/wall-segment-geometry'
-import { CameraFovConesLayer } from '../camera/camera-fov-cones-layer'
-import { FireDetectorCoverageShapes } from '../fire-alarm/fire-detector-coverage-shapes'
-import { SensorCoverageShapes } from '../sensor/sensor-coverage-shapes'
 import { useConeLiveHandles } from '../camera/use-cone-live-handles'
 import { WallSegmentsLayer } from '../wall/wall-segments-layer'
 import { computeIconRadiusPx, computeWallStrokeWidthPx } from '../shared/brand-and-dori-color-palette'
 import { usePlanSceneCabling, type PlanSceneCabling, type PlanSceneCablingInteraction } from '../cable/use-plan-scene-cabling'
+import { PlanSceneCoverageLayer } from './plan-scene-coverage-layer'
 import { PlanSceneMarkersLayer } from './plan-scene-markers-layer'
+import { usePlanSceneViewVisibility } from './use-plan-scene-view-visibility'
+
+/** Shared empty list: hidden walls draw no lines / handles, while cones, coverage and beams keep the real `walls` (occlusion unchanged). */
+const NO_WALLS: Wall[] = []
 
 export interface PlanSceneLayersProps {
   decodedImage: HTMLImageElement
@@ -34,6 +37,8 @@ export interface PlanSceneLayersProps {
   cablingInteraction?: PlanSceneCablingInteraction
   /** False hides every camera cone, sensor coverage shape and fire-detector coverage circle (the cable tool: routes are drawn on a clear plan). Default true. */
   coverageVisible?: boolean
+  /** Which kinds of items are drawn (the caller passes the tool-effective config). Items are hidden by id, never by filtering the arrays. Default: everything. */
+  viewConfig?: ViewConfig
   /** False strips drag/selection/rotation-handle wiring for a pure static render - the PNG export reuses this component that way. */
   interactive: boolean
   selectedCameraId: string | null
@@ -65,13 +70,14 @@ export interface PlanSceneLayersProps {
  * mounts this same component on a detached, non-interactive stage at
  * image-native size instead of duplicating the drawing code.
  *
- * Four layers: image -> cones (camera cones, `SensorCoverageShapes`,
- * `FireDetectorCoverageShapes`, all non-listening) -> walls (lines, cable
+ * Four layers: image -> `PlanSceneCoverageLayer` (camera cones, sensor and
+ * fire-detector coverage, all non-listening) -> walls (lines, cable
  * routes, node handles) -> `PlanSceneMarkersLayer` (every marker kind +
  * hubs + the selected cable's editor). Every icon sits above every wall/
  * cable/cone regardless of placement order. Sensors, fire-alarm devices and
  * cables add zero Konva Layers - the scene stays at Konva's recommended
- * five-Layer maximum (comment in `floor-plan-stage.tsx`).
+ * five-Layer maximum (comment in `floor-plan-stage.tsx`). `viewConfig` hides
+ * items by id; cabling and wall occlusion always get the full lists.
  */
 export function PlanSceneLayers({
   decodedImage,
@@ -87,6 +93,7 @@ export function PlanSceneLayers({
   cabling,
   cablingInteraction,
   coverageVisible = true,
+  viewConfig = DEFAULT_VIEW_CONFIG,
   interactive,
   selectedCameraId,
   selectedWallId,
@@ -107,11 +114,10 @@ export function PlanSceneLayers({
 }: PlanSceneLayersProps) {
   const iconRadiusPx = useMemo(() => computeIconRadiusPx(Math.max(imageWidthPx, imageHeightPx)), [imageWidthPx, imageHeightPx])
   const wallClearancePx = useMemo(() => metersToPlanPx(WALL_MOUNT_CLEARANCE_M, planPxPerMeter), [planPxPerMeter])
-  const maxClipRadiusPx = useMemo(() => Math.hypot(imageWidthPx, imageHeightPx), [imageWidthPx, imageHeightPx]) // perf cap, image diagonal
   // Shared live-handle registry + drag/rotate wrapper callbacks - see `use-cone-live-handles.ts`.
   const live = useConeLiveHandles(onCameraDragEnd, onCameraRotateEnd, onSensorCommit, onFireAlarmDeviceCommit)
-  const { coneLiveHandles } = live
   const cablingInteractionIfInteractive = interactive ? cablingInteraction : undefined
+  const { cameraHidden, sensorHidden } = usePlanSceneViewVisibility(cameras, sensors, viewConfig)
   const {
     index: cableEndpointIndex,
     limitStatusById,
@@ -124,38 +130,28 @@ export function PlanSceneLayers({
         <KonvaImage image={decodedImage} width={imageWidthPx} height={imageHeightPx} />
       </Layer>
 
-      <CameraFovConesLayer
+      <PlanSceneCoverageLayer
         cameras={cameras}
+        sensors={sensors}
+        fireAlarmDevices={fireAlarmDevices}
+        fireAlarmSettings={fireAlarmSettings}
         walls={walls}
         planPxPerMeter={planPxPerMeter}
+        scaleIsSet={scaleIsSet}
+        imageWidthPx={imageWidthPx}
+        imageHeightPx={imageHeightPx}
+        wallClearancePx={wallClearancePx}
         selectedCameraId={interactive ? selectedCameraId : null}
-        coneLiveHandles={coneLiveHandles}
+        selectedSensorId={interactive ? selectedSensorId : null}
+        selectedFireAlarmDeviceId={interactive ? selectedFireAlarmDeviceId : null}
+        coneLiveHandles={live.coneLiveHandles}
+        hiddenCameraIds={cameraHidden.coverage}
+        hiddenSensorIds={sensorHidden.coverage}
         visible={coverageVisible}
-      >
-        <SensorCoverageShapes
-          sensors={sensors}
-          walls={walls}
-          planPxPerMeter={planPxPerMeter}
-          selectedSensorId={interactive ? selectedSensorId : null}
-          nodeRegistry={coneLiveHandles}
-          wallClearancePx={wallClearancePx}
-          maxClipRadiusPx={maxClipRadiusPx}
-        />
-        <FireDetectorCoverageShapes
-          devices={fireAlarmDevices}
-          settings={fireAlarmSettings}
-          walls={walls}
-          scaleIsSet={scaleIsSet}
-          planPxPerMeter={planPxPerMeter}
-          selectedFireAlarmDeviceId={interactive ? selectedFireAlarmDeviceId : null}
-          nodeRegistry={coneLiveHandles}
-          wallClearancePx={wallClearancePx}
-          maxClipRadiusPx={maxClipRadiusPx}
-        />
-      </CameraFovConesLayer>
+      />
 
       <WallSegmentsLayer
-        walls={walls}
+        walls={viewConfig.walls ? walls : NO_WALLS}
         strokeWidthPx={computeWallStrokeWidthPx(iconRadiusPx)}
         selectable={interactive && wallsSelectable}
         selectedWallId={interactive ? selectedWallId : null}
@@ -165,7 +161,7 @@ export function PlanSceneLayers({
         imageHeightPx={imageHeightPx}
         onMoveWallNode={onMoveWallNode}
       >
-        {cableLines}
+        {viewConfig.cables ? cableLines : null}
       </WallSegmentsLayer>
 
       <PlanSceneMarkersLayer
@@ -173,6 +169,10 @@ export function PlanSceneLayers({
         sensors={sensors}
         fireAlarmDevices={fireAlarmDevices}
         walls={walls}
+        hiddenCameraIds={cameraHidden.markers}
+        hiddenSensorIds={sensorHidden.markers}
+        hubsVisible={viewConfig.hubs}
+        cablesVisible={viewConfig.cables}
         cabling={cabling}
         cablingInteraction={cablingInteractionIfInteractive}
         cableEndpointIndex={cableEndpointIndex}

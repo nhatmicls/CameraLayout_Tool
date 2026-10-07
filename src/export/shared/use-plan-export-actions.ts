@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { useProjectStore } from '../../state/project-store'
 import { useEditorUiStore } from '../../state/editor-ui-store'
+import { resolveEffectiveViewConfig } from '../../domain/view/view-config-tool-mode-overrides'
 import { exportPlanPng } from '../png/export-plan-png'
 import { exportBomCsv } from '../csv/export-bom-csv'
 
@@ -31,6 +32,8 @@ export function usePlanExportActions() {
     try {
       const { cameras, walls, sensors, hubs, cables, cableTypes, cableSettings, fireAlarmDevices, fireAlarmSettings } =
         useProjectStore.getState()
+      // The drawing shows what is on screen: the stored view config with the active tool's layers forced on.
+      const { viewConfig, toolMode } = useEditorUiStore.getState()
       await exportPlanPng({
         decodedImage,
         image,
@@ -44,6 +47,7 @@ export function usePlanExportActions() {
         fireAlarmDevices,
         fireAlarmSettings,
         scale,
+        viewConfig: resolveEffectiveViewConfig(viewConfig, toolMode),
         onDownscaled: (widthPx, heightPx, scaleFactor) =>
           pushNotification(
             'warning',

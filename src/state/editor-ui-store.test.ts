@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
+import { DEFAULT_VIEW_CONFIG } from '../domain/view/view-config-types'
 import { useEditorUiStore } from './editor-ui-store'
 
 describe('useEditorUiStore camera / wall / sensor selection', () => {
@@ -132,6 +133,21 @@ describe('useEditorUiStore camera / wall / sensor selection', () => {
     useEditorUiStore.getState().setToolMode('cable')
     useEditorUiStore.getState().setCableDrawTypeId('cat6-utp')
     expect(useEditorUiStore.getState()).toMatchObject({ toolMode: 'cable', cableDrawTypeId: 'cat6-utp' })
+  })
+
+  it('view config defaults to all-visible, and changing it touches neither the unsaved flag nor the selection', () => {
+    expect(useEditorUiStore.getState().viewConfig).toEqual(DEFAULT_VIEW_CONFIG)
+    useEditorUiStore.getState().setSelectedCameraId('cam-1')
+    useEditorUiStore.getState().setHasUnsavedChanges(false)
+
+    useEditorUiStore.getState().setViewConfig({ ...DEFAULT_VIEW_CONFIG, cables: false })
+    expect(useEditorUiStore.getState().viewConfig.cables).toBe(false)
+    expect(useEditorUiStore.getState().hasUnsavedChanges).toBe(false)
+    expect(selectedIds()).toEqual({ ...NONE, selectedCameraId: 'cam-1' })
+
+    useEditorUiStore.getState().setViewConfig(DEFAULT_VIEW_CONFIG)
+    expect(useEditorUiStore.getState().viewConfig).toBe(DEFAULT_VIEW_CONFIG)
+    expect(useEditorUiStore.getState().hasUnsavedChanges).toBe(false)
   })
 
   it('defaults new walls to opaque and remembers the chosen kind and the wall tool mode', () => {

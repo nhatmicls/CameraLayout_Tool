@@ -21,6 +21,7 @@ import { useSensorSelectionKeyboardShortcuts } from '../sensor/use-sensor-select
 import { useWallNodeMoveHandler } from '../wall/use-wall-node-move-handler'
 import { useStageContainerResizeAndInitialFit } from './use-stage-container-resize-and-initial-fit'
 import { useFireAlarmStageProps } from './use-fire-alarm-stage-props'
+import { useStageEffectiveViewConfig } from './use-stage-effective-view-config'
 import { computePlanPxPerMeter, type RefLine } from '../../domain/shared/scale-calibration-calculator'
 
 /**
@@ -64,6 +65,7 @@ export function FloorPlanStage() {
   useWallSelectionKeyboardShortcuts()
   useSensorSelectionKeyboardShortcuts()
   useHubAndCableSelectionKeyboardShortcuts()
+  const effectiveViewConfig = useStageEffectiveViewConfig()
   const handleMoveWallNode = useWallNodeMoveHandler()
 
   useStageContainerResizeAndInitialFit(containerRef, image, stageSize, fitToView, setStageSize)
@@ -139,6 +141,7 @@ export function FloorPlanStage() {
             cabling={cabling}
             cablingInteraction={cablingInteraction}
             coverageVisible={toolMode !== 'cable'}
+            viewConfig={effectiveViewConfig}
             interactive
             selectedCameraId={selectedCameraId}
             selectedWallId={selectedWallId}

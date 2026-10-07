@@ -11,6 +11,10 @@ export interface HubAndSelectedCableNodesProps {
   limitStatusById: ReadonlyMap<string, CableLimitStatus>
   /** Omitted in the PNG export: hubs become a static render and no cable is selected. */
   interaction?: PlanSceneCablingInteraction
+  /** False (view config) draws no hub / riser / drop marker; cables still end at the hub position. Default true. */
+  hubsVisible?: boolean
+  /** False (view config) draws no vertex editor for the selected cable. Default true. */
+  cablesVisible?: boolean
   iconRadiusPx: number
   viewportScale: number
   imageWidthPx: number
@@ -27,6 +31,8 @@ export function HubAndSelectedCableNodes({
   index,
   limitStatusById,
   interaction,
+  hubsVisible = true,
+  cablesVisible = true,
   iconRadiusPx,
   viewportScale,
   imageWidthPx,
@@ -42,7 +48,7 @@ export function HubAndSelectedCableNodes({
 
   return (
     <>
-      {cabling.hubs.map((hub) => (
+      {(hubsVisible ? cabling.hubs : []).map((hub) => (
         <HubMarkerNode
           key={hub.id}
           hub={hub}
@@ -57,7 +63,7 @@ export function HubAndSelectedCableNodes({
           onDragEnd={interaction?.onHubDragEnd}
         />
       ))}
-      {interaction && selectedCable && (
+      {interaction && selectedCable && cablesVisible && (
         <SelectedCableVertexEditor
           key={selectedCable.id}
           cable={selectedCable}

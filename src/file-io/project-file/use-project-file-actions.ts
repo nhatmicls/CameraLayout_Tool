@@ -4,6 +4,7 @@ import { fireAlarmModels } from '../../catalog/fire-alarm/fire-alarm-catalog-loa
 import { sensorModels } from '../../catalog/sensor/sensor-catalog-loader'
 import type { ProjectFileLookups, SensorModelLookup, SensorModelLookupEntry } from '../../domain/project-file/project-file-schema'
 import { defaultBeamEnvironment, sensorPlacementShape } from '../../domain/sensor/sensor-types'
+import { DEFAULT_VIEW_CONFIG } from '../../domain/view/view-config-types'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
 import { loadProjectFromFile, saveProjectToFile } from './project-file-save-and-load'
@@ -39,6 +40,7 @@ const PROJECT_FILE_LOOKUPS: ProjectFileLookups = {
 export function useProjectFileActions() {
   const replaceProject = useProjectStore((s) => s.replaceProject)
   const setDecodedImage = useEditorUiStore((s) => s.setDecodedImage)
+  const setViewConfig = useEditorUiStore((s) => s.setViewConfig)
   const hasUnsavedChanges = useEditorUiStore((s) => s.hasUnsavedChanges)
   const setHasUnsavedChanges = useEditorUiStore((s) => s.setHasUnsavedChanges)
   const pushNotification = useEditorUiStore((s) => s.pushNotification)
@@ -92,12 +94,13 @@ export function useProjectFileActions() {
       }
       replaceProject(outcome.project)
       setDecodedImage(outcome.decodedImage)
+      setViewConfig(DEFAULT_VIEW_CONFIG) // the view is not in the file: an opened project always starts with everything shown
       setHasUnsavedChanges(false)
       if (outcome.warnings.length > 0) {
         pushNotification('warning', summariseProjectLoadWarnings(outcome.warnings))
       }
     },
-    [hasUnsavedChanges, replaceProject, setDecodedImage, setHasUnsavedChanges, pushNotification],
+    [hasUnsavedChanges, replaceProject, setDecodedImage, setViewConfig, setHasUnsavedChanges, pushNotification],
   )
 
   const handleProjectFileInputChange = useCallback(

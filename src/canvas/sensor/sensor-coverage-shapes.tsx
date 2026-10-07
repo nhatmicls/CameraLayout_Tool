@@ -9,6 +9,8 @@ import type { ConeLiveHandle } from '../wall/wall-occlusion-cone-clip'
 
 export interface SensorCoverageShapesProps {
   sensors: PlacedSensor[]
+  /** Sensors whose coverage shape the view config hides (`plan-view-visibility.ts`) - skipped, so the shape unmounts. */
+  hiddenIds?: ReadonlySet<string>
   walls: Wall[]
   planPxPerMeter: number
   selectedSensorId: string | null
@@ -38,6 +40,7 @@ export interface SensorCoverageShapesProps {
  */
 export function SensorCoverageShapes({
   sensors,
+  hiddenIds,
   walls,
   planPxPerMeter,
   selectedSensorId,
@@ -65,7 +68,7 @@ export function SensorCoverageShapes({
   return (
     <>
       {sensorsInPaintOrder.map((sensor) => {
-        if (sensor.shape === 'beam') return null
+        if (sensor.shape === 'beam' || hiddenIds?.has(sensor.id)) return null
         const spec = sensorModelById(sensor.modelId)
         if (!spec || spec.kind === 'beam') return null
 

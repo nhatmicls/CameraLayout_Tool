@@ -1,9 +1,28 @@
 import { useCallback, type DragEvent, type RefObject } from 'react'
 import type Konva from 'konva'
+import { cameraFormFactorOf } from '../../catalog/camera/camera-catalog-loader'
+import { sensorKindOf } from '../../catalog/sensor/sensor-catalog-loader'
+import { VIEW_TOGGLES, isViewToggleOn } from '../../domain/view/view-config-toggle-table'
+import { revealCameraFormFactorInView, revealSensorKindInView, type ViewConfig } from '../../domain/view/view-config-types'
 import { useEditorUiStore } from '../../state/editor-ui-store'
+import { useProjectStore } from '../../state/project-store'
 import { useCameraDragDropTarget } from '../camera/use-camera-drag-drop-target'
 import { useFireAlarmDeviceDragDropTarget } from '../fire-alarm/use-fire-alarm-device-drag-drop-target'
 import { useSensorDragDropTarget } from '../sensor/use-sensor-drag-drop-target'
+
+/**
+ * A card dropped while its type is hidden would land invisibly: turn that
+ * type's marker toggles back on in the STORED view config and say so. The
+ * note lists the toggles that changed, by their `VIEW_TOGGLES` label.
+ */
+function revealDroppedItemInView(reveal: (config: ViewConfig) => ViewConfig): void {
+  const { viewConfig, setViewConfig, pushNotification } = useEditorUiStore.getState()
+  const next = reveal(viewConfig)
+  if (next === viewConfig) return
+  const turnedOn = VIEW_TOGGLES.filter((t) => isViewToggleOn(next, t.key) && !isViewToggleOn(viewConfig, t.key)).map((t) => t.noteLabel)
+  setViewConfig(next)
+  pushNotification('info', `View: turned ${turnedOn.join(' and ')} back on so the new item is visible.`)
+}
 
 /**
  * The stage container's drag-over / drop handlers for catalog cards (camera,
@@ -31,17 +50,22 @@ export function useStageCatalogDropHandlers(stageRef: RefObject<Konva.Stage | nu
   // Tries the camera payload first, then the sensor payload, then the fire-alarm payload, and
   // selects whichever one actually dropped - in select mode only: in a drawing tool Backspace /
   // Esc belong to the tool, and a selected item would be deleted by the same Backspace that
-  // removes a route point.
+  // removes a route point. A dropped camera / sensor of a hidden type is revealed first, so the
+  // selection that follows is never cleared as "hidden".
   const handleDropOnStage = useCallback(
     (e: DragEvent<HTMLDivElement>) => {
       const canSelect = useEditorUiStore.getState().toolMode === 'select'
       const newCameraId = handleCameraDrop(e)
       if (newCameraId) {
+        const modelId = useProjectStore.getState().cameras.find((camera) => camera.id === newCameraId)?.modelId
+        if (modelId) revealDroppedItemInView((config) => revealCameraFormFactorInView(config, cameraFormFactorOf(modelId)))
         if (canSelect) setSelectedCameraId(newCameraId)
         return
       }
       const newSensorId = handleSensorDrop(e)
       if (newSensorId) {
+        const modelId = useProjectStore.getState().sensors.find((sensor) => sensor.id === newSensorId)?.modelId
+        if (modelId) revealDroppedItemInView((config) => revealSensorKindInView(config, sensorKindOf(modelId)))
         if (canSelect) setSelectedSensorId(newSensorId)
         return
       }

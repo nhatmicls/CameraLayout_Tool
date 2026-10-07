@@ -4,6 +4,7 @@ import type { SensorKind } from '../../domain/sensor/sensor-types'
 import { drawCableLegendLine, type CableLegend } from './draw-export-cable-legend-line'
 import { drawCompatibilityWarningLine, drawFireAlarmLegendLine, type FireAlarmLegend } from './draw-export-fire-alarm-legend-lines'
 import { drawDoriLegendLine, drawSensorLegendLine } from './draw-export-legend-lines'
+import { drawViewFilterNoteLine } from './draw-export-view-filter-note'
 import { truncateCanvasTextToWidth } from './truncate-canvas-text-to-width'
 
 export interface BomStripContent {
@@ -21,6 +22,8 @@ export interface BomStripContent {
   fireAlarmLegend: FireAlarmLegend | null
   /** Null (no `checkFireAlarmCompatibility` warning) draws no compatibility-warning line. */
   compatibilityWarningText: string | null
+  /** The view config's "Shown / Hidden" note, already wrapped to the strip width (`wrapViewFilterNoteLines`). Empty (nothing hidden) draws nothing. */
+  viewFilterNoteLines: string[]
 }
 
 // Type, Brand, Model, Form Factor, Resolution, Lens, Quantity, Unit, Labels, Unit Price, Total - sums to 1, proportional to
@@ -35,7 +38,7 @@ export const COLUMN_WEIGHTS = [0.06, 0.07, 0.14, 0.09, 0.13, 0.07, 0.07, 0.04, 0
 const TEXT_COLOR = '#111827'
 const GRID_LINE_COLOR = '#d4d4d8'
 const HEADER_FILL_COLOR = '#f4f4f5'
-const CELL_PADDING_RATIO = 0.4 // * fontPx, left padding inside each cell
+export const CELL_PADDING_RATIO = 0.4 // * fontPx, left padding inside each cell
 
 /** Left-edge x of column `columnIndex` (and the right edge of the table when passed `COLUMN_WEIGHTS.length`), as a fraction of `widthPx`. */
 function columnX(widthPx: number, columnIndex: number): number {
@@ -82,19 +85,24 @@ function drawTableRow(
  * How many legend lines the strip draws: the DORI line, plus one when the
  * plan has a sensor whose model is known, plus one when it has cables, plus
  * one when it has a fire-alarm device whose model is known, plus one when
- * there is a compatibility warning. The ONE definition: the caller feeds
+ * there is a compatibility warning, plus one per wrapped view-filter note
+ * line. The ONE definition: the caller feeds
  * this to `computeBomStripLayout`, so the strip's reserved legend height and
  * what gets drawn into it cannot disagree.
  */
 export function legendLineCountFor(
-  content: Pick<BomStripContent, 'sensorKindsPresent' | 'cableLegend' | 'fireAlarmLegend' | 'compatibilityWarningText'>,
+  content: Pick<
+    BomStripContent,
+    'sensorKindsPresent' | 'cableLegend' | 'fireAlarmLegend' | 'compatibilityWarningText' | 'viewFilterNoteLines'
+  >,
 ): number {
   return (
     1 +
     (content.sensorKindsPresent.length > 0 ? 1 : 0) +
     (content.cableLegend ? 1 : 0) +
     (content.fireAlarmLegend ? 1 : 0) +
-    (content.compatibilityWarningText ? 1 : 0)
+    (content.compatibilityWarningText ? 1 : 0) +
+    content.viewFilterNoteLines.length
   )
 }
 
@@ -103,7 +111,8 @@ export function legendLineCountFor(
  * swatches + scale note + export date, a sensor-kind line when the plan has
  * sensors, a cable line when it has cables, a fire-alarm kind/coverage line
  * when it has fire-alarm devices, a compatibility-warning line when one
- * exists) followed by the BOM table (same columns as `bomToTable` - also
+ * exists), then the wrapped "Shown / Hidden" view note when the view config
+ * hides something, followed by the BOM table (same columns as `bomToTable` - also
  * used, with a trailing `Notes` column, by the CSV export's `bomToCsvTable` -
  * cameras, sensors, fire-alarm devices, then cables, one source so CSV and
  * PNG can never drift on the row data). `scale` is the export's overall downscale
@@ -162,6 +171,11 @@ export function drawBomTableAndLegendStrip(
   }
   if (content.compatibilityWarningText) {
     drawCompatibilityWarningLine(ctx, lineCenterY(nextLineIndex), widthPx, fontPx, cellPaddingPx, content.compatibilityWarningText)
+    nextLineIndex += 1
+  }
+  for (const noteLine of content.viewFilterNoteLines) {
+    drawViewFilterNoteLine(ctx, lineCenterY(nextLineIndex), fontPx, cellPaddingPx, noteLine)
+    nextLineIndex += 1
   }
 
   let rowTop = stripOriginY + legendHeightPx

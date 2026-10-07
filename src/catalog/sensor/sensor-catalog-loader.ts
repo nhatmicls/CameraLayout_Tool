@@ -63,4 +63,9 @@ export function sensorModelById(id: string): SensorModel | undefined {
   return modelsById.get(id);
 }
 
+/** A model id's sensor kind, undefined for an unknown id - the lookup callback the pure view-config helpers (`src/domain/view/`) take. */
+export function sensorKindOf(modelId: string): SensorModel["kind"] | undefined {
+  return modelsById.get(modelId)?.kind;
+}
+
 export type { SensorModel, SensorBrand } from "./sensor-catalog-schema";

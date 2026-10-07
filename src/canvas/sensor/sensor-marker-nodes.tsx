@@ -10,6 +10,8 @@ import { SensorMarkerNode } from './sensor-marker-node'
 
 export interface SensorMarkerNodesProps {
   sensors: PlacedSensor[]
+  /** Sensors whose marker (for a beam: the whole line + both ends) the view config hides. Skipped by id - the array is never filtered, so `S{n}` labels do not renumber. */
+  hiddenIds?: ReadonlySet<string>
   walls: Wall[]
   /**
    * `onDragMove`/`onDragEnd`/`onRotateLive`/`onRotateEnd` below are expected
@@ -45,6 +47,7 @@ export interface SensorMarkerNodesProps {
  */
 export function SensorMarkerNodes({
   sensors,
+  hiddenIds,
   walls,
   iconRadiusPx,
   planPxPerMeter,
@@ -72,7 +75,7 @@ export function SensorMarkerNodes({
     <>
       {sensors.map((sensor, index) => {
         const spec = sensorModelById(sensor.modelId)
-        if (!spec) return null
+        if (!spec || hiddenIds?.has(sensor.id)) return null
         const label = `S${index + 1}`
         const selected = sensor.id === selectedSensorId
 

@@ -16,7 +16,7 @@ Layout: `data/` (catalog JSON, repo root), `src/catalog` (schema, loader), `src/
 Every `src` folder except `state` is grouped into feature subfolders - put a new file in the
 matching one, never loose at the folder root:
 - `catalog/`: `camera`, `sensor`, `fire-alarm`, `shared`
-- `domain/`: `beam`, `bom`, `cable`, `camera`, `export`, `fire-alarm`, `project-file`, `sensor`, `wall`, `shared`
+- `domain/`: `beam`, `bom`, `cable`, `camera`, `export`, `fire-alarm`, `project-file`, `sensor`, `view`, `wall`, `shared`
 - `canvas/`: `beam`, `cable`, `camera`, `fire-alarm`, `sensor`, `wall`, `stage`, `shared`
 - `panels/`: `app-shell`, `bom`, `cable`, `camera`, `fire-alarm`, `sensor`, `shared`
 - `export/`: `csv`, `png`, `shared`
@@ -130,6 +130,20 @@ Project rules:
   canvas edge.
 - Konva drag events bubble: a draggable child's drag reaches its parent's drag handlers, so
   parent handlers must check `e.target === e.currentTarget`.
+- View config (`viewConfig` in `editor-ui-store.ts`, types + helpers in `src/domain/view/`) is
+  UI-only: never persisted, never in undo, never sets `hasUnsavedChanges`. Items are hidden by id
+  set (`hiddenIds`), never by filtering `cameras` / `sensors` - labels `C{n}` / `S{n}` and cable
+  ends depend on the full arrays. Fire-alarm devices have no view toggle (always drawn). Walls
+  hidden = lines and handles only; occlusion still applies. A beam (line + ends) is a sensor marker; a thermal cone
+  is sensor coverage. A drawing tool forces its layers on through `resolveEffectiveViewConfig`
+  (computed, never stored). The PNG drawing uses that effective config and the strip prints a
+  "Shown / Hidden" note (`buildViewFilterNote`) only when something is hidden - all visible
+  must stay identical to the pre-feature PNG. Legend lines, BOM panel, BOM strip, CSV and the
+  cable estimate never follow the view. Labels for the panel and the note come from the one
+  table `VIEW_TOGGLES`. The view resets to `DEFAULT_VIEW_CONFIG` where a project
+  (`replaceProject`) or a plan image (`setImage`) is loaded - at those UI call sites, never
+  from `project-store`. Cones and sensor coverage shapes live in `plan-scene-coverage-layer.tsx`;
+  markers in `plan-scene-markers-layer.tsx`; still no extra Konva Layer.
 - Windows: a leftover dev server locks `node_modules` and breaks `npm ci` (EPERM). Kill the
   whole process tree of anything you spawn.
 - `./plans/` is gitignored (local working notes), so do not link to it from committed docs.

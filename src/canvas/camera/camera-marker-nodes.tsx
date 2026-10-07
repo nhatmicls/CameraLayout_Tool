@@ -5,6 +5,8 @@ import { CameraMarkerNode } from './camera-marker-node'
 
 export interface CameraMarkerNodesProps {
   cameras: PlacedCamera[]
+  /** Cameras whose marker the view config hides. Skipped by id - the array is never filtered, so `C{n}` labels do not renumber. */
+  hiddenIds?: ReadonlySet<string>
   iconRadiusPx: number
   selectedCameraId: string | null
   interactive: boolean
@@ -25,6 +27,7 @@ export interface CameraMarkerNodesProps {
  */
 export function CameraMarkerNodes({
   cameras,
+  hiddenIds,
   iconRadiusPx,
   selectedCameraId,
   interactive,
@@ -41,7 +44,7 @@ export function CameraMarkerNodes({
     <>
       {cameras.map((camera, index) => {
         const model = cameraModelById(camera.modelId)
-        if (!model) return null
+        if (!model || hiddenIds?.has(camera.id)) return null
         return (
           <CameraMarkerNode
             key={camera.id}

@@ -2,6 +2,15 @@
 
 ## 2026-10-07
 
+**View**: layer visibility toggles for the plan and PNG export. Feature set:
+
+- **Toggles**: 16 toggles on a collapsible panel section: camera markers, camera FOV cones, each camera form factor (bullet, dome, turret, PTZ, fisheye), sensor markers (including IR beam line + ends as one group), sensor coverage shapes (including thermal cones), each sensor kind (PIR, IR beam, vibration, thermal), hubs / risers / drops, cable routes, and walls. Every option always listed with live item count.
+- **UI**: collapsed section; "N hidden" badge when any are off; "Show all" button resets all to visible.
+- **Visibility effect**: camera cones, sensor coverage and cable lines clipped to the visible set; hidden items (except walls) are not rendered. Hidden walls still apply occlusion / blocking to visible cones and beams. Fire-alarm devices and their coverage are always drawn (no toggle).
+- **Drawing tools**: wall tool, hub/riser/drop tool and cable tool each force their layers on while active (computed per call, never stored), restored on leaving the tool.
+- **PNG export**: drawing uses the on-screen (tool-effective) view config. Legend lines, BOM strip, BOM panel, CSV and cable estimate always cover everything. When anything is hidden the strip prints a wrapped "Shown: ... / Hidden: ..." note (`buildViewFilterNote`) under legend lines; no hidden items = PNG identical to pre-feature export.
+- **State management**: UI-only (`viewConfig` in `editor-ui-store.ts`), never persisted, never in undo, never sets `hasUnsavedChanges`. Items hidden by id set (`hiddenIds`), not by filtering arrays - labels C{n}/S{n} never renumber. Reset to show-all when a project or a new plan image is loaded (at two UI call sites in `app.tsx` and `use-project-file-actions.ts`). Selecting an item then hiding its type clears the selection. Dropping a catalog card of a hidden type reveals that type with an info notification.
+
 **Fire alarm / alarm panels**: third device family (Hikvision only, 12 records). Feature set:
 - **Catalog**: 2 AX Hybrid PRO control panels, 1 wired expander, 1 keypad, 2 AX PRO 868 MHz wireless hubs, wireless detectors (smoke / heat / CO, one each), 1 wireless sounder, 1 emergency button, 1 standalone smoke alarm. Specs from official Hikvision datasheets (hikvision.com / hikvision.vn) and AX PRO user manual, copied as printed. One record has a Vietnamese price; the rest "price on request".
 - **Placement**: drag card onto plan (scale required like sensors); devices numbered F1, F2...

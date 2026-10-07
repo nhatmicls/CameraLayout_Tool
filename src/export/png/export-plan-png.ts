@@ -6,6 +6,8 @@ import type { FireAlarmSettings, PlacedFireAlarmDevice } from '../../domain/fire
 import type { PlacedCamera, PlanImage, ScaleCalibration, Wall } from '../../domain/project-file/project-types'
 import { SENSOR_KIND_DISPLAY_ORDER, type PlacedSensor, type SensorKind, type SensorModelSpec } from '../../domain/sensor/sensor-types'
 import { hasGlassWallClippingAnySensor } from '../../domain/sensor/sensor-wall-blocking-rules'
+import { buildViewFilterNote } from '../../domain/view/view-config-toggle-table'
+import type { ViewConfig } from '../../domain/view/view-config-types'
 import { triggerBrowserFileDownload } from '../../file-io/browser/trigger-browser-file-download'
 import { buildCombinedBomRows } from '../shared/build-combined-bom-rows'
 import { buildCameraModelByIdRecord } from '../shared/camera-model-by-id-record'
@@ -13,8 +15,9 @@ import { fireAlarmModelSpecById } from '../shared/fire-alarm-compatibility-index
 import { buildSensorModelByIdRecord } from '../shared/sensor-model-by-id-record'
 import { canAllocateCanvas, SAFARI_SAFE_MAX_CANVAS_PIXELS, SAFARI_SAFE_MAX_CANVAS_SIDE_PX } from './probe-max-canvas-size'
 import { renderPlanToOffscreenCanvas } from './render-plan-to-offscreen-canvas'
-import { drawBomTableAndLegendStrip, legendLineCountFor } from './draw-bom-table-and-legend-strip'
+import { CELL_PADDING_RATIO, drawBomTableAndLegendStrip, legendLineCountFor } from './draw-bom-table-and-legend-strip'
 import { buildCableLegend } from './draw-export-cable-legend-line'
+import { wrapViewFilterNoteLines } from './draw-export-view-filter-note'
 import { canvasToPngBlob, sampleCanvasPixels } from './export-canvas-pixel-helpers'
 import { isPixelDataBlank } from './is-pixel-data-blank'
 import { resolveCompatibilityWarningText, resolveFireAlarmLegend } from './resolve-fire-alarm-export-legend'
@@ -40,6 +43,8 @@ export interface ExportPlanPngOptions extends CableLayout {
   fireAlarmSettings: FireAlarmSettings
   /** Null is valid (e.g. exporting before calibrating) - the plan still renders at a 1:1 pixel/unit fallback, matching `floor-plan-stage.tsx`'s own `scale?.planPxPerMeter ?? 1`. Fire-detector coverage circles draw only when non-null (`renderPlanToOffscreenCanvas`'s `scaleIsSet`). */
   scale: ScaleCalibration | null
+  /** What the plan DRAWING shows - the caller passes the tool-effective config, i.e. what is on screen. Legend lines and BOM rows never follow it. */
+  viewConfig: ViewConfig
   /** Injectable for deterministic tests; defaults to "now". */
   now?: Date
   /** Override hooks for the canvas-size limit - lets a caller force the downscale path without editing the shared constants. Defaults to the Safari-safe limits. */
@@ -59,7 +64,8 @@ function formatIsoDate(date: Date): string {
 /**
  * Exports the floor plan (image-native resolution, cameras/cones/DORI
  * bands, walls, hubs and cables exactly as on screen, no selection UI) plus a BOM strip beneath it
- * as a single PNG download. Downscales uniformly (plan and strip together)
+ * as a single PNG download. The drawing follows `viewConfig`; when that hides anything the strip
+ * says so in a "Shown / Hidden" note, while the legend lines and the BOM stay complete. Downscales uniformly (plan and strip together)
  * when the combined canvas would exceed the browser-safe size, and reports
  * that back via `onDownscaled` rather than failing or silently cropping.
  * Every intermediate canvas is released before returning, success or not.
@@ -69,12 +75,19 @@ export async function exportPlanPng(options: ExportPlanPngOptions): Promise<void
   const sensorModelById = buildSensorModelByIdRecord()
   const { allRows: rows, cableEstimate, fireAlarmWarnings } = buildCombinedBomRows(options)
   const scaleIsSet = options.scale !== null
+  // Null when nothing is hidden: no note lines, so the strip (and the whole PNG) is what it was before the view config existed.
+  const viewFilterNote = buildViewFilterNote(options.viewConfig)
+  // The font size depends on the image width only, so it is known before the final layout.
+  const { fontPx } = computeBomStripLayout(options.image.widthPx, rows.length)
   // Built before the layout: the strip's height depends on how many legend lines its content draws.
   const legends = {
     sensorKindsPresent: resolveSensorKindsPresent(options.sensors, sensorModelById),
     cableLegend: buildCableLegend(options.cables, options.cableTypes, options.cableSettings, cableEstimate),
     fireAlarmLegend: resolveFireAlarmLegend(options.fireAlarmDevices, fireAlarmModelSpecById, options.fireAlarmSettings, scaleIsSet),
     compatibilityWarningText: resolveCompatibilityWarningText(options.fireAlarmDevices, fireAlarmWarnings),
+    viewFilterNoteLines: viewFilterNote
+      ? wrapViewFilterNoteLines(viewFilterNote, fontPx, options.image.widthPx, fontPx * CELL_PADDING_RATIO)
+      : [],
   }
   const layout = computeBomStripLayout(options.image.widthPx, rows.length, legendLineCountFor(legends))
 
@@ -113,6 +126,7 @@ export async function exportPlanPng(options: ExportPlanPngOptions): Promise<void
         cableSettings: options.cableSettings,
         scale: options.scale,
       },
+      viewConfig: options.viewConfig,
       pixelRatio: scale,
     })
 

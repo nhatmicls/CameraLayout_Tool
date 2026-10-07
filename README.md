@@ -156,6 +156,7 @@ calls once the page has loaded.
     height, so they use the default device height. A cable end follows its camera, sensor or
     hub when the drag is dropped, not while dragging. There are no hub-to-hub links. A cable
     type's colour is its position in the type list. Measure on site before ordering.
+- **View**: collapsed section at the top of the right panel with toggles to hide / show layer groups on the plan. Includes 16 toggles: camera markers, camera FOV cones, each camera form factor (bullet, dome, turret, PTZ, fisheye), sensor markers (including IR beam line + ends), sensor coverage shapes (including thermal cones), each sensor kind (PIR, IR beam, vibration, thermal), hubs / risers / drops, cable routes, and walls. Every toggle option is always listed with a live item count; a "N hidden" badge shows when any are off; "Show all" resets all to visible. The Cameras, Sensors and Cabling headings are parent checkboxes: unticking one unticks every row under it, ticking it turns them all on, and it shows a dash when only some rows are on. The per-type rows sit under their own parent ("Types" for cameras, "Kinds" for sensors) that works the same way; a type that is off hides both the marker and the cone / coverage of those items. Hidden walls still block camera cones and sensor coverage. A drawing tool (wall, hub, cable) forces its own layers visible while the tool is active and restores the previous state when leaving - so a wall, hub or cable drawn while its layer is switched off disappears again when you leave the tool (the "N hidden" badge is the cue). Labels never renumber when items are hidden, and a cable is still drawn to a hidden camera, sensor or hub. Hiding the type of the selected item deselects it; dropping a catalog card of a hidden type turns that type back on. The PNG export draws the on-screen state: if anything is hidden, the strip prints a wrapped "Shown: ... / Hidden: ..." note under the legend; legend lines, BOM strip, BOM panel, CSV and cable estimate always cover everything. Fire-alarm devices and their coverage are always drawn (no toggle). View state is not saved in the project file, not undoable, and is reset to all visible when a project is opened or a new plan image is loaded.
 - **Bill of materials**: camera rows grouped by model + lens, then sensor rows grouped by
   model, then fire-alarm rows grouped by kind (unit `pcs`, labels F1, F2...), then one cable
   row per cable type in use, with quantity, labels, unit price, line total and one estimated
@@ -235,9 +236,9 @@ is still running - stop it first.
 |---|---|
 | `data/` | Catalog JSON: `data/<brand>/<device-type>/<brand>-<device-type>_<NN>.json`; device type = `camera-<form factor>`, `sensor-<kind>`, or `fire-alarm-<kind>` (control-panel, wireless-hub, smoke-detector, heat-detector, co-detector, keypad, expander-module, manual-call-point, sounder) |
 | `src/catalog/` | Zod schemas and loaders for the camera, sensor and fire-alarm catalogs |
-| `src/domain/` | Pure logic: FOV geometry, DORI distances, mounted-camera floor coverage, sensor coverage (resolver, thermal bands, beam line check, wall-blocking table), fire-alarm coverage (resolver, TCVN 5738 table, wall-blocking table), wall visibility geometry (occlusion polygon, endpoint snap, crossing detection), cable layout (types, length + range estimate, snap lookup, drawing chain, vertex editing), compatibility checker (fire devices), scale, BOM grouping, CSV, project file schema (no React/Konva imports) |
+| `src/domain/` | Pure logic: FOV geometry, DORI distances, mounted-camera floor coverage, sensor coverage (resolver, thermal bands, beam line check, wall-blocking table), fire-alarm coverage (resolver, TCVN 5738 table, wall-blocking table), wall visibility geometry (occlusion polygon, endpoint snap, crossing detection), cable layout (types, length + range estimate, snap lookup, drawing chain, vertex editing), compatibility checker (fire devices), scale, BOM grouping, CSV, project file schema, view config (toggles, hidden-id sets, tool-layer forcing) (no React/Konva imports) |
 | `src/canvas/` | Konva stage, pan/zoom, camera, sensor and fire-alarm markers, cones, sensor/fire coverage, walls + wall drawing tool, hubs, cable lines + cable drawing tool + vertex editor, calibration overlay |
-| `src/panels/` | Toolbar, catalog sidebar (Cameras / Sensors / Fire alarm tabs), camera, sensor, fire-alarm, hub and cable properties panels, cable estimate panel, BOM panel |
+| `src/panels/` | Toolbar, catalog sidebar (Cameras / Sensors / Fire alarm tabs), camera, sensor, fire-alarm, hub and cable properties panels, cable estimate panel, BOM panel, view panel (layer visibility toggles) |
 | `src/export/` | PNG and CSV export |
 | `src/file-io/`, `src/state/` | Project save/load, zustand stores, undo/redo |
 
@@ -260,7 +261,7 @@ placement, DORI cones, sensor coverage (PIR sectors / beams / thermal), fire-ala
 coverage (datasheet mode or TCVN 5738 circles with ceiling height), compatibility warnings,
 properties, BOM with prices, mounting height + tilt floor coverage, walls with camera cone
 occlusion and sensor/fire-alarm wall blocking, hubs and cable routes with a cable-length
-estimate, save/load, PNG + CSV export (verified in Chromium). Project files are saved as
+estimate, layer visibility toggles, save/load, PNG + CSV export (verified in Chromium). Project files are saved as
 schema version 6: files from earlier versions (1-5) still open, but a file saved by this
 version needs this version or newer. Known limit: on a very dense plan (about 100 sensors and
 300 walls) moving a wall or a sensor can take a few tenths of a second to redraw. Not done yet:

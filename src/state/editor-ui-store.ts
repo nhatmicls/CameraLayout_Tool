@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { WallKind } from '../domain/project-file/project-types'
+import { DEFAULT_VIEW_CONFIG, type ViewConfig } from '../domain/view/view-config-types'
 import { useProjectStore } from './project-store'
 
 /** `select`: default, drag/pan/select cameras, sensors, walls, hubs, cables and fire-alarm devices. `calibrate`: next two clicks on the stage draw a reference line. `wall`: clicks draw a chain of wall segments. `hub` / `riser` / `drop`: each click places a hub / a riser / a drop (the point where cables go up to the floor above / down to the floor below). `cable`: clicks draw one cable route from a device to a hub (or the reverse). */
@@ -38,6 +39,8 @@ export interface EditorUiState {
   decodedImage: HTMLImageElement | null
   /** Whether the persisted calibration reference line is drawn on top of the plan. */
   showCalibrationLine: boolean
+  /** Which kinds of items are drawn on the plan. UI-only: not persisted, not in undo history, never sets `hasUnsavedChanges`. */
+  viewConfig: ViewConfig
   /** Stage container's on-screen size (from `floor-plan-stage.tsx`'s ResizeObserver). Lets the toolbar's zoom/fit buttons compute viewport math without the Stage's own refs. */
   stageSize: { width: number; height: number }
   notifications: UiNotification[]
@@ -65,6 +68,8 @@ export interface EditorUiActions {
   setWallDrawKind: (kind: WallKind) => void
   setDecodedImage: (image: HTMLImageElement | null) => void
   setShowCalibrationLine: (show: boolean) => void
+  /** Callers pass the next object (`withViewToggle`, `reveal*`); reset = `setViewConfig(DEFAULT_VIEW_CONFIG)`. */
+  setViewConfig: (viewConfig: ViewConfig) => void
   setStageSize: (size: { width: number; height: number }) => void
   pushNotification: (kind: UiNotification['kind'], message: string) => void
   dismissNotification: (id: string) => void
@@ -97,6 +102,7 @@ export const useEditorUiStore = create<EditorUiStore>((set) => ({
   wallDrawKind: 'opaque',
   decodedImage: null,
   showCalibrationLine: true,
+  viewConfig: DEFAULT_VIEW_CONFIG,
   stageSize: { width: 0, height: 0 },
   notifications: [],
   hasUnsavedChanges: false,
@@ -120,6 +126,8 @@ export const useEditorUiStore = create<EditorUiStore>((set) => ({
   setDecodedImage: (decodedImage) => set({ decodedImage }),
 
   setShowCalibrationLine: (showCalibrationLine) => set({ showCalibrationLine }),
+
+  setViewConfig: (viewConfig) => set({ viewConfig }),
 
   setStageSize: (stageSize) => set({ stageSize }),
 

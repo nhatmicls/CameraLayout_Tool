@@ -16,6 +16,11 @@ export interface PlanSceneMarkersLayerProps {
   sensors: PlacedSensor[]
   fireAlarmDevices: PlacedFireAlarmDevice[]
   walls: Wall[]
+  /** View config (`use-plan-scene-view-visibility.ts`): camera / sensor markers skipped by id, hub markers and the selected cable's editor switched off as a whole. */
+  hiddenCameraIds: ReadonlySet<string>
+  hiddenSensorIds: ReadonlySet<string>
+  hubsVisible: boolean
+  cablesVisible: boolean
   cabling: PlanSceneCabling
   cablingInteraction: PlanSceneCablingInteraction | undefined
   cableEndpointIndex: CableEndpointIndex
@@ -53,6 +58,10 @@ export function PlanSceneMarkersLayer({
   sensors,
   fireAlarmDevices,
   walls,
+  hiddenCameraIds,
+  hiddenSensorIds,
+  hubsVisible,
+  cablesVisible,
   cabling,
   cablingInteraction,
   cableEndpointIndex,
@@ -78,6 +87,7 @@ export function PlanSceneMarkersLayer({
     <Layer listening={listening}>
       <CameraMarkerNodes
         cameras={cameras}
+        hiddenIds={hiddenCameraIds}
         iconRadiusPx={iconRadiusPx}
         selectedCameraId={selectedCameraId}
         interactive={interactive}
@@ -93,6 +103,7 @@ export function PlanSceneMarkersLayer({
 
       <SensorMarkerNodes
         sensors={sensors}
+        hiddenIds={hiddenSensorIds}
         walls={walls}
         iconRadiusPx={iconRadiusPx}
         planPxPerMeter={planPxPerMeter}
@@ -128,6 +139,8 @@ export function PlanSceneMarkersLayer({
         index={cableEndpointIndex}
         limitStatusById={limitStatusById}
         interaction={cablingInteraction}
+        hubsVisible={hubsVisible}
+        cablesVisible={cablesVisible}
         iconRadiusPx={iconRadiusPx}
         viewportScale={viewportScale}
         imageWidthPx={imageWidthPx}

@@ -5,6 +5,7 @@ import { Stage } from 'react-konva'
 import type { FireAlarmSettings, PlacedFireAlarmDevice } from '../../domain/fire-alarm/fire-alarm-device-types'
 import type { PlacedCamera, Wall } from '../../domain/project-file/project-types'
 import type { PlacedSensor } from '../../domain/sensor/sensor-types'
+import type { ViewConfig } from '../../domain/view/view-config-types'
 import type { PlanSceneCabling } from '../../canvas/cable/use-plan-scene-cabling'
 import { PlanSceneLayers } from '../../canvas/stage/plan-scene-layers'
 
@@ -20,6 +21,8 @@ export interface RenderPlanToOffscreenCanvasOptions {
   planPxPerMeter: number
   /** Hubs + cables are drawn like on screen, without selection or handles. */
   cabling: PlanSceneCabling
+  /** Which kinds of items the drawing shows (the on-screen, tool-effective view config). */
+  viewConfig: ViewConfig
   /** Export downscale factor (<=1). Konva's `pixelRatio` scales the *rasterised* output while the Stage/scene stays in image-px coordinates. */
   pixelRatio: number
 }
@@ -96,6 +99,7 @@ export async function renderPlanToOffscreenCanvas(
             planPxPerMeter={options.planPxPerMeter}
             scaleIsSet={options.cabling.scale !== null}
             cabling={options.cabling}
+            viewConfig={options.viewConfig}
             interactive={false}
             selectedCameraId={null}
             selectedWallId={null}

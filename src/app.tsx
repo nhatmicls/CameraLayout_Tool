@@ -15,6 +15,8 @@ import { SelectionPropertiesPanel } from './panels/app-shell/selection-propertie
 import { BillOfMaterialsPanel } from './panels/bom/bill-of-materials-panel'
 import { CableEstimatePanel } from './panels/cable/cable-estimate-panel'
 import { FloorPlanStage } from './canvas/stage/floor-plan-stage'
+import { DEFAULT_VIEW_CONFIG } from './domain/view/view-config-types'
+import { ViewConfigPanel } from './panels/app-shell/view-config-panel'
 import { installDevTestHooks } from './dev-test-hooks'
 
 const REPLACE_IMAGE_CONFIRM_MESSAGE =
@@ -40,6 +42,7 @@ export function App() {
   const toolMode = useEditorUiStore((s) => s.toolMode)
   const setToolMode = useEditorUiStore((s) => s.setToolMode)
   const setDecodedImage = useEditorUiStore((s) => s.setDecodedImage)
+  const setViewConfig = useEditorUiStore((s) => s.setViewConfig)
   const showCalibrationLine = useEditorUiStore((s) => s.showCalibrationLine)
   const setShowCalibrationLine = useEditorUiStore((s) => s.setShowCalibrationLine)
   const pushNotification = useEditorUiStore((s) => s.pushNotification)
@@ -69,12 +72,13 @@ export function App() {
           fileName: decoded.fileName,
         })
         setDecodedImage(decoded.element)
+        setViewConfig(DEFAULT_VIEW_CONFIG) // a new plan always starts with everything shown
         if (warning) pushNotification('warning', warning)
       } catch (err) {
         pushNotification('error', err instanceof Error ? err.message : 'Failed to load the image file.')
       }
     },
-    [setImage, setDecodedImage, pushNotification],
+    [setImage, setDecodedImage, setViewConfig, pushNotification],
   )
 
   const handleFileInputChange = useCallback(
@@ -130,6 +134,7 @@ export function App() {
         </main>
 
         <aside className="w-[320px] flex-shrink-0 overflow-y-auto border-l border-neutral-200 bg-white p-3">
+          <ViewConfigPanel />
           <SelectionPropertiesPanel />
           <CableEstimatePanel />
           <BillOfMaterialsPanel />

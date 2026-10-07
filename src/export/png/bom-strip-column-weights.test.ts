@@ -22,7 +22,13 @@ describe('PNG strip column weights', () => {
 describe('legendLineCountFor', () => {
   const cableLegend = { types: [], hasDashedCable: false, noteText: '' }
   const fireAlarmLegend = { kindCounts: [{ kind: 'smoke-detector' as const, count: 1 }], coverageBasisText: null }
-  const base = { sensorKindsPresent: [] as SensorKind[], cableLegend: null, fireAlarmLegend: null, compatibilityWarningText: null }
+  const base = {
+    sensorKindsPresent: [] as SensorKind[],
+    cableLegend: null,
+    fireAlarmLegend: null,
+    compatibilityWarningText: null,
+    viewFilterNoteLines: [] as string[],
+  }
 
   it('is 1 for a plan with no sensors, cables or fire-alarm devices (strip height unchanged)', () => {
     expect(legendLineCountFor(base)).toBe(1)
@@ -34,5 +40,10 @@ describe('legendLineCountFor', () => {
     expect(legendLineCountFor({ ...base, fireAlarmLegend })).toBe(2)
     expect(legendLineCountFor({ ...base, compatibilityWarningText: 'Compatibility: 1 device(s) not listed for a placed panel/hub: F1' })).toBe(2)
     expect(legendLineCountFor({ ...base, sensorKindsPresent: ['pir', 'beam'], cableLegend, fireAlarmLegend, compatibilityWarningText: 'x' })).toBe(5)
+  })
+
+  it('adds one line per wrapped view-filter note line, and none when nothing is hidden', () => {
+    expect(legendLineCountFor({ ...base, viewFilterNoteLines: ['Shown: walls', 'Hidden: cables,', 'hubs'] })).toBe(4)
+    expect(legendLineCountFor({ ...base, sensorKindsPresent: ['pir'], viewFilterNoteLines: ['Shown: none', 'Hidden: walls'] })).toBe(4)
   })
 })

@@ -54,4 +54,9 @@ export function cameraModelById(id: string): CameraModel | undefined {
   return modelsById.get(id);
 }
 
+/** A model id's form factor, undefined for an unknown id - the lookup callback the pure view-config helpers (`src/domain/view/`) take. */
+export function cameraFormFactorOf(modelId: string): CameraModel["formFactor"] | undefined {
+  return modelsById.get(modelId)?.formFactor;
+}
+
 export type { CameraModel, Brand, DetectionType, FormFactor, Lens, ManufacturerDori } from "./camera-catalog-schema";
