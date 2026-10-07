@@ -6,7 +6,9 @@
     "model": "DS-PDSMK-S-WE",
     "productLine": "ax-pro",
     "worksStandalone": false,
-    "certificationsAsPrinted": ["EN 14604 Certified"],
+    "certificationsAsPrinted": [
+      "EN 14604 Certified"
+    ],
     "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000038138/DS-PDSMK-S-WE_Datasheet.pdf",
     "sourceRetrieved": "2026-10-07",
     "priceVn": null,
@@ -19,11 +21,59 @@
     "model": "HF-S2",
     "productLine": "standalone",
     "worksStandalone": true,
-    "certificationsAsPrinted": ["Executive standard EN14604:2005"],
+    "certificationsAsPrinted": [
+      "Executive standard EN14604:2005"
+    ],
     "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000053750/HF-S2_datasheet_20230417.pdf",
     "sourceRetrieved": "2026-10-07",
     "priceVn": null,
     "purchaseLinks": null,
     "notes": "Datasheet also covers HF-S2E."
+  },
+  {
+    "id": "hikvision-ds-pdsmk-s-wb",
+    "kind": "smoke-detector",
+    "brand": "hikvision",
+    "model": "DS-PDSMK-S-WB",
+    "productLine": "ax-pro",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000045417/DS-PDSMK-S-WB_Datasheet_V1.0_202303.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": {
+      "amountVnd": 1470000,
+      "sourceUrl": "https://vuhoangtelecom.vn/san-pham/cam-bien-bao-khoi-khong-day-hikvision-ds-pdsmk-s-wb/",
+      "retrieved": "2026-10-07"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "vuhoangtelecom",
+        "url": "https://vuhoangtelecom.vn/san-pham/cam-bien-bao-khoi-khong-day-hikvision-ds-pdsmk-s-wb/",
+        "amountVnd": 1470000,
+        "retrieved": "2026-10-07"
+      }
+    }
+  },
+  {
+    "id": "hikvision-ds-pdsmk-e-wb",
+    "kind": "smoke-detector",
+    "brand": "hikvision",
+    "model": "DS-PDSMK-E-WB",
+    "productLine": "ax-pro",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000050558/DS-PDSMK-E-WB_Datasheet_20230724.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "mastery",
+        "url": "https://mastery.vn/sanpham/cam-bien-khoi-khong-day-hikvision-ds-pdsmk-e-wb/",
+        "amountVnd": null,
+        "retrieved": "2026-10-07"
+      }
+    }
   }
 ]

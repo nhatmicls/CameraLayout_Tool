@@ -14,6 +14,15 @@ import {
   baseKeypad,
   baseManualCallPoint,
   baseSounder,
+  baseKeyfob,
+  baseTagReader,
+  baseRelayModule,
+  baseRepeater,
+  baseCommunicator,
+  basePowerSupply,
+  baseAccessory,
+  baseMagneticContact,
+  baseEnvironmentDetector,
 } from "./fire-alarm-catalog-schema.test-fixtures";
 
 describe("fireAlarmModelSchema: one minimal record per kind", () => {
@@ -27,6 +36,15 @@ describe("fireAlarmModelSchema: one minimal record per kind", () => {
     ["keypad", baseKeypad],
     ["manual-call-point", baseManualCallPoint],
     ["sounder", baseSounder],
+    ["keyfob", baseKeyfob],
+    ["tag-reader", baseTagReader],
+    ["relay-module", baseRelayModule],
+    ["repeater", baseRepeater],
+    ["communicator", baseCommunicator],
+    ["power-supply", basePowerSupply],
+    ["accessory", baseAccessory],
+    ["magnetic-contact", baseMagneticContact],
+    ["environment-detector", baseEnvironmentDetector],
   ])("parses a minimal %s record and applies defaults", (_kind, record) => {
     const result = fireAlarmModelSchema.safeParse(record);
     expect(result.success, JSON.stringify(result.success ? null : result.error.issues)).toBe(true);

@@ -74,6 +74,15 @@ export const fireAlarmModelSchema = z
     accessorySchemaFor("keypad").extend(fireAlarmCommonFields),
     accessorySchemaFor("manual-call-point").extend(fireAlarmCommonFields),
     accessorySchemaFor("sounder").extend(fireAlarmCommonFields),
+    accessorySchemaFor("keyfob").extend(fireAlarmCommonFields),
+    accessorySchemaFor("tag-reader").extend(fireAlarmCommonFields),
+    accessorySchemaFor("relay-module").extend(fireAlarmCommonFields),
+    accessorySchemaFor("repeater").extend(fireAlarmCommonFields),
+    accessorySchemaFor("communicator").extend(fireAlarmCommonFields),
+    accessorySchemaFor("power-supply").extend(fireAlarmCommonFields),
+    accessorySchemaFor("accessory").extend(fireAlarmCommonFields),
+    accessorySchemaFor("magnetic-contact").extend(fireAlarmCommonFields),
+    accessorySchemaFor("environment-detector").extend(fireAlarmCommonFields),
   ])
   .superRefine((record, ctx) => {
     if (record.productLine === "standalone" && !record.worksStandalone) {

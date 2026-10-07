@@ -14,45 +14,44 @@ import { filterFireAlarmCatalogModels, groupControllerOptionsByPlacement } from 
 import { usePlacedFireAlarmModelIds } from './use-placed-fire-alarm-model-ids'
 import { FireAlarmCatalogModelCard } from './fire-alarm-catalog-model-card'
 
-interface FireAlarmCatalogListProps {
+interface ControlPanelCatalogListProps {
   disabled: boolean
 }
 
-// Only the kinds FIRE_ALARM_KIND_CATALOG_TAB maps to 'fire-alarm' (smoke/heat/co detectors,
-// call points, sounders) - the control-panel-tab kinds (including the two controller kinds)
-// never appear here, so a controller is never shown nor hidden by this tab's own filters.
+// Control panels/hubs plus their own modules and accessories (expander module, keypad,
+// keyfob, tag reader, relay module, repeater, communicator, power supply, accessory) -
+// every kind FIRE_ALARM_KIND_CATALOG_TAB maps to 'control-panel'.
 // Kind display order (panels and hubs first), not the data folders' alphabetical order; stable within a kind.
 const TAB_MODELS = fireAlarmModels
-  .filter((model) => FIRE_ALARM_KIND_CATALOG_TAB[model.kind] === 'fire-alarm')
+  .filter((model) => FIRE_ALARM_KIND_CATALOG_TAB[model.kind] === 'control-panel')
   .sort((a, b) => FIRE_ALARM_KIND_DISPLAY_ORDER.indexOf(a.kind) - FIRE_ALARM_KIND_DISPLAY_ORDER.indexOf(b.kind))
 
-// Computed once from the static catalog: only brands and kinds that have a record in this tab are offered.
 const BRAND_OPTIONS = [...new Set(TAB_MODELS.map((model) => model.brand))]
   .sort()
   .map((brand) => ({ value: brand, label: capitalizeFirstLetter(brand) }))
 
 const KIND_OPTIONS = FIRE_ALARM_KIND_DISPLAY_ORDER.filter(
-  (kind) => FIRE_ALARM_KIND_CATALOG_TAB[kind] === 'fire-alarm' && TAB_MODELS.some((model) => model.kind === kind),
+  (kind) => FIRE_ALARM_KIND_CATALOG_TAB[kind] === 'control-panel' && TAB_MODELS.some((model) => model.kind === kind),
 ).map((kind) => ({ value: kind, label: FIRE_ALARM_KIND_LABELS[kind] }))
 
-// The shared "works with" filter's options: every controller in the WHOLE catalog (control
-// panels/hubs live in the Control panel tab, not this one).
 const CONTROLLER_OPTIONS = fireAlarmModels
   .filter((model) => isFireAlarmControllerKind(model.kind))
   .map((model) => ({ value: model.id, label: model.model }))
 
 /**
- * Fire-alarm tab body: brand, type and the shared "works with" (a control
- * panel / hub) drop-downs and the filtered, draggable fire-alarm cards.
- * "Works with" keeps only the devices the chosen controller's own official
- * compatibility entries list (`filterFireAlarmCatalogModels`) - the
- * controller itself never appears here (it lives in the Control panel tab).
+ * Control panel tab body: control panels/hubs and their own modules /
+ * accessories, brand + type drop-downs scoped to this tab
+ * (`FIRE_ALARM_KIND_CATALOG_TAB`), and the shared "works with" filter -
+ * here it filters the chosen panel/hub's own modules/accessories while
+ * ALWAYS keeping the panel/hub itself visible (`filterFireAlarmCatalogModels`'s
+ * "keep `model.id === controllerId`" rule), unlike the Sensors and Fire
+ * alarm tabs where the controller is never a member of `TAB_MODELS` at all.
  */
-export function FireAlarmCatalogList({ disabled }: FireAlarmCatalogListProps) {
-  const brandFilter = useCatalogSidebarFilterStore((s) => s.fireAlarmCatalogBrandFilter)
-  const setBrandFilter = useCatalogSidebarFilterStore((s) => s.setFireAlarmCatalogBrandFilter)
-  const kindFilter = useCatalogSidebarFilterStore((s) => s.fireAlarmCatalogKindFilter)
-  const setKindFilter = useCatalogSidebarFilterStore((s) => s.setFireAlarmCatalogKindFilter)
+export function ControlPanelCatalogList({ disabled }: ControlPanelCatalogListProps) {
+  const brandFilter = useCatalogSidebarFilterStore((s) => s.controlPanelCatalogBrandFilter)
+  const setBrandFilter = useCatalogSidebarFilterStore((s) => s.setControlPanelCatalogBrandFilter)
+  const kindFilter = useCatalogSidebarFilterStore((s) => s.controlPanelCatalogKindFilter)
+  const setKindFilter = useCatalogSidebarFilterStore((s) => s.setControlPanelCatalogKindFilter)
   const controllerFilter = useCatalogSidebarFilterStore((s) => s.catalogControllerFilter)
   const setControllerFilter = useCatalogSidebarFilterStore((s) => s.setCatalogControllerFilter)
   const placedModelIds = usePlacedFireAlarmModelIds()
@@ -77,21 +76,21 @@ export function FireAlarmCatalogList({ disabled }: FireAlarmCatalogListProps) {
       <div className="mt-3 flex flex-col gap-2 text-xs">
         <CatalogFilterSelect
           label="Brand"
-          testId="fire-alarm-catalog-brand-filter"
+          testId="control-panel-catalog-brand-filter"
           value={brandFilter}
           options={BRAND_OPTIONS}
           onChange={setBrandFilter}
         />
         <CatalogFilterSelect
           label="Type"
-          testId="fire-alarm-catalog-kind-filter"
+          testId="control-panel-catalog-kind-filter"
           value={kindFilter}
           options={KIND_OPTIONS}
           onChange={(value) => setKindFilter(value as FireAlarmKind | 'all')}
         />
         <CatalogFilterSelect
           label="Works with"
-          testId="fire-alarm-catalog-controller-filter"
+          testId="control-panel-catalog-controller-filter"
           value={controllerFilter}
           groups={[
             { label: 'Placed in this project', options: controllerGroups.placed },
@@ -100,9 +99,9 @@ export function FireAlarmCatalogList({ disabled }: FireAlarmCatalogListProps) {
           onChange={setControllerFilter}
         />
         {controllerFilter !== 'all' && (
-          <p data-testid="fire-alarm-catalog-controller-filter-hint" className="text-neutral-400">
-            Showing only the devices the chosen panel / hub's official list names. A hidden device is "not listed", not proven
-            incompatible.
+          <p data-testid="control-panel-catalog-controller-filter-hint" className="text-neutral-400">
+            Showing the chosen panel / hub and the modules / accessories its official list names. A hidden device is "not
+            listed", not proven incompatible.
           </p>
         )}
       </div>
@@ -112,7 +111,7 @@ export function FireAlarmCatalogList({ disabled }: FireAlarmCatalogListProps) {
           <FireAlarmCatalogModelCard key={model.id} model={model} disabled={disabled} />
         ))}
         {filteredModels.length === 0 && (
-          <p data-testid="fire-alarm-catalog-empty-kind" className="text-xs text-neutral-400">
+          <p data-testid="control-panel-catalog-empty-kind" className="text-xs text-neutral-400">
             No datasheet-verified models match these filters.
           </p>
         )}

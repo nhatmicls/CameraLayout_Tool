@@ -8,15 +8,19 @@
 - Walls: opaque and glass segments with camera cone occlusion and sensor wall blocking; live redraw, endpoint snap, undo/redo.
 - Camera mounting + floor coverage: optional per-camera height and tilt with blind spot, far edge and DORI floor distances on the panel.
 - Cables: hand-drawn routes from devices to hubs; cable types with optional length limit and user-entered VND/m prices; provisional length estimate (route + vertical runs + slack + waste %) with scale-click-error range; over-length warnings; vertex editing; BOM rows; PNG legend; project schema v5.
-- Fire alarm / alarm panels: 12 Hikvision records (AX Hybrid PRO / AX PRO panels, hubs, detectors, expander, keypad, sounder, panic button); placement with F labels; coverage modes (datasheet or TCVN 5738:2021 circles with ceiling height); compatibility warnings (controller records only, "not listed" = no official source); BOM rows; CSV `Notes` column (breaking change); project schema v6.
-- View: 16 toggles for layer visibility (camera markers, FOV cones, per-form-factor, sensor markers, coverage, per-sensor-kind, hubs, cables, walls); collapsible panel with live counts and "N hidden" badge; PNG export follows on-screen config with view-filter note; fire-alarm devices always visible; reset on load; UI-only, not saved.
+- Fire alarm / alarm panels: 43 Hikvision records (AX Hybrid PRO / AX PRO panels, hubs, 9 accessory kinds, detectors, call points, sounders); placement with F labels; coverage modes (datasheet or TCVN 5738:2021 circles with ceiling height); compatibility warnings (controller records only, "not listed" = no official source, frequency-paired 433/868 MHz); filter by brand, kind, and "works with" controller (shared with Sensors and Control panel tabs); BOM rows; CSV `Notes` column (breaking change); project schema v6.
+- Fire alarm catalog expansion (AX HYBRID PRO): 28 additional Hikvision records (magnetic contacts 5, manual call points 6, keypads 3, sounders 4, relay modules 2, repeaters 1, communicators 3, environment detectors 1, keyfobs 1, tag readers 0, power supplies 0, accessories 0 - only models sold in Vietnam with official datasheets); Control panel sidebar tab (2 control panels + 2 wireless hubs + 9 accessory kinds); sensor catalog +12 records (10 PIR, 1 glass-break, 1 PIR-glass-break combo).
+- View: 16 toggles for layer visibility (camera markers, FOV cones, per-form-factor, sensor markers, coverage, per-sensor-kind, hubs, cables, walls); collapsible panel with live counts and "N hidden" badge; PNG export follows on-screen config with view-filter note; fire-alarm devices always visible; reset on load; UI-only, not saved. Sidebar filter state (brand, kind, "works with" controller - shared across Sensors/Fire alarm/Control panel tabs).
 
 ## Open
 
+- **Shopee links for fire-alarm devices**: source Shopee shop listings where available (none found in Oct 2026 AX HYBRID PRO expansion).
+- **Six datasheet-less AX HYBRID PRO models**: DS-PDPG12P-EG2, DS-PDSK-P, and four others sold in Vietnam but with no downloadable official datasheet - add when/if datasheets are published.
+- **868 MHz variants (`-WE`) sold in Vietnam**: currently the `-WE` AX PRO peripherals (868 MHz) are not sold in Vietnam - if/when they become available, add them.
 - **View toggles for fire-alarm devices**: add toggles to hide / show fire-alarm device markers and coverage circles (currently always visible).
 - **Cabling fire-alarm devices**: extend cable routes to include fire-alarm devices as endpoints (currently camera/sensor only).
 - **Dedicated fire-alarm panels**: Hikvision HF-C series (HF-C108, etc.) once official datasheets are available; wireless and wired detectors for them.
-- **More AX PRO peripherals**: wireless repeaters, additional detector models (DS-PDSMK-E-WE, DS-PS1-I-WE, DS-PS1-EV-WE) once datasheets obtained.
+- **More AX PRO peripherals**: additional detector models (DS-PDSMK-E-WE, DS-PS1-I-WE, DS-PS1-EV-WE) once datasheets obtained.
 - **Fire-alarm prices**: Vietnamese shop prices for remaining records as they become available.
 - **Hub-to-hub uplinks**: cables from hub to hub for daisy-chaining recorders or network switches.
 - **Live cable follow during drag**: cable route updates in real time while dragging a device, not only when dropped.

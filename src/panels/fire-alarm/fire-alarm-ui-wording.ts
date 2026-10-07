@@ -51,7 +51,6 @@ export const FIRE_COVERAGE_NOT_CERTIFIED_NOTE = 'this device is not certified to
 export const FIRE_COVERAGE_MODE_TCVN_HINT = 'standard-derived approximation, not datasheet'
 
 export const FIRE_COMPATIBILITY_CONTROLLER_HEADING = 'Compatible devices in this catalog'
-export const FIRE_COMPATIBILITY_PERIPHERAL_HEADING = 'Listed for'
 export const FIRE_COMPATIBILITY_NONE_RECORDED = 'No official compatibility data recorded'
 export const FIRE_COMPATIBILITY_WORKS_STANDALONE = 'Works standalone - no compatibility check needed'
 export const FIRE_COMPATIBILITY_NO_CONTROLLER_PLACED =
@@ -59,8 +58,6 @@ export const FIRE_COMPATIBILITY_NO_CONTROLLER_PLACED =
 /** "Not listed" - never "incompatible": the collected sources are not exhaustive (docs/fire-alarm-catalog-sources.md). */
 export const FIRE_COMPATIBILITY_NOT_LISTED = 'Not listed as compatible with any placed control panel or wireless hub.'
 
-/** Collapse a compatibility list past this many rows, behind a "Show all N" toggle. */
-export const FIRE_COMPATIBILITY_COLLAPSE_THRESHOLD = 5
 
 export const FIRE_COMPATIBILITY_WARNINGS_HEADING = 'Compatibility warnings'
 

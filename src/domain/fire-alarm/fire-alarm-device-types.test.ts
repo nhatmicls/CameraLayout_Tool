@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   DEFAULT_FIRE_ALARM_SETTINGS,
+  FIRE_ALARM_KIND_CATALOG_TAB,
   FIRE_ALARM_KIND_DISPLAY_ORDER,
   FIRE_ALARM_KIND_LABELS,
   isFireAlarmControllerKind,
@@ -15,11 +16,20 @@ const ALL_KINDS: readonly FireAlarmKind[] = [
   'wireless-hub',
   'expander-module',
   'keypad',
+  'keyfob',
+  'tag-reader',
+  'relay-module',
+  'repeater',
+  'communicator',
+  'power-supply',
+  'accessory',
   'smoke-detector',
   'heat-detector',
   'co-detector',
   'manual-call-point',
   'sounder',
+  'magnetic-contact',
+  'environment-detector',
 ]
 
 describe('isFireAlarmControllerKind', () => {
@@ -47,6 +57,45 @@ describe('FIRE_ALARM_KIND_LABELS', () => {
 describe('FIRE_ALARM_KIND_DISPLAY_ORDER', () => {
   it('lists every kind exactly once', () => {
     expect([...FIRE_ALARM_KIND_DISPLAY_ORDER].sort()).toEqual([...ALL_KINDS].sort())
+  })
+})
+
+describe('FIRE_ALARM_KIND_CATALOG_TAB', () => {
+  it('maps every kind to exactly one of the three catalog tabs', () => {
+    for (const kind of ALL_KINDS) {
+      expect(['sensors', 'fire-alarm', 'control-panel']).toContain(FIRE_ALARM_KIND_CATALOG_TAB[kind])
+    }
+  })
+
+  it('maps the two controller kinds and the other control-panel accessories to the control-panel tab', () => {
+    const controlPanelKinds = ALL_KINDS.filter((kind) => FIRE_ALARM_KIND_CATALOG_TAB[kind] === 'control-panel')
+    expect(controlPanelKinds.sort()).toEqual(
+      [
+        'control-panel',
+        'wireless-hub',
+        'expander-module',
+        'keypad',
+        'keyfob',
+        'tag-reader',
+        'relay-module',
+        'repeater',
+        'communicator',
+        'power-supply',
+        'accessory',
+      ].sort(),
+    )
+  })
+
+  it('maps the five fire-detector/sounder/call-point kinds to the fire-alarm tab', () => {
+    const fireAlarmKinds = ALL_KINDS.filter((kind) => FIRE_ALARM_KIND_CATALOG_TAB[kind] === 'fire-alarm')
+    expect(fireAlarmKinds.sort()).toEqual(
+      ['smoke-detector', 'heat-detector', 'co-detector', 'manual-call-point', 'sounder'].sort(),
+    )
+  })
+
+  it('maps magnetic-contact and environment-detector to the sensors tab', () => {
+    const sensorsKinds = ALL_KINDS.filter((kind) => FIRE_ALARM_KIND_CATALOG_TAB[kind] === 'sensors')
+    expect(sensorsKinds.sort()).toEqual(['magnetic-contact', 'environment-detector'].sort())
   })
 })
 

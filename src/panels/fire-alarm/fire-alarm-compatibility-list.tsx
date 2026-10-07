@@ -1,54 +1,42 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { fireAlarmModelById, type FireAlarmModel } from '../../catalog/fire-alarm/fire-alarm-catalog-loader'
-import { fireAlarmCompatibilityIndex } from '../../export/shared/fire-alarm-compatibility-index-singleton'
-import {
-  FIRE_COMPATIBILITY_COLLAPSE_THRESHOLD,
-  FIRE_COMPATIBILITY_CONTROLLER_HEADING,
-  FIRE_COMPATIBILITY_NONE_RECORDED,
-  FIRE_COMPATIBILITY_PERIPHERAL_HEADING,
-} from './fire-alarm-ui-wording'
+import { sensorModelById } from '../../catalog/sensor/sensor-catalog-loader'
+import { FireAlarmCompatibilityPopup, type FireAlarmCompatibilityPopupRow } from './fire-alarm-compatibility-popup'
+import { FIRE_COMPATIBILITY_CONTROLLER_HEADING, FIRE_COMPATIBILITY_NONE_RECORDED } from './fire-alarm-ui-wording'
 
 interface FireAlarmCompatibilityListProps {
   model: FireAlarmModel
 }
 
-interface CompatibilityRow {
-  key: string
-  label: string
-  sourceUrl: string
-  note?: string
-}
-
 /**
- * Both compatibility directions for one catalog record, shared by the
- * catalog card and the device properties panel so the two never disagree
- * (phase-07 risk register). A controller ('compatibleDevices' in model,
- * narrowed via the `in` check the catalog loader itself uses) shows
- * "Compatible devices in this catalog" from its own forward list; any other
- * kind shows "Listed for" from the reverse index built once at module load.
- * Collapses past `FIRE_COMPATIBILITY_COLLAPSE_THRESHOLD` rows behind a
- * "Show all N" toggle (phase-07 risk register: long lists blow up the card).
+ * Compatibility of one catalog record, shared by the catalog card and the
+ * device properties panel so the two never disagree. Compatibility is
+ * controller-centric (owner decision): the control panel / hub is the main
+ * item and lists the devices that work with it, so only a controller
+ * ('compatibleDevices' in model) renders anything here - a sensor or other
+ * peripheral shows no list of its own (its status against the PLACED
+ * controllers is the properties panel's status line). The card shows only
+ * the count and a button; the entries (source links, firmware notes) open
+ * in `FireAlarmCompatibilityPopup`, so a long list never stretches the card.
  */
 export function FireAlarmCompatibilityList({ model }: FireAlarmCompatibilityListProps) {
-  const [expanded, setExpanded] = useState(false)
-  const isController = 'compatibleDevices' in model
+  const [popupOpen, setPopupOpen] = useState(false)
+  const closePopup = useCallback(() => setPopupOpen(false), [])
+  if (!('compatibleDevices' in model)) return null
 
-  const rows: CompatibilityRow[] = isController
-    ? model.compatibleDevices.map((entry) => ({
-        key: entry.modelId,
-        label: fireAlarmModelById(entry.modelId)?.model ?? entry.modelId,
-        sourceUrl: entry.sourceUrl,
-        note: entry.note,
-      }))
-    : (fireAlarmCompatibilityIndex.controllersByDeviceModelId.get(model.id) ?? []).map((link) => ({
-        key: link.controllerModelId,
-        label: fireAlarmModelById(link.controllerModelId)?.model ?? link.controllerModelId,
-        sourceUrl: link.sourceUrl,
-        note: link.note,
-      }))
+  // A compatibleDevices entry may point at this catalog OR the sensor catalog (ids are
+  // disjoint - CLAUDE.md), e.g. an AX Hybrid PRO motion/glass-break detector that is a
+  // sensor-catalog record, not a fire-alarm one. Try this catalog first, then the sensor
+  // catalog, so the popup never shows a bare id when the model is known.
+  const rows: FireAlarmCompatibilityPopupRow[] = model.compatibleDevices.map((entry) => ({
+    key: entry.modelId,
+    label: fireAlarmModelById(entry.modelId)?.model ?? sensorModelById(entry.modelId)?.model ?? entry.modelId,
+    sourceUrl: entry.sourceUrl,
+    note: entry.note,
+  }))
 
-  const heading = isController ? FIRE_COMPATIBILITY_CONTROLLER_HEADING : FIRE_COMPATIBILITY_PERIPHERAL_HEADING
-  const testPrefix = isController ? 'fire-alarm-compat-controller' : 'fire-alarm-compat-peripheral'
+  const heading = FIRE_COMPATIBILITY_CONTROLLER_HEADING
+  const testPrefix = 'fire-alarm-compat-controller'
 
   if (rows.length === 0) {
     return (
@@ -58,39 +46,29 @@ export function FireAlarmCompatibilityList({ model }: FireAlarmCompatibilityList
     )
   }
 
-  const visibleRows = expanded ? rows : rows.slice(0, FIRE_COMPATIBILITY_COLLAPSE_THRESHOLD)
-
   return (
-    <div data-testid={`${testPrefix}-${model.id}`} className="mt-1">
-      <p className="text-neutral-500">{heading}</p>
-      <ul className="mt-0.5 list-inside list-disc text-neutral-600">
-        {visibleRows.map((row) => (
-          <li key={row.key}>
-            <a
-              href={row.sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="text-blue-600 hover:underline"
-            >
-              {row.label}
-            </a>
-            {row.note && <span className="text-neutral-400"> ({row.note})</span>}
-          </li>
-        ))}
-      </ul>
-      {rows.length > FIRE_COMPATIBILITY_COLLAPSE_THRESHOLD && !expanded && (
-        <button
-          type="button"
-          data-testid={`${testPrefix}-show-all-${model.id}`}
-          onClick={(e) => {
-            e.stopPropagation()
-            setExpanded(true)
-          }}
-          className="mt-0.5 text-blue-600 hover:underline"
-        >
-          Show all {rows.length}
-        </button>
+    <div data-testid={`${testPrefix}-${model.id}`} className="mt-1 flex items-center justify-between gap-2">
+      <span className="text-neutral-500">
+        {heading}: {rows.length}
+      </span>
+      <button
+        type="button"
+        data-testid={`${testPrefix}-open-${model.id}`}
+        onClick={(e) => {
+          e.stopPropagation()
+          setPopupOpen(true)
+        }}
+        className="flex-shrink-0 rounded border border-neutral-300 px-1.5 py-0.5 text-blue-600 hover:bg-neutral-50"
+      >
+        View list
+      </button>
+      {popupOpen && (
+        <FireAlarmCompatibilityPopup
+          title={`${model.model} - ${heading.toLowerCase()}`}
+          rows={rows}
+          testId={`${testPrefix}-popup-${model.id}`}
+          onClose={closePopup}
+        />
       )}
     </div>
   )

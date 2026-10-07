@@ -32,6 +32,29 @@ describe('useCatalogSidebarFilterStore catalog tab and kind filters', () => {
       fireAlarmCatalogKindFilter: 'smoke-detector',
     })
   })
+
+  it('switches to the control-panel tab and its own brand/kind filters independently', () => {
+    useCatalogSidebarFilterStore.getState().setCatalogTab('control-panel')
+    useCatalogSidebarFilterStore.getState().setControlPanelCatalogKindFilter('keypad')
+    useCatalogSidebarFilterStore.getState().setControlPanelCatalogBrandFilter('hikvision')
+    expect(useCatalogSidebarFilterStore.getState()).toMatchObject({
+      catalogTab: 'control-panel',
+      controlPanelCatalogKindFilter: 'keypad',
+      controlPanelCatalogBrandFilter: 'hikvision',
+    })
+  })
+})
+
+describe('useCatalogSidebarFilterStore shared "works with" controller filter', () => {
+  beforeEach(() => {
+    useCatalogSidebarFilterStore.setState({ catalogControllerFilter: 'all' })
+  })
+
+  it('defaults to "all" and is settable independently of the tab', () => {
+    expect(useCatalogSidebarFilterStore.getState().catalogControllerFilter).toBe('all')
+    useCatalogSidebarFilterStore.getState().setCatalogControllerFilter('hikvision-ds-pha48-ep')
+    expect(useCatalogSidebarFilterStore.getState().catalogControllerFilter).toBe('hikvision-ds-pha48-ep')
+  })
 })
 
 describe('useCatalogSidebarFilterStore catalog feature filters', () => {

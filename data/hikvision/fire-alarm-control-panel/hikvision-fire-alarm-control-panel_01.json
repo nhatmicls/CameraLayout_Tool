@@ -8,15 +8,270 @@
     "worksStandalone": false,
     "certificationsAsPrinted": [],
     "capacityAsPrinted": [
-      { "label": "Zones", "value": "48(8 on-board zones, max 4 wired PIRCAM)" },
-      { "label": "Tag", "value": "48" },
-      { "label": "Keyfob", "value": "48" },
-      { "label": "Keypad", "value": "4" },
-      { "label": "Wireless sounder", "value": "8" }
+      {
+        "label": "Zones",
+        "value": "48(8 on-board zones, max 4 wired PIRCAM)"
+      },
+      {
+        "label": "Tag",
+        "value": "48"
+      },
+      {
+        "label": "Keyfob",
+        "value": "48"
+      },
+      {
+        "label": "Keypad",
+        "value": "4"
+      },
+      {
+        "label": "Wireless sounder",
+        "value": "8"
+      }
     ],
     "compatibleDevices": [
       {
+        "modelId": "hikvision-ds-pdp15p-eg2-wb-b",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.0.5 build 240111 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.5 build 231009 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdp18-hm-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.7 build 250524 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdc15-eg2-wb-b",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.0.5 build 240111 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.5 build 231009 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdc10am-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.0.2 build 220719 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdd12p-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.0.2 build 220719 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdc10dm-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.0.2 build 220719 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdtt15am-lm-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.7 build 250524 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdqp15am-lm-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.7 build 250524 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdpc12p-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: listed with no minimum firmware printed (\"—\"), read as compatible with every firmware version; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB."
+      },
+      {
+        "modelId": "hikvision-ds-pdmc-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.0.3 build 230107 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.4 build 230105 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdmc-eg2-wb-b",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.0.5 build 240111 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.5 build 231009 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdmcs-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.0.2 build 220719 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdmck-eg2-wb-b",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.1 build 241016 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.6 build 240914 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdmcx-e-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.7 build 250524 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdbg8-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.7 build 250524 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdpg12p-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.0.2 build 220719 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdtph-e-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.0.2 build 220719 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdsmk-s-we",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: listed with no minimum firmware printed (\"—\"), read as compatible with every firmware version; wireless device - needs the bus wireless receiver DS-PM1-RT-HWE."
+      },
+      {
+        "modelId": "hikvision-ds-pdsmk-s-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: listed with no minimum firmware printed (\"—\"), read as compatible with every firmware version; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB."
+      },
+      {
+        "modelId": "hikvision-ds-pdsmk-e-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.7 build 250524 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdht-e-we",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWE (V1.0.7 build 250524 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdht-e-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.7 build 250524 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdco-e-we",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWE (V1.0.7 build 250524 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdco-e-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.7 build 250524 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pk1-lt-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: listed with no minimum firmware printed (\"—\"), read as compatible with every firmware version; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB."
+      },
+      {
+        "modelId": "hikvision-ds-pkf1-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.0.2 build 220719 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdeb1-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.0.2 build 220719 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdeb1-eg2-wb-b",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.0.5 build 240111 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.5 build 231009 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdeb2-eg2-wb-b",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.0.5 build 240111 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.5 build 231009 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdebp1-eg2-we",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.0.2 build 220719 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWE (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdebp1-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.0.2 build 220719 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdebp2-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.7 build 250524 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-ps1-i-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.0.2 build 220719 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-ps1-ii-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: listed with no minimum firmware printed (\"—\"), read as compatible with every firmware version; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB."
+      },
+      {
+        "modelId": "hikvision-ds-ps1-e-we",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.0.2 build 220719 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWE (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-ps1-e-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.0.2 build 220719 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pm1-o1h-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.0.2 build 220719 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pr1-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: listed with no minimum firmware printed (\"—\"), read as compatible with every firmware version; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB."
+      },
+      {
+        "modelId": "hikvision-ds-pdpc12p-eg2",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.0.2 build 220719 or later."
+      },
+      {
         "modelId": "hikvision-ds-pk1-lrt-hwe",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.0.2 build 220719 or later."
+      },
+      {
+        "modelId": "hikvision-ds-pk1-lrt-hwb",
         "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
         "sourceRetrieved": "2026-10-07",
         "note": "Official compatibility list: panel firmware V1.0.2 build 220719 or later."
@@ -28,28 +283,34 @@
         "note": "Official compatibility list: panel firmware V1.0.2 build 220719 or later."
       },
       {
-        "modelId": "hikvision-ds-pdht-e-we",
+        "modelId": "hikvision-ds-pm1-o4l-h",
         "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
         "sourceRetrieved": "2026-10-07",
-        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; needs the bus wireless receiver DS-PM1-RT-HWE (V1.0.7 build 250524 or later), which is not in this catalog."
+        "note": "Official compatibility list: panel firmware V1.0.2 build 220719 or later."
       },
       {
-        "modelId": "hikvision-ds-pdco-e-we",
+        "modelId": "hikvision-ds-pm1-rt-hwb",
         "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
         "sourceRetrieved": "2026-10-07",
-        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; needs the bus wireless receiver DS-PM1-RT-HWE (V1.0.7 build 250524 or later), which is not in this catalog."
+        "note": "Official compatibility list: panel firmware V1.0.2 build 220719 or later."
       },
       {
-        "modelId": "hikvision-ds-pdebp1-eg2-we",
+        "modelId": "hikvision-ds-pm2-p",
         "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
         "sourceRetrieved": "2026-10-07",
-        "note": "Official compatibility list: panel firmware V1.0.2 build 220719 or later; needs the bus wireless receiver DS-PM1-RT-HWE (V1.0.1 build 220723 or later), which is not in this catalog."
+        "note": "Official compatibility list: listed with no minimum firmware printed (\"—\"), read as compatible with every firmware version."
       },
       {
-        "modelId": "hikvision-ds-ps1-e-we",
+        "modelId": "hikvision-ds-pm2-g",
         "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
         "sourceRetrieved": "2026-10-07",
-        "note": "Official compatibility list: panel firmware V1.0.2 build 220719 or later; needs the bus wireless receiver DS-PM1-RT-HWE (V1.0.1 build 220723 or later), which is not in this catalog. Listed as DS-PS1-E-WE/RED, /BLUE, /AMBER."
+        "note": "Official compatibility list: listed with no minimum firmware printed (\"—\"), read as compatible with every firmware version."
+      },
+      {
+        "modelId": "hikvision-ds-pm2-s-au",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: listed with no minimum firmware printed (\"—\"), read as compatible with every firmware version."
       }
     ],
     "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000054763/DS-PHA48-EP_Datasheet_20240118.pdf",
@@ -66,15 +327,270 @@
     "worksStandalone": false,
     "certificationsAsPrinted": [],
     "capacityAsPrinted": [
-      { "label": "Zones", "value": "64 (8 On-board zones, max 8 wired PIRCAM)" },
-      { "label": "Tag", "value": "64" },
-      { "label": "Keyfob", "value": "64" },
-      { "label": "Keypad", "value": "8" },
-      { "label": "Wireless sounder", "value": "16" }
+      {
+        "label": "Zones",
+        "value": "64 (8 On-board zones, max 8 wired PIRCAM)"
+      },
+      {
+        "label": "Tag",
+        "value": "64"
+      },
+      {
+        "label": "Keyfob",
+        "value": "64"
+      },
+      {
+        "label": "Keypad",
+        "value": "8"
+      },
+      {
+        "label": "Wireless sounder",
+        "value": "16"
+      }
     ],
     "compatibleDevices": [
       {
+        "modelId": "hikvision-ds-pdp15p-eg2-wb-b",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.5 build 231009 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdp18-hm-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.7 build 250524 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdc15-eg2-wb-b",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.5 build 231009 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdc10am-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdd12p-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdc10dm-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdtt15am-lm-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.7 build 250524 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdqp15am-lm-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.7 build 250524 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdpc12p-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: listed with no minimum firmware printed (\"—\"), read as compatible with every firmware version; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB."
+      },
+      {
+        "modelId": "hikvision-ds-pdmc-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.4 build 230105 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdmc-eg2-wb-b",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.5 build 231009 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdmcs-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdmck-eg2-wb-b",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.1 build 241016 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.6 build 240914 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdmcx-e-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.7 build 250524 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdbg8-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.7 build 250524 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdpg12p-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdtph-e-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdsmk-s-we",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: listed with no minimum firmware printed (\"—\"), read as compatible with every firmware version; wireless device - needs the bus wireless receiver DS-PM1-RT-HWE."
+      },
+      {
+        "modelId": "hikvision-ds-pdsmk-s-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: listed with no minimum firmware printed (\"—\"), read as compatible with every firmware version; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB."
+      },
+      {
+        "modelId": "hikvision-ds-pdsmk-e-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.7 build 250524 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdht-e-we",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWE (V1.0.7 build 250524 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdht-e-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.7 build 250524 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdco-e-we",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWE (V1.0.7 build 250524 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdco-e-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.7 build 250524 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pk1-lt-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: listed with no minimum firmware printed (\"—\"), read as compatible with every firmware version; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB."
+      },
+      {
+        "modelId": "hikvision-ds-pkf1-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdeb1-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdeb1-eg2-wb-b",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.5 build 231009 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdeb2-eg2-wb-b",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.5 build 231009 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdebp1-eg2-we",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWE (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdebp1-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdebp2-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.7 build 250524 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-ps1-i-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-ps1-ii-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: listed with no minimum firmware printed (\"—\"), read as compatible with every firmware version; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB."
+      },
+      {
+        "modelId": "hikvision-ds-ps1-e-we",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWE (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-ps1-e-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pm1-o1h-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pr1-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: listed with no minimum firmware printed (\"—\"), read as compatible with every firmware version; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB."
+      },
+      {
+        "modelId": "hikvision-ds-pdpc12p-eg2",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later."
+      },
+      {
         "modelId": "hikvision-ds-pk1-lrt-hwe",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later."
+      },
+      {
+        "modelId": "hikvision-ds-pk1-lrt-hwb",
         "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
         "sourceRetrieved": "2026-10-07",
         "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later."
@@ -86,33 +602,419 @@
         "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later."
       },
       {
-        "modelId": "hikvision-ds-pdht-e-we",
+        "modelId": "hikvision-ds-pm1-o4l-h",
         "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
         "sourceRetrieved": "2026-10-07",
-        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; needs the bus wireless receiver DS-PM1-RT-HWE (V1.0.7 build 250524 or later), which is not in this catalog."
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later."
       },
       {
-        "modelId": "hikvision-ds-pdco-e-we",
+        "modelId": "hikvision-ds-pm1-rt-hwb",
         "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
         "sourceRetrieved": "2026-10-07",
-        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; needs the bus wireless receiver DS-PM1-RT-HWE (V1.0.7 build 250524 or later), which is not in this catalog."
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later."
       },
       {
-        "modelId": "hikvision-ds-pdebp1-eg2-we",
+        "modelId": "hikvision-ds-pm2-p",
         "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
         "sourceRetrieved": "2026-10-07",
-        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; needs the bus wireless receiver DS-PM1-RT-HWE (V1.0.1 build 220723 or later), which is not in this catalog."
+        "note": "Official compatibility list: listed with no minimum firmware printed (\"—\"), read as compatible with every firmware version."
       },
       {
-        "modelId": "hikvision-ds-ps1-e-we",
+        "modelId": "hikvision-ds-pm2-g",
         "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
         "sourceRetrieved": "2026-10-07",
-        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; needs the bus wireless receiver DS-PM1-RT-HWE (V1.0.1 build 220723 or later), which is not in this catalog. Listed as DS-PS1-E-WE/RED, /BLUE, /AMBER."
+        "note": "Official compatibility list: listed with no minimum firmware printed (\"—\"), read as compatible with every firmware version."
+      },
+      {
+        "modelId": "hikvision-ds-pm2-s-au",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: listed with no minimum firmware printed (\"—\"), read as compatible with every firmware version."
       }
     ],
     "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138169/DS-PHA64-LPB_Datasheet_20240401.pdf",
     "sourceRetrieved": "2026-10-07",
     "priceVn": null,
-    "purchaseLinks": null
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "mastery",
+        "url": "https://mastery.vn/sanpham/bang-dieu-khien-ax-hybrid-pro-hikvision-ds-pha64-lpb/",
+        "amountVnd": null,
+        "retrieved": "2026-10-07"
+      }
+    }
+  },
+  {
+    "id": "hikvision-ds-pha48-ep-b",
+    "kind": "control-panel",
+    "brand": "hikvision",
+    "model": "DS-PHA48-EP(B)",
+    "productLine": "ax-hybrid",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "capacityAsPrinted": [
+      {
+        "label": "Zones",
+        "value": "48(8 on-board zones, max 4 wired PIRCAM)"
+      },
+      {
+        "label": "Tag",
+        "value": "48"
+      },
+      {
+        "label": "Keyfob",
+        "value": "48"
+      },
+      {
+        "label": "Keypad",
+        "value": "4"
+      },
+      {
+        "label": "Wireless sounder",
+        "value": "8"
+      }
+    ],
+    "compatibleDevices": [
+      {
+        "modelId": "hikvision-ds-pdp15p-eg2-wb-b",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.5 build 231009 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdp18-hm-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.7 build 250524 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdc15-eg2-wb-b",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.5 build 231009 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdc10am-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdd12p-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdc10dm-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdtt15am-lm-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.7 build 250524 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdqp15am-lm-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.7 build 250524 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdpc12p-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: listed with no minimum firmware printed (\"—\"), read as compatible with every firmware version; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB."
+      },
+      {
+        "modelId": "hikvision-ds-pdmc-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.4 build 230105 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdmc-eg2-wb-b",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.5 build 231009 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdmcs-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdmck-eg2-wb-b",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.1 build 241016 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.6 build 240914 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdmcx-e-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.7 build 250524 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdbg8-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.7 build 250524 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdpg12p-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdtph-e-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdsmk-s-we",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: listed with no minimum firmware printed (\"—\"), read as compatible with every firmware version; wireless device - needs the bus wireless receiver DS-PM1-RT-HWE."
+      },
+      {
+        "modelId": "hikvision-ds-pdsmk-s-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: listed with no minimum firmware printed (\"—\"), read as compatible with every firmware version; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB."
+      },
+      {
+        "modelId": "hikvision-ds-pdsmk-e-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.7 build 250524 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdht-e-we",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWE (V1.0.7 build 250524 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdht-e-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.7 build 250524 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdco-e-we",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWE (V1.0.7 build 250524 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdco-e-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.7 build 250524 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pk1-lt-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: listed with no minimum firmware printed (\"—\"), read as compatible with every firmware version; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB."
+      },
+      {
+        "modelId": "hikvision-ds-pkf1-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdeb1-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdeb1-eg2-wb-b",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.5 build 231009 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdeb2-eg2-wb-b",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.5 build 231009 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdebp1-eg2-we",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWE (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdebp1-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pdebp2-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.2 build 250808 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.7 build 250524 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-ps1-i-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-ps1-ii-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: listed with no minimum firmware printed (\"—\"), read as compatible with every firmware version; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB."
+      },
+      {
+        "modelId": "hikvision-ds-ps1-e-we",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWE (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-ps1-e-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pm1-o1h-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB (V1.0.1 build 220723 or later)."
+      },
+      {
+        "modelId": "hikvision-ds-pr1-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: listed with no minimum firmware printed (\"—\"), read as compatible with every firmware version; wireless device - needs the bus wireless receiver DS-PM1-RT-HWB."
+      },
+      {
+        "modelId": "hikvision-ds-pdpc12p-eg2",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later."
+      },
+      {
+        "modelId": "hikvision-ds-pk1-lrt-hwe",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later."
+      },
+      {
+        "modelId": "hikvision-ds-pk1-lrt-hwb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later."
+      },
+      {
+        "modelId": "hikvision-ds-pm1-i8o2-h",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later."
+      },
+      {
+        "modelId": "hikvision-ds-pm1-o4l-h",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later."
+      },
+      {
+        "modelId": "hikvision-ds-pm1-rt-hwb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later."
+      },
+      {
+        "modelId": "hikvision-ds-pm2-p",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: listed with no minimum firmware printed (\"—\"), read as compatible with every firmware version."
+      },
+      {
+        "modelId": "hikvision-ds-pm2-g",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: listed with no minimum firmware printed (\"—\"), read as compatible with every firmware version."
+      },
+      {
+        "modelId": "hikvision-ds-pm2-s-au",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official compatibility list: listed with no minimum firmware printed (\"—\"), read as compatible with every firmware version."
+      }
+    ],
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138168/DS-PHA48-EPB_Datasheet_20240401.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "mastery",
+        "url": "https://mastery.vn/sanpham/bang-dieu-khien-ax-hybrid-pro-hikvision-ds-pha48-epb/",
+        "amountVnd": null,
+        "retrieved": "2026-10-07"
+      }
+    }
+  },
+  {
+    "id": "hikvision-ds-pha20-w2p",
+    "kind": "control-panel",
+    "brand": "hikvision",
+    "model": "DS-PHA20-W2P",
+    "productLine": "ax-hybrid",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "capacityAsPrinted": [
+      {
+        "label": "Zones",
+        "value": "20"
+      },
+      {
+        "label": "Tag",
+        "value": "12 (with DS-PK-LRT keypad)"
+      },
+      {
+        "label": "Keypad",
+        "value": "9"
+      },
+      {
+        "label": "Wireless sounder",
+        "value": "2"
+      },
+      {
+        "label": "Keyfob",
+        "value": "8"
+      }
+    ],
+    "compatibleDevices": [],
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000006930/DS-PHA20-W2P_Datasheet.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "mastery",
+        "url": "https://mastery.vn/sanpham/bang-dieu-khien-ax-hikvision-ds-pha20-w2p/",
+        "amountVnd": null,
+        "retrieved": "2026-10-07"
+      }
+    },
+    "notes": "Older AX Hybrid panel (datasheet title \"Hybrid Control Panel\"): Hikvision's AX HYBRID PRO compatibility list does not cover it, so no compatibility entries are recorded."
   }
 ]

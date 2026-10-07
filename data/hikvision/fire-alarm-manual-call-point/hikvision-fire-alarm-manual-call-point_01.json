@@ -12,5 +12,114 @@
     "priceVn": null,
     "purchaseLinks": null,
     "notes": "Portable emergency (panic) button, not a fire manual call point."
+  },
+  {
+    "id": "hikvision-ds-pdeb1-eg2-wb",
+    "kind": "manual-call-point",
+    "brand": "hikvision",
+    "model": "DS-PDEB1-EG2-WB",
+    "productLine": "ax-pro",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://www.hikvision.com/content/dam/hikvision/products/S000000001/S000000601/S000000933/S000000935/OFR000937/M000039129/Data_Sheet/DS-PDEB1-EG2-WB_Datasheet_20201201.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": {
+      "amountVnd": 589000,
+      "sourceUrl": "https://vuhoangtelecom.vn/san-pham/nut-an-bao-dong-khan-cap-hikvision-ds-pdeb1-eg2-wb/",
+      "retrieved": "2026-10-07"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "vuhoangtelecom",
+        "url": "https://vuhoangtelecom.vn/san-pham/nut-an-bao-dong-khan-cap-hikvision-ds-pdeb1-eg2-wb/",
+        "amountVnd": 589000,
+        "retrieved": "2026-10-07"
+      }
+    }
+  },
+  {
+    "id": "hikvision-ds-pdeb1-eg2-wb-b",
+    "kind": "manual-call-point",
+    "brand": "hikvision",
+    "model": "DS-PDEB1-EG2-WB(B)",
+    "productLine": "ax-pro",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000056570/DS-PDEB1-EG2-WBB_Datasheet_V1.0_202303.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "mastery",
+        "url": "https://mastery.vn/sanpham/nut-an-bao-dong-khan-cap-hikvision-ds-pdeb1-eg2-wbb/",
+        "amountVnd": null,
+        "retrieved": "2026-10-07"
+      }
+    }
+  },
+  {
+    "id": "hikvision-ds-pdeb2-eg2-wb-b",
+    "kind": "manual-call-point",
+    "brand": "hikvision",
+    "model": "DS-PDEB2-EG2-WB(B)",
+    "productLine": "ax-pro",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000056571/DS-PDEB2-EG2-WBB_Datasheet_V1.0_202303.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "mastery",
+        "url": "https://mastery.vn/sanpham/nut-an-bao-dong-khan-cap-hikvision-ds-pdeb2-eg2-wbb/",
+        "amountVnd": null,
+        "retrieved": "2026-10-07"
+      }
+    }
+  },
+  {
+    "id": "hikvision-ds-pdebp1-eg2-wb",
+    "kind": "manual-call-point",
+    "brand": "hikvision",
+    "model": "DS-PDEBP1-EG2-WB",
+    "productLine": "ax-pro",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000039127/DS-PDEBP1-EG2-WB_Datasheet_V1.0_202303.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "mastery",
+        "url": "https://mastery.vn/sanpham/nut-an-bao-dong-khan-cap-hikvision-ds-pdebp1-eg2-wb/",
+        "amountVnd": null,
+        "retrieved": "2026-10-07"
+      }
+    }
+  },
+  {
+    "id": "hikvision-ds-pdebp2-eg2-wb",
+    "kind": "manual-call-point",
+    "brand": "hikvision",
+    "model": "DS-PDEBP2-EG2-WB",
+    "productLine": "ax-pro",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000039128/DS-PDEBP2-EG2-WB_Datasheet_V1.0_202303.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "mastery",
+        "url": "https://mastery.vn/sanpham/nut-an-khan-cap-khong-day-hikvision-ds-pdebp2-eg2-wb/",
+        "amountVnd": null,
+        "retrieved": "2026-10-07"
+      }
+    }
   }
 ]

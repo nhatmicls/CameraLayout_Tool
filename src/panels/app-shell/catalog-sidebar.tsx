@@ -4,6 +4,7 @@ import { useCatalogSidebarFilterStore, type CatalogTab } from '../../state/catal
 import { CameraCatalogList } from '../camera/camera-catalog-list'
 import { SensorCatalogList } from '../sensor/sensor-catalog-list'
 import { FireAlarmCatalogList } from '../fire-alarm/fire-alarm-catalog-list'
+import { ControlPanelCatalogList } from '../fire-alarm/control-panel-catalog-list'
 import { DoriLegend } from '../camera/dori-legend'
 import { SensorCoverageLegend } from '../sensor/sensor-coverage-legend'
 
@@ -11,21 +12,24 @@ const TABS: ReadonlyArray<{ tab: CatalogTab; label: string }> = [
   { tab: 'cameras', label: 'Cameras' },
   { tab: 'sensors', label: 'Sensors' },
   { tab: 'fire-alarm', label: 'Fire alarm' },
+  { tab: 'control-panel', label: 'Control panel' },
 ]
 
 // Lookup objects (not nested ternaries) for the tab's list body and footer legend - the
-// fire-alarm tab has no footer legend yet (its coverage circle has no colour-coded bands to
-// key, unlike DORI/sensor kinds), so that slot is null.
+// fire-alarm and control-panel tabs have no footer legend (their markers have no colour-
+// coded bands to key, unlike DORI/sensor kinds), so those slots are null.
 const TAB_LIST: Record<CatalogTab, ComponentType<{ disabled: boolean }>> = {
   cameras: CameraCatalogList,
   sensors: SensorCatalogList,
   'fire-alarm': FireAlarmCatalogList,
+  'control-panel': ControlPanelCatalogList,
 }
 
 const TAB_LEGEND: Record<CatalogTab, ComponentType | null> = {
   cameras: DoriLegend,
   sensors: SensorCoverageLegend,
   'fire-alarm': null,
+  'control-panel': null,
 }
 
 /**
@@ -48,7 +52,7 @@ export function CatalogSidebar() {
   return (
     <aside className="flex w-[280px] flex-shrink-0 flex-col overflow-hidden border-r border-neutral-200 bg-white">
       <div className="flex-1 overflow-y-auto p-3">
-        <div className="flex gap-1" role="tablist">
+        <div className="flex flex-wrap gap-1" role="tablist">
           {TABS.map(({ tab, label }) => (
             <button
               key={tab}
@@ -57,7 +61,7 @@ export function CatalogSidebar() {
               aria-selected={catalogTab === tab}
               data-testid={`catalog-tab-${tab}`}
               onClick={() => setCatalogTab(tab)}
-              className={`flex-1 rounded px-2 py-1.5 text-sm font-semibold transition-colors ${
+              className={`min-w-[60px] flex-1 rounded px-1 py-1.5 text-[11px] font-semibold leading-tight transition-colors ${
                 catalogTab === tab ? 'bg-blue-600 text-white' : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
               }`}
             >

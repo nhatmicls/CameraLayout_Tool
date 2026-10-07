@@ -18,19 +18,41 @@ calls once the page has loaded.
   means the datasheet does not print it, not that the camera lacks it. Filter by brand, form
   factor, "only models with a listed price", outdoor rating (IP65+), built-in mic, and
   human / vehicle detection.
-- **Sensors**: the sidebar's Sensors tab holds 11 records across Hikvision, Dahua, Bosch and
-  Takex (3 PIR motion, 3 IR beam, 3 vibration / glass-break, 2 thermal), every spec copied
-  from the official datasheet or the manufacturer's install manual. Thermal cameras live
-  here, not in the camera catalog. Drag a card onto the plan like a camera; sensors are
-  numbered S1, S2... and have their own properties panel.
-- **Fire alarm / alarm panels**: the sidebar's Fire alarm tab holds 12 Hikvision records (2 AX
-  Hybrid PRO control panels, 1 wired expander, 1 keypad, 2 AX PRO wireless hubs, 3 wireless
-  detectors (smoke / heat / CO), 1 manual call point / emergency button, 1 wireless sounder,
-  1 standalone smoke detector), every spec copied from the official Hikvision datasheet or
-  the AX PRO user manual. The AX lines are intrusion alarm systems (the AX PRO manual lists
-  smoke, heat and CO detectors as peripherals), not certified fire-alarm control panels; the
-  emergency button is a portable panic button, not a fire call point. Drag a card onto the plan (scale required); devices
-  are numbered F1, F2... Placement: select, drag, delete, undo/redo.
+- **Sensors**: the sidebar's Sensors tab holds 26 records across Hikvision, Dahua, Bosch and
+  Takex (17 PIR motion, 3 IR beam, 4 vibration / glass-break, 2 thermal), every spec copied
+  from the official datasheet or the manufacturer's install manual. The tab also lists
+  two marker-only kinds from the alarm catalog - magnetic contacts (6) and an environment
+  (temperature) detector (1): they are placed as a marker with no coverage shape and are
+  numbered F1, F2... like the other alarm devices. Thermal cameras live here, not in the
+  camera catalog. Drag a card onto the plan like a camera; sensors are numbered S1, S2... and
+  have their own properties panel. Filters: Brand, Type and "Works with" drop-downs (see
+  Control panel tab).
+  - PIR: a sector at the datasheet range and angle (a ceiling PIR is a full 360° circle).
+    Range and angle can be reduced, never raised above the datasheet.
+  - IR beam: a straight line between two draggable ends (transmitter and receiver). An
+    Indoor / Outdoor switch picks which datasheet maximum distance applies. The line turns
+    dashed with a warning when it is longer than that maximum or an opaque wall crosses it;
+    crossing glass only adds a note.
+  - Vibration / glass-break: a circle of the datasheet radius.
+  - Thermal: a flat sector at the datasheet HFOV, banded by the datasheet's human detection /
+    recognition / identification distances - these are not EN 62676-4 DORI. A new thermal
+    cone is drawn at 100 m or the datasheet detection distance, whichever is smaller; you can
+    raise it to the datasheet figure.
+  - Magnetic contact / environment detector: markers only, no coverage shape, labelled F1,
+    F2... with the other alarm devices.
+
+  Limits: coverage shapes are the datasheet's nominal figures - a planning aid, not a
+  detection guarantee. Real coverage depends on mounting, lens masks, temperature and
+  environment. Mounting height and tilt are not modelled for sensors. A datasheet that prints
+  feet only is converted to metres (x 0.3048, rounded to 0.1 m) and marked "converted from
+  ft"; no current record needs it.
+- **Fire alarm / alarm panels**: the sidebar's Fire alarm tab holds Hikvision detectors and
+  call points: 4 smoke (including 1 standalone), 2 heat, 2 CO, 6 manual call points / panic
+  buttons, 4 sounders (18 records); specs copied from the official Hikvision datasheet or the
+  AX PRO user manual. The AX lines are intrusion alarm systems (the AX PRO manual lists
+  detectors as peripherals), not certified fire-alarm control panels; emergency buttons are
+  portable panic buttons, not fire call points. Drag a card onto the plan (scale required);
+  devices are numbered F1, F2... Placement: select, drag, delete, undo/redo.
   - **Coverage modes** (toolbar control, shown when the Fire alarm tab is active or a device
     is placed): "Datasheet" draws markers only (no detector prints a protection area). "TCVN
     5738" mode (Vietnam standard, clause 6.13 Bảng 1 for smoke up to 12 m, clause 6.15.1 Bảng 2
@@ -46,37 +68,38 @@ calls once the page has loaded.
     against the official standard text. The table numbers were read from the full-text
     reprint on dulieuphapluat.vn; the toolbar control and the properties panel link to that
     page so you can open the document the circles are based on.
-  - **Compatibility**: stored only on controller records (AX Hybrid PRO panels, AX PRO hubs),
-    each entry a row of one of Hikvision's two official model-by-model lists (AXPRO Series
-    Compatibility List, AX HYBRID PRO Device Compatibility List), linked from the card with
-    the minimum firmware the list prints. As listed on 2026-10-07: the 868 MHz hub
-    DS-PWA96-M-WE supports all five wireless peripherals in the catalog; the AX Hybrid PRO
-    panels support the keypad, the expander and, through a bus wireless receiver that is not
-    in the catalog, the heat detector, CO detector, emergency button and sounder - but the
-    smoke detector DS-PDSMK-S-WE has no version on that list, so it shows as "not listed"
-    for them; the 433 MHz hub DS-PWA96-M2H-WB has no entries because the catalog holds only
-    the 868 MHz (`-WE`) peripherals. Cards show "Compatible devices in this catalog".
-    Warnings appear when a device is "not listed" for any placed panel / hub (one aggregated
-    line when no panel / hub is placed). "Not listed" means no official statement was found,
-    not proof of incompatibility. Standalone devices are never warned. Capacity is shown as
-    printed on the datasheet (display only; no assignment or capacity checks).
-  - PIR: a sector at the datasheet range and angle (a ceiling PIR is a full 360° circle).
-    Range and angle can be reduced, never raised above the datasheet.
-  - IR beam: a straight line between two draggable ends (transmitter and receiver). An
-    Indoor / Outdoor switch picks which datasheet maximum distance applies. The line turns
-    dashed with a warning when it is longer than that maximum or an opaque wall crosses it;
-    crossing glass only adds a note.
-  - Vibration / glass-break: a circle of the datasheet radius.
-  - Thermal: a flat sector at the datasheet HFOV, banded by the datasheet's human detection /
-    recognition / identification distances - these are not EN 62676-4 DORI. A new thermal
-    cone is drawn at 100 m or the datasheet detection distance, whichever is smaller; you can
-    raise it to the datasheet figure.
-
-  Limits: coverage shapes are the datasheet's nominal figures - a planning aid, not a
-  detection guarantee. Real coverage depends on mounting, lens masks, temperature and
-  environment. Mounting height and tilt are not modelled for sensors. A datasheet that prints
-  feet only is converted to metres (x 0.3048, rounded to 0.1 m) and marked "converted from
-  ft"; no current record needs it.
+  - **Compatibility** is controller-centric: it is stored only on control panel / hub records
+    and shown only on their cards (Control panel tab) as a count with a "View list" button;
+    the popup lists each device with its official source link and firmware note. Every entry
+    is a row of one of Hikvision's two official model-by-model lists (AXPRO Series
+    Compatibility List, AX HYBRID PRO Device Compatibility List). Two readings to know about:
+    a "—" cell on the AX HYBRID PRO list is taken as "compatible with every firmware
+    version" (the page prints no legend), and the AXPRO list writes rows as "-WE/WB", so each
+    variant is attached to the hub of the same frequency (868 MHz DS-PWA96-M-WE with `-WE`,
+    433 MHz DS-PWA96-M2H-WB with `-WB`). Wireless devices on an AX Hybrid PRO panel need the
+    bus wireless receiver DS-PM1-RT-HWB (in the Control panel tab); the app does not check
+    that one is placed.
+  - Warnings: a placed alarm device (any tab's F-numbered device) is flagged when it is "not
+    listed" for any placed panel / hub, with one combined line when no panel / hub is placed.
+    "Not listed" means no official statement was found, not proof of incompatibility.
+    Standalone devices are never flagged, and placed coverage sensors (S-numbered) are never
+    flagged - for them compatibility is a catalog filter only. Capacity is shown as printed on
+    the datasheet (display only; no assignment or capacity checks).
+- **Control panel tab**: the alarm system's own hardware - 4 control panels (3 AX Hybrid PRO, and the older
+  AX Hybrid DS-PHA20-W2P, which has no official compatibility list) and 2 AX PRO hubs (868 MHz and 433 MHz), plus their modules: expanders / the bus wireless
+  receiver, keypads, a keyfob, relay modules, a repeater and communicator modules (tag
+  reader, power supply and accessory kinds exist but have no records yet). All are placed as
+  markers.
+  - **Filters** (Sensors, Fire alarm and Control panel tabs): Brand and Type drop-downs, and
+    one shared "Works with" drop-down listing every control panel / hub in two groups,
+    "Placed in this project" and "Not placed". Choosing one shows only the devices that
+    panel's official compatibility entries name (in the Control panel tab the chosen panel
+    stays visible); the choice carries across the three tabs. A hidden device is "not
+    listed", not proven incompatible - with a panel chosen, the Sensors tab therefore hides
+    every sensor that panel's list does not name, including all other brands.
+- **Alarm-device prices**: 11 of the 43 alarm-catalog records have a Vietnamese price
+  (vuhoangtelecom.vn); 24 more link to a contact-for-price page on mastery.vn; the rest are
+  "price on request". No Shopee listing could be verified.
 - **Placement**: drag from the catalog, move, rotate with the handle, adjust range and (for
   varifocal lenses) HFOV in the properties panel. Undo/redo.
 - **DORI coverage**: each cone is banded Identify / Recognize / Observe / Detect per EN 62676-4.
@@ -183,8 +206,9 @@ page on the date stored with each record; each catalog card links to its source.
 no published Vietnam price show "price on request" and are excluded from the estimated total
 (the total says how many cameras, sensors or fire devices it leaves out). Axis camera prices
 come from a cross-border marketplace, not an authorised distributor. Takex beam prices are set
-prices (TX+RX pair). Fire-alarm devices are mostly "price on request" (only 1 record has a
-Vietnamese price). Always confirm with your supplier.
+prices (TX+RX pair). Fire-alarm devices are mostly "price on request" (11 of 43 have a Vietnamese price (vuhoangtelecom.vn); 24 more link to a contact-for-price page on mastery.vn; no Shopee listing could be verified).
+Sensor cards: the 8 priced records carry a secondary channel (the shop their price was read
+from); none has a Shopee listing. Always confirm with your supplier.
 
 Cable prices are the one price you type yourself: VND per metre, per cable type, saved with
 the project. Nothing is prefilled. A type with no price shows "price on request" and is left
@@ -194,8 +218,7 @@ A camera catalog record can also carry up to two sales channels - a primary one 
 shop) and a secondary one (another Vietnamese shop). Its card then shows one row per channel:
 that shop's price and a "buy (shopee)" / "buy (hacom)" link. 63 Hikvision camera records
 have them. The BOM keeps using one price per model: the secondary shop's where it shows one,
-else the Shopee one. Sensor cards work the same way: the 4 priced sensor records carry a
-secondary channel (the shop their price was read from); none has a Shopee listing yet.
+else the Shopee one.
 
 PTZ models are drawn as one cone at the bearing you set (2.8-12 mm zoom adjustable like any
 varifocal lens); the pan sweep is not modelled.
@@ -234,11 +257,11 @@ is still running - stop it first.
 
 | Path | Contents |
 |---|---|
-| `data/` | Catalog JSON: `data/<brand>/<device-type>/<brand>-<device-type>_<NN>.json`; device type = `camera-<form factor>`, `sensor-<kind>`, or `fire-alarm-<kind>` (control-panel, wireless-hub, smoke-detector, heat-detector, co-detector, keypad, expander-module, manual-call-point, sounder) |
+| `data/` | Catalog JSON: `data/<brand>/<device-type>/<brand>-<device-type>_<NN>.json`; device type = `camera-<form factor>`, `sensor-<kind>`, or `fire-alarm-<kind>` (control-panel, wireless-hub, expander-module, keypad, keyfob, tag-reader, relay-module, repeater, communicator, power-supply, accessory, smoke-detector, heat-detector, co-detector, manual-call-point, sounder, magnetic-contact, environment-detector) |
 | `src/catalog/` | Zod schemas and loaders for the camera, sensor and fire-alarm catalogs |
 | `src/domain/` | Pure logic: FOV geometry, DORI distances, mounted-camera floor coverage, sensor coverage (resolver, thermal bands, beam line check, wall-blocking table), fire-alarm coverage (resolver, TCVN 5738 table, wall-blocking table), wall visibility geometry (occlusion polygon, endpoint snap, crossing detection), cable layout (types, length + range estimate, snap lookup, drawing chain, vertex editing), compatibility checker (fire devices), scale, BOM grouping, CSV, project file schema, view config (toggles, hidden-id sets, tool-layer forcing) (no React/Konva imports) |
 | `src/canvas/` | Konva stage, pan/zoom, camera, sensor and fire-alarm markers, cones, sensor/fire coverage, walls + wall drawing tool, hubs, cable lines + cable drawing tool + vertex editor, calibration overlay |
-| `src/panels/` | Toolbar, catalog sidebar (Cameras / Sensors / Fire alarm tabs), camera, sensor, fire-alarm, hub and cable properties panels, cable estimate panel, BOM panel, view panel (layer visibility toggles) |
+| `src/panels/` | Toolbar, catalog sidebar (Cameras / Sensors / Fire alarm / Control panel tabs), camera, sensor, fire-alarm, hub and cable properties panels, cable estimate panel, BOM panel, view panel (layer visibility toggles) |
 | `src/export/` | PNG and CSV export |
 | `src/file-io/`, `src/state/` | Project save/load, zustand stores, undo/redo |
 

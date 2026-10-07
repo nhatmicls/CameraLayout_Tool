@@ -11,5 +11,26 @@
     "sourceRetrieved": "2026-10-07",
     "priceVn": null,
     "purchaseLinks": null
+  },
+  {
+    "id": "hikvision-ds-pdco-e-wb",
+    "kind": "co-detector",
+    "brand": "hikvision",
+    "model": "DS-PDCO-E-WB",
+    "productLine": "ax-pro",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000050560/DS-PDCO-E-WB_Datasheet_20230724.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "mastery",
+        "url": "https://mastery.vn/sanpham/cam-bien-carbon-monoxide-hikvision-ds-pdco-e-wb/",
+        "amountVnd": null,
+        "retrieved": "2026-10-07"
+      }
+    }
   }
 ]

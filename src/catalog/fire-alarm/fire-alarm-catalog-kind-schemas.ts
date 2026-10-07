@@ -20,7 +20,26 @@ export type ControllerKind = (typeof CONTROLLER_KINDS)[number];
 export const DETECTOR_KINDS = ["smoke-detector", "heat-detector", "co-detector"] as const;
 export type DetectorKind = (typeof DETECTOR_KINDS)[number];
 
-export const ACCESSORY_KINDS = ["expander-module", "keypad", "manual-call-point", "sounder"] as const;
+// Non-controller, non-detector kinds. The nine kinds added after the original four
+// (keyfob, tag-reader, relay-module, repeater, communicator, power-supply, accessory,
+// magnetic-contact, environment-detector) came with the AX Hybrid PRO compatibility-list
+// expansion (owner decision; some still have zero records) and need no schema shape of their own -
+// same "nothing printed to model" reasoning as the original four.
+export const ACCESSORY_KINDS = [
+  "expander-module",
+  "keypad",
+  "manual-call-point",
+  "sounder",
+  "keyfob",
+  "tag-reader",
+  "relay-module",
+  "repeater",
+  "communicator",
+  "power-supply",
+  "accessory",
+  "magnetic-contact",
+  "environment-detector",
+] as const;
 export type AccessoryKind = (typeof ACCESSORY_KINDS)[number];
 
 // One printed compatibility reference, stored once on the controller record (C3).

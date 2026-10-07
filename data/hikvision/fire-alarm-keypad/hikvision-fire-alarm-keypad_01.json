@@ -10,6 +10,60 @@
     "sourceUrl": "https://www.hikvision.com/content/dam/hikvision/products/S000000001/S000000601/S000000937/S000000934/OFR001816/M000053265/Data_Sheet/DS-PK1-LRT-HWEHWB_Datasheet.pdf",
     "sourceRetrieved": "2026-10-07",
     "priceVn": null,
-    "purchaseLinks": null
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "mastery",
+        "url": "https://mastery.vn/sanpham/ban-phim-lcd-co-day-hikvision-ds-pk1-lrt-hwe/",
+        "amountVnd": null,
+        "retrieved": "2026-10-07"
+      }
+    }
+  },
+  {
+    "id": "hikvision-ds-pk1-lt-wb",
+    "kind": "keypad",
+    "brand": "hikvision",
+    "model": "DS-PK1-LT-WB",
+    "productLine": "ax-pro",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/sm000096643/DS-PK1-LT-WB_Datasheet_V1.0_202303.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": {
+      "amountVnd": 2720000,
+      "sourceUrl": "https://vuhoangtelecom.vn/san-pham/ban-phim-khong-day-hikvision-ds-pk1-lt-wb/",
+      "retrieved": "2026-10-07"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "vuhoangtelecom",
+        "url": "https://vuhoangtelecom.vn/san-pham/ban-phim-khong-day-hikvision-ds-pk1-lt-wb/",
+        "amountVnd": 2720000,
+        "retrieved": "2026-10-07"
+      }
+    }
+  },
+  {
+    "id": "hikvision-ds-pk1-lrt-hwb",
+    "kind": "keypad",
+    "brand": "hikvision",
+    "model": "DS-PK1-LRT-HWB",
+    "productLine": "ax-hybrid",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000053265/DS-PK1-LRT-HWEHWB_Datasheet.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "mastery",
+        "url": "https://mastery.vn/sanpham/ban-phim-lcd-co-day-hikvision-ds-pk1-lrt-hwb/",
+        "amountVnd": null,
+        "retrieved": "2026-10-07"
+      }
+    }
   }
 ]

@@ -1,0 +1,23 @@
+[
+  {
+    "id": "hikvision-ds-pdtph-e-wb",
+    "kind": "environment-detector",
+    "brand": "hikvision",
+    "model": "DS-PDTPH-E-WB",
+    "productLine": "ax-pro",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000044576/DS-PDTPH-E-WB_Datasheet_V1.0_202303.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "mastery",
+        "url": "https://mastery.vn/sanpham/may-do-nhiet-do-khong-day-hikvision-ds-pdtph-e-wb/",
+        "amountVnd": null,
+        "retrieved": "2026-10-07"
+      }
+    }
+  }
+]

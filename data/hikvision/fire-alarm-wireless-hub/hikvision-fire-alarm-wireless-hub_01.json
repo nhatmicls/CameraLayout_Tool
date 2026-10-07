@@ -8,45 +8,69 @@
     "worksStandalone": false,
     "certificationsAsPrinted": [],
     "capacityAsPrinted": [
-      { "label": "Tag", "value": "48" },
-      { "label": "PIR cam", "value": "Supported" },
-      { "label": "Zones", "value": "96 (up to 48 PIRCAMs)" },
-      { "label": "Keypad", "value": "8 (including tag reader)" },
-      { "label": "Wireless sounder", "value": "6 (3 internal+3 external)" },
-      { "label": "Wireless repeater", "value": "4" },
-      { "label": "Keyfob", "value": "48" },
-      { "label": "Multi Transmitter", "value": "6" }
+      {
+        "label": "Tag",
+        "value": "48"
+      },
+      {
+        "label": "PIR cam",
+        "value": "Supported"
+      },
+      {
+        "label": "Zones",
+        "value": "96 (up to 48 PIRCAMs)"
+      },
+      {
+        "label": "Keypad",
+        "value": "8 (including tag reader)"
+      },
+      {
+        "label": "Wireless sounder",
+        "value": "6 (3 internal+3 external)"
+      },
+      {
+        "label": "Wireless repeater",
+        "value": "4"
+      },
+      {
+        "label": "Keyfob",
+        "value": "48"
+      },
+      {
+        "label": "Multi Transmitter",
+        "value": "6"
+      }
     ],
     "compatibleDevices": [
-      {
-        "modelId": "hikvision-ds-ps1-e-we",
-        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
-        "sourceRetrieved": "2026-10-07",
-        "note": "Official AXPRO Series Compatibility List, row \"DS-PS1-E-WE/WB(red)/(blue)/(amber)\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names DS-PWA96-M-WE in that series."
-      },
       {
         "modelId": "hikvision-ds-pdebp1-eg2-we",
         "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
         "sourceRetrieved": "2026-10-07",
-        "note": "Official AXPRO Series Compatibility List, row \"DS-PDEBP1-EG2-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names DS-PWA96-M-WE in that series."
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PDEBP1-EG2-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names this hub in that series."
+      },
+      {
+        "modelId": "hikvision-ds-ps1-e-we",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PS1-E-WE/WB(red)/(blue)/(amber)\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names this hub in that series."
       },
       {
         "modelId": "hikvision-ds-pdsmk-s-we",
         "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
         "sourceRetrieved": "2026-10-07",
-        "note": "Official AXPRO Series Compatibility List, row \"DS-PDSMK-S-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names DS-PWA96-M-WE in that series."
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PDSMK-S-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names this hub in that series."
       },
       {
         "modelId": "hikvision-ds-pdht-e-we",
         "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
         "sourceRetrieved": "2026-10-07",
-        "note": "Official AXPRO Series Compatibility List, row \"DS-PDHT-E-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names DS-PWA96-M-WE in that series."
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PDHT-E-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names this hub in that series."
       },
       {
         "modelId": "hikvision-ds-pdco-e-we",
         "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
         "sourceRetrieved": "2026-10-07",
-        "note": "Official AXPRO Series Compatibility List, row \"DS-PDCO-E-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names DS-PWA96-M-WE in that series."
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PDCO-E-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names this hub in that series."
       }
     ],
     "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/sm000090683/DS-PWA96-M-WE_Datasheet_20240322.pdf",
@@ -63,19 +87,251 @@
     "worksStandalone": false,
     "certificationsAsPrinted": [],
     "capacityAsPrinted": [
-      { "label": "Zones", "value": "Up to 96 (including 48 PIRCAMs & 16 onboard Wired Zones & 2 onboard Wired Outputs)" },
-      { "label": "Keyfob", "value": "48" },
-      { "label": "Wireless sounder", "value": "6 (3 internal+3 External)" },
-      { "label": "Keypad", "value": "8 (Including Tag reader)" },
-      { "label": "Wireless Repeater", "value": "4" },
-      { "label": "Multi Transmitter", "value": "5" },
-      { "label": "PIR Cam", "value": "Supported" }
+      {
+        "label": "Zones",
+        "value": "Up to 96 (including 48 PIRCAMs & 16 onboard Wired Zones & 2 onboard Wired Outputs)"
+      },
+      {
+        "label": "Keyfob",
+        "value": "48"
+      },
+      {
+        "label": "Wireless sounder",
+        "value": "6 (3 internal+3 External)"
+      },
+      {
+        "label": "Keypad",
+        "value": "8 (Including Tag reader)"
+      },
+      {
+        "label": "Wireless Repeater",
+        "value": "4"
+      },
+      {
+        "label": "Multi Transmitter",
+        "value": "5"
+      },
+      {
+        "label": "PIR Cam",
+        "value": "Supported"
+      }
     ],
-    "compatibleDevices": [],
+    "compatibleDevices": [
+      {
+        "modelId": "hikvision-ds-pr1-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PR1-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names this hub in that series."
+      },
+      {
+        "modelId": "hikvision-ds-pdmc-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PDMC-EG2-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names this hub in that series."
+      },
+      {
+        "modelId": "hikvision-ds-pdmc-eg2-wb-b",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PDMC-EG2-WE(B)/WB(B)\": supported on DS-PWAxx firmware V1.2.9, V1.3.0, V1.3.1, V1.3.2; the list names this hub in that series."
+      },
+      {
+        "modelId": "hikvision-ds-pdmck-eg2-wb-b",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PDMCK-EG2-WE(B)/WB(B)\": supported on DS-PWAxx firmware V1.3.0, V1.3.1, V1.3.2; the list names this hub in that series."
+      },
+      {
+        "modelId": "hikvision-ds-pdmcs-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PDMCS-EG2-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names this hub in that series."
+      },
+      {
+        "modelId": "hikvision-ds-pdmcx-e-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PDMCX-E-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names this hub in that series."
+      },
+      {
+        "modelId": "hikvision-ds-pdbg8-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PDBG8-EG2-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names this hub in that series."
+      },
+      {
+        "modelId": "hikvision-ds-pdpg12p-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PDPG12P-EG2-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names this hub in that series."
+      },
+      {
+        "modelId": "hikvision-ds-pdp15p-eg2-wb-b",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PDP15P-EG2-WE/WB(B)\": supported on DS-PWAxx firmware V1.2.9, V1.3.0, V1.3.1, V1.3.2; the list names this hub in that series."
+      },
+      {
+        "modelId": "hikvision-ds-pdc15-eg2-wb-b",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PDC15-EG2-WE(B)/WB(B)\": supported on DS-PWAxx firmware V1.2.9, V1.3.0, V1.3.1, V1.3.2; the list names this hub in that series."
+      },
+      {
+        "modelId": "hikvision-ds-pdc10am-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PDC10AM-EG2-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names this hub in that series."
+      },
+      {
+        "modelId": "hikvision-ds-pdd12p-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PDD12P-EG2-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names this hub in that series."
+      },
+      {
+        "modelId": "hikvision-ds-pdc10dm-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PDC10DM-EG2-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names this hub in that series."
+      },
+      {
+        "modelId": "hikvision-ds-pdp18-hm-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PDP18-HM-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names this hub in that series."
+      },
+      {
+        "modelId": "hikvision-ds-pdtt15am-lm-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PDTT15AM-LM-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names this hub in that series."
+      },
+      {
+        "modelId": "hikvision-ds-pdqp15am-lm-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PDQP15AM-LM-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names this hub in that series."
+      },
+      {
+        "modelId": "hikvision-ds-pdpc12p-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PDPC12P-EG2-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names this hub in that series."
+      },
+      {
+        "modelId": "hikvision-ds-pdeb1-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PDEB1-EG2-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names this hub in that series."
+      },
+      {
+        "modelId": "hikvision-ds-pdeb1-eg2-wb-b",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PDEB1-EG2-WE(B)/WB(B)\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names this hub in that series."
+      },
+      {
+        "modelId": "hikvision-ds-pdeb2-eg2-wb-b",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PDEB2-EG2-WE(B)/WB(B)\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names this hub in that series."
+      },
+      {
+        "modelId": "hikvision-ds-pdebp1-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PDEBP1-EG2-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names this hub in that series."
+      },
+      {
+        "modelId": "hikvision-ds-pdebp2-eg2-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PDEBP2-EG2-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names this hub in that series."
+      },
+      {
+        "modelId": "hikvision-ds-pk1-lt-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PK1-LT-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names this hub in that series."
+      },
+      {
+        "modelId": "hikvision-ds-pkf1-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PKF1-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names this hub in that series."
+      },
+      {
+        "modelId": "hikvision-ds-ps1-i-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PS1-I-WE/WB(red)/(blue)- BLACK\": supported on DS-PWAxx firmware V1.3.1, V1.3.2; the list names this hub in that series."
+      },
+      {
+        "modelId": "hikvision-ds-ps1-e-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PS1-E-WE/WB(red)/(blue)/(amber)\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names this hub in that series."
+      },
+      {
+        "modelId": "hikvision-ds-ps1-ii-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PS1-II-WE/WB(red)/(blue)\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names this hub in that series."
+      },
+      {
+        "modelId": "hikvision-ds-pm1-o1h-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PM1-O1H-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names this hub in that series."
+      },
+      {
+        "modelId": "hikvision-ds-pdtph-e-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PDTPH-E-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names this hub in that series."
+      },
+      {
+        "modelId": "hikvision-ds-pdsmk-s-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PDSMK-S-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names this hub in that series."
+      },
+      {
+        "modelId": "hikvision-ds-pdsmk-e-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PDSMK-E-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names this hub in that series."
+      },
+      {
+        "modelId": "hikvision-ds-pdht-e-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PDHT-E-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names this hub in that series."
+      },
+      {
+        "modelId": "hikvision-ds-pdco-e-wb",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wireless-intrusion-alarm/ax-pro/axpro-series-compatibility-list/",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Official AXPRO Series Compatibility List, row \"DS-PDCO-E-WE/WB\": supported on DS-PWAxx firmware V1.2.8 to V1.3.2; the list names this hub in that series."
+      }
+    ],
     "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000052448/DS-PWA96-M2H-WB_Datasheet_20240322.pdf",
     "sourceRetrieved": "2026-10-07",
-    "priceVn": { "amountVnd": 7350000, "sourceUrl": "https://vuhoangtelecom.vn/san-pham/tu-bao-dong-ax-hybrid-panel-96-vung-hikvision-ds-pwa96-m2h-wb/", "retrieved": "2026-10-07" },
-    "purchaseLinks": { "primary": null, "secondary": { "shop": "vuhoangtelecom", "url": "https://vuhoangtelecom.vn/san-pham/tu-bao-dong-ax-hybrid-panel-96-vung-hikvision-ds-pwa96-m2h-wb/", "amountVnd": 7350000, "retrieved": "2026-10-07" } },
-    "notes": "433 MHz hub. The official AXPRO Series Compatibility List covers it with the -WB (433 MHz) variants of the peripherals; this catalog holds the -WE (868 MHz) variants, so none is listed here."
+    "priceVn": {
+      "amountVnd": 7350000,
+      "sourceUrl": "https://vuhoangtelecom.vn/san-pham/tu-bao-dong-ax-hybrid-panel-96-vung-hikvision-ds-pwa96-m2h-wb/",
+      "retrieved": "2026-10-07"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "vuhoangtelecom",
+        "url": "https://vuhoangtelecom.vn/san-pham/tu-bao-dong-ax-hybrid-panel-96-vung-hikvision-ds-pwa96-m2h-wb/",
+        "amountVnd": 7350000,
+        "retrieved": "2026-10-07"
+      }
+    },
+    "notes": "433 MHz hub: pairs with the -WB (433 MHz) peripherals."
   }
 ]

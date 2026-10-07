@@ -11,5 +11,76 @@
     "sourceRetrieved": "2026-10-07",
     "priceVn": null,
     "purchaseLinks": null
+  },
+  {
+    "id": "hikvision-ds-ps1-i-wb",
+    "kind": "sounder",
+    "brand": "hikvision",
+    "model": "DS-PS1-I-WB",
+    "productLine": "ax-pro",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://www.hikvision.com/content/dam/hikvision/products/S000000001/S000000601/S000000933/S000000935/OFR001820/M000038133/Data_Sheet/DS-PS1-I-WB_Datasheet_V1.0_202303.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": {
+      "amountVnd": 1180000,
+      "sourceUrl": "https://vuhoangtelecom.vn/san-pham/loa-bao-dong-khong-day-trong-nha-hikvision-ds-ps1-i-wb/",
+      "retrieved": "2026-10-07"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "vuhoangtelecom",
+        "url": "https://vuhoangtelecom.vn/san-pham/loa-bao-dong-khong-day-trong-nha-hikvision-ds-ps1-i-wb/",
+        "amountVnd": 1180000,
+        "retrieved": "2026-10-07"
+      }
+    }
+  },
+  {
+    "id": "hikvision-ds-ps1-ii-wb",
+    "kind": "sounder",
+    "brand": "hikvision",
+    "model": "DS-PS1-II-WB",
+    "productLine": "ax-pro",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000055800/DS-PS1-II-WB_Datasheet_V1.0_202303.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "mastery",
+        "url": "https://mastery.vn/sanpham/loa-bao-dong-khong-day-trong-nha-hikvision-ds-ps1-ii-wb/",
+        "amountVnd": null,
+        "retrieved": "2026-10-07"
+      }
+    }
+  },
+  {
+    "id": "hikvision-ds-ps1-e-wb",
+    "kind": "sounder",
+    "brand": "hikvision",
+    "model": "DS-PS1-E-WB",
+    "productLine": "ax-pro",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000038134/DS-PS1-E-WB_Datasheet_20250416.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": {
+      "amountVnd": 2120000,
+      "sourceUrl": "https://vuhoangtelecom.vn/san-pham/loa-bao-dong-khong-day-trong-nha-hikvision-ds-ps1-e-wb/",
+      "retrieved": "2026-10-07"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "vuhoangtelecom",
+        "url": "https://vuhoangtelecom.vn/san-pham/loa-bao-dong-khong-day-trong-nha-hikvision-ds-ps1-e-wb/",
+        "amountVnd": 2120000,
+        "retrieved": "2026-10-07"
+      }
+    }
   }
 ]

@@ -247,6 +247,110 @@ one row per channel with that shop's price and a "buy (shop)" link.
   browser; none has been read for a sensor yet.
 - The seven records with no `priceVn` have no channel at all (`purchaseLinks: null`).
 
+## Hikvision AX HYBRID PRO / AX PRO tail (12 records, 2026-10-07)
+
+Twelve more Hikvision motion/glass-break detectors, added only because each exact model is
+sold by a Vietnamese shop (vuhoangtelecom.vn, or mastery.vn where vuhoangtelecom has no
+listing - mastery shows "Lien he", i.e. contact for price, so `priceVn: null` there). Model
+list sourced from Hikvision's "AX HYBRID PRO Device Compatibility List" (motion-detector
+section) cross-checked one by one against vuhoangtelecom.vn / mastery.vn product search and
+each model's own official `hikvision.com` datasheet. Retrieval date for every row below
+(datasheet, shop page, mastery page): **2026-10-07**. Method as above:
+`pdftotext -raw` extraction, values copied from the Specification table (never the cover-page
+marketing bullets when the two disagree - see the DS-PDP15P-EG2-WB(B) note below).
+
+| Record id | Model | Kind | Field sources | SHA-256 |
+|---|---|---|---|---|
+| hikvision-ds-pdp15p-eg2-wb-b | DS-PDP15P-EG2-WB(B) | pir | p.1 "Detection Range 15m"; p.1 "Detection Angle 90°" (spec table; cover bullet instead prints "15m / 85.9°" - not used, see note) | `84c9707c90e53a30c2b810e8d3c8850e19b2127bd185f375b2e18db3f7ccf345` |
+| hikvision-ds-pdp18-hm-wb | DS-PDP18-HM-WB | pir | p.1 "Detection Range 18 m"; p.1 "Detection Angle 90°" | `6b5905d17c53ee3fa8de013d5353a9d570792385c2f06203fe3b90d6d0677af4` |
+| hikvision-ds-pdc15-eg2-wb-b | DS-PDC15-EG2-WB(B) | pir | p.1 "Detection Range 15m"; p.1 "Detection Angle 6.3°" | `ace7d518ce6b1c4a7d77f7bc7f7de99cfbae923073c840ea193bb8f676ba8fee` |
+| hikvision-ds-pdc10am-eg2-wb | DS-PDC10AM-EG2-WB | pir | p.1 "Wall mount: 10m / Ceiling mount: 5m" (wall value used, see note); p.1 "Detection Angle 5°" | `8b01452541a0c9157ceba2b73278ee516147f42a3f5044bdcd4f43d411e3374b` |
+| hikvision-ds-pdd12p-eg2-wb | DS-PDD12P-EG2-WB | pir | p.1 "Detection Range 12m"; p.1 "Detection Angle 85.9°" | `efbb3f043b3574aaf3b7b7bfc898452aae36951b5c101d47c373d267d81acb75` |
+| hikvision-ds-pdc10dm-eg2-wb | DS-PDC10DM-EG2-WB | pir | p.1 "Wall mount: 10m / Ceiling mount: 5m" (wall value used, see note); p.1 "Detection Angle 5°" | `9df2b120a0276fb2de5fcf29c74188af353c3c4d57ce2eadd8e2954cb5055400` |
+| hikvision-ds-pdtt15am-lm-wb | DS-PDTT15AM-LM-WB | pir | p.1 "Detection Range 15 m"; p.1 "Detection Angle 90° @ 180° adjustable" (90° stored, see note) | `14c9f09bc0a23b73fa8cdbb15609497d8a1933070ae4708abca14851fbe2506a` |
+| hikvision-ds-pdqp15am-lm-wb | DS-PDQP15AM-LM-WB | pir | p.1 "Detection Range 15 m"; p.1 "Detection Angle 180°" | `bd8ff56c93881ba174e2e68753a9813759d2bcea154be0db85e7dc1f6d56d08c` |
+| hikvision-ds-pdpc12p-eg2-wb | DS-PDPC12P-EG2-WB | pir | p.1 "Detection range: 12m / 85.9°" (cover bullet, matches spec table "Detection Range 12m" / "Detection Angle 85.9°") | `e30e5ca82b8bfa426f6b10c7635ca2965454328cac467ca7de638f92fd453af4` |
+| hikvision-ds-pdpc12p-eg2 | DS-PDPC12P-EG2 | pir | p.1 "Detection range: 12m / 85.9°" (cover bullet, matches spec table "Detection Range 12 m" / "Detection Angle 85.9°") | `5396f96e8c25d86d58bc625c686e5bbbcb4faf0c1f81ecd9aec06a3b35534faf` |
+| hikvision-ds-pdbg8-eg2-wb | DS-PDBG8-EG2-WB | vibration (glass-break) | p.1 "Detection Range 8m"; p.1 "Glass Type Float,Plate,Tampered,Wired,Laminated Leaded,Double Glazing" | `4d1d5a17530d777b51f095200865dab6755ca8f4424adb08903293bfc28fda53` |
+| hikvision-ds-pdpg12p-eg2-wb | DS-PDPG12P-EG2-WB | pir (combo, see note) | p.1 "PIR Detection Range: 12m / 85.9°" (cover bullet, matches spec table "Detection range 12m" / "Detection angle 85.9°") | `b45bb5f41d90cd75f3bfc810f847570aa7645d2b61f5b1980e937058cef1bd2e` |
+
+Source URLs:
+- DS-PDP15P-EG2-WB(B): https://assets.hikvision.com/prd/public/all/doc/m000109200/DS-PDP15P-EG2-WBB_Datasheet_20250421.pdf
+- DS-PDP18-HM-WB: https://assets.hikvision.com/prd/normal/all/doc/m000061696/DS-PDP18-HM-WB_Datasheet_V1.0_202303.pdf
+- DS-PDC15-EG2-WB(B): https://assets.hikvision.com/prd/normal/all/doc/m000109202/DS-PDC15-EG2-WBB_Datasheet_20250421.pdf
+- DS-PDC10AM-EG2-WB: https://assets.hikvision.com/prd/public/all/doc/m000050009/DS-PDC10AM-EG2-WB_Datasheet.pdf
+- DS-PDD12P-EG2-WB: https://assets.hikvision.com/prd/normal/all/doc/m000039126/DS-PDD12P-EG2-WB_Datasheet_20251111.pdf
+- DS-PDC10DM-EG2-WB: https://assets.hikvision.com/prd/public/all/doc/m000050011/DS-PDC10DM-EG2-WB_Datasheet.pdf
+- DS-PDTT15AM-LM-WB: https://assets.hikvision.com/prd/normal/all/doc/m000050025/DS-PDTT15AM-LM-WB_Datasheet.pdf
+- DS-PDQP15AM-LM-WB: https://assets.hikvision.com/prd/normal/all/doc/m000062910/DS-PDQP15AM-LM-WB_Datasheet.pdf
+- DS-PDPC12P-EG2-WB: https://assets.hikvision.com/prd/normal/all/doc/m000039121/DS-PDPC12P-EG2-WB_Datasheet_20251111.pdf
+- DS-PDPC12P-EG2: https://assets.hikvision.com/prd/normal/all/doc/m000057878/DS-PDPC12P-EG2_Datasheet_V1.0_202207.pdf
+- DS-PDBG8-EG2-WB: https://assets.hikvision.com/prd/normal/all/doc/m000039137/DS-PDBG8-EG2-WB_Datasheet_20251111.pdf
+- DS-PDPG12P-EG2-WB: https://assets.hikvision.com/prd/normal/all/doc/m000039118/DS-PDPG12P-EG2-WB_Datasheet_20260605.pdf
+
+All twelve PDFs retrieved and SHA-256-verified before extraction (session scratchpad, not
+committed - see "PDF handling" below); `pdftotext -raw` text extracted cleanly for every
+file (label-left/value-right Specification table, same layout as the rest of this catalog).
+
+**Detection-angle / range discrepancy notes:**
+- **DS-PDP15P-EG2-WB(B)**: the cover-page marketing bullet prints "Detection Range: 15m /
+  85.9°" but the Specification table prints "Detection Range 15m" / "Detection Angle 90°".
+  The 85.9° bullet figure matches the unrelated DS-PDPC12P-EG2(-WB) models exactly and is
+  judged a copy-paste leftover in the marketing bullet; the Specification table (90°) is
+  used, consistent with how every other record in this catalog is sourced (spec table, not
+  cover bullets).
+- **DS-PDC10AM-EG2-WB / DS-PDC10DM-EG2-WB**: both print two Detection Range rows ("Wall
+  mount: 10m" / "Ceiling mount: 5m") for one dual-mount (wall or ceiling) product. The
+  wall-mount figure (10m, listed first) is stored as `coverage.rangeM`; the ceiling-mount
+  alternate (5m) is named in `notes`, not modelled (schema has one `rangeM` field, same
+  single-value constraint noted at C1/C2).
+- **DS-PDTT15AM-LM-WB**: prints "Detection Angle 90° @ 180° adjustable". The 90° detection
+  angle is stored; 180° is the span the detector can be adjusted over, not an angle covered at
+  once, so storing it would overstate the area covered.
+- DS-PDPC12P-EG2-WB and DS-PDPC12P-EG2 are PIR-camera / PIRCAM detectors: the built-in
+  camera's own "Field Angle" (88°(H)/68°(V) and 109°(H)/60°(V) respectively) is that
+  camera's optical FOV, not the PIR detection angle - not modelled, same treatment as
+  `dahua-ard2251e-w2-v-pir`.
+- DS-PDBG8-EG2-WB is a pure acoustic glass-break detector (no PIR) - modelled as a single
+  `vibration`/`glass-break` record, same shape as `hikvision-ds-pdpg12p-eg2-glass-break`.
+  Its "Detection Angle 120°" is printed but not modelled (vibration schema carries no angle
+  field).
+- DS-PDPG12P-EG2-WB is a combo PIR + acoustic glass-break detector, same physical class as
+  the already-catalogued wired DS-PDPG12P-EG2. Per explicit instruction for this tail, it is
+  stored as **one `pir` record only** (PIR range/angle), with the glass-break figures named
+  in `notes` and NOT split into a second catalog record - unlike the wired sibling pair
+  (`hikvision-ds-pdpg12p-eg2-pir` / `hikvision-ds-pdpg12p-eg2-glass-break`), which remains
+  split as before.
+
+**priceVn / purchaseLinks (shop data, not datasheet values):**
+- `hikvision-ds-pdd12p-eg2-wb`: 1,880,000 VND, vuhoangtelecom.vn, retrieved 2026-10-07
+  (https://vuhoangtelecom.vn/san-pham/cam-bien-hong-ngoai-khong-day-hikvision-ds-pdd12p-eg2-wb/).
+- `hikvision-ds-pdpc12p-eg2-wb`: 2,470,000 VND, vuhoangtelecom.vn, retrieved 2026-10-07
+  (https://vuhoangtelecom.vn/san-pham/hong-ngoai-khong-day-kem-camera-hikvision-ds-pdpc12p-eg2-wb/).
+- `hikvision-ds-pdbg8-eg2-wb`: 945,000 VND, vuhoangtelecom.vn, retrieved 2026-10-07
+  (https://vuhoangtelecom.vn/san-pham/dau-bao-kinh-vo-khong-day-433-mhz-hikvision-ds-pdbg8-eg2-wb/) -
+  a mastery.vn listing also exists for this model (contact-only) but vuhoangtelecom's numeric
+  price takes precedence per the stated rule.
+- `hikvision-ds-pdpg12p-eg2-wb`: 1,580,000 VND, vuhoangtelecom.vn, retrieved 2026-10-07
+  (https://vuhoangtelecom.vn/san-pham/hong-ngoai-bao-vo-kinh-khong-day-hikvision-ds-pdpg12p-eg2-wb/) -
+  same precedence note as above (mastery.vn also lists it, contact-only).
+- The other seven records (`hikvision-ds-pdp15p-eg2-wb-b`, `hikvision-ds-pdp18-hm-wb`,
+  `hikvision-ds-pdc15-eg2-wb-b`, `hikvision-ds-pdc10am-eg2-wb`, `hikvision-ds-pdc10dm-eg2-wb`,
+  `hikvision-ds-pdtt15am-lm-wb`, `hikvision-ds-pdqp15am-lm-wb`, `hikvision-ds-pdpc12p-eg2`):
+  no vuhoangtelecom.vn listing found; mastery.vn lists each but shows "Lien he" (contact for
+  price, no number) - `priceVn: null`, `purchaseLinks.secondary` set to that mastery.vn page
+  with `amountVnd: null`. `purchaseLinks.primary` is `null` for all twelve (no Shopee listing
+  verified for any of them, same as the rest of the sensor catalog).
+
+**Record id cross-reference update**: 23 records total now (11 pre-existing + 12 this
+round), every id below appears in exactly one `data/hikvision/sensor-<kind>/*.json` file and
+in a Records table in this doc: hikvision-ds-pdp15p-eg2-wb-b, hikvision-ds-pdp18-hm-wb,
+hikvision-ds-pdc15-eg2-wb-b, hikvision-ds-pdc10am-eg2-wb, hikvision-ds-pdd12p-eg2-wb,
+hikvision-ds-pdc10dm-eg2-wb, hikvision-ds-pdtt15am-lm-wb, hikvision-ds-pdqp15am-lm-wb,
+hikvision-ds-pdpc12p-eg2-wb, hikvision-ds-pdpc12p-eg2, hikvision-ds-pdbg8-eg2-wb,
+hikvision-ds-pdpg12p-eg2-wb (added this round), plus the original 11 listed under "Record id
+cross-reference (JSON <-> this doc)" below.
+
 ## Downloaded but not entered (available for a future tail)
 
 | Candidate | Brand | Reason not entered |
@@ -274,3 +378,18 @@ takex-pb-60tk, takex-pb-100tk.
 Same as the camera catalog: PDFs are downloaded to a local scratch directory for this
 session only and never committed. The SHA-256 above lets anyone re-download the same
 `sourceUrl` and confirm byte-identical content.
+
+## Hikvision wired detectors sold in Vietnam (second pass)
+
+Added 2026-10-07 on the owner's request for more wired devices. Each model has a saved
+mastery.vn product page for the exact model ("Liên hệ", contact for price) and an official
+datasheet whose text contains the exact model string.
+
+| Record id | Model | Kind | Printed values used | Datasheet | SHA-256 | Shop |
+|---|---|---|---|---|---|---|
+| `hikvision-ds-pdc10am-vg3` | DS-PDC10AM-VG3 | pir | p.1 Detection Range "Wall Mount：10m" (stored) / "Ceiling Mount：6m"; Detection Angle "5°" | https://www.hikvision.com/content/dam/hikvision/products/S000000001/S000000601/S000000937/S000000934/OFR001804/M000050014/Data_Sheet/DS-PDC10AM-VG3_Datasheet_V1.0_202106.pdf | `abd37ee2aa0ceb5eb966ac278f42dfd8a40256b68a3bbcce5cc6bea36ddbda62` | contact for price (mastery) https://mastery.vn/sanpham/cam-bien-hong-ngoai-co-day-hikvision-ds-pdc10am-vg3/ |
+| `hikvision-ds-pdc10dm-vg3` | DS-PDC10DM-VG3 | pir | p.1 Detection Range "Wall Mount：10m" (stored) / "Ceiling Mount：6m"; Detection Angle "5°" | https://www.hikvision.com/content/dam/hikvision/products/S000000001/S000000601/S000000933/S000000934/OFR001803/M000050015/Data_Sheet/DS-PDC10DM-VG3_Datasheet_V1.0_202106.pdf | `09fc9371d79e0c91055cd6e3fd826c369263e15ce3da8aa9d5ba1cdbb51c87b6` | contact for price (mastery) https://mastery.vn/sanpham/cam-bien-hong-ngoai-co-day-hikvision-ds-pdc10dm-vg3/ |
+| `hikvision-ds-pdd15am-eg2` | DS-PDD15AM-EG2 | pir | p.1 "Detection Range 15 m"; "Detection Angle 85.9°" | https://www.hikvision.com/content/dam/hikvision/products/S000000001/S000000601/S000000937/S000000934/OFR000956/M000050017/Data_Sheet/DS-PDD15AM-EG2_Datasheet_V1.0_202205.pdf | `d2fcf4003ac278ed5715fca6db215c01661c552c2535d3b44d787ca8f22b968b` | contact for price (mastery) https://mastery.vn/sanpham/cam-bien-chuyen-dong-hikvision-ds-pdd15am-eg2/ |
+
+These wired detectors are on neither of Hikvision's compatibility lists, so no control panel
+lists them; with a panel chosen in the "Works with" filter they are hidden.

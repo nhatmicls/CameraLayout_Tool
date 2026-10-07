@@ -1,5 +1,19 @@
 # Project Changelog
 
+## 2026-10-07 (continued)
+
+**Fire alarm / alarm panels** (AX HYBRID PRO expansion): 28 additional Hikvision alarm-device records (magnetic contacts, a temperature detector, smoke / heat / CO detectors, keypads, a keyfob, emergency buttons, sounders, relay modules, a repeater, the bus wireless receiver, communicator modules) added from the AX HYBRID PRO Device Compatibility List - only models sold in Vietnam with official datasheets (433 MHz `-WB` and wired variants; 868 MHz `-WE` variants and 6 datasheet-less models excluded). Fire-alarm catalog grows from 12 to 40 records. Feature set:
+
+- **New marker-only kinds** (no coverage circle): magnetic-contact, environment-detector, keyfob, tag-reader, relay-module, repeater, communicator, power-supply, accessory. Grouped by `FIRE_ALARM_KIND_CATALOG_TAB` into tab assignment (Control panel tab vs Fire alarm tab vs shared with Sensors tab).
+- **Control panel tab** (new sidebar tab): shows the 2 control panels + 2 wireless hubs and their modules (expanders, keypads, keyfob, relay modules, repeater, communicators; tag-reader, power-supply and accessory kinds have no records yet). Controllers show a "Compatible devices in this catalog" count with a "View list" popup; placed modules follow the same "not listed" warning rules as other alarm devices. Filter by brand and kind; "Works with" drop-down shared with Sensors and Fire alarm tabs.
+- **Sensor catalog growth**: 12 new records (10 PIR variants, 1 glass-break, 1 PIR-glass-break combo) from the AX HYBRID PRO motion-detector section, all sold in Vietnam with official datasheets. Sensor catalog grows from 13 to 23 records (14 PIR, 3 IR beam, 4 vibration, 2 thermal). Sensor tab now allows filtering by "Works with" controller.
+- **Catalog sidebar filters**: Brand and Type drop-downs (not type buttons) in Sensors, Fire alarm and Control panel tabs; shared "Works with" drop-down listing controllers grouped "Placed in this project" / "Not placed". Choosing a controller shows only devices named in its official compatibility list.
+- **Compatibility**: controller-centric (stored on control-panel / wireless-hub records only). A "—" cell on the AX HYBRID PRO list is read as all firmware versions (owner decision). Frequency pairing: 433 MHz hub (`-WB`) <-> `-WB` peripherals; 868 MHz hub (`-WE`) <-> `-WE` peripherals. Placed sensors get no warnings (filter only). Placed alarm devices show "not listed" warning if absent from a placed controller's list.
+- **Prices**: fire-alarm devices are mostly "price on request" (11 of 40 have a Vietnamese price (vuhoangtelecom.vn); 21 more link to a contact-for-price page on mastery.vn; no Shopee listing could be verified).
+- **Wired devices (second pass)**: 3 wired motion detectors (DS-PDC10AM-VG3, DS-PDC10DM-VG3, DS-PDD15AM-EG2) in the sensor catalog, a wired magnetic contact (DS-PD1-MC-RS) and 2 control panels (DS-PHA48-EP(B) with the AX HYBRID PRO list's second-column entries; older DS-PHA20-W2P with no official list). Totals: 43 alarm records, 26 sensor records. 25 more wired models sold in Vietnam are not added yet (no datasheet for the exact model could be downloaded; hikvision.com product pages answered 403).
+- **Keyboard**: Delete / Backspace act only in select mode; ignored when a drop-down has focus.
+- **No breaking changes**: sidebar tab switch is UI-only.
+
 ## 2026-10-07
 
 **View**: layer visibility toggles for the plan and PNG export. Feature set:

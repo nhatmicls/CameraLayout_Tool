@@ -98,3 +98,102 @@ export const baseSounder = {
   sourceUrl: "https://www.hikvision.com/test-datasheet.pdf",
   sourceRetrieved: "2026-10-07",
 };
+
+export const baseKeyfob = {
+  id: "hikvision-test-keyfob",
+  kind: "keyfob",
+  brand: "hikvision",
+  model: "TEST-KEYFOB",
+  productLine: "ax-hybrid",
+  worksStandalone: false,
+  sourceUrl: "https://www.hikvision.com/test-datasheet.pdf",
+  sourceRetrieved: "2026-10-07",
+};
+
+export const baseTagReader = {
+  id: "hikvision-test-tag-reader",
+  kind: "tag-reader",
+  brand: "hikvision",
+  model: "TEST-TAG-READER",
+  productLine: "ax-hybrid",
+  worksStandalone: false,
+  sourceUrl: "https://www.hikvision.com/test-datasheet.pdf",
+  sourceRetrieved: "2026-10-07",
+};
+
+export const baseRelayModule = {
+  id: "hikvision-test-relay-module",
+  kind: "relay-module",
+  brand: "hikvision",
+  model: "TEST-RELAY-MODULE",
+  productLine: "ax-hybrid",
+  worksStandalone: false,
+  sourceUrl: "https://www.hikvision.com/test-datasheet.pdf",
+  sourceRetrieved: "2026-10-07",
+};
+
+export const baseRepeater = {
+  id: "hikvision-test-repeater",
+  kind: "repeater",
+  brand: "hikvision",
+  model: "TEST-REPEATER",
+  productLine: "ax-hybrid",
+  worksStandalone: false,
+  sourceUrl: "https://www.hikvision.com/test-datasheet.pdf",
+  sourceRetrieved: "2026-10-07",
+};
+
+export const baseCommunicator = {
+  id: "hikvision-test-communicator",
+  kind: "communicator",
+  brand: "hikvision",
+  model: "TEST-COMMUNICATOR",
+  productLine: "ax-hybrid",
+  worksStandalone: false,
+  sourceUrl: "https://www.hikvision.com/test-datasheet.pdf",
+  sourceRetrieved: "2026-10-07",
+};
+
+export const basePowerSupply = {
+  id: "hikvision-test-power-supply",
+  kind: "power-supply",
+  brand: "hikvision",
+  model: "TEST-POWER-SUPPLY",
+  productLine: "ax-hybrid",
+  worksStandalone: false,
+  sourceUrl: "https://www.hikvision.com/test-datasheet.pdf",
+  sourceRetrieved: "2026-10-07",
+};
+
+export const baseAccessory = {
+  id: "hikvision-test-accessory",
+  kind: "accessory",
+  brand: "hikvision",
+  model: "TEST-ACCESSORY",
+  productLine: "ax-hybrid",
+  worksStandalone: false,
+  sourceUrl: "https://www.hikvision.com/test-datasheet.pdf",
+  sourceRetrieved: "2026-10-07",
+};
+
+export const baseMagneticContact = {
+  id: "hikvision-test-magnetic-contact",
+  kind: "magnetic-contact",
+  brand: "hikvision",
+  model: "TEST-MAGNETIC-CONTACT",
+  productLine: "ax-hybrid",
+  worksStandalone: false,
+  sourceUrl: "https://www.hikvision.com/test-datasheet.pdf",
+  sourceRetrieved: "2026-10-07",
+};
+
+export const baseEnvironmentDetector = {
+  id: "hikvision-test-environment-detector",
+  kind: "environment-detector",
+  brand: "hikvision",
+  model: "TEST-ENVIRONMENT-DETECTOR",
+  productLine: "ax-hybrid",
+  worksStandalone: false,
+  sourceUrl: "https://www.hikvision.com/test-datasheet.pdf",
+  sourceRetrieved: "2026-10-07",
+};

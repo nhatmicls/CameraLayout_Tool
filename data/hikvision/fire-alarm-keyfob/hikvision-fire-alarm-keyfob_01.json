@@ -1,0 +1,27 @@
+[
+  {
+    "id": "hikvision-ds-pkf1-wb",
+    "kind": "keyfob",
+    "brand": "hikvision",
+    "model": "DS-PKF1-WB",
+    "productLine": "ax-pro",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000038135/DS-PKF1-WB_Datasheet_V1.0_202303.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": {
+      "amountVnd": 700000,
+      "sourceUrl": "https://vuhoangtelecom.vn/san-pham/dieu-khien-tu-xa-hikvision-ds-pkf1-wb/",
+      "retrieved": "2026-10-07"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "vuhoangtelecom",
+        "url": "https://vuhoangtelecom.vn/san-pham/dieu-khien-tu-xa-hikvision-ds-pkf1-wb/",
+        "amountVnd": 700000,
+        "retrieved": "2026-10-07"
+      }
+    }
+  }
+]

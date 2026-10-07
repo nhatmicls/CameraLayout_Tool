@@ -1,0 +1,48 @@
+[
+  {
+    "id": "hikvision-ds-pm1-o1h-wb",
+    "kind": "relay-module",
+    "brand": "hikvision",
+    "model": "DS-PM1-O1H-WB",
+    "productLine": "ax-pro",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000038132/DS-PM1-O1H-WB_Datasheet_20251209.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": {
+      "amountVnd": 880000,
+      "sourceUrl": "https://vuhoangtelecom.vn/san-pham/thiet-bi-pgm-khong-day-hikvision-ds-pm1-o1h-wb/",
+      "retrieved": "2026-10-07"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "vuhoangtelecom",
+        "url": "https://vuhoangtelecom.vn/san-pham/thiet-bi-pgm-khong-day-hikvision-ds-pm1-o1h-wb/",
+        "amountVnd": 880000,
+        "retrieved": "2026-10-07"
+      }
+    }
+  },
+  {
+    "id": "hikvision-ds-pm1-o4l-h",
+    "kind": "relay-module",
+    "brand": "hikvision",
+    "model": "DS-PM1-O4L-H",
+    "productLine": "ax-hybrid",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000065234/DS-PM1-O4L-H_Datasheet_V1.0_202207.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "mastery",
+        "url": "https://mastery.vn/sanpham/bo-mo-rong-relay-co-day-hikvision-ds-pm1-o4l-h/",
+        "amountVnd": null,
+        "retrieved": "2026-10-07"
+      }
+    }
+  }
+]

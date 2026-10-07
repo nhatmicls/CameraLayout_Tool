@@ -10,6 +10,35 @@
     "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000057668/DS-PM1-I8O2-H_Datasheet.pdf",
     "sourceRetrieved": "2026-10-07",
     "priceVn": null,
-    "purchaseLinks": null
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "mastery",
+        "url": "https://mastery.vn/sanpham/bo-mo-rong-dau-vao-hikvision-ds-pm1-i8o2-h/",
+        "amountVnd": null,
+        "retrieved": "2026-10-07"
+      }
+    }
+  },
+  {
+    "id": "hikvision-ds-pm1-rt-hwb",
+    "kind": "expander-module",
+    "brand": "hikvision",
+    "model": "DS-PM1-RT-HWB",
+    "productLine": "ax-hybrid",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000059783/DS-PM1-RT-HWB_Datasheet_20220616.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "mastery",
+        "url": "https://mastery.vn/sanpham/bo-thu-khong-day-hikvision-ds-pm1-rt-hwb/",
+        "amountVnd": null,
+        "retrieved": "2026-10-07"
+      }
+    }
   }
 ]

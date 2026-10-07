@@ -12,5 +12,26 @@
     "priceVn": null,
     "purchaseLinks": null,
     "notes": "Datasheet: alarm when ambient temperature exceeds 57."
+  },
+  {
+    "id": "hikvision-ds-pdht-e-wb",
+    "kind": "heat-detector",
+    "brand": "hikvision",
+    "model": "DS-PDHT-E-WB",
+    "productLine": "ax-pro",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000050559/DS-PDHT-E-WB_Datasheet_20230724.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "mastery",
+        "url": "https://mastery.vn/sanpham/cam-bien-nhiet-do-hikvision-ds-pdht-e-wb/",
+        "amountVnd": null,
+        "retrieved": "2026-10-07"
+      }
+    }
   }
 ]

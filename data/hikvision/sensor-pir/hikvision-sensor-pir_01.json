@@ -4,7 +4,10 @@
     "kind": "pir",
     "brand": "hikvision",
     "model": "DS-PDPG12P-EG2",
-    "coverage": { "rangeM": 12, "angleDeg": 85.9 },
+    "coverage": {
+      "rangeM": 12,
+      "angleDeg": 85.9
+    },
     "sourceUrl": "https://www.hikvision.com/content/dam/hikvision/products/S000000001/S000000601/S000000933/S000000934/OFR001801/M000050023/Data_Sheet/DS-PDPG12P-EG2_Datasheet_V1.0_202201.pdf",
     "sourceRetrieved": "2026-10-06",
     "priceVn": null,
@@ -16,11 +19,348 @@
     "kind": "pir",
     "brand": "hikvision",
     "model": "DS-PDCL12-EG2-WE",
-    "coverage": { "rangeM": 12, "angleDeg": 360 },
+    "coverage": {
+      "rangeM": 12,
+      "angleDeg": 360
+    },
     "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000044573/DS-PDCL12-EG2-WE_Datasheet.pdf",
     "sourceRetrieved": "2026-10-06",
     "priceVn": null,
     "purchaseLinks": null,
     "notes": "Wireless ceiling-mount PIR. Datasheet prints a single range (12m) + 360 deg angle, not a height-keyed diameter table (mounting height is a band, 2.4-4m, not tied to a specific diameter) - modelled with the same sector shape as wall PIR, angleDeg=360 giving full-circle coverage. See C2 in docs/sensor-catalog-sources.md."
+  },
+  {
+    "id": "hikvision-ds-pdp15p-eg2-wb-b",
+    "kind": "pir",
+    "brand": "hikvision",
+    "model": "DS-PDP15P-EG2-WB(B)",
+    "coverage": {
+      "rangeM": 15,
+      "angleDeg": 90
+    },
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000109200/DS-PDP15P-EG2-WBB_Datasheet_20250421.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "mastery",
+        "url": "https://mastery.vn/sanpham/cam-bien-hong-ngoai-hikvision-ds-pdp15p-eg2-wbb/",
+        "amountVnd": null,
+        "retrieved": "2026-10-07"
+      }
+    },
+    "notes": "AX HYBRID PRO wireless wall-mount PIR. Specification table p.1: 'Detection Range 15m'; 'Detection Angle 90°'. Cover-page bullet instead prints 'Detection Range: 15m / 85.9°' - likely marketing text reused from a sibling model (DS-PDPC12P-EG2-WB / DS-PDPC12P-EG2 both print 12m/85.9° consistently in both their bullet and spec table); the Specification table value (90 deg) is used, matching how every other record in this catalog is sourced. No vuhoangtelecom listing found; mastery.vn lists it 'Lien he' (contact only) - priceVn null."
+  },
+  {
+    "id": "hikvision-ds-pdp18-hm-wb",
+    "kind": "pir",
+    "brand": "hikvision",
+    "model": "DS-PDP18-HM-WB",
+    "coverage": {
+      "rangeM": 18,
+      "angleDeg": 90
+    },
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000061696/DS-PDP18-HM-WB_Datasheet_V1.0_202303.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "mastery",
+        "url": "https://mastery.vn/sanpham/cam-bien-hong-ngoai-ngoai-troi-hikvision-ds-pdp18-hm-wb/",
+        "amountVnd": null,
+        "retrieved": "2026-10-07"
+      }
+    },
+    "notes": "AX PRO wireless outdoor double-PIR detector. Spec table: 'Detection Range 18 m'; 'Detection Angle 90°'. Mounting height printed as two bands (2.5-3m high mount / 0.8-1.2m low mount) - not modelled. No vuhoangtelecom listing found; mastery.vn lists it 'Lien he' (contact only) - priceVn null."
+  },
+  {
+    "id": "hikvision-ds-pdc15-eg2-wb-b",
+    "kind": "pir",
+    "brand": "hikvision",
+    "model": "DS-PDC15-EG2-WB(B)",
+    "coverage": {
+      "rangeM": 15,
+      "angleDeg": 6.3
+    },
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000109202/DS-PDC15-EG2-WBB_Datasheet_20250421.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "mastery",
+        "url": "https://mastery.vn/sanpham/cam-bien-hong-ngoai-hikvision-ds-pdc15-eg2-wbb/",
+        "amountVnd": null,
+        "retrieved": "2026-10-07"
+      }
+    },
+    "notes": "AX HYBRID PRO wireless PIR curtain detector - long narrow 'curtain' coverage for perimeter/window protection. Spec table: 'Detection Range 15m'; 'Detection Angle 6.3°'. No vuhoangtelecom listing found; mastery.vn lists it 'Lien he' (contact only) - priceVn null."
+  },
+  {
+    "id": "hikvision-ds-pdc10am-eg2-wb",
+    "kind": "pir",
+    "brand": "hikvision",
+    "model": "DS-PDC10AM-EG2-WB",
+    "coverage": {
+      "rangeM": 10,
+      "angleDeg": 5
+    },
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000050009/DS-PDC10AM-EG2-WB_Datasheet.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "mastery",
+        "url": "https://mastery.vn/sanpham/cam-bien-chuyen-dong-hikvision-ds-pdc10am-eg2-wb/",
+        "amountVnd": null,
+        "retrieved": "2026-10-07"
+      }
+    },
+    "notes": "AX PRO slim PIR AM curtain detector for window-frame mount, wall or ceiling. Spec table prints two Detection Range rows: 'Wall mount: 10m' / 'Ceiling mount: 5m' - the wall-mount value (10m, first-listed) is stored as rangeM; the ceiling-mount alternate (5m) is not modelled. 'Detection Angle 5°' applies to both modes. No vuhoangtelecom listing found; mastery.vn lists it 'Lien he' (contact only) - priceVn null."
+  },
+  {
+    "id": "hikvision-ds-pdd12p-eg2-wb",
+    "kind": "pir",
+    "brand": "hikvision",
+    "model": "DS-PDD12P-EG2-WB",
+    "coverage": {
+      "rangeM": 12,
+      "angleDeg": 85.9
+    },
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000039126/DS-PDD12P-EG2-WB_Datasheet_20251111.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": {
+      "amountVnd": 1880000,
+      "sourceUrl": "https://vuhoangtelecom.vn/san-pham/cam-bien-hong-ngoai-khong-day-hikvision-ds-pdd12p-eg2-wb/",
+      "retrieved": "2026-10-07"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "vuhoangtelecom",
+        "url": "https://vuhoangtelecom.vn/san-pham/cam-bien-hong-ngoai-khong-day-hikvision-ds-pdd12p-eg2-wb/",
+        "amountVnd": 1880000,
+        "retrieved": "2026-10-07"
+      }
+    },
+    "notes": "AX HYBRID PRO wireless dual-tech (PIR + 24GHz microwave) detector. Spec table: 'Detection Range 12m'; 'Detection Angle 85.9°' (consistent with cover bullet '12m radius'). vuhoangtelecom.vn 1,880,000 VND, retrieved 2026-10-07."
+  },
+  {
+    "id": "hikvision-ds-pdc10dm-eg2-wb",
+    "kind": "pir",
+    "brand": "hikvision",
+    "model": "DS-PDC10DM-EG2-WB",
+    "coverage": {
+      "rangeM": 10,
+      "angleDeg": 5
+    },
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000050011/DS-PDC10DM-EG2-WB_Datasheet.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "mastery",
+        "url": "https://mastery.vn/sanpham/cam-bien-chuyen-dong-hikvision-ds-pdc10dm-eg2-wb/",
+        "amountVnd": null,
+        "retrieved": "2026-10-07"
+      }
+    },
+    "notes": "AX PRO slim dual-tech (PIR + 24GHz microwave) AM curtain detector for window-frame mount, wall or ceiling. Spec table prints two Detection Range rows: 'Wall mount: 10m' / 'Ceiling mount: 5m' - wall-mount value (10m) stored as rangeM, same convention as hikvision-ds-pdc10am-eg2-wb; ceiling-mount alternate (5m) not modelled. 'Detection Angle 5°' applies to both modes. No vuhoangtelecom listing found; mastery.vn lists it 'Lien he' (contact only) - priceVn null."
+  },
+  {
+    "id": "hikvision-ds-pdtt15am-lm-wb",
+    "kind": "pir",
+    "brand": "hikvision",
+    "model": "DS-PDTT15AM-LM-WB",
+    "coverage": {
+      "rangeM": 15,
+      "angleDeg": 90
+    },
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000050025/DS-PDTT15AM-LM-WB_Datasheet.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "mastery",
+        "url": "https://mastery.vn/sanpham/cam-bien-chuyen-dong-hikvision-ds-pdtt15am-lm-wb/",
+        "amountVnd": null,
+        "retrieved": "2026-10-07"
+      }
+    },
+    "notes": "Spec table: 'Detection Range 15 m'; 'Detection Angle 90° @ 180° adjustable' - the 90 deg detection angle is stored (the datasheet prints 180 deg as the span it can be adjusted over, not as the angle covered at once). No vuhoangtelecom listing found; mastery.vn lists it 'Lien he' (contact only) - priceVn null."
+  },
+  {
+    "id": "hikvision-ds-pdqp15am-lm-wb",
+    "kind": "pir",
+    "brand": "hikvision",
+    "model": "DS-PDQP15AM-LM-WB",
+    "coverage": {
+      "rangeM": 15,
+      "angleDeg": 180
+    },
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000062910/DS-PDQP15AM-LM-WB_Datasheet.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "mastery",
+        "url": "https://mastery.vn/sanpham/cam-bien-hong-ngoai-180-khong-day-hikvision-ds-pdqp15am-lm-wb/",
+        "amountVnd": null,
+        "retrieved": "2026-10-07"
+      }
+    },
+    "notes": "AX PRO wireless outdoor quad-PIR 180° panoramic detector. Spec table: 'Detection Range 15 m'; 'Detection Angle 180°'. No vuhoangtelecom listing found; mastery.vn lists it 'Lien he' (contact only) - priceVn null."
+  },
+  {
+    "id": "hikvision-ds-pdpc12p-eg2-wb",
+    "kind": "pir",
+    "brand": "hikvision",
+    "model": "DS-PDPC12P-EG2-WB",
+    "coverage": {
+      "rangeM": 12,
+      "angleDeg": 85.9
+    },
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000039121/DS-PDPC12P-EG2-WB_Datasheet_20251111.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": {
+      "amountVnd": 2470000,
+      "sourceUrl": "https://vuhoangtelecom.vn/san-pham/hong-ngoai-khong-day-kem-camera-hikvision-ds-pdpc12p-eg2-wb/",
+      "retrieved": "2026-10-07"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "vuhoangtelecom",
+        "url": "https://vuhoangtelecom.vn/san-pham/hong-ngoai-khong-day-kem-camera-hikvision-ds-pdpc12p-eg2-wb/",
+        "amountVnd": 2470000,
+        "retrieved": "2026-10-07"
+      }
+    },
+    "notes": "AX HYBRID PRO wireless PIR-camera (snapshot video verification) detector. Cover bullet and spec table agree: 'Detection range: 12m / 85.9°' / 'Detection Range 12m' + 'Detection Angle 85.9°'. Built-in camera's own 'Field Angle 88°(H), 68°(V)' is the camera's optical FOV, not the PIR detection angle - not modelled (same treatment as dahua-ard2251e-w2-v-pir's built-in snapshot camera). vuhoangtelecom.vn 2,470,000 VND, retrieved 2026-10-07."
+  },
+  {
+    "id": "hikvision-ds-pdpc12p-eg2",
+    "kind": "pir",
+    "brand": "hikvision",
+    "model": "DS-PDPC12P-EG2",
+    "coverage": {
+      "rangeM": 12,
+      "angleDeg": 85.9
+    },
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000057878/DS-PDPC12P-EG2_Datasheet_V1.0_202207.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "mastery",
+        "url": "https://mastery.vn/sanpham/cam-bien-hong-ngoai-co-day-hikvision-ds-pdpc12p-eg2/",
+        "amountVnd": null,
+        "retrieved": "2026-10-07"
+      }
+    },
+    "notes": "Wired PIRCAM detector (Speed-X Bus, AX HYBRID PRO) - wired sibling of hikvision-ds-pdpc12p-eg2-wb. Spec table: 'Detection Range 12 m'; 'Detection Angle 85.9°'. Built-in camera's own 'Field Angle 109°(H), 60°(V)' is the camera's optical FOV, not the PIR detection angle - not modelled. No vuhoangtelecom listing found; mastery.vn lists it 'Lien he' (contact only) - priceVn null."
+  },
+  {
+    "id": "hikvision-ds-pdpg12p-eg2-wb",
+    "kind": "pir",
+    "brand": "hikvision",
+    "model": "DS-PDPG12P-EG2-WB",
+    "coverage": {
+      "rangeM": 12,
+      "angleDeg": 85.9
+    },
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000039118/DS-PDPG12P-EG2-WB_Datasheet_20260605.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": {
+      "amountVnd": 1580000,
+      "sourceUrl": "https://vuhoangtelecom.vn/san-pham/hong-ngoai-bao-vo-kinh-khong-day-hikvision-ds-pdpg12p-eg2-wb/",
+      "retrieved": "2026-10-07"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "vuhoangtelecom",
+        "url": "https://vuhoangtelecom.vn/san-pham/hong-ngoai-bao-vo-kinh-khong-day-hikvision-ds-pdpg12p-eg2-wb/",
+        "amountVnd": 1580000,
+        "retrieved": "2026-10-07"
+      }
+    },
+    "notes": "AX PRO wireless combo PIR + acoustic glass-break detector. Stored as a single pir record using the PIR half of the spec: cover bullet 'PIR Detection Range: 12m / 85.9°'; spec table 'Detection range 12m' / 'Detection angle 85.9°'. The glass-break half is NOT split into a separate catalog record for this wireless model (contrast the wired hikvision-ds-pdpg12p-eg2-pir / hikvision-ds-pdpg12p-eg2-glass-break pair, which IS split) per owner instruction: cover bullet 'Glass Break Range: 8m / 120°'; spec table 'Glass break range 8m'; glass types 'Float,Plate,Tampered,Wired,Laminated Leaded,Double Glazing' - noted here, not modelled as its own record."
+  },
+  {
+    "id": "hikvision-ds-pdc10am-vg3",
+    "kind": "pir",
+    "brand": "hikvision",
+    "model": "DS-PDC10AM-VG3",
+    "coverage": {
+      "rangeM": 10,
+      "angleDeg": 5
+    },
+    "sourceUrl": "https://www.hikvision.com/content/dam/hikvision/products/S000000001/S000000601/S000000937/S000000934/OFR001804/M000050014/Data_Sheet/DS-PDC10AM-VG3_Datasheet_V1.0_202106.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "mastery",
+        "url": "https://mastery.vn/sanpham/cam-bien-hong-ngoai-co-day-hikvision-ds-pdc10am-vg3/",
+        "amountVnd": null,
+        "retrieved": "2026-10-07"
+      }
+    },
+    "notes": "Wired PIR AM curtain detector. Spec table: Detection Range 'Wall Mount：10m' / 'Ceiling Mount：6m' - the wall-mount value is stored, the ceiling-mount alternate is not modelled; 'Detection Angle 5°'. mastery.vn lists it 'Lien he' (contact only) - priceVn null."
+  },
+  {
+    "id": "hikvision-ds-pdc10dm-vg3",
+    "kind": "pir",
+    "brand": "hikvision",
+    "model": "DS-PDC10DM-VG3",
+    "coverage": {
+      "rangeM": 10,
+      "angleDeg": 5
+    },
+    "sourceUrl": "https://www.hikvision.com/content/dam/hikvision/products/S000000001/S000000601/S000000933/S000000934/OFR001803/M000050015/Data_Sheet/DS-PDC10DM-VG3_Datasheet_V1.0_202106.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "mastery",
+        "url": "https://mastery.vn/sanpham/cam-bien-hong-ngoai-co-day-hikvision-ds-pdc10dm-vg3/",
+        "amountVnd": null,
+        "retrieved": "2026-10-07"
+      }
+    },
+    "notes": "Wired dual-tech (PIR + microwave) AM curtain detector. Spec table: Detection Range 'Wall Mount：10m' / 'Ceiling Mount：6m' - the wall-mount value is stored, the ceiling-mount alternate is not modelled; 'Detection Angle 5°'. mastery.vn lists it 'Lien he' (contact only) - priceVn null."
+  },
+  {
+    "id": "hikvision-ds-pdd15am-eg2",
+    "kind": "pir",
+    "brand": "hikvision",
+    "model": "DS-PDD15AM-EG2",
+    "coverage": {
+      "rangeM": 15,
+      "angleDeg": 85.9
+    },
+    "sourceUrl": "https://www.hikvision.com/content/dam/hikvision/products/S000000001/S000000601/S000000937/S000000934/OFR000956/M000050017/Data_Sheet/DS-PDD15AM-EG2_Datasheet_V1.0_202205.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "mastery",
+        "url": "https://mastery.vn/sanpham/cam-bien-chuyen-dong-hikvision-ds-pdd15am-eg2/",
+        "amountVnd": null,
+        "retrieved": "2026-10-07"
+      }
+    },
+    "notes": "Wired dual-tech (PIR + microwave) AM detector. Spec table: 'Detection Range 15 m'; 'Detection Angle 85.9°'. mastery.vn lists it 'Lien he' (contact only) - priceVn null."
   }
 ]

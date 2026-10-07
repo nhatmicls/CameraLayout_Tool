@@ -1,0 +1,137 @@
+[
+  {
+    "id": "hikvision-ds-pdmc-eg2-wb",
+    "kind": "magnetic-contact",
+    "brand": "hikvision",
+    "model": "DS-PDMC-EG2-WB",
+    "productLine": "ax-pro",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000039123/DS-PDMC-EG2-WB_Datasheet_V1.0_202303.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": {
+      "amountVnd": 750000,
+      "sourceUrl": "https://vuhoangtelecom.vn/san-pham/cong-tac-tu-ket-noi-dau-bao-co-day-hikvision-ds-pdmc-eg2-wb/",
+      "retrieved": "2026-10-07"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "vuhoangtelecom",
+        "url": "https://vuhoangtelecom.vn/san-pham/cong-tac-tu-ket-noi-dau-bao-co-day-hikvision-ds-pdmc-eg2-wb/",
+        "amountVnd": 750000,
+        "retrieved": "2026-10-07"
+      }
+    }
+  },
+  {
+    "id": "hikvision-ds-pdmc-eg2-wb-b",
+    "kind": "magnetic-contact",
+    "brand": "hikvision",
+    "model": "DS-PDMC-EG2-WB(B)",
+    "productLine": "ax-pro",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/sm000092422/DS-PDMC-EG2-WBB_Datasheet_20260923.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "mastery",
+        "url": "https://mastery.vn/sanpham/cong-tac-tu-khong-day-hikvision-ds-pdmc-eg2-wbb/",
+        "amountVnd": null,
+        "retrieved": "2026-10-07"
+      }
+    }
+  },
+  {
+    "id": "hikvision-ds-pdmcs-eg2-wb",
+    "kind": "magnetic-contact",
+    "brand": "hikvision",
+    "model": "DS-PDMCS-EG2-WB",
+    "productLine": "ax-pro",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000039122/DS-PDMCS-EG2-WB_Datasheet_V1.0_202303.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": {
+      "amountVnd": 620000,
+      "sourceUrl": "https://vuhoangtelecom.vn/san-pham/cong-tac-tu-khong-day-433-mhz-hikvision-ds-pdmcs-eg2-wb/",
+      "retrieved": "2026-10-07"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "vuhoangtelecom",
+        "url": "https://vuhoangtelecom.vn/san-pham/cong-tac-tu-khong-day-433-mhz-hikvision-ds-pdmcs-eg2-wb/",
+        "amountVnd": 620000,
+        "retrieved": "2026-10-07"
+      }
+    }
+  },
+  {
+    "id": "hikvision-ds-pdmck-eg2-wb-b",
+    "kind": "magnetic-contact",
+    "brand": "hikvision",
+    "model": "DS-PDMCK-EG2-WB(B)",
+    "productLine": "ax-pro",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000115121/DS-PDMCK-EG2-WBB_Datasheet_20260923.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "mastery",
+        "url": "https://mastery.vn/sanpham/cong-tac-tu-ket-hop-bao-rung-hikvision-ds-pdmck-eg2-wbb/",
+        "amountVnd": null,
+        "retrieved": "2026-10-07"
+      }
+    }
+  },
+  {
+    "id": "hikvision-ds-pdmcx-e-wb",
+    "kind": "magnetic-contact",
+    "brand": "hikvision",
+    "model": "DS-PDMCX-E-WB",
+    "productLine": "ax-pro",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000043792/DS-PDMCX-E-WB_Datasheet_V1.0_202303.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "mastery",
+        "url": "https://mastery.vn/sanpham/cam-bien-tu-khong-day-hikvision-ds-pdmcx-e-wb/",
+        "amountVnd": null,
+        "retrieved": "2026-10-07"
+      }
+    }
+  },
+  {
+    "id": "hikvision-ds-pd1-mc-rs",
+    "kind": "magnetic-contact",
+    "brand": "hikvision",
+    "model": "DS-PD1-MC-RS",
+    "productLine": "ax-hybrid",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://www.hikvision.com/content/dam/hikvision/products/S000000001/S000000601/S000000937/S000000934/OFR000943/M000004980/Data_Sheet/DS-PD1-MC-RS.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "mastery",
+        "url": "https://mastery.vn/sanpham/cam-bien-tu-co-day-hikvision-ds-pd1-mc-rs/",
+        "amountVnd": null,
+        "retrieved": "2026-10-07"
+      }
+    },
+    "notes": "Wired magnetic contact for rolling doors ('Connection type: NC', 'Active gap: 65 mm'). Wired zone device: it is not on Hikvision's compatibility lists, so no panel lists it."
+  }
+]

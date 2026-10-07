@@ -30,5 +30,31 @@
     },
     "purchaseLinks": { "primary": null, "secondary": { "shop": "vuhoangtelecom", "url": "https://vuhoangtelecom.vn/san-pham/cam-bien-rung-hikvision-ds-pdsk-p/", "amountVnd": 405000, "retrieved": "2026-10-06" } },
     "notes": "Ordinary wired wall-mount shock sensor (perimeter protection on a door/window/safe, not the vault-specific ISC-SM-90). Datasheet p.1: 'Detection Range Up to 2.5m Radius'; no material/surface named, so surface is null (contrast bosch-isc-sm-90, which does name one). No glass-type field on this model (pure shock sensor, not combo glass-break) - glassTypes stays []."
+  },
+  {
+    "id": "hikvision-ds-pdbg8-eg2-wb",
+    "kind": "vibration",
+    "detection": "glass-break",
+    "brand": "hikvision",
+    "model": "DS-PDBG8-EG2-WB",
+    "radii": [{ "surface": null, "radiusM": 8 }],
+    "glassTypes": ["Float", "Plate", "Tampered", "Wired", "Laminated Leaded", "Double Glazing"],
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000039137/DS-PDBG8-EG2-WB_Datasheet_20251111.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": {
+      "amountVnd": 945000,
+      "sourceUrl": "https://vuhoangtelecom.vn/san-pham/dau-bao-kinh-vo-khong-day-433-mhz-hikvision-ds-pdbg8-eg2-wb/",
+      "retrieved": "2026-10-07"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "vuhoangtelecom",
+        "url": "https://vuhoangtelecom.vn/san-pham/dau-bao-kinh-vo-khong-day-433-mhz-hikvision-ds-pdbg8-eg2-wb/",
+        "amountVnd": 945000,
+        "retrieved": "2026-10-07"
+      }
+    },
+    "notes": "AX PRO wireless omni-directional acoustic glass-break detector (microphone sensor). Spec table: 'Detection Range 8m'. 'Detection Angle 120°' is also printed but not modelled (vibration schema has no angle field, same convention as hikvision-ds-pdpg12p-eg2-glass-break). Glass type 'Tampered' copied as printed (likely a manufacturer typo for 'Tempered', per no-correction-from-memory rule). vuhoangtelecom.vn 945,000 VND, retrieved 2026-10-07."
   }
 ]

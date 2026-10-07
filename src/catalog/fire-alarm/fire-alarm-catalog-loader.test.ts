@@ -3,10 +3,38 @@
 // compatibleDevices reference resolves to a non-controller record in this catalog, and
 // an empty / zero-record kind does not fail the loader.
 import { describe, expect, it } from "vitest";
+import type { FireAlarmModel } from "./fire-alarm-catalog-schema";
 import { fireAlarmModelArraySchema } from "./fire-alarm-catalog-schema";
-import { fireAlarmCatalogDataFiles, fireAlarmModelById, fireAlarmModels } from "./fire-alarm-catalog-loader";
+import {
+  assertCompatibilityReferencesResolve,
+  fireAlarmCatalogDataFiles,
+  fireAlarmModelById,
+  fireAlarmModels,
+} from "./fire-alarm-catalog-loader";
 import { cameraModels } from "../camera/camera-catalog-loader";
 import { sensorModels } from "../sensor/sensor-catalog-loader";
+
+// Minimal synthetic records (cast, not zod-parsed - assertCompatibilityReferencesResolve
+// only ever reads id/kind/compatibleDevices) for the unit tests below, which exercise the
+// OR-resolution branch (fire-alarm catalog OR sensor catalog) without needing a real
+// sensor-catalog data file.
+function controller(id: string, compatibleDeviceIds: readonly string[]): FireAlarmModel {
+  return {
+    id,
+    kind: "control-panel",
+    brand: "hikvision",
+    model: id,
+    compatibleDevices: compatibleDeviceIds.map((modelId) => ({
+      modelId,
+      sourceUrl: "https://www.hikvision.com/a.pdf",
+      sourceRetrieved: "2026-10-07",
+    })),
+  } as unknown as FireAlarmModel;
+}
+
+function detector(id: string): FireAlarmModel {
+  return { id, kind: "smoke-detector", brand: "hikvision", model: id } as unknown as FireAlarmModel;
+}
 
 // [label, raw text, brand folder, device-type folder] of every bundled data file
 // (data/<brand>/fire-alarm-<kind>/).
@@ -64,12 +92,14 @@ describe("fireAlarmModels (loaded + validated catalog)", () => {
     expect(fireAlarmModelById("does-not-exist")).toBeUndefined();
   });
 
-  it("every compatibleDevices reference resolves to a non-controller record in this catalog", () => {
+  it("every compatibleDevices reference resolves to a non-controller record of this catalog or to a sensor catalog record", () => {
     const byId = new Map(fireAlarmModels.map((model) => [model.id, model]));
+    const sensorIds = new Set(sensorModels.map((model) => model.id));
     const controllerKinds = new Set(["control-panel", "wireless-hub"]);
     for (const model of fireAlarmModels) {
       if (!("compatibleDevices" in model)) continue;
       for (const entry of model.compatibleDevices) {
+        if (sensorIds.has(entry.modelId)) continue;
         const target = byId.get(entry.modelId);
         expect(target, `${model.id} -> ${entry.modelId}`).toBeDefined();
         expect(controllerKinds.has(target!.kind), `${model.id} -> ${entry.modelId}`).toBe(false);
@@ -83,5 +113,32 @@ describe("fireAlarmModels (loaded + validated catalog)", () => {
       .filter((model) => "compatibleDevices" in model)
       .reduce((sum, model) => sum + (model as { compatibleDevices: unknown[] }).compatibleDevices.length, 0);
     expect(pairCount).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe("assertCompatibilityReferencesResolve", () => {
+  it("accepts a reference that resolves only to a sensor catalog id", () => {
+    const models = [controller("panel-1", ["sensor-1"])];
+    expect(() => assertCompatibilityReferencesResolve(models, new Set(["sensor-1"]))).not.toThrow();
+  });
+
+  it("still resolves a non-controller record in this catalog, same as before", () => {
+    const models = [controller("panel-1", ["smoke-1"]), detector("smoke-1")];
+    expect(() => assertCompatibilityReferencesResolve(models, new Set())).not.toThrow();
+  });
+
+  it("throws when a reference resolves to neither this catalog nor a sensor id", () => {
+    const models = [controller("panel-1", ["unknown-device"])];
+    expect(() => assertCompatibilityReferencesResolve(models, new Set())).toThrow(/unknown modelId/);
+  });
+
+  it("still throws when a reference targets a controller in this catalog", () => {
+    const models = [controller("panel-1", ["panel-2"]), controller("panel-2", [])];
+    expect(() => assertCompatibilityReferencesResolve(models, new Set())).toThrow(/references controller/);
+  });
+
+  it("still throws when a reference targets itself", () => {
+    const models = [controller("panel-1", ["panel-1"])];
+    expect(() => assertCompatibilityReferencesResolve(models, new Set())).toThrow(/references itself/);
   });
 });

@@ -13,17 +13,35 @@
  * so `compatibleDevices` is model-level only (no `match` discriminator).
  */
 
-/** The nine device kinds this catalog ships, exactly as printed on the Hikvision datasheets. */
+/**
+ * The eighteen device kinds this catalog ships, exactly as printed on the
+ * Hikvision datasheets. The nine marker-only kinds added alongside
+ * `FIRE_ALARM_KIND_CATALOG_TAB` (owner decision, AX Hybrid PRO compatibility
+ * list expansion) carry no coverage shape - same as `expander-module` /
+ * `keypad` / `sounder` already did - so adding them needed no change to
+ * `isFireDetectorKind` or the coverage resolver, only new entries in every
+ * exhaustive `Record<FireAlarmKind, ...>` table below and in
+ * `src/canvas/fire-alarm`.
+ */
 export type FireAlarmKind =
   | 'control-panel'
   | 'wireless-hub'
   | 'expander-module'
   | 'keypad'
+  | 'keyfob'
+  | 'tag-reader'
+  | 'relay-module'
+  | 'repeater'
+  | 'communicator'
+  | 'power-supply'
+  | 'accessory'
   | 'smoke-detector'
   | 'heat-detector'
   | 'co-detector'
   | 'manual-call-point'
   | 'sounder'
+  | 'magnetic-contact'
+  | 'environment-detector'
 
 /** The three detector kinds a coverage circle can ever be drawn for. */
 export type FireDetectorKind = 'smoke-detector' | 'heat-detector' | 'co-detector'
@@ -38,6 +56,13 @@ export const FIRE_ALARM_KIND_LABELS: Record<FireAlarmKind, string> = {
   'wireless-hub': 'Wireless hub',
   'expander-module': 'Expander module',
   keypad: 'Keypad',
+  keyfob: 'Keyfob',
+  'tag-reader': 'Tag reader',
+  'relay-module': 'Relay module',
+  repeater: 'Repeater',
+  communicator: 'Communicator',
+  'power-supply': 'Power supply',
+  accessory: 'Accessory',
   'smoke-detector': 'Smoke detector',
   'heat-detector': 'Heat detector',
   'co-detector': 'CO detector',
@@ -45,20 +70,35 @@ export const FIRE_ALARM_KIND_LABELS: Record<FireAlarmKind, string> = {
   // manual call point - see docs/fire-alarm-catalog-sources.md "Kind of DS-PDEBP1-EG2-WE".
   'manual-call-point': 'Call point / panic button',
   sounder: 'Sounder',
+  'magnetic-contact': 'Magnetic contact',
+  'environment-detector': 'Environment detector',
 }
 
-/** Fixed display order used everywhere a UI lists all nine kinds (catalog tab filter, BOM grouping). */
+/** Fixed display order used everywhere a UI lists all eighteen kinds (catalog tab filters, BOM grouping) - grouped by `FIRE_ALARM_KIND_CATALOG_TAB` (control-panel kinds, then fire-alarm kinds, then sensors-tab kinds). */
 export const FIRE_ALARM_KIND_DISPLAY_ORDER: readonly FireAlarmKind[] = [
   'control-panel',
   'wireless-hub',
   'expander-module',
   'keypad',
+  'keyfob',
+  'tag-reader',
+  'relay-module',
+  'repeater',
+  'communicator',
+  'power-supply',
+  'accessory',
   'smoke-detector',
   'heat-detector',
   'co-detector',
   'manual-call-point',
   'sounder',
+  'magnetic-contact',
+  'environment-detector',
 ]
+
+// The kind -> sidebar tab table lives in its own module (file-size rule); re-exported here so
+// every consumer keeps importing kind tables from this file.
+export { FIRE_ALARM_KIND_CATALOG_TAB } from './fire-alarm-kind-catalog-tab'
 
 export function isFireAlarmControllerKind(kind: FireAlarmKind): kind is FireAlarmControllerKind {
   return kind === 'control-panel' || kind === 'wireless-hub'

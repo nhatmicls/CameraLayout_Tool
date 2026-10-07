@@ -24,10 +24,11 @@ matching one, never loose at the folder root:
 A new feature gets its own subfolder where it adds files.
 Catalog data: `data/<brand>/<device-type>/<brand>-<device-type>_<NN>.json`, where `device-type`
 is `camera-<formFactor>` (bullet, dome, turret, ptz, fisheye), `sensor-<kind>` (pir, beam,
-vibration, thermal), or `fire-alarm-<kind>` (control-panel, wireless-hub, smoke-detector,
-heat-detector, co-detector, keypad, expander-module, manual-call-point, sounder); e.g.
-`data/hikvision/camera-bullet/hikvision-camera-bullet_02.json` or
-`data/hikvision/fire-alarm-smoke-detector/hikvision-fire-alarm-smoke-detector_01.json`. A
+vibration, thermal), or `fire-alarm-<kind>` (control-panel, wireless-hub, expander-module,
+keypad, keyfob, tag-reader, relay-module, repeater, communicator, power-supply, accessory,
+smoke-detector, heat-detector, co-detector, manual-call-point, sounder, magnetic-contact,
+environment-detector); e.g. `data/hikvision/camera-bullet/hikvision-camera-bullet_02.json`
+or `data/hikvision/fire-alarm-smoke-detector/hikvision-fire-alarm-smoke-detector_01.json`. A
 record must sit in the folder of its own brand and form factor / kind (tested). Loaders glob
 `data/*/camera-*/*.json`, `data/*/sensor-*/*.json` and `data/*/fire-alarm-*/*.json`, so a new
 numbered file, type folder or brand folder needs no loader edit. Keep a file to about 25
@@ -56,16 +57,33 @@ Project rules:
   the page shows the TX+RX set price. Record every source in
   `./docs/sensor-catalog-sources.md`.
 - Fire-alarm catalog (`data/hikvision/fire-alarm-<kind>/*.json`) is a third catalog; ids are
-  disjoint from cameras and sensors. Hikvision only. Specs come only from official Hikvision
-  datasheets (hosts `hikvision.com` + subdomains, or `hikvision.vn`) or the AX PRO user manual,
-  copied as printed. A kind with no official PDF ships zero records - never a placeholder.
-  `priceVn` as for cameras. Record every source in `./docs/fire-alarm-catalog-sources.md`.
+  disjoint from cameras and sensors. Hikvision only (AX HYBRID PRO and AX PRO lines). Specs
+  come only from official Hikvision datasheets (hosts `hikvision.com` + subdomains, or
+  `hikvision.vn`) or the AX PRO user manual, copied as printed. A kind with no official PDF
+  ships zero records - never a placeholder. `priceVn` as for cameras. Record every source in
+  `./docs/fire-alarm-catalog-sources.md`. A device from Hikvision's compatibility lists is
+  added only when the EXACT model is sold in Vietnam (a saved Vietnamese shop page whose title
+  / SKU carries the model string - a price or "Liên hệ" both count; `-WE` / `-WB` and "(B)"
+  are distinct models) AND an official datasheet whose text contains that model string was
+  downloaded. In practice that is the 433 MHz `-WB` and wired models; the 868 MHz `-WE`
+  variants were not found in Vietnamese shops. Motion / glass-break detectors from those
+  lists go to the sensor catalog; everything else is a marker-only kind here.
+- Fire-alarm kinds: `FIRE_ALARM_KIND_CATALOG_TAB` (one table, one source of truth) maps each
+  of 18 kinds to a tab ('control-panel', 'fire-alarm', or 'sensors'). Control panel tab shows
+  controllers and their modules (expander, keypad, keyfob, tag reader, relay, repeater,
+  communicator, power supply, accessory). Fire alarm tab shows detectors + call points + sounders.
+  Sensors tab shows magnetic contact + environment detector (marker-only, placed like sensors).
+  Detector coverage shapes (smoke/heat circles in TCVN 5738 mode only) are determined by kind,
+  not stored in placement data.
 - Compatibility (fire alarm): stored only on controller records (`compatibleDevices[]`), each
-  with `sourceUrl` and `sourceRetrieved` date. Only pairs whose both ends are in this catalog
-  and whose both ends appear in an official Hikvision source are stored - today the two
-  official lists (AXPRO Series Compatibility List, AX HYBRID PRO Device Compatibility List);
-  the printed minimum firmware goes in the entry `note`, and a row whose cells are all "—"
-  is not stored. Never inferred from protocol, series name or memory. UI says "not listed", never "incompatible". Placed device is
+  with `sourceUrl` and `sourceRetrieved` date. Both ends must be in this catalog OR a sensor-catalog
+  id, and both must appear in an official Hikvision source (AXPRO Series Compatibility List,
+  AX HYBRID PRO Device Compatibility List). The printed minimum firmware goes in entry `note`.
+  A "—" cell is read as compatible with all firmware versions (owner decision 2026-10-07).
+  Frequency pairing (433 MHz hub `-WB` <-> `-WB` peripherals; 868 MHz hub `-WE` <-> `-WE`
+  peripherals). Never inferred from protocol, series name or memory. UI says "not listed",
+  never "incompatible". Placed sensor gets no warnings (only the filter). Placed alarm device
+  shows "not listed" warning if not in a placed controller's list. Placed device is
   `{ id, modelId, x, y }`; circle is computed at draw time and never stored.
 - Fire detector coverage: one project setting (`fireAlarmSettings { coverageMode, ceilingHeightM }`),
   modes "datasheet" or "tcvn-5738". TCVN 5738:2021 numbers and clause citations live only in
@@ -118,6 +136,9 @@ Project rules:
   CSV and PNG all come from `src/export/shared/build-combined-bom-rows.ts`. CSV gains a 12th
   trailing column `Notes` (breaking change for strict parsers), filled only on fire-alarm rows
   with a compatibility warning or "No panel/hub placed"; PNG table stays 11 columns.
+- Keyboard Delete / Backspace: acts only in select mode (a placed device is selected). When a
+  catalog sidebar tab's drop-down (Brand, Type, "Works with") has focus, Delete / Backspace
+  are ignored (no delete action).
 - Walls are single segments in image px. For cameras `opaque` blocks and `glass` never does.
   For sensors the table `SENSOR_BLOCKING_WALL_KINDS` in
   `src/domain/sensor/sensor-wall-blocking-rules.ts` is the single source: PIR and thermal are clipped
@@ -130,6 +151,13 @@ Project rules:
   canvas edge.
 - Konva drag events bubble: a draggable child's drag reaches its parent's drag handlers, so
   parent handlers must check `e.target === e.currentTarget`.
+- Catalog sidebar filter state (`catalog-sidebar-filter-store.ts`): UI-only, never persisted.
+  `catalogControllerFilter` is ONE shared "works with" selection read by the Sensors, Fire alarm
+  and Control panel tabs (replaced tab-specific filters when the Control panel tab was added).
+  A chosen controller model id, or 'all'. The filter appears in all three tabs' drop-downs,
+  grouped into "Placed in this project" and "Not placed". Each tab also has its own brand and
+  kind filters (merged union of sensor kinds + magnetic-contact/environment-detector for Sensors;
+  fire-alarm detector kinds for Fire alarm; control-panel/hub and accessory kinds for Control panel).
 - View config (`viewConfig` in `editor-ui-store.ts`, types + helpers in `src/domain/view/`) is
   UI-only: never persisted, never in undo, never sets `hasUnsavedChanges`. Items are hidden by id
   set (`hiddenIds`), never by filtering `cameras` / `sensors` - labels `C{n}` / `S{n}` and cable

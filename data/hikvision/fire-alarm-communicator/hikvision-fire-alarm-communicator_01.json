@@ -1,0 +1,65 @@
+[
+  {
+    "id": "hikvision-ds-pm2-p",
+    "kind": "communicator",
+    "brand": "hikvision",
+    "model": "DS-PM2-P",
+    "productLine": "ax-hybrid",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://www.hikvision.com/content/dam/hikvision/products/S000000001/S000000601/S000000937/S000000934/OFR001533/M000057368/Data_Sheet/DS-PM2-P_datasheet.doc.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "mastery",
+        "url": "https://mastery.vn/sanpham/module-giao-tiep-pstn-hikvision-ds-pm2-p/",
+        "amountVnd": null,
+        "retrieved": "2026-10-07"
+      }
+    }
+  },
+  {
+    "id": "hikvision-ds-pm2-g",
+    "kind": "communicator",
+    "brand": "hikvision",
+    "model": "DS-PM2-G",
+    "productLine": "ax-hybrid",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000057367/DS-PM2-G_datasheet.doc.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "mastery",
+        "url": "https://mastery.vn/sanpham/module-giao-tiep-gprs-hikvision-ds-pm2-g/",
+        "amountVnd": null,
+        "retrieved": "2026-10-07"
+      }
+    }
+  },
+  {
+    "id": "hikvision-ds-pm2-s-au",
+    "kind": "communicator",
+    "brand": "hikvision",
+    "model": "DS-PM2-S(AU)",
+    "productLine": "ax-hybrid",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000057365/DS-PM2-SAU_datasheet.doc.pdf",
+    "sourceRetrieved": "2026-10-07",
+    "priceVn": null,
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "mastery",
+        "url": "https://mastery.vn/sanpham/module-giao-tiep-3g-4g-hikvision-ds-pm2-sau/",
+        "amountVnd": null,
+        "retrieved": "2026-10-07"
+      }
+    }
+  }
+]

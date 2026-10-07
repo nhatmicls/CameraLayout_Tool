@@ -48,29 +48,38 @@ function assertDisjointFromOtherCatalogs(models: FireAlarmModel[]): void {
   }
 }
 
-// Every compatibleDevices[].modelId must resolve to a record in this catalog that is
-// neither a controller nor the controller entry itself (compatibility is stored once,
-// pointing from controller -> peripheral, never controller -> controller).
-function assertCompatibilityReferencesResolve(models: FireAlarmModel[]): void {
+// Every compatibleDevices[].modelId must resolve either to a non-controller record in
+// this catalog (never the controller entry itself - compatibility is stored once,
+// pointing from controller -> peripheral, never controller -> controller) OR to a record
+// in the SENSOR catalog (owner decision: an AX Hybrid PRO motion/glass-break detector is a
+// sensor-catalog record, not a fire-alarm one, but a control panel's official compatibility
+// list still names it). Exported so the OR-resolution branch is unit-testable with a
+// synthetic model list, without needing a real sensor-catalog data file.
+export function assertCompatibilityReferencesResolve(
+  models: readonly FireAlarmModel[],
+  sensorIds: ReadonlySet<string>,
+): void {
   const byId = new Map(models.map((model) => [model.id, model]));
   const controllerKinds = new Set<string>(CONTROLLER_KINDS);
   for (const model of models) {
     if (!("compatibleDevices" in model)) continue;
     for (const entry of model.compatibleDevices) {
       const target = byId.get(entry.modelId);
-      if (!target) {
-        throw new Error(
-          `Fire-alarm catalog "${model.id}" compatibleDevices references unknown modelId "${entry.modelId}"`,
-        );
+      if (target) {
+        if (target.id === model.id) {
+          throw new Error(`Fire-alarm catalog "${model.id}" compatibleDevices references itself`);
+        }
+        if (controllerKinds.has(target.kind)) {
+          throw new Error(
+            `Fire-alarm catalog "${model.id}" compatibleDevices references controller "${entry.modelId}"`,
+          );
+        }
+        continue;
       }
-      if (target.id === model.id) {
-        throw new Error(`Fire-alarm catalog "${model.id}" compatibleDevices references itself`);
-      }
-      if (controllerKinds.has(target.kind)) {
-        throw new Error(
-          `Fire-alarm catalog "${model.id}" compatibleDevices references controller "${entry.modelId}"`,
-        );
-      }
+      if (sensorIds.has(entry.modelId)) continue;
+      throw new Error(
+        `Fire-alarm catalog "${model.id}" compatibleDevices references unknown modelId "${entry.modelId}"`,
+      );
     }
   }
 }
@@ -81,7 +90,10 @@ const allModels: FireAlarmModel[] = fireAlarmCatalogDataFiles.flatMap((file) =>
 
 assertUniqueIds(allModels);
 assertDisjointFromOtherCatalogs(allModels);
-assertCompatibilityReferencesResolve(allModels);
+assertCompatibilityReferencesResolve(
+  allModels,
+  new Set(sensorModels.map((model) => model.id)),
+);
 
 /** All validated fire-alarm models, bundled statically from the brand JSON files. */
 export const fireAlarmModels: readonly FireAlarmModel[] = allModels;
