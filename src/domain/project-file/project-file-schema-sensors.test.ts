@@ -1,12 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { parseProjectFile, serializeProject, type ProjectFileLookups, type SensorModelLookup } from './project-file-schema'
-import { createEmptyFireAlarmLayout, type Project } from './project-types'
-import { createEmptyCableLayout } from '../cable/cable-layout-types'
 import type { PlacedBeamSensor, PlacedCircleSensor, PlacedSectorSensor } from '../sensor/sensor-types'
-
-// Smallest possible valid PNG (1x1 transparent pixel), as a real base64 data URL.
-const TINY_PNG_DATA_URL =
-  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUAAk6WgQAAAABJRU5ErkJggg=='
+import { parseProjectFile, serializeProject, type ProjectFileLookups, type SensorModelLookup } from './project-file-schema'
+import { buildLegacyFlatRaw, buildProject, onlyFloor } from './project-file-test-fixtures'
+import type { Floor } from '../floor/floor-types'
 
 const KNOWN_MODEL_IDS = new Set(['model-a'])
 
@@ -36,25 +32,17 @@ const beam: PlacedBeamSensor = {
   environment: 'outdoor',
 }
 
-function projectWith(sensors: Project['sensors']): Project {
-  return {
-    image: { dataUrl: TINY_PNG_DATA_URL, widthPx: 1000, heightPx: 800, fileName: 'floor-plan.png' },
-    scale: null,
-    cameras: [],
-    walls: [],
-    sensors,
-    ...createEmptyCableLayout(),
-    ...createEmptyFireAlarmLayout(),
-  }
+function projectWithSensors(sensors: Floor['sensors']) {
+  return buildProject({ sensors })
 }
 
-function parse(project: Project) {
+function parse(project: ReturnType<typeof projectWithSensors>) {
   return parseProjectFile(serializeProject(project), LOOKUPS)
 }
 
 function parseRaw(sensors: unknown, mutate: (raw: Record<string, unknown>) => void = () => {}) {
-  const raw = JSON.parse(serializeProject(projectWith([]))) as Record<string, unknown>
-  raw.sensors = sensors
+  const raw = JSON.parse(serializeProject(projectWithSensors([]))) as { floors: Array<Record<string, unknown>> } & Record<string, unknown>
+  raw.floors[0].sensors = sensors
   mutate(raw)
   return parseProjectFile(JSON.stringify(raw), LOOKUPS)
 }
@@ -65,25 +53,21 @@ function expectOk(result: ReturnType<typeof parseProjectFile>) {
 }
 
 describe('project file sensors - back-compat', () => {
-  it.each([1, 2, 3, 4])('loads a version %i file without `sensors` as an empty sensor list', (version) => {
-    const result = expectOk(
-      parseRaw(undefined, (raw) => {
-        delete raw.sensors
-        raw.schemaVersion = version
-      }),
-    )
-    expect(result.project.sensors).toEqual([])
+  it.each([1, 2, 3, 4])('loads a legacy version %i file without `sensors` as an empty sensor list', (version) => {
+    const raw = buildLegacyFlatRaw(version)
+    const result = expectOk(parseProjectFile(JSON.stringify(raw), LOOKUPS))
+    expect(onlyFloor(result).sensors).toEqual([])
     expect(result.warnings).toEqual([])
   })
 
   it('accepts `sensors: []`', () => {
-    expect(expectOk(parseRaw([])).project.sensors).toEqual([])
+    expect(onlyFloor(expectOk(parseRaw([]))).sensors).toEqual([])
   })
 })
 
-describe('project file sensors - v4 round trip per shape', () => {
+describe('project file sensors - v7 round trip per shape', () => {
   it('preserves a sector sensor exactly', () => {
-    const project = projectWith([sector])
+    const project = projectWithSensors([sector])
     const result = expectOk(parse(project))
     expect(result.project).toEqual(project)
     expect(result.warnings).toEqual([])
@@ -91,41 +75,43 @@ describe('project file sensors - v4 round trip per shape', () => {
 
   it('preserves a sector sensor with an angleDeg override', () => {
     const withOverride: PlacedSectorSensor = { ...sector, angleDeg: 45 }
-    const result = expectOk(parse(projectWith([withOverride])))
-    expect(result.project.sensors).toEqual([withOverride])
+    const result = expectOk(parse(projectWithSensors([withOverride])))
+    expect(onlyFloor(result).sensors).toEqual([withOverride])
   })
 
   it('preserves a circle sensor exactly', () => {
-    const project = projectWith([circle])
+    const project = projectWithSensors([circle])
     const result = expectOk(parse(project))
     expect(result.project).toEqual(project)
   })
 
   it('preserves a beam sensor (with explicit environment) exactly', () => {
-    const project = projectWith([beam])
+    const project = projectWithSensors([beam])
     const result = expectOk(parse(project))
     expect(result.project).toEqual(project)
   })
 
-  it('writes schemaVersion 6', () => {
-    expect(JSON.parse(serializeProject(projectWith([sector]))).schemaVersion).toBe(6)
+  it('writes schemaVersion 7', () => {
+    expect(JSON.parse(serializeProject(projectWithSensors([sector]))).schemaVersion).toBe(7)
   })
 })
 
 describe('project file sensors - beam environment default on load', () => {
   it('fills the model default when the file omits environment', () => {
-    const raw = JSON.parse(serializeProject(projectWith([beam]))) as { sensors: Array<Record<string, unknown>> }
-    delete raw.sensors[0].environment
+    const raw = JSON.parse(serializeProject(projectWithSensors([beam]))) as { floors: Array<{ sensors: Array<Record<string, unknown>> }> }
+    delete raw.floors[0].sensors[0].environment
     const result = expectOk(parseProjectFile(JSON.stringify(raw), LOOKUPS))
-    expect(result.project.sensors[0]).toMatchObject({ environment: 'indoor' })
+    expect(onlyFloor(result).sensors[0]).toMatchObject({ environment: 'indoor' })
   })
 
   it("uses the model's outdoor default when that is the smaller figure", () => {
     const outdoorDefaultBeam: PlacedBeamSensor = { ...beam, id: 'beam-s2', modelId: 'beam-2' }
-    const raw = JSON.parse(serializeProject(projectWith([outdoorDefaultBeam]))) as { sensors: Array<Record<string, unknown>> }
-    delete raw.sensors[0].environment
+    const raw = JSON.parse(serializeProject(projectWithSensors([outdoorDefaultBeam]))) as {
+      floors: Array<{ sensors: Array<Record<string, unknown>> }>
+    }
+    delete raw.floors[0].sensors[0].environment
     const result = expectOk(parseProjectFile(JSON.stringify(raw), LOOKUPS))
-    expect(result.project.sensors[0]).toMatchObject({ environment: 'outdoor' })
+    expect(onlyFloor(result).sensors[0]).toMatchObject({ environment: 'outdoor' })
   })
 })
 
@@ -153,7 +139,7 @@ describe('project file sensors - rejected input', () => {
     const longButValidId = `pir-1${'x'.repeat(95)}` // 100 chars, not in SENSOR_MODEL_LOOKUP
     const result = expectOk(parseRaw([{ ...sector, modelId: longButValidId }]))
     // Schema accepts the length; normalisation still drops it as an unknown model, with a warning.
-    expect(result.project.sensors).toEqual([])
+    expect(onlyFloor(result).sensors).toEqual([])
     expect(result.warnings).toHaveLength(1)
   })
 
@@ -163,8 +149,8 @@ describe('project file sensors - rejected input', () => {
   })
 
   it('rejects an unknown/future schemaVersion', () => {
-    const raw = JSON.parse(serializeProject(projectWith([]))) as Record<string, unknown>
-    raw.schemaVersion = 7
+    const raw = JSON.parse(serializeProject(projectWithSensors([]))) as Record<string, unknown>
+    raw.schemaVersion = 8
     expect(parseProjectFile(JSON.stringify(raw), LOOKUPS).ok).toBe(false)
   })
 })
@@ -172,14 +158,14 @@ describe('project file sensors - rejected input', () => {
 describe('project file sensors - normalisation warnings', () => {
   it('drops a sensor referencing an unknown modelId, with a warning', () => {
     const result = expectOk(parseRaw([{ ...sector, modelId: 'does-not-exist' }]))
-    expect(result.project.sensors).toEqual([])
+    expect(onlyFloor(result).sensors).toEqual([])
     expect(result.warnings).toHaveLength(1)
     expect(result.warnings[0]).toContain('does-not-exist')
   })
 
   it("drops a sensor whose shape does not match its model's catalog shape", () => {
     const result = expectOk(parseRaw([{ ...circle, modelId: 'pir-1', shape: 'circle' }]))
-    expect(result.project.sensors).toEqual([])
+    expect(onlyFloor(result).sensors).toEqual([])
     expect(result.warnings).toHaveLength(1)
     expect(result.warnings[0]).toContain('pir-1')
   })
@@ -187,14 +173,14 @@ describe('project file sensors - normalisation warnings', () => {
   it('drops a repeated sensor id, keeping the first', () => {
     const second = { ...sector, x: 999 }
     const result = expectOk(parseRaw([sector, second]))
-    expect(result.project.sensors).toEqual([sector])
+    expect(onlyFloor(result).sensors).toEqual([sector])
     expect(result.warnings).toHaveLength(1)
   })
 
   it('drops a zero-length beam with a warning', () => {
     const zeroLength = { ...beam, x2: beam.x, y2: beam.y }
     const result = expectOk(parseRaw([zeroLength]))
-    expect(result.project.sensors).toEqual([])
+    expect(onlyFloor(result).sensors).toEqual([])
     expect(result.warnings).toHaveLength(1)
     expect(result.warnings[0]).toContain('beam-s1')
   })

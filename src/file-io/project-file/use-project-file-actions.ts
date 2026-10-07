@@ -2,13 +2,21 @@ import { useCallback, useEffect, useRef, type ChangeEvent } from 'react'
 import { cameraModels } from '../../catalog/camera/camera-catalog-loader'
 import { fireAlarmModels } from '../../catalog/fire-alarm/fire-alarm-catalog-loader'
 import { sensorModels } from '../../catalog/sensor/sensor-catalog-loader'
+import { DEFAULT_FLOOR_HEIGHT_M, LEGACY_FLOOR_ID, LEGACY_FLOOR_NAME } from '../../domain/floor/floor-types'
 import type { ProjectFileLookups, SensorModelLookup, SensorModelLookupEntry } from '../../domain/project-file/project-file-schema'
+import type { Project } from '../../domain/project-file/project-types'
 import { defaultBeamEnvironment, sensorPlacementShape } from '../../domain/sensor/sensor-types'
 import { DEFAULT_VIEW_CONFIG } from '../../domain/view/view-config-types'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
 import { loadProjectFromFile, saveProjectToFile } from './project-file-save-and-load'
 import { summariseProjectLoadWarnings } from './summarise-project-load-warnings'
+
+/** `floors.length > 1` is a file this build cannot fully open yet - only the first floor loads. */
+const EXTRA_FLOORS_DROPPED_WARNING = (floorCount: number, firstFloorName: string) =>
+  `This project has ${floorCount} floors; only the first ("${firstFloorName}") was opened - multi-floor projects are not supported yet.`
+
+const FLOOR_ZERO_HAS_NO_IMAGE_ERROR = "This project's first floor has no plan image; open a file whose first floor has one."
 
 const REPLACE_PROJECT_CONFIRM_MESSAGE = 'Opening a project discards your unsaved changes. Continue?'
 
@@ -59,23 +67,34 @@ export function useProjectFileActions() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [hasUnsavedChanges])
 
+  // Bridge (phase 1 only, deleted once the store itself holds `floors[]` - phase 2): the store
+  // stays flat, so save wraps it as a one-floor `Project` and load unwraps `floors[0]`.
   const handleSaveProject = useCallback(() => {
     const current = useProjectStore.getState()
     if (!current.image) return
     try {
-      saveProjectToFile({
-        image: current.image,
-        scale: current.scale,
-        cameras: current.cameras,
-        walls: current.walls,
-        sensors: current.sensors,
-        hubs: current.hubs,
-        cables: current.cables,
+      const project: Project = {
+        floors: [
+          {
+            id: LEGACY_FLOOR_ID,
+            name: LEGACY_FLOOR_NAME,
+            floorHeightM: DEFAULT_FLOOR_HEIGHT_M,
+            image: current.image,
+            scale: current.scale,
+            cameras: current.cameras,
+            walls: current.walls,
+            sensors: current.sensors,
+            hubs: current.hubs,
+            cables: current.cables,
+            fireAlarmDevices: current.fireAlarmDevices,
+          },
+        ],
+        shafts: [],
         cableTypes: current.cableTypes,
         cableSettings: current.cableSettings,
-        fireAlarmDevices: current.fireAlarmDevices,
         fireAlarmSettings: current.fireAlarmSettings,
-      })
+      }
+      saveProjectToFile(project)
       setHasUnsavedChanges(false)
     } catch (err) {
       pushNotification('error', err instanceof Error ? err.message : 'Failed to save the project.')
@@ -92,12 +111,33 @@ export function useProjectFileActions() {
         pushNotification('error', outcome.error)
         return
       }
-      replaceProject(outcome.project)
+      const floor = outcome.project.floors[0]
+      if (floor.image === null || outcome.decodedImage === null) {
+        pushNotification('error', FLOOR_ZERO_HAS_NO_IMAGE_ERROR)
+        return
+      }
+      replaceProject({
+        image: floor.image,
+        scale: floor.scale,
+        cameras: floor.cameras,
+        walls: floor.walls,
+        sensors: floor.sensors,
+        hubs: floor.hubs,
+        cables: floor.cables,
+        cableTypes: outcome.project.cableTypes,
+        cableSettings: outcome.project.cableSettings,
+        fireAlarmDevices: floor.fireAlarmDevices,
+        fireAlarmSettings: outcome.project.fireAlarmSettings,
+      })
       setDecodedImage(outcome.decodedImage)
       setViewConfig(DEFAULT_VIEW_CONFIG) // the view is not in the file: an opened project always starts with everything shown
       setHasUnsavedChanges(false)
-      if (outcome.warnings.length > 0) {
-        pushNotification('warning', summariseProjectLoadWarnings(outcome.warnings))
+      const warnings =
+        outcome.project.floors.length > 1
+          ? [EXTRA_FLOORS_DROPPED_WARNING(outcome.project.floors.length, floor.name), ...outcome.warnings]
+          : outcome.warnings
+      if (warnings.length > 0) {
+        pushNotification('warning', summariseProjectLoadWarnings(warnings))
       }
     },
     [hasUnsavedChanges, replaceProject, setDecodedImage, setViewConfig, setHasUnsavedChanges, pushNotification],

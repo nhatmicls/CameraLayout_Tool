@@ -2,8 +2,15 @@
  * Core domain types for a saved project: the floor-plan image, its scale
  * calibration, the placed cameras and the drawn walls. Pure data shapes only - no behaviour,
  * no React/Konva imports. Phase 4 builds the zustand store on top of these.
+ *
+ * Schema v7 made the project multi-floor (`Project.floors`, see `Floor` in
+ * `domain/floor/floor-types.ts`); `LegacyFlatProject` below is the pre-v7
+ * flat shape (one floor's worth of data at the top level) that the legacy
+ * reader still produces and that the still-flat store (phase 2 replaces it)
+ * uses as its bridge type.
  */
-import type { CableLayout } from '../cable/cable-layout-types'
+import type { CableLayout, CableSettings, CableType, Shaft } from '../cable/cable-layout-types'
+import type { Floor } from '../floor/floor-types'
 import { DEFAULT_FIRE_ALARM_SETTINGS, type FireAlarmSettings, type PlacedFireAlarmDevice } from '../fire-alarm/fire-alarm-device-types'
 import type { PlacedSensor } from '../sensor/sensor-types'
 
@@ -60,7 +67,13 @@ export interface Wall {
   y2: number
 }
 
-/** The two fire-alarm fields, always present in memory; optional in the file (pre-v6 files have neither). Combinator mirrors `CableLayout` (`cable-layout-types.ts`). */
+/**
+ * The two fire-alarm fields, always present in memory; optional in the file
+ * (pre-v6 files have neither). Combinator mirrors `CableLayout`
+ * (`cable-layout-types.ts`). Used by the pre-v7 flat shape (`LegacyFlatProject`)
+ * and the still-flat store (phase 1) - v7's `Project` keeps `fireAlarmSettings`
+ * at project level and moves `fireAlarmDevices` onto each `Floor` instead.
+ */
 export interface FireAlarmLayout {
   fireAlarmDevices: PlacedFireAlarmDevice[]
   fireAlarmSettings: FireAlarmSettings
@@ -71,8 +84,14 @@ export function createEmptyFireAlarmLayout(): FireAlarmLayout {
   return { fireAlarmDevices: [], fireAlarmSettings: { ...DEFAULT_FIRE_ALARM_SETTINGS } }
 }
 
-/** The cable and fire-alarm fields are always present in memory; optional in the file (v1-v4 files have no cable keys, v1-v5 have no fire-alarm keys). */
-export interface Project extends CableLayout, FireAlarmLayout {
+/**
+ * Pre-v7 flat shape: one floor's worth of data at the top level. The cable
+ * and fire-alarm fields are always present in memory; optional in the file
+ * (v1-v4 files have no cable keys, v1-v5 have no fire-alarm keys). Used by
+ * the legacy (v1-v6) reader and, in phase 1 only, by the still-flat store as
+ * its save/load bridge type - phase 2 removes it from the store.
+ */
+export interface LegacyFlatProject extends CableLayout, FireAlarmLayout {
   image: PlanImage
   scale: ScaleCalibration | null
   cameras: PlacedCamera[]
@@ -80,6 +99,21 @@ export interface Project extends CableLayout, FireAlarmLayout {
   walls: Wall[]
   /** Always present in memory; optional in the file (v1-v3 files have none). See `sensor-types.ts`. */
   sensors: PlacedSensor[]
+}
+
+/**
+ * Multi-floor project (schema v7). `floors[0]` is the lowest floor (tab
+ * order). `shafts` is the project-wide list of vertical tubes (phase 1:
+ * names only, no markers yet). `fireAlarmSettings` stays project-level - one
+ * coverage-mode setting for the whole building - while each floor's own
+ * `fireAlarmDevices` lives on `Floor` (see its doc comment).
+ */
+export interface Project {
+  floors: Floor[]
+  shafts: Shaft[]
+  cableTypes: CableType[]
+  cableSettings: CableSettings
+  fireAlarmSettings: FireAlarmSettings
 }
 
 /**

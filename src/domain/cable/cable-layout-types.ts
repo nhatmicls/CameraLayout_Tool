@@ -140,3 +140,17 @@ export interface CableLayout {
 export function createEmptyCableLayout(): CableLayout {
   return { hubs: [], cables: [], cableTypes: createDefaultCableTypes(), cableSettings: { ...DEFAULT_CABLE_SETTINGS } }
 }
+
+/**
+ * A vertical tube through several floors (phase 1: project-wide list only).
+ * Its openings are hub markers on each floor it passes through
+ * (`Hub.kind: 'shaft'`, `Hub.shaftId`) - added in a later phase, so a shaft
+ * with no markers yet still loads as-is.
+ */
+export interface Shaft {
+  id: string
+  name: string
+}
+
+export const MAX_SHAFTS = 20
+export const SHAFT_NAME_MAX_LENGTH = 40

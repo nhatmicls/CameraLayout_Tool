@@ -1,5 +1,5 @@
 import { useEffect, useRef, type RefObject } from 'react'
-import type { Project } from '../../domain/project-file/project-types'
+import type { PlanImage } from '../../domain/project-file/project-types'
 
 /**
  * Pulled out of `floor-plan-stage.tsx` (pure move, no behaviour change):
@@ -10,7 +10,7 @@ import type { Project } from '../../domain/project-file/project-types'
  */
 export function useStageContainerResizeAndInitialFit(
   containerRef: RefObject<HTMLDivElement | null>,
-  image: Project['image'] | null,
+  image: PlanImage | null,
   stageSize: { width: number; height: number },
   fitToView: () => void,
   setStageSize: (size: { width: number; height: number }) => void,

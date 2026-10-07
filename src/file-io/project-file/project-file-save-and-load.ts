@@ -2,10 +2,12 @@
  * Project save/load: the only place that turns a `Project` into a
  * downloaded `.json` file and back. All schema validation lives in
  * `src/domain/project-file/project-file-schema.ts` - this module is pure file/DOM
- * plumbing around it (read file -> validate -> decode embedded image).
+ * plumbing around it (read file -> validate -> decode every floor's embedded image).
  */
+import type { Floor } from '../../domain/floor/floor-types'
 import { parseProjectFile, serializeProject, type ProjectFileLookups } from '../../domain/project-file/project-file-schema'
 import type { Project } from '../../domain/project-file/project-types'
+import { decodeEmbeddedImage } from '../browser/decode-image-data-url'
 import { sanitiseDownloadFileName, triggerBrowserFileDownload } from '../browser/trigger-browser-file-download'
 
 /** Guards against reading a huge file into memory at all; matches the schema's own text-length cap. */
@@ -21,39 +23,28 @@ export function deriveProjectFileName(imageFileName: string): string {
   return `${base.length > 0 ? base : 'project'}-camera-layout.json`
 }
 
-/** Serialises `project` and triggers a browser download of it. */
+/** Serialises `project` and triggers a browser download of it. The file name comes from the first floor (in tab order) that has an image. */
 export function saveProjectToFile(project: Project): void {
   const json = serializeProject(project)
-  const fileName = sanitiseDownloadFileName(deriveProjectFileName(project.image.fileName))
+  const sourceImageFileName = project.floors.find((floor) => floor.image !== null)?.image?.fileName ?? ''
+  const fileName = sanitiseDownloadFileName(deriveProjectFileName(sourceImageFileName))
   triggerBrowserFileDownload(json, fileName, 'application/json')
 }
 
 export type LoadProjectOutcome =
-  | { ok: true; project: Project; decodedImage: HTMLImageElement; warnings: string[] }
+  | { ok: true; project: Project; decodedImage: HTMLImageElement | null; warnings: string[] }
   | { ok: false; error: string }
-
-/** Decodes a project's embedded `data:image/...` URL, rejecting with a user-facing message on any failure. */
-function decodeEmbeddedImage(dataUrl: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const element = new Image()
-    element.onload = () => {
-      element
-        .decode()
-        .then(() => resolve(element))
-        .catch(() => reject(new Error('The project file is corrupt: its embedded image failed to decode.')))
-    }
-    element.onerror = () => reject(new Error('The project file is corrupt: its embedded image failed to decode.'))
-    element.src = dataUrl
-  })
-}
 
 /**
  * Reads, validates, and decodes a project file. Never throws - every
  * failure path (oversized file, unreadable file, invalid JSON/schema,
- * corrupt embedded image) resolves to `{ ok: false, error }`, leaving the
- * caller's current project untouched. On success, the returned image's
- * `widthPx`/`heightPx` are the decoded element's real dimensions, not
- * whatever the file claimed (the decode is the source of truth).
+ * corrupt embedded image on ANY floor) resolves to `{ ok: false, error }`,
+ * leaving the caller's current project untouched. Decodes every floor's
+ * image sequentially (so each floor's `widthPx`/`heightPx` become the
+ * decoded element's real dimensions, not whatever the file claimed); the
+ * still-flat store's bridge (`use-project-file-actions.ts`, phase 1 only)
+ * only needs floor 0's, so that one is also returned directly as
+ * `decodedImage` (null when floor 0 itself has no image).
  */
 export async function loadProjectFromFile(file: File, lookups: ProjectFileLookups): Promise<LoadProjectOutcome> {
   if (file.size > MAX_LOAD_FILE_SIZE_BYTES) {
@@ -75,21 +66,25 @@ export async function loadProjectFromFile(file: File, lookups: ProjectFileLookup
     return { ok: false, error: parsed.error }
   }
 
-  let decodedImage: HTMLImageElement
-  try {
-    decodedImage = await decodeEmbeddedImage(parsed.project.image.dataUrl)
-  } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : 'Failed to decode the embedded image.' }
+  let decodedImage: HTMLImageElement | null = null
+  const floors: Floor[] = []
+  for (let index = 0; index < parsed.project.floors.length; index++) {
+    const floor = parsed.project.floors[index]
+    if (floor.image === null) {
+      floors.push(floor)
+      continue
+    }
+
+    let decoded: HTMLImageElement
+    try {
+      decoded = await decodeEmbeddedImage(floor.image.dataUrl)
+    } catch (err) {
+      return { ok: false, error: err instanceof Error ? err.message : 'Failed to decode the embedded image.' }
+    }
+    floors.push({ ...floor, image: { ...floor.image, widthPx: decoded.naturalWidth, heightPx: decoded.naturalHeight } })
+    if (index === 0) decodedImage = decoded
   }
 
-  const project: Project = {
-    ...parsed.project,
-    image: {
-      ...parsed.project.image,
-      widthPx: decodedImage.naturalWidth,
-      heightPx: decodedImage.naturalHeight,
-    },
-  }
-
+  const project: Project = { ...parsed.project, floors }
   return { ok: true, project, decodedImage, warnings: parsed.warnings }
 }

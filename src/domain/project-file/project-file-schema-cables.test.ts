@@ -2,17 +2,12 @@ import { describe, expect, it } from 'vitest'
 import {
   DEFAULT_CABLE_SETTINGS,
   createDefaultCableTypes,
-  createEmptyCableLayout,
   type Cable,
   type Hub,
 } from '../cable/cable-layout-types'
 import type { PlacedBeamSensor, PlacedSectorSensor } from '../sensor/sensor-types'
 import { parseProjectFile, serializeProject, type ProjectFileLookups, type SensorModelLookup } from './project-file-schema'
-import { createEmptyFireAlarmLayout, type Project } from './project-types'
-
-// Smallest possible valid PNG (1x1 transparent pixel), as a real base64 data URL.
-const TINY_PNG_DATA_URL =
-  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUAAk6WgQAAAABJRU5ErkJggg=='
+import { buildProject, onlyFloor } from './project-file-test-fixtures'
 
 const KNOWN_MODEL_IDS = new Set(['model-a'])
 const SENSOR_MODEL_LOOKUP: SensorModelLookup = new Map([
@@ -46,19 +41,14 @@ const beamRxCable: Cable = {
   points: [],
 }
 
-const project: Project = {
-  image: { dataUrl: TINY_PNG_DATA_URL, widthPx: 1000, heightPx: 800, fileName: 'floor-plan.png' },
-  scale: null,
+const project = buildProject({
   cameras: [{ id: 'cam-1', modelId: 'model-a', x: 100, y: 100, rotationDeg: 0, rangeM: 15 }],
-  walls: [],
   sensors: [pir, beam],
-  ...createEmptyCableLayout(),
   hubs: [hub],
   cables: [cameraCable, beamRxCable],
-  ...createEmptyFireAlarmLayout(),
-}
+})
 
-type Raw = Record<string, unknown> & { hubs: Hub[]; cables: Cable[]; cameras: Array<Record<string, unknown>> }
+type Raw = Record<string, unknown> & { floors: Array<Record<string, unknown> & { hubs: Hub[]; cables: Cable[]; cameras: Array<Record<string, unknown>> }> }
 
 function parseRaw(mutate: (raw: Raw) => void) {
   const raw = JSON.parse(serializeProject(project)) as Raw
@@ -72,7 +62,7 @@ function expectOk(result: ReturnType<typeof parseProjectFile>) {
 }
 
 describe('project file cables - round trip and back-compat', () => {
-  it('round-trips a v5 project deep-equal with no warnings', () => {
+  it('round-trips a v7 project deep-equal with no warnings', () => {
     const result = expectOk(parseRaw(() => {}))
     expect(result.project).toEqual(project)
     expect(result.warnings).toEqual([])
@@ -81,86 +71,118 @@ describe('project file cables - round trip and back-compat', () => {
   it('round-trips a riser and a drop, and rejects any other hub kind or an out-of-range length', () => {
     const riser: Hub = { id: 'riser-1', kind: 'riser', x: 50, y: 60, mountHeightM: 6, extraLengthM: 12.5 }
     const drop: Hub = { id: 'drop-1', kind: 'drop', x: 70, y: 60, mountHeightM: 2 }
-    expect(expectOk(parseRaw((raw) => void raw.hubs.push(riser, drop))).project.hubs).toEqual([hub, riser, drop])
-    expect(parseRaw((raw) => void raw.hubs.push({ ...riser, kind: 'lift' } as unknown as Hub)).ok).toBe(false)
-    expect(parseRaw((raw) => void raw.hubs.push({ ...riser, extraLengthM: 501 })).ok).toBe(false)
-    expect(parseRaw((raw) => void raw.hubs.push({ ...drop, mountHeightM: -1 })).ok).toBe(false)
+    expect(expectOk(parseRaw((raw) => void raw.floors[0].hubs.push(riser, drop))).project.floors[0].hubs).toEqual([hub, riser, drop])
+    expect(parseRaw((raw) => void raw.floors[0].hubs.push({ ...riser, kind: 'lift' } as unknown as Hub)).ok).toBe(false)
+    expect(parseRaw((raw) => void raw.floors[0].hubs.push({ ...riser, extraLengthM: 501 })).ok).toBe(false)
+    expect(parseRaw((raw) => void raw.floors[0].hubs.push({ ...drop, mountHeightM: -1 })).ok).toBe(false)
   })
 
-  it.each([1, 2, 3, 4])('loads a version %i file without cable keys with the defaults', (version) => {
-    const result = expectOk(
-      parseRaw((raw) => {
-        raw.schemaVersion = version
-        for (const key of ['hubs', 'cables', 'cableTypes', 'cableSettings']) delete raw[key]
-      }),
-    )
-    expect(result.project.hubs).toEqual([])
-    expect(result.project.cables).toEqual([])
+  it.each([1, 2, 3, 4])('loads a legacy flat version %i file without cable keys with the defaults', (version) => {
+    const rawFloor = project.floors[0]
+    const legacy = {
+      app: 'camera-layout-tool',
+      schemaVersion: version,
+      image: rawFloor.image,
+      scale: rawFloor.scale,
+      cameras: rawFloor.cameras,
+      sensors: rawFloor.sensors,
+    }
+    const result = expectOk(parseProjectFile(JSON.stringify(legacy), LOOKUPS))
+    const floor = onlyFloor(result)
+    expect(floor.hubs).toEqual([])
+    expect(floor.cables).toEqual([])
     expect(result.project.cableTypes).toEqual(createDefaultCableTypes())
     expect(result.project.cableSettings).toEqual(DEFAULT_CABLE_SETTINGS)
     expect(result.warnings).toEqual([])
   })
 
-  it('rejects schemaVersion 7', () => {
-    expect(parseRaw((raw) => void (raw.schemaVersion = 7)).ok).toBe(false)
+  it('rejects schemaVersion 8', () => {
+    expect(parseRaw((raw) => void (raw.schemaVersion = 8)).ok).toBe(false)
   })
 
   it('reseeds the default types when the file carries an empty list', () => {
     const result = expectOk(
       parseRaw((raw) => {
         raw.cableTypes = []
-        raw.cables = []
+        raw.floors[0].cables = []
       }),
     )
     expect(result.project.cableTypes).toEqual(createDefaultCableTypes())
+  })
+
+  it('dedupes a repeated cable type id once, not once per floor', () => {
+    const types = createDefaultCableTypes()
+    const secondFloor = { ...project.floors[0], id: 'floor-2', name: 'Floor 2' }
+    const result = expectOk(
+      parseRaw((raw) => {
+        raw.floors.push(secondFloor as unknown as Raw['floors'][number])
+        raw.cableTypes = [...types, { ...types[0], name: 'Twin' }]
+      }),
+    )
+    expect(result.project.cableTypes).toEqual(types)
+    expect(result.warnings).toHaveLength(1)
+  })
+
+  it('allows the same hub id on different floors (hubs are per-floor, not global)', () => {
+    const secondFloor = { ...project.floors[0], id: 'floor-2', name: 'Floor 2' }
+    const result = expectOk(
+      parseRaw((raw) => {
+        raw.floors.push(secondFloor as unknown as Raw['floors'][number])
+      }),
+    )
+    expect(result.project.floors[0].hubs).toEqual([hub])
+    expect(result.project.floors[1].hubs).toEqual([hub])
+    expect(result.warnings).toEqual([])
   })
 })
 
 describe('project file cables - dropped with a warning, the rest kept', () => {
   function expectOnlyBeamCableKept(mutate: (raw: Raw) => void) {
     const result = expectOk(parseRaw(mutate))
-    expect(result.project.cables).toEqual([beamRxCable])
+    expect(onlyFloor(result).cables).toEqual([beamRxCable])
     expect(result.warnings).toHaveLength(1)
     expect(result.warnings[0]).toContain('cable-1')
   }
 
   it('unknown hubId', () => {
-    expectOnlyBeamCableKept((raw) => void (raw.cables[0].hubId = 'nope'))
+    expectOnlyBeamCableKept((raw) => void (raw.floors[0].cables[0].hubId = 'nope'))
   })
 
   it('unknown camera id', () => {
-    expectOnlyBeamCableKept((raw) => void (raw.cables[0].device = { kind: 'camera', id: 'nope' }))
+    expectOnlyBeamCableKept((raw) => void (raw.floors[0].cables[0].device = { kind: 'camera', id: 'nope' }))
   })
 
   it('unknown typeId', () => {
-    expectOnlyBeamCableKept((raw) => void (raw.cables[0].typeId = 'nope'))
+    expectOnlyBeamCableKept((raw) => void (raw.floors[0].cables[0].typeId = 'nope'))
   })
 
   it('beam ref without an end', () => {
-    expectOnlyBeamCableKept((raw) => void (raw.cables[0].device = { kind: 'sensor', id: 'beam-s1' }))
+    expectOnlyBeamCableKept((raw) => void (raw.floors[0].cables[0].device = { kind: 'sensor', id: 'beam-s1' }))
   })
 
   it('PIR ref with an end', () => {
-    expectOnlyBeamCableKept((raw) => void (raw.cables[0].device = { kind: 'sensor', id: 'pir-s1', end: 'tx' }))
+    expectOnlyBeamCableKept((raw) => void (raw.floors[0].cables[0].device = { kind: 'sensor', id: 'pir-s1', end: 'tx' }))
   })
 
   it('a cable on a camera whose model is unknown (camera dropped first)', () => {
-    const result = expectOk(parseRaw((raw) => void (raw.cameras[0].modelId = 'does-not-exist')))
-    expect(result.project.cameras).toEqual([])
-    expect(result.project.cables).toEqual([beamRxCable])
+    const result = expectOk(parseRaw((raw) => void (raw.floors[0].cameras[0].modelId = 'does-not-exist')))
+    const floor = onlyFloor(result)
+    expect(floor.cameras).toEqual([])
+    expect(floor.cables).toEqual([beamRxCable])
     expect(result.warnings).toHaveLength(2)
   })
 
   it('repeated hub id', () => {
-    const result = expectOk(parseRaw((raw) => void raw.hubs.push({ ...hub, x: 1 })))
-    expect(result.project.hubs).toEqual([hub])
-    expect(result.project.cables).toHaveLength(2)
+    const result = expectOk(parseRaw((raw) => void raw.floors[0].hubs.push({ ...hub, x: 1 })))
+    const floor = onlyFloor(result)
+    expect(floor.hubs).toEqual([hub])
+    expect(floor.cables).toHaveLength(2)
     expect(result.warnings).toHaveLength(1)
   })
 
   it('repeated cable id', () => {
-    const result = expectOk(parseRaw((raw) => void raw.cables.push({ ...beamRxCable, id: 'cable-1' })))
-    expect(result.project.cables).toEqual([cameraCable, beamRxCable])
+    const result = expectOk(parseRaw((raw) => void raw.floors[0].cables.push({ ...beamRxCable, id: 'cable-1' })))
+    expect(onlyFloor(result).cables).toEqual([cameraCable, beamRxCable])
     expect(result.warnings).toHaveLength(1)
   })
 
@@ -176,15 +198,15 @@ describe('project file cables - rejected input', () => {
   const type = createDefaultCableTypes()[0]
 
   it.each<[string, (raw: Raw) => void]>([
-    ['unknown key on a hub', (raw) => void (raw.hubs[0] = { ...hub, extra: 1 } as Hub)],
-    ['201 points', (raw) => void (raw.cables[0].points = Array.from({ length: 201 }, (_, i) => ({ x: i, y: i })))],
+    ['unknown key on a hub', (raw) => void (raw.floors[0].hubs[0] = { ...hub, extra: 1 } as Hub)],
+    ['201 points', (raw) => void (raw.floors[0].cables[0].points = Array.from({ length: 201 }, (_, i) => ({ x: i, y: i })))],
     ['wastePercent 51', (raw) => void (raw.cableSettings = { ...DEFAULT_CABLE_SETTINGS, wastePercent: 51 })],
     ['price -1', (raw) => void (raw.cableTypes = [{ ...type, pricePerMeterVnd: -1 }])],
     ['price 1.5', (raw) => void (raw.cableTypes = [{ ...type, pricePerMeterVnd: 1.5 }])],
     ['61-char name', (raw) => void (raw.cableTypes = [{ ...type, name: 'x'.repeat(61) }])],
     ['lengthLimitM 0', (raw) => void (raw.cableTypes = [{ ...type, lengthLimitM: 0 }])],
-    ['x 1e7', (raw) => void (raw.hubs[0].x = 1e7)],
-    ['hub height 31', (raw) => void (raw.hubs[0].mountHeightM = 31)],
+    ['x 1e7', (raw) => void (raw.floors[0].hubs[0].x = 1e7)],
+    ['hub height 31', (raw) => void (raw.floors[0].hubs[0].mountHeightM = 31)],
   ])('rejects %s', (_label, mutate) => {
     expect(parseRaw(mutate).ok).toBe(false)
   })

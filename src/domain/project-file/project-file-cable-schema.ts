@@ -4,18 +4,28 @@ import {
   CABLE_PRICE_MAX_VND_PER_M,
   CABLE_SETTINGS_BOUNDS,
   CABLE_TYPE_NAME_MAX_LENGTH,
-  DEFAULT_CABLE_SETTINGS,
   HUB_EXTRA_LENGTH_BOUNDS,
   HUB_MOUNT_HEIGHT_BOUNDS,
   MAX_CABLE_POINTS,
+  MAX_SHAFTS,
+  SHAFT_NAME_MAX_LENGTH,
   createDefaultCableTypes,
-  type CableLayout,
+  type Cable,
+  type CableType,
+  type Hub,
 } from '../cable/cable-layout-types'
 import { cableRefProblem } from '../cable/cable-reference-integrity'
 import type { PlacedSensor } from '../sensor/sensor-types'
 import type { PlacedCamera } from './project-types'
 
-/** On-disk shapes of the cable layout (schema v5). Split out of `project-file-schema.ts` to keep that file under 200 lines. */
+/**
+ * On-disk shapes of the cable layout. Split out of `project-file-schema.ts`
+ * to keep that file under 200 lines. `cableTypes` are project-wide (one
+ * list for the whole building); `hubs`/`cables` are per floor - the
+ * normaliser below is split the same way (`normaliseLoadedCableTypes` once,
+ * `normaliseLoadedFloorCabling` per floor) so a dedupe warning on a repeated
+ * type id is raised once, not once per floor.
+ */
 
 const CABLE_COORD_LIMIT_PX = 1_000_000
 const coord = z.number().finite().gte(-CABLE_COORD_LIMIT_PX).lte(CABLE_COORD_LIMIT_PX)
@@ -63,6 +73,26 @@ export const cableSettingsSchema = z.strictObject({
   clickErrorPx: bounded(CABLE_SETTINGS_BOUNDS.clickErrorPx),
 })
 
+/**
+ * Project-wide vertical tube (schema v7 only). Phase 1 stores just the list -
+ * no marker/route keys yet (phase 6) - so duplicate ids are rejected outright
+ * (schema-level `.refine` on `shaftsArraySchema`, below) rather than dropped
+ * with a warning like a per-floor item: a hand-written v7 file is the only
+ * source, there is nothing yet to "normalise against".
+ */
+export const shaftSchema = z.strictObject({
+  id,
+  name: z.string().trim().min(1).max(SHAFT_NAME_MAX_LENGTH),
+})
+
+/** The whole `shafts` list: bounded by `MAX_SHAFTS`, ids unique (rejects outright, not a warning - see `shaftSchema`'s doc comment). */
+export const shaftsArraySchema = z
+  .array(shaftSchema)
+  .max(MAX_SHAFTS)
+  .refine((shafts) => new Set(shafts.map((shaft) => shaft.id)).size === shafts.length, {
+    message: 'shaft ids must be unique',
+  })
+
 /** Keeps the first item of every id; each repeat is dropped with one warning. */
 function dedupeById<T extends { id: string }>(items: readonly T[], noun: string, warnings: string[]): T[] {
   const seenIds = new Set<string>()
@@ -77,20 +107,31 @@ function dedupeById<T extends { id: string }>(items: readonly T[], noun: string,
 }
 
 /**
- * Fills what an older file lacks (no hubs / cables, the default cable types
- * and settings) and drops, each with one warning, what the app never
- * creates: a repeated id, or a cable whose device, hub or type does not
- * resolve. `kept` is the cameras / sensors that survived their own
- * filtering, so a cable on a dropped camera goes with it. Never rejects.
+ * Project-wide: dedupes cable type ids (each repeat dropped with one
+ * warning) and reseeds the defaults when the file carries an empty/missing
+ * list. Called ONCE per file, not per floor, so a repeated type id raises
+ * exactly one warning however many floors the file has.
  */
-export function normaliseLoadedCabling(
-  raw: Partial<CableLayout>,
-  kept: { cameras: readonly PlacedCamera[]; sensors: readonly PlacedSensor[] },
-  warnings: string[],
-): CableLayout {
+export function normaliseLoadedCableTypes(raw: { cableTypes?: CableType[] }, warnings: string[]): CableType[] {
   const dedupedTypes = dedupeById(raw.cableTypes ?? [], 'Cable type', warnings)
   // Invariant: at least one cable type always exists in memory.
-  const cableTypes = dedupedTypes.length > 0 ? dedupedTypes : createDefaultCableTypes()
+  return dedupedTypes.length > 0 ? dedupedTypes : createDefaultCableTypes()
+}
+
+/**
+ * Per floor: drops, each with one warning, what the app never creates - a
+ * repeated hub/cable id, or a cable whose device, hub or type does not
+ * resolve. `cableTypes` is the project-wide deduped list
+ * (`normaliseLoadedCableTypes`); `kept` is the cameras/sensors THIS FLOOR
+ * kept after their own filtering, so a cable on a dropped camera goes with
+ * it. Never rejects.
+ */
+export function normaliseLoadedFloorCabling(
+  raw: { hubs?: Hub[]; cables?: Cable[] },
+  cableTypes: readonly CableType[],
+  kept: { cameras: readonly PlacedCamera[]; sensors: readonly PlacedSensor[] },
+  warnings: string[],
+): { hubs: Hub[]; cables: Cable[] } {
   const hubs = dedupeById(raw.hubs ?? [], 'Hub', warnings)
 
   const ctx = {
@@ -105,5 +146,5 @@ export function normaliseLoadedCabling(
     return problem === null
   })
 
-  return { hubs, cables, cableTypes, cableSettings: raw.cableSettings ?? { ...DEFAULT_CABLE_SETTINGS } }
+  return { hubs, cables }
 }

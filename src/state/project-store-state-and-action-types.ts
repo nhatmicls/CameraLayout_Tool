@@ -1,6 +1,6 @@
 import { createEmptyCableLayout } from '../domain/cable/cable-layout-types'
 import { createEmptyFireAlarmLayout } from '../domain/project-file/project-types'
-import type { PlacedCamera, Project, ScaleCalibration, Wall } from '../domain/project-file/project-types'
+import type { LegacyFlatProject, PlacedCamera, PlanImage, ScaleCalibration, Wall } from '../domain/project-file/project-types'
 import type { PlacedSensor, PlacedSensorPatch } from '../domain/sensor/sensor-types'
 import type { WallNode } from '../domain/wall/wall-node-editing'
 import type { CablingActions, CablingState } from './project-store-cabling-actions'
@@ -11,9 +11,13 @@ import type { FireAlarmActions, FireAlarmState } from './project-store-fire-alar
  * factory, extracted out of `project-store.ts` to keep that file under 200
  * lines (mirrors how the cabling and fire-alarm slices already live in
  * their own action files).
+ *
+ * The store stays flat in this phase (phase 2 restructures it to
+ * `floors[]`); `replaceProject`/`setImage` use `PlanImage`/`LegacyFlatProject`
+ * - the pre-v7 one-floor shapes - not the new multi-floor `Project`.
  */
 export interface ProjectState extends CablingState, FireAlarmState {
-  image: Project['image'] | null
+  image: PlanImage | null
   scale: ScaleCalibration | null
   cameras: PlacedCamera[]
   walls: Wall[]
@@ -22,7 +26,7 @@ export interface ProjectState extends CablingState, FireAlarmState {
 
 export interface ProjectActions extends CablingActions, FireAlarmActions {
   /** Sets a newly loaded floor-plan image. Always clears cameras, walls, sensors, hubs, cables, fire-alarm devices + scale, and RESETS fire-alarm settings to `DEFAULT_FIRE_ALARM_SETTINGS`: all are meaningless against a different plan (CLAUDE.md). Only cable types + cable settings are kept - they describe a procurement convention, not plan geometry (see `project-store.ts`'s `setImage`). */
-  setImage: (image: Project['image']) => void
+  setImage: (image: PlanImage) => void
   setScale: (scale: ScaleCalibration | null) => void
   addCamera: (camera: PlacedCamera) => void
   /** Merges `patch` into the camera matching `id`. No-op if the id is unknown. */
@@ -42,7 +46,7 @@ export interface ProjectActions extends CablingActions, FireAlarmActions {
   /** Also removes the sensor's cables, in the same undo step. An unknown id leaves the state (and so the undo history) untouched - the selected id can be stale after an undo. */
   deleteSensor: (id: string) => void
   /** Replaces the whole project (used when loading a project file). */
-  replaceProject: (project: Project) => void
+  replaceProject: (project: LegacyFlatProject) => void
   /** Clears back to the empty-project state (no image, no scale, no cameras, no walls, no sensors, no fire-alarm devices). */
   resetProject: () => void
 }

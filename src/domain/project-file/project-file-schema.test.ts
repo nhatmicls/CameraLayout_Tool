@@ -1,21 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { parseProjectFile, serializeProject, type ProjectFileLookups, type SensorModelLookup } from './project-file-schema'
-import { createEmptyFireAlarmLayout, type Project } from './project-types'
-import { createEmptyCableLayout } from '../cable/cable-layout-types'
+import { buildLegacyFlatRaw, buildProject, onlyFloor, toLegacyFlatRaw } from './project-file-test-fixtures'
+import type { Project } from './project-types'
 
-// Smallest possible valid PNG (1x1 transparent pixel), as a real base64 data URL.
-const TINY_PNG_DATA_URL =
-  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUAAk6WgQAAAABJRU5ErkJggg=='
-
-const baseProject: Project = {
-  image: { dataUrl: TINY_PNG_DATA_URL, widthPx: 1000, heightPx: 800, fileName: 'floor-plan.png' },
-  scale: { planPxPerMeter: 100, refLine: { x1: 0, y1: 0, x2: 500, y2: 0 }, refLengthM: 5 },
+const baseProject: Project = buildProject({
   cameras: [{ id: 'cam-1', modelId: 'model-a', x: 10, y: 20, rotationDeg: 45, rangeM: 15 }],
-  walls: [],
-  sensors: [],
-  ...createEmptyCableLayout(),
-  ...createEmptyFireAlarmLayout(),
-}
+  scale: { planPxPerMeter: 100, refLine: { x1: 0, y1: 0, x2: 500, y2: 0 }, refLengthM: 5 },
+})
 
 const KNOWN_MODEL_IDS = new Set(['model-a', 'model-b'])
 const SENSOR_MODEL_LOOKUP: SensorModelLookup = new Map([
@@ -39,15 +30,7 @@ describe('serializeProject + parseProjectFile round trip', () => {
   })
 
   it('round-trips a project with scale: null and no cameras', () => {
-    const project: Project = {
-      image: baseProject.image,
-      scale: null,
-      cameras: [],
-      walls: [],
-      sensors: [],
-      ...createEmptyCableLayout(),
-      ...createEmptyFireAlarmLayout(),
-    }
+    const project = buildProject()
     const result = parseProjectFile(serializeProject(project), LOOKUPS)
     expect(result.ok).toBe(true)
     if (!result.ok) throw new Error('expected ok')
@@ -56,34 +39,33 @@ describe('serializeProject + parseProjectFile round trip', () => {
 })
 
 describe('schema version', () => {
-  it('writes schemaVersion 6', () => {
-    expect(JSON.parse(serializeProject(baseProject)).schemaVersion).toBe(6)
+  it('writes schemaVersion 7', () => {
+    expect(JSON.parse(serializeProject(baseProject)).schemaVersion).toBe(7)
   })
 
-  it('still reads a version 1 file, leaving cameras without mounting keys', () => {
-    const raw = JSON.parse(serializeProject(baseProject))
-    raw.schemaVersion = 1
-    const result = parseProjectFile(JSON.stringify(raw), LOOKUPS)
+  it('still reads a version 1 flat file, deep-equalling the one-floor project, with cameras left without mounting keys', () => {
+    const rawV1 = toLegacyFlatRaw(baseProject, 1)
+    const result = parseProjectFile(JSON.stringify(rawV1), LOOKUPS)
     expect(result.ok).toBe(true)
     if (!result.ok) throw new Error('expected ok')
     expect(result.project).toEqual(baseProject)
-    expect(result.project.cameras[0]).not.toHaveProperty('mountHeightM')
-    expect(result.project.cameras[0]).not.toHaveProperty('tiltDeg')
+    const floor = onlyFloor(result)
+    expect(floor.cameras[0]).not.toHaveProperty('mountHeightM')
+    expect(floor.cameras[0]).not.toHaveProperty('tiltDeg')
   })
 })
 
 describe('camera mounting height + tilt', () => {
   function parseWithCamera(patch: Record<string, unknown>) {
     const raw = JSON.parse(serializeProject(baseProject))
-    Object.assign(raw.cameras[0], patch)
+    Object.assign(raw.floors[0].cameras[0], patch)
     return parseProjectFile(JSON.stringify(raw), LOOKUPS)
   }
 
   it('round-trips both fields', () => {
-    const project: Project = {
-      ...baseProject,
-      cameras: [{ ...baseProject.cameras[0], mountHeightM: 2.7, tiltDeg: 32 }],
-    }
+    const project = buildProject({
+      cameras: [{ ...baseProject.floors[0].cameras[0], mountHeightM: 2.7, tiltDeg: 32 }],
+    })
     const result = parseProjectFile(serializeProject(project), LOOKUPS)
     expect(result.ok).toBe(true)
     if (!result.ok) throw new Error('expected ok')
@@ -91,10 +73,9 @@ describe('camera mounting height + tilt', () => {
   })
 
   it('serialises a cleared camera without the keys', () => {
-    const project: Project = {
-      ...baseProject,
-      cameras: [{ ...baseProject.cameras[0], mountHeightM: undefined, tiltDeg: undefined }],
-    }
+    const project = buildProject({
+      cameras: [{ ...baseProject.floors[0].cameras[0], mountHeightM: undefined, tiltDeg: undefined }],
+    })
     const text = serializeProject(project)
     expect(text).not.toContain('mountHeightM')
     expect(text).not.toContain('tiltDeg')
@@ -121,7 +102,7 @@ describe('camera mounting height + tilt', () => {
   it('reports a half-set mounting with a readable path', () => {
     const result = parseWithCamera({ mountHeightM: 3 })
     if (result.ok) throw new Error('expected rejection')
-    expect(result.error).toContain('cameras.0.tiltDeg: mountHeightM and tiltDeg must be set together')
+    expect(result.error).toContain('floors.0.cameras.0.tiltDeg: mountHeightM and tiltDeg must be set together')
   })
 })
 
@@ -144,30 +125,38 @@ describe('parseProjectFile rejection cases', () => {
     expect(result.ok).toBe(false)
   })
 
-  it('rejects an unknown/future schemaVersion', () => {
+  it('rejects an unknown/future schemaVersion on a v7-shaped file', () => {
     const raw = JSON.parse(serializeProject(baseProject))
-    raw.schemaVersion = 7
+    raw.schemaVersion = 8
     const result = parseProjectFile(JSON.stringify(raw), LOOKUPS)
     expect(result.ok).toBe(false)
   })
 
+  // A FLAT-shaped file (no `floors` key) must also be rejected at these versions: 7 routes to the
+  // v7 schema by version number alone but then fails for lacking `floors`; 8 and 0 are not in the
+  // legacy schema's 1-6 union either.
+  it.each([7, 8, 0])('rejects a flat-shaped file with schemaVersion %i', (version) => {
+    const raw = buildLegacyFlatRaw(version)
+    expect(parseProjectFile(JSON.stringify(raw), LOOKUPS).ok).toBe(false)
+  })
+
   it('rejects an SVG data URL (only png/jpeg allowed)', () => {
     const raw = JSON.parse(serializeProject(baseProject))
-    raw.image.dataUrl = 'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4='
+    raw.floors[0].image.dataUrl = 'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4='
     const result = parseProjectFile(JSON.stringify(raw), LOOKUPS)
     expect(result.ok).toBe(false)
   })
 
   it('rejects a remote http:// image URL', () => {
     const raw = JSON.parse(serializeProject(baseProject))
-    raw.image.dataUrl = 'http://example.com/plan.png'
+    raw.floors[0].image.dataUrl = 'http://example.com/plan.png'
     const result = parseProjectFile(JSON.stringify(raw), LOOKUPS)
     expect(result.ok).toBe(false)
   })
 
   it('rejects a string where a camera coordinate must be a number', () => {
     const raw = JSON.parse(serializeProject(baseProject))
-    raw.cameras[0].x = '10'
+    raw.floors[0].cameras[0].x = '10'
     const result = parseProjectFile(JSON.stringify(raw), LOOKUPS)
     expect(result.ok).toBe(false)
   })
@@ -181,14 +170,14 @@ describe('parseProjectFile rejection cases', () => {
 
   it('rejects extra unknown keys on a nested camera object', () => {
     const raw = JSON.parse(serializeProject(baseProject))
-    raw.cameras[0].extra = 'nope'
+    raw.floors[0].cameras[0].extra = 'nope'
     const result = parseProjectFile(JSON.stringify(raw), LOOKUPS)
     expect(result.ok).toBe(false)
   })
 
   it('rejects more than 500 cameras', () => {
     const raw = JSON.parse(serializeProject(baseProject))
-    raw.cameras = Array.from({ length: 501 }, (_, i) => ({
+    raw.floors[0].cameras = Array.from({ length: 501 }, (_, i) => ({
       id: `cam-${i}`,
       modelId: 'model-a',
       x: i,
@@ -219,12 +208,13 @@ describe('parseProjectFile rejection cases', () => {
 describe('parseProjectFile - unknown model handling', () => {
   it('drops cameras referencing an unknown modelId and reports a warning', () => {
     const raw = JSON.parse(serializeProject(baseProject))
-    raw.cameras.push({ id: 'cam-2', modelId: 'does-not-exist', x: 1, y: 1, rotationDeg: 0, rangeM: 10 })
+    raw.floors[0].cameras.push({ id: 'cam-2', modelId: 'does-not-exist', x: 1, y: 1, rotationDeg: 0, rangeM: 10 })
     const result = parseProjectFile(JSON.stringify(raw), LOOKUPS)
     expect(result.ok).toBe(true)
+    const floor = onlyFloor(result)
+    expect(floor.cameras).toHaveLength(1)
+    expect(floor.cameras[0].id).toBe('cam-1')
     if (!result.ok) throw new Error('expected ok')
-    expect(result.project.cameras).toHaveLength(1)
-    expect(result.project.cameras[0].id).toBe('cam-1')
     expect(result.warnings).toHaveLength(1)
     expect(result.warnings[0]).toContain('does-not-exist')
   })
