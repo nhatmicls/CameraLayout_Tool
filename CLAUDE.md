@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Camera Layout Tool: browser-only floor-plan camera planner (Vite + React 19 + TypeScript 5.9 +
+Security Layout Planner (formerly Camera Layout Tool; the project-file `app` id stays `camera-layout-tool`): browser-only floor-plan security planner (Vite + React 19 + TypeScript 5.9 +
 Konva + zustand + Tailwind 4 + Zod). No backend, no runtime network calls. See `./README.md`
 and `./docs/tech-stack.md`.
 

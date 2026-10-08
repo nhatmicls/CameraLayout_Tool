@@ -21,6 +21,14 @@
   record of a second brand, AoLin, so the Fire alarm tab's Brand filter now has two entries.
   The alarm catalog's `sourceUrl` may be `null`.
 
+**Renamed to Security Layout Planner**
+
+- The app, the package (`security-layout-planner`) and the repository are renamed from "Camera Layout
+  Tool": it now plans cameras, sensors, alarm devices and cabling. Not breaking: project files
+  keep the `app` id `camera-layout-tool` and PNG exports keep the `-camera-layout.png` suffix.
+- **Docs**: the README is now a short overview; the feature details moved unchanged into
+  `docs/user-guide-*.md` and `docs/local-setup.md`.
+
 **Multi-floor projects**
 
 - **BREAKING: project file schema version 7.** A project is now a list of floors. Files from
