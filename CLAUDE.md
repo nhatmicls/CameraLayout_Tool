@@ -16,9 +16,9 @@ Layout: `data/` (catalog JSON, repo root), `src/catalog` (schema, loader), `src/
 Every `src` folder except `state` is grouped into feature subfolders - put a new file in the
 matching one, never loose at the folder root:
 - `catalog/`: `camera`, `sensor`, `fire-alarm`, `shared`
-- `domain/`: `beam`, `bom`, `cable`, `camera`, `export`, `fire-alarm`, `project-file`, `sensor`, `view`, `wall`, `shared`
-- `canvas/`: `beam`, `cable`, `camera`, `fire-alarm`, `sensor`, `wall`, `stage`, `shared`
-- `panels/`: `app-shell`, `bom`, `cable`, `camera`, `fire-alarm`, `sensor`, `shared`
+- `domain/`: `beam`, `bom`, `cable`, `camera`, `export`, `fire-alarm`, `floor`, `project-file`, `sensor`, `view`, `wall`, `shared`
+- `canvas/`: `beam`, `cable`, `camera`, `fire-alarm`, `floor`, `sensor`, `wall`, `stage`, `shared`
+- `panels/`: `app-shell`, `bom`, `cable`, `camera`, `fire-alarm`, `floor`, `sensor`, `shared`
 - `export/`: `csv`, `png`, `shared`
 - `file-io/`: `browser`, `project-file`
 A new feature gets its own subfolder where it adds files.
@@ -108,34 +108,79 @@ Project rules:
   and both-or-neither. Unset must draw and save exactly like the flat cone. Floor-coverage math
   lives in `src/domain/camera/mounted-camera-ground-coverage-calculator.ts` (metres only; slant model,
   centre-line arcs, fisheye HFOV >= 180 ignores tilt) - keep it out of components.
-- Project files: `PROJECT_SCHEMA_VERSION` is 6 (v5 + optional `fireAlarmDevices`,
-  `fireAlarmSettings`); the reader accepts 1 to 6, the writer always emits 6.
-- Cables: a cable is `{ device, hubId, typeId, points }` - `device` is a `{ kind, id, end? }`
-  ref (`end` = `tx` / `rx`, for a beam only), `points` are the INTERMEDIATE vertices in image
-  px, device -> hub; both ends derive from the live device / hub position
-  (`src/domain/cable/cable-endpoint-index.ts`). Metres are never persisted. Deleting a camera,
-  sensor or hub removes its cables in the same `set()` (one undo step); a cable type in use,
-  or the last one, cannot be deleted (>= 1 type always). `setImage` clears hubs + cables and
-  keeps cable types + settings. A riser / drop (cables leave for the floor above / below) is a `Hub`
-  with `kind: 'riser' | 'drop'`: `mountHeightM` (never negative) is the height it rises to /
-  the depth below this floor (`hubEffectiveHeightM` negates a drop's), optional
-  `extraLengthM` = cable on the other floor; labels `H{n}` / `R{n}` / `D{n}` come from
-  `hubLabels`. Cones + sensor coverage are hidden in cable mode
-  (`coverageVisible`).
-- Cable maths lives in `src/domain/cable/cable-length-estimate-calculator.ts` +
-  `cable-layout-estimate.ts` (`computeCableLayoutEstimate` is the one entry point for panels,
-  canvas, BOM and exports) - keep it out of components. The scale-error range applies to
-  horizontal metres only (vertical runs and slack are typed in metres); the length limit
-  checks the run without waste. No scale = no cable metres: never use the
-  `planPxPerMeter ?? 1` fallback for cables.
-- Cable lines render in the walls Layer's children slot (after wall lines, before wall node
-  handles); hubs and the selected cable's vertex editor are in the markers Layer; the hub
-  and cable tools share the one editor-overlay Layer - no sixth Konva Layer.
+- Project = ordered `floors[]` (1 to `MAX_FLOORS` 20; tab 1 = lowest floor) + project-level
+  `shafts`, `cableTypes`, `cableSettings`, `fireAlarmSettings`. A floor (`src/domain/floor/floor-types.ts`)
+  owns `image` (nullable), `scale`, `cameras`, `sensors`, `walls`, `hubs`, `cables`,
+  `fireAlarmDevices` and `floorHeightM` (floor-to-floor to the floor above, default 3.5). Ids and
+  labels (`C{n}`, `S{n}`, `F{n}`, `H{n}`...) are per floor.
+- Store: `floors[]` + `activeFloorId`; existing actions act on the active floor. Read through
+  `src/state/project-store-floor-selectors.ts`; write through `patchActiveFloor` / `patchFloorById`
+  (`project-store-active-floor-update.ts`), which also run the cross-floor + shaft prune. Never
+  use a selector that returns a fresh object / array as a zustand hook selector. `activeFloorId`
+  is untracked: a floor switch is not an undo step and never sets `hasUnsavedChanges`; undo / redo
+  switches to the floor it changed (`project-store-undo-redo.ts`). A switch clears selection + tool
+  and remounts the stage (keyed by floor id + project-load epoch); the view config is kept.
+- Plan images stay inside `floors` and are tracked by reference (a replaced / deleted image stays
+  in memory while undo can reach it). `decodedImage` is written only by
+  `src/canvas/floor/use-active-floor-decoded-image-sync.ts`, keyed on the data URL.
+- `setImage` acts on the active floor: clears that floor's scale, cameras, sensors, walls, hubs,
+  cables and fire-alarm devices, prunes links / shaft markers that pointed at it, keeps cable
+  types + settings and `fireAlarmSettings`, and is always ONE undo step - it never clears history
+  (only `replaceProject` / `resetProject` do). An image load is pinned to the floor (and project
+  load) it was started for (`floor-image-load-target-resolver.ts`); the image budget
+  (`floor-image-budget.ts`) and the 80 MB save guard keep the saved file loadable.
+- Project files: `PROJECT_SCHEMA_VERSION` is 7 (`floors[]` shape); the reader accepts 1 to 7 -
+  flat v1-6 files are parsed by the legacy schema and wrapped into one floor - the writer always
+  emits 7. The loader never rejects a file for bad cross-floor data: invalid links, trunks, shaft
+  markers and exit choices are dropped with a warning.
+- Cables: a cable is `{ device, hubId, typeId, points, exitFloorId? }` - `device` is a
+  `{ kind, id, end? }` ref (`end` = `tx` / `rx`, for a beam only), `points` are the INTERMEDIATE
+  vertices in image px, device -> hub; both ends derive from the live device / hub position
+  (`src/domain/cable/cable-endpoint-index.ts`). A cable and its hub are on the same floor. Metres
+  are never persisted. Deleting a camera, sensor or hub removes its cables in the same `set()`
+  (one undo step); a cable type in use on ANY floor, or the last one, cannot be deleted (>= 1
+  type always). A `Hub` is `{ id, x, y, mountHeightM, kind?, extraLengthM?, link?, trunk?,
+  shaftId? }`; no `kind` = plain hub. Labels `H{n}` / `R{n}` / `D{n}` (per floor) and `T{n}`
+  (shaft, from `shafts[]` order, same on every floor) come from `hubLabels`. Cones + sensor
+  coverage are hidden in cable and trunk mode (`coverageVisible`).
+- Riser / drop (`kind: 'riser' | 'drop'`): cables leave for the floor above / below. Typed mode
+  (no partner route): `mountHeightM` (never negative) is the height it rises to / the depth below
+  this floor (`hubEffectiveHeightM` negates a drop's) + optional `extraLengthM` = cable on the
+  other floor. A riser on floor i may `link` to a drop on floor i + 1 (adjacent only, symmetric,
+  one partner; linking to a point linked elsewhere is refused). A linked point may carry a
+  `trunk { hubId, points }`: a route on ITS floor to a plain hub or another riser / drop (never a
+  shaft marker). Computed mode (the partner has a trunk): vertical = the lower floor's
+  `floorHeightM` (both `mountHeightM` ignored) + trunk at the partner floor's scale + the end at
+  its target (chains continue; cycles = no metres).
+- Shaft: project `shafts[] { id, name }` (max 20) + hub markers `kind: 'shaft'` with `shaftId`,
+  at most one per shaft per floor; never linked. Every marker with a `trunk` is an exit (several
+  allowed). A cable ending on a marker: no exit at all = 0 m at the marker + the marker's typed
+  `extraLengthM` (no vertical); one exit = used implicitly; several = the cable's `exitFloorId`,
+  never guessed - none chosen = NO metres, counted and named (`shaft-exit-not-chosen`). Vertical
+  = sum of `floorHeightM` between entry and exit floor. Exit choices are stamped when a second
+  exit appears and cleared when their exit goes; a shaft with no marker left is removed - each in
+  the SAME `set()` as its cause. `cross-floor-exit-resolver.ts` is the only place that knows
+  where a crossing point leads.
+- Cable maths lives in `src/domain/cable/cable-length-estimate-calculator.ts`,
+  `cable-layout-estimate.ts` (per-floor) and `project-cable-layout-estimate.ts`
+  (`computeProjectCableEstimate` is the one entry point for panels, canvas, BOM and exports;
+  returns per-floor estimates merged into project totals, cable metres summed and rounded once
+  per type) - keep it out of components. The scale-error range applies to horizontal metres only
+  (vertical runs and slack are typed in metres); the length limit checks the run without waste.
+  No scale on any floor = no cable metres for that crossing: never use the `planPxPerMeter ?? 1`
+  fallback for cables. Unestimated cables (missing a chosen exit, or crossing a scale-less floor)
+  are counted and named, never guessed.
+- Cable lines and trunk lines render in the walls Layer's children slot (after wall lines, before
+  wall node handles); hubs and the selected cable/trunk vertex editor are in the markers Layer;
+  the hub, cable and trunk tools share the one editor-overlay Layer - no sixth Konva Layer.
 - Cable prices (VND/m per type) are user input: never invented, never prefilled. BOM rows
   carry `unit` (`pcs` / `m`); metres never count as unpriced items. BOM rows for the panel,
-  CSV and PNG all come from `src/export/shared/build-combined-bom-rows.ts`. CSV gains a 12th
-  trailing column `Notes` (breaking change for strict parsers), filled only on fire-alarm rows
-  with a compatibility warning or "No panel/hub placed"; PNG table stays 11 columns.
+  CSV and PNG all come from `buildCombinedBomRows(project, { floorId? })` - one signature for
+  all three. Pass `floorId` for that floor's rows only (unprefixed); omit for project-wide rows
+  (floor-prefixed `F{n}-` when `floors.length > 1`; cable metres summed per type, rounded once on
+  the total). CSV is always whole project (12 columns: 11 as before + trailing `Notes` for
+  fire-alarm compatibility warnings); PNG can be current floor or all floors (fire-alarm rows
+  filtered per floor, legend checked for that floor's device ids).
 - Keyboard Delete / Backspace: acts only in select mode (a placed device is selected). When a
   catalog sidebar tab's drop-down (Brand, Type, "Works with") has focus, Delete / Backspace
   are ignored (no delete action).
@@ -168,9 +213,11 @@ Project rules:
   "Shown / Hidden" note (`buildViewFilterNote`) only when something is hidden - all visible
   must stay identical to the pre-feature PNG. Legend lines, BOM panel, BOM strip, CSV and the
   cable estimate never follow the view. Labels for the panel and the note come from the one
-  table `VIEW_TOGGLES`. The view resets to `DEFAULT_VIEW_CONFIG` where a project
-  (`replaceProject`) or a plan image (`setImage`) is loaded - at those UI call sites, never
-  from `project-store`. Cones and sensor coverage shapes live in `plan-scene-coverage-layer.tsx`;
+  table `VIEW_TOGGLES`. The view is kept across a floor switch; it resets to `DEFAULT_VIEW_CONFIG`
+  where a project (`replaceProject`) or a plan image (`setImage`) is loaded - at those UI call
+  sites, never from `project-store`. Hidden ids and counts come from the active floor; trunk lines
+  follow the cable-routes toggle, shaft markers the hubs toggle. Cones and sensor coverage shapes
+  live in `plan-scene-coverage-layer.tsx`;
   markers in `plan-scene-markers-layer.tsx`; still no extra Konva Layer.
 - Windows: a leftover dev server locks `node_modules` and breaks `npm ci` (EPERM). Kill the
   whole process tree of anything you spawn.

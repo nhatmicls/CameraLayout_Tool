@@ -99,6 +99,46 @@ calls once the page has loaded.
 - **Alarm-device prices**: 11 of the 42 alarm-catalog records have a Vietnamese price
   (vuhoangtelecom.vn); 23 more link to a contact-for-price page on mastery.vn; the rest are
   "price on request". No Shopee listing could be verified.
+- **Floors**: a project holds 1 to 20 floors, shown as tabs under the toolbar; tab 1 is the
+  lowest floor. Each floor has its own plan image, scale, cameras, sensors, walls, hubs, cables
+  and alarm devices, numbered per floor (C1, S1, F1, H1... start again on every floor). Cable
+  types, cable allowances, the fire-detector coverage mode and shafts belong to the whole project.
+  - Tabs: click to switch (the view refits each time), "+ Floor" adds one, double-click a name
+    (or F2 / Enter) to rename, and the active tab has move left / move right, delete and a
+    "floor-to-floor height" input (default 3.5 m, 0.5-30 m; not shown on the top floor). A new
+    floor is empty until you load its plan. Switching floors is not an undo step; undo / redo
+    takes you to the floor it changed. Deleting a floor can be undone.
+  - Replacing a floor's plan image clears that floor only and is one undo step.
+  - Linking a riser to a drop: select a riser or drop and click "Create paired point" to place
+    the matching point on the floor above / below and link the two (or pick an existing point in
+    "Linked to"). Only adjacent floors can be linked, one partner each. Until a route is drawn
+    the typed values still apply ("Rises to" / "Goes down to" and "Length on the other floor").
+  - Route to a hub: on the floor where the cables arrive, select the linked point, click "Draw
+    route to hub", click the route points and finish on a hub (Backspace removes the last point,
+    Esc cancels). The route is a dotted line; with its point selected you can drag a route point,
+    double-click the line to add one, double-click a point to remove one. Once the route exists,
+    every cable ending on the partner point is measured as: its own route + the floor-to-floor
+    height + the route (at that floor's scale) + the drop at the hub. The typed height and length
+    are then ignored - expect the length to jump when you draw the route.
+  - Shafts: a vertical tube through several floors. Click "Shaft", click the plan, name it and
+    choose the floor range: an opening (T1, T2... - the same label on every floor) is placed on
+    each of those floors that has a plan, at the same position; drag each one to where the tube
+    really is. Cables end on an opening like on a hub. An opening with a route to a hub is an
+    exit, and a shaft can have several. With one exit every cable uses it; with several, each
+    cable must be told which (the "Exit" select in the cable's properties, or "assign" in the
+    shaft panel) and its label shows it, e.g. `C1-T1>F3`. A cable with no exit chosen has no
+    length and is left out of the totals - the shaft panel shows cables in, out per exit and not
+    chosen, and the BOM, the CSV message and the PNG say how many are missing. The vertical run is
+    the sum of the floor heights between the cable's floor and the exit floor. A shaft with no
+    exit route yet uses the typed "Length beyond this opening" and adds no vertical run. A route
+    cannot end on a shaft opening.
+  - A cable that crosses floors is counted on the floor of its camera or sensor. Each floor is
+    measured with its own scale; if a floor on the way has no scale the cable has no length and
+    is reported, never guessed.
+  - Limits: plans of different floors are not aligned to each other; one route per riser / drop;
+    floor heights are typed, not measured. Plan images are stored in the project file, which is
+    limited to 80 MB: adding an image that would pass the limit is refused. A replaced or deleted
+    plan image stays in memory while undo can still bring it back.
 - **Placement**: drag from the catalog, move, rotate with the handle, adjust range and (for
   varifocal lenses) HFOV in the properties panel. Undo/redo.
 - **DORI coverage**: each cone is banded Identify / Recognize / Observe / Detect per EN 62676-4.
@@ -145,8 +185,10 @@ calls once the page has loaded.
     the height above this floor the cable climbs to (it starts at the route height, so set
     it); a drop's "Goes down to" is how far below this floor it ends (it starts at 0, i.e.
     the cable descends the route height). "Length on the other floor" (default 0) is added
-    to every cable ending there, for the run from that point to its hub. Each plan is one
-    floor: the other floor's own routes are not drawn here.
+    to every cable ending there, for the run from that point to its hub. In a project
+    with several floors a riser can be linked to the drop on the floor above and the run
+    measured from a drawn route instead of typed, and a shaft can carry cables through
+    several floors - see Floors.
   - While "Draw cable" is on, camera cones and sensor coverage are hidden so the route is
     drawn on a clear plan; they come back when you leave the tool.
   - Drawing: click "Draw cable", click a camera, a sensor (either end of an IR beam) or a hub
@@ -158,7 +200,7 @@ calls once the page has loaded.
     removes its cables, in the same undo step.
   - Cable types: name, optional length limit (m) and optional price (VND/m) - a new project
     starts with Cat6 UTP (90 m limit), Power 2-core and Alarm signal, all without a price.
-    A type in use, or the last remaining type, cannot be deleted.
+    A type in use on any floor, or the last remaining type, cannot be deleted.
   - How the estimate is built, per cable: horizontal route length (drawn route / scale) +
     the vertical run at each end (route height vs the device's and the hub's height) + the
     length on the other floor (riser / drop only) + slack at each end = the run; the run + waste % = what to buy. Per type the metres are summed
@@ -178,25 +220,40 @@ calls once the page has loaded.
     height, so they use the default device height. A cable end follows its camera, sensor or
     hub when the drag is dropped, not while dragging. There are no hub-to-hub links. A cable
     type's colour is its position in the type list. Measure on site before ordering.
-- **View**: collapsed section at the top of the right panel with toggles to hide / show layer groups on the plan. Includes 16 toggles: camera markers, camera FOV cones, each camera form factor (bullet, dome, turret, PTZ, fisheye), sensor markers (including IR beam line + ends), sensor coverage shapes (including thermal cones), each sensor kind (PIR, IR beam, vibration, thermal), hubs / risers / drops, cable routes, and walls. Every toggle option is always listed with a live item count; a "N hidden" badge shows when any are off; "Show all" resets all to visible. The Cameras, Sensors and Cabling headings are parent checkboxes: unticking one unticks every row under it, ticking it turns them all on, and it shows a dash when only some rows are on. The per-type rows sit under their own parent ("Types" for cameras, "Kinds" for sensors) that works the same way; a type that is off hides both the marker and the cone / coverage of those items. Hidden walls still block camera cones and sensor coverage. A drawing tool (wall, hub, cable) forces its own layers visible while the tool is active and restores the previous state when leaving - so a wall, hub or cable drawn while its layer is switched off disappears again when you leave the tool (the "N hidden" badge is the cue). Labels never renumber when items are hidden, and a cable is still drawn to a hidden camera, sensor or hub. Hiding the type of the selected item deselects it; dropping a catalog card of a hidden type turns that type back on. The PNG export draws the on-screen state: if anything is hidden, the strip prints a wrapped "Shown: ... / Hidden: ..." note under the legend; legend lines, BOM strip, BOM panel, CSV and cable estimate always cover everything. Fire-alarm devices and their coverage are always drawn (no toggle). View state is not saved in the project file, not undoable, and is reset to all visible when a project is opened or a new plan image is loaded.
-- **Bill of materials**: camera rows grouped by model + lens, then sensor rows grouped by
-  model, then fire-alarm rows grouped by kind (unit `pcs`, labels F1, F2...), then one cable
-  row per cable type in use, with quantity, labels, unit price, line total and one estimated
-  grand total. One placed beam counts as one transmitter + receiver set. A cable row's quantity
-  is whole metres to buy.
+- **View**: collapsed section at the top of the right panel with toggles to hide / show layer groups on the active floor. Includes 16 toggles: camera markers, camera FOV cones, each camera form factor (bullet, dome, turret, PTZ, fisheye), sensor markers (including IR beam line + ends), sensor coverage shapes (including thermal cones), each sensor kind (PIR, IR beam, vibration, thermal), hubs / risers / drops, cable routes (including trunk routes to hubs on other floors), and walls. Every toggle option is always listed with a live item count for the active floor; a "N hidden" badge shows when any are off; "Show all" resets all to visible. The Cameras, Sensors and Cabling headings are parent checkboxes: unticking one unticks every row under it, ticking it turns them all on, and it shows a dash when only some rows are on. The per-type rows sit under their own parent ("Types" for cameras, "Kinds" for sensors) that works the same way; a type that is off hides both the marker and the cone / coverage of those items. Hidden walls still block camera cones and sensor coverage. A drawing tool (wall, hub, cable, trunk) forces its own layers visible while the tool is active and restores the previous state when leaving. Labels never renumber when items are hidden, and a cable is still drawn to a hidden camera, sensor or hub. Hiding the type of the selected item deselects it; dropping a catalog card of a hidden type turns that type back on. The PNG export (both "Export PNG" and "Export all floors") draws the on-screen state for that floor: if anything is hidden, the strip prints a wrapped "Shown: ... / Hidden: ..." note under the legend; legend lines, BOM strip, BOM panel, CSV and cable estimate always cover everything. Fire-alarm devices and their coverage are always drawn (no toggle). View state is not saved in the project file, not undoable, is kept when you switch floors, and is reset to all visible when a project is opened or a new plan image is loaded.
+- **Bill of materials**: one list for the whole project: camera rows grouped by model + lens,
+  then sensor rows grouped by model, then fire-alarm rows grouped by kind (unit `pcs`), then one
+  cable row per cable type in use, with quantity, labels, unit price, line total and one
+  estimated grand total. One placed beam counts as one transmitter + receiver set. A cable row's
+  quantity is whole metres to buy.
+  With more than one floor the same model on several floors is one row, and every label carries
+  its floor: `F2-C1` is camera C1 on floor 2, `F2-C1-H1` its cable, `F2-F1` alarm device F1 on
+  floor 2 (the first `F2` is the floor). An "All floors" drop-down above the list can show one floor's rows
+  without the prefix. A one-floor project has no prefix and no filter. Cable metres are summed
+  over all floors and rounded up once per type; a single floor's view rounds that floor alone, so
+  per-floor figures can add up to a few metres more than the project total (at most one metre
+  per extra floor and type). Cables that could not be measured (no exit chosen in a shaft, or a
+  floor on the way without a scale) are left out of the metres and the list says how many.
   The PNG table has 11 columns: `Type, Brand, Model, Form Factor, Resolution, Lens,
   Quantity, Unit, Labels, Unit Price (VND), Total (VND)`. The CSV has the same 11 columns
   plus a 12th trailing column `Notes` (breaking change for strict CSV parsers), filled only on
   fire-alarm rows with a compatibility warning if the device is "not listed" for a placed
-  panel/hub, or "No panel/hub placed". For sensors `Form Factor` is empty, `Resolution` /
-  `Lens` filled for thermal only. For fire-alarm devices `Type` is the device kind (e.g.
-  "Smoke detector") and `Form Factor`, `Resolution` and `Lens` are empty. A cable row has Type `Cable`, the type name in
-  `Model` and the price per metre in `Unit Price`. Cable rows need a scale: a CSV exported
-  before the scale is set leaves them out and says so.
+  panel/hub, or "No panel/hub placed". A panel / hub placed on any floor counts as placed. For
+  sensors `Form Factor` is empty, `Resolution` / `Lens` filled for thermal only. For fire-alarm
+  devices `Type` is the device kind (e.g. "Smoke detector") and `Form Factor`, `Resolution` and
+  `Lens` are empty. A cable row has Type `Cable`, the type name in `Model` and the price per
+  metre in `Unit Price`. Cable rows need a scale: a floor without one adds no metres and the
+  export says which floors.
 - **Export**: PNG at image resolution with a legend + BOM strip (downscaled with a notice above
-  ~16.7 M pixels), and a BOM CSV. The PNG draws hubs and cables and, when the plan has
-  cables, a legend line with the cable types and the provisional total. The PNG needs a
-  scale. Project save/load as JSON.
+  ~16.7 M pixels), and a BOM CSV. "Export PNG" exports the floor you are looking at and needs
+  its scale; the strip lists that floor's rows, matching the labels on the picture. The PNG
+  draws hubs, cables and routes and, when the plan has cables, a legend line with the cable
+  types and the provisional total. With several floors, "Export all floors" downloads one PNG
+  per floor, one after another (the browser may ask once to allow several downloads); floors
+  without a plan or a scale are skipped and named. Each strip then also says which floor it is,
+  names the shafts on it and notes that cable metres are rounded per floor, and the files are
+  named `F2-<floor name>-<image name>-camera-layout.png`. The CSV always covers the whole
+  project. Project save/load as JSON.
 
 ## Prices
 
@@ -250,7 +307,7 @@ is still running - stop it first.
 | `npm run typecheck` | Type-check only, no emit |
 | `npm run lint` | ESLint over the whole project |
 | `npm test` | Run unit tests (Vitest, pure logic only) |
-| `npm run test:e2e` | Run end-to-end tests (Playwright, builds + previews first) - no specs written yet |
+| `npm run test:e2e` | Run end-to-end smoke tests (Playwright, Chromium, starts the dev server on port 4173) |
 
 ## Project layout
 
@@ -258,11 +315,11 @@ is still running - stop it first.
 |---|---|
 | `data/` | Catalog JSON: `data/<brand>/<device-type>/<brand>-<device-type>_<NN>.json`; device type = `camera-<form factor>`, `sensor-<kind>`, or `fire-alarm-<kind>` (control-panel, wireless-hub, expander-module, keypad, keyfob, tag-reader, relay-module, repeater, communicator, power-supply, accessory, smoke-detector, heat-detector, co-detector, manual-call-point, sounder, magnetic-contact, environment-detector) |
 | `src/catalog/` | Zod schemas and loaders for the camera, sensor and fire-alarm catalogs |
-| `src/domain/` | Pure logic: FOV geometry, DORI distances, mounted-camera floor coverage, sensor coverage (resolver, thermal bands, beam line check, wall-blocking table), fire-alarm coverage (resolver, TCVN 5738 table, wall-blocking table), wall visibility geometry (occlusion polygon, endpoint snap, crossing detection), cable layout (types, length + range estimate, snap lookup, drawing chain, vertex editing), compatibility checker (fire devices), scale, BOM grouping, CSV, project file schema, view config (toggles, hidden-id sets, tool-layer forcing) (no React/Konva imports) |
-| `src/canvas/` | Konva stage, pan/zoom, camera, sensor and fire-alarm markers, cones, sensor/fire coverage, walls + wall drawing tool, hubs, cable lines + cable drawing tool + vertex editor, calibration overlay |
-| `src/panels/` | Toolbar, catalog sidebar (Cameras / Sensors / Fire alarm / Control panel tabs), camera, sensor, fire-alarm, hub and cable properties panels, cable estimate panel, BOM panel, view panel (layer visibility toggles) |
-| `src/export/` | PNG and CSV export |
-| `src/file-io/`, `src/state/` | Project save/load, zustand stores, undo/redo |
+| `src/domain/` | Pure logic: FOV geometry, DORI distances, mounted-camera floor coverage, sensor coverage (resolver, thermal bands, beam line check, wall-blocking table), fire-alarm coverage (resolver, TCVN 5738 table, wall-blocking table), wall visibility geometry (occlusion polygon, endpoint snap, crossing detection), cable layout (types, length + range estimate, snap lookup, drawing chain, vertex editing, cross-floor link and shaft models), compatibility checker (fire devices), floor list editing (add/delete/rename/reorder), scale, BOM grouping (merged across floors), CSV, project file schema, view config (toggles, hidden-id sets, tool-layer forcing) (no React/Konva imports) |
+| `src/canvas/` | Konva stage, pan/zoom, camera, sensor and fire-alarm markers, cones, sensor/fire coverage, walls + wall drawing tool, hubs, cable lines + trunk lines + cable/trunk drawing tools + vertex editor, floor tabs + active floor management, calibration overlay |
+| `src/panels/` | Toolbar, catalog sidebar (Cameras / Sensors / Fire alarm / Control panel tabs), camera, sensor, fire-alarm, hub, cable and shaft properties panels, cable estimate panel, BOM panel (with per-floor filter), view panel (layer visibility toggles), floor tabs UI |
+| `src/export/` | PNG (per-floor or all floors) and CSV (whole project) export |
+| `src/file-io/`, `src/state/` | Project save/load, zustand stores with multi-floor support, undo/redo with floor auto-switching |
 
 Every `src/` folder except `state/` is split into feature subfolders (`beam`, `bom`, `cable`,
 `camera`, `sensor`, `wall`, ... plus `shared` for cross-feature helpers).
@@ -278,13 +335,16 @@ Every `src/` folder except `state/` is split into feature subfolders (`beam`, `b
 
 ## Status
 
-v1 in progress. Working: image load, calibration, camera + sensor + fire-alarm catalogs,
-placement, DORI cones, sensor coverage (PIR sectors / beams / thermal), fire-alarm marker and
-coverage (datasheet mode or TCVN 5738 circles with ceiling height), compatibility warnings,
-properties, BOM with prices, mounting height + tilt floor coverage, walls with camera cone
-occlusion and sensor/fire-alarm wall blocking, hubs and cable routes with a cable-length
-estimate, layer visibility toggles, save/load, PNG + CSV export (verified in Chromium). Project files are saved as
-schema version 6: files from earlier versions (1-5) still open, but a file saved by this
-version needs this version or newer. Known limit: on a very dense plan (about 100 sensors and
-300 walls) moving a wall or a sensor can take a few tenths of a second to redraw. Not done yet:
-cabling fire devices, Playwright end-to-end suite, Firefox/Safari export checks.
+v1 in progress. Working: image load, calibration, floors (tabs, per-floor plan / scale / height),
+camera + sensor + fire-alarm catalogs, placement, DORI cones, sensor coverage (PIR sectors /
+beams / thermal), fire-alarm marker and coverage (datasheet mode or TCVN 5738 circles with
+ceiling height), compatibility warnings, properties, BOM with prices (one list for all floors),
+mounting height + tilt floor coverage, walls with camera cone occlusion and sensor/fire-alarm
+wall blocking, hubs and cable routes with a cable-length estimate, riser / drop links with a
+drawn route, shafts with several exits, layer visibility toggles, save/load, PNG (per floor) +
+CSV export (verified in Chromium). Project files are saved as schema version 7: files from
+earlier versions (1-6) still open as a one-floor project, but a file saved by this version
+needs this version or newer. Known limit: on a very dense plan (about 100 sensors and 300
+walls) moving a wall or a sensor can take a few tenths of a second to redraw. End-to-end
+tests are smoke tests in Chromium against the dev server. Not done yet: cabling fire devices,
+end-to-end tests against the production build, Firefox/Safari export checks.

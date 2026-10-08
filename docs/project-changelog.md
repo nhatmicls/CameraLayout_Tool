@@ -1,5 +1,47 @@
 # Project Changelog
 
+## 2026-10-08
+
+**Multi-floor projects**
+
+- **BREAKING: project file schema version 7.** A project is now a list of floors. Files from
+  versions 1-6 still open (as a one-floor project); a file saved by this version needs this
+  version or newer.
+- **BREAKING (several floors only): PNG file names.** A project with more than one floor exports
+  `F{n}-<floor name>-<image name>-camera-layout.png`. A one-floor project keeps the old names,
+  and its BOM rows, CSV text and PNG table are unchanged.
+- **Floors**: 1 to 20 floors as tabs (add, rename, reorder, delete), each with its own plan
+  image, scale, cameras, sensors, walls, hubs, cables and alarm devices, numbered per floor.
+  Cable types, cable allowances, the fire-detector coverage settings and shafts belong to the
+  project. Each floor has a floor-to-floor height (default 3.5 m).
+- **Undo**: switching floors is not an undo step; undo / redo goes to the floor it changed.
+  Replacing a floor's plan image is now ONE undo step and no longer clears the undo history
+  (it clears that floor only, and no longer resets the fire-detector coverage settings).
+- **Riser / drop links**: a riser can be linked to a drop on the floor above ("Create paired
+  point" or pick one). A linked point can carry a drawn route to a hub on its floor, editable
+  point by point like a cable. With a route, cables ending on the partner point are measured as
+  own route + floor-to-floor height + the route at that floor's scale + the drop at the hub,
+  and the typed height / length are ignored. Without a route the typed values apply as before.
+- **Shafts**: a vertical tube with one opening per floor (`T1`, `T2`...). Every opening with a
+  route is an exit; a shaft can have several. One exit is used implicitly; with several each
+  cable must choose (label `C1-T1>F3`), and a cable with no choice has no length and is counted
+  as "not estimated" in the BOM panel, the CSV message and the PNG. No exit at all = the typed
+  "length beyond this opening". A route cannot end on a shaft opening.
+- **Cable estimate**: each floor is measured with its own scale; a cable whose run crosses a
+  floor without a scale has no length and is reported. A cable type in use on any floor cannot
+  be deleted.
+- **BOM / CSV / PNG**: one BOM for the project - the same model on several floors is one row,
+  labels carry a floor prefix (`F2-C1`) when the project has more than one floor, cable metres
+  are summed over floors and rounded up once per type. The BOM panel has an "All floors" / per
+  floor filter. The CSV always covers the whole project. "Export PNG" exports the current floor;
+  "Export all floors" downloads one PNG per floor that has a plan and a scale. A panel / hub on
+  any floor counts as placed for alarm-device compatibility.
+- **Limits**: plan images are saved inside the project file (80 MB limit; adding an image that
+  would pass it is refused). A replaced or deleted plan image stays in memory while undo can
+  still bring it back.
+- **Tests**: first Playwright end-to-end smoke tests (Chromium, against the dev server on port
+  4173, because the test hooks exist only in dev builds).
+
 ## 2026-10-07 (continued)
 
 **Fire alarm / alarm panels** (AX HYBRID PRO expansion): 28 additional Hikvision alarm-device records (magnetic contacts, a temperature detector, smoke / heat / CO detectors, keypads, a keyfob, emergency buttons, sounders, relay modules, a repeater, the bus wireless receiver, communicator modules) added from the AX HYBRID PRO Device Compatibility List - only models sold in Vietnam with official datasheets (433 MHz `-WB` and wired variants; 868 MHz `-WE` variants and 6 datasheet-less models excluded). Fire-alarm catalog grows from 12 to 40 records. Feature set:
