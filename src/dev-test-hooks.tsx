@@ -1,10 +1,8 @@
-import { createRoot } from 'react-dom/client'
-import type Konva from 'konva'
-import { Stage } from 'react-konva'
+import Konva from 'konva'
 import { useProjectStore } from './state/project-store'
 import { getActiveFloor } from './state/project-store-floor-selectors'
 import { useEditorUiStore, type UiNotification, type Viewport } from './state/editor-ui-store'
-import { PlanSceneLayers } from './canvas/stage/plan-scene-layers'
+import { runExportSpike } from './dev-test-hooks-export-spike'
 import type { Cable, Hub } from './domain/cable/cable-layout-types'
 import type { Floor } from './domain/floor/floor-types'
 import type { PlacedCamera, ScaleCalibration, Wall } from './domain/project-file/project-types'
@@ -24,6 +22,8 @@ declare global {
       getCables: () => Cable[]
       getFireAlarmDevices: () => PlacedFireAlarmDevice[]
       getSelectedCameraId: () => string | null
+      /** The selected hub, if any - lets an e2e spec confirm a click landed on a hub marker (not swallowed by an overlapping line) without relying on panel text. */
+      getSelectedHubId: () => string | null
       /** Phase 3 (multi-floor tabs): the whole floor list and which one is active, for an e2e spec to assert per-floor counts/order without re-deriving them from the DOM. */
       getFloors: () => Floor[]
       getActiveFloorId: () => string
@@ -46,109 +46,31 @@ declare global {
       selectHub: (id: string) => void
       /** Selects a cable (clears any other selection) - the right panel then shows `CablePropertiesPanel`. */
       selectCable: (id: string) => void
-      /** Phase 4: sets (or, with `trunk: null`, clears) a LINKED riser/drop's own route to another hub on its own floor - no drawing UI for this yet (phase 5). Delegates to the store's `setHubTrunk` action, one undo step. */
+      /** Sets (or, with `trunk: null`, clears) a LINKED riser/drop's own route to another hub on its own floor. Delegates to the store's `setHubTrunk` action, one undo step. */
       setHubTrunk: (ref: { floorId: string; hubId: string }, trunk: { hubId: string; points: Array<{ x: number; y: number }> } | null) => void
+      /**
+       * Phase 5: converts an IMAGE px position to a client (CSS px, viewport-relative) position -
+       * same coordinate space `page.mouse.click`/`page.mouse.move` expect - by combining the
+       * stage container's on-screen rect with the live pan/zoom viewport. Lets an e2e spec drive
+       * the real canvas with mouse events instead of re-implementing Konva's own hit-testing.
+       * `null` before the stage container exists.
+       */
+      imagePxToClient: (x: number, y: number) => { x: number; y: number } | null
+      /** Clears every pending notification toast immediately, instead of waiting out its auto-dismiss timer - the toast banner is `fixed`/`z-50` over the stage, so a script clicking much faster than a real user risks a click landing on a still-visible toast instead of the canvas underneath it. */
+      dismissAllNotifications: () => void
+      /** Ids of every hub whose own PLAIN trunk route line (`HubTrunkRouteLines`, not the editor's) is currently mounted on the live stage - lets an e2e spec confirm a route stays visible while its owner hub is selected in a tool other than trunk/select (H2), independent of pixel colours. */
+      getTrunkRouteLineHubIds: () => string[]
+      /** Number of Konva Layers on the live interactive stage - confirms a tool mode never grows a sixth. */
+      getLayerCount: () => number
     }
   }
 }
 
-/**
- * Mounts the same `PlanSceneLayers` used on-screen into a detached,
- * non-interactive Stage at image-native size, and rasterises it - lets the
- * PNG export reuse this component with zero drawing-code duplication.
- *
- * react-konva's Stage ref never attaches on a container that is never
- * inserted into `document` at all (its mount effect appears to depend on
- * being connected). Off-screen-but-attached (never visible, never affects
- * layout) is the workaround.
- */
-function runExportSpike(): Promise<{ dataUrlLength: number; widthPx: number; heightPx: number }> {
-  return new Promise((resolve, reject) => {
-    const store = useProjectStore.getState()
-    const { image, scale, cameras, walls, sensors, hubs, cables, fireAlarmDevices } = getActiveFloor(store)
-    const { cableTypes, cableSettings, fireAlarmSettings } = store
-    const decodedImage = useEditorUiStore.getState().decodedImage
-    if (!image || !scale || !decodedImage) {
-      reject(new Error('runExportSpike: no calibrated project to export'))
-      return
-    }
-
-    const container = document.createElement('div')
-    container.style.cssText = 'position:fixed; left:-99999px; top:-99999px;'
-    document.body.appendChild(container)
-    const root = createRoot(container)
-    const stageRef = { current: null as Konva.Stage | null }
-
-    root.render(
-      <Stage
-        ref={(node) => {
-          stageRef.current = node
-        }}
-        width={image.widthPx}
-        height={image.heightPx}
-      >
-        <PlanSceneLayers
-          decodedImage={decodedImage}
-          imageWidthPx={image.widthPx}
-          imageHeightPx={image.heightPx}
-          cameras={cameras}
-          walls={walls}
-          sensors={sensors}
-          fireAlarmDevices={fireAlarmDevices}
-          fireAlarmSettings={fireAlarmSettings}
-          planPxPerMeter={scale.planPxPerMeter}
-          scaleIsSet
-          cabling={{ hubs, cables, cableTypes, cableSettings, scale }}
-          interactive={false}
-          selectedCameraId={null}
-          selectedWallId={null}
-          selectedSensorId={null}
-          selectedFireAlarmDeviceId={null}
-          wallsSelectable={false}
-          viewportScale={1}
-          onSelectCamera={() => {}}
-          onSelectWall={() => {}}
-          onSelectSensor={() => {}}
-          onSelectFireAlarmDevice={() => {}}
-          onMoveWallNode={() => {}}
-          onCameraDragEnd={() => {}}
-          onCameraRotateEnd={() => {}}
-          onSensorCommit={() => {}}
-          onFireAlarmDeviceCommit={() => {}}
-        />
-      </Stage>,
-    )
-
-    // React's commit (and so the ref callback firing) isn't guaranteed to
-    // land within a single requestAnimationFrame - poll a few frames rather
-    // than assume one is enough (observed flaky with just one on a large,
-    // 40-camera scene).
-    let attemptsLeft = 10
-    const tryCapture = () => {
-      const stage = stageRef.current
-      if (!stage) {
-        attemptsLeft -= 1
-        if (attemptsLeft <= 0) {
-          root.unmount()
-          container.remove()
-          reject(new Error('runExportSpike: detached Stage ref never attached after 10 frames'))
-          return
-        }
-        requestAnimationFrame(tryCapture)
-        return
-      }
-      try {
-        const dataUrl = stage.toDataURL({ pixelRatio: 1 })
-        resolve({ dataUrlLength: dataUrl.length, widthPx: image.widthPx, heightPx: image.heightPx })
-      } catch (err) {
-        reject(err instanceof Error ? err : new Error(String(err)))
-      } finally {
-        root.unmount()
-        container.remove()
-      }
-    }
-    requestAnimationFrame(tryCapture)
-  })
+/** The live interactive stage among `Konva.stages` (a detached export-spike/PNG-render stage never lands inside the real container). `undefined` before the stage mounts. */
+function findInteractiveStage(): Konva.Stage | undefined {
+  const container = document.querySelector('[data-testid="stage-container"]')
+  if (!container) return undefined
+  return Konva.stages.find((stage) => container.contains(stage.container()))
 }
 
 /** Installs `window.__cameraLayoutToolTestHooks` in dev builds only. Call once from `main.tsx`/`app.tsx`. */
@@ -165,6 +87,7 @@ export function installDevTestHooks(): void {
     getCables: () => getActiveFloor(useProjectStore.getState()).cables,
     getFireAlarmDevices: () => getActiveFloor(useProjectStore.getState()).fireAlarmDevices,
     getSelectedCameraId: () => useEditorUiStore.getState().selectedCameraId,
+    getSelectedHubId: () => useEditorUiStore.getState().selectedHubId,
     getFloors: () => useProjectStore.getState().floors,
     getActiveFloorId: () => useProjectStore.getState().activeFloorId,
     seedFloor: (name) => {
@@ -191,5 +114,27 @@ export function installDevTestHooks(): void {
     selectHub: (id) => useEditorUiStore.getState().setSelectedHubId(id),
     selectCable: (id) => useEditorUiStore.getState().setSelectedCableId(id),
     setHubTrunk: (ref, trunk) => useProjectStore.getState().setHubTrunk(ref, trunk),
+    imagePxToClient: (x, y) => {
+      const container = document.querySelector('[data-testid="stage-container"]')
+      if (!container) return null
+      const rect = container.getBoundingClientRect()
+      const { x: viewportX, y: viewportY, scale } = useEditorUiStore.getState().viewport
+      return { x: rect.left + viewportX + x * scale, y: rect.top + viewportY + y * scale }
+    },
+    dismissAllNotifications: () => {
+      const { notifications, dismissNotification } = useEditorUiStore.getState()
+      notifications.forEach((n) => dismissNotification(n.id))
+    },
+    getTrunkRouteLineHubIds: () => {
+      const stage = findInteractiveStage()
+      if (!stage) return []
+      const prefix = 'trunk-route-'
+      return stage
+        .find('Line')
+        .map((node) => node.name())
+        .filter((name) => name.startsWith(prefix))
+        .map((name) => name.slice(prefix.length))
+    },
+    getLayerCount: () => findInteractiveStage()?.getLayers().length ?? 0,
   }
 }

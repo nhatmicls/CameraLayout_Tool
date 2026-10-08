@@ -20,7 +20,7 @@ describe('PNG strip column weights', () => {
 })
 
 describe('legendLineCountFor', () => {
-  const cableLegend = { types: [], hasDashedCable: false, noteText: '' }
+  const cableLegend = { types: [], hasDashedCable: false, hasTrunkRoute: false, noteText: '' }
   const fireAlarmLegend = { kindCounts: [{ kind: 'smoke-detector' as const, count: 1 }], coverageBasisText: null }
   const base = {
     sensorKindsPresent: [] as SensorKind[],

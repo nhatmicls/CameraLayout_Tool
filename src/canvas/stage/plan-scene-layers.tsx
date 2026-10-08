@@ -1,67 +1,22 @@
 import { useMemo } from 'react'
 import { Image as KonvaImage, Layer } from 'react-konva'
-import type { FireAlarmSettings, PlacedFireAlarmDevice } from '../../domain/fire-alarm/fire-alarm-device-types'
-import type { PlacedFireAlarmDevicePatch } from '../../domain/fire-alarm/placed-fire-alarm-device-builder-and-patch'
-import type { PlacedCamera, Wall } from '../../domain/project-file/project-types'
+import type { Wall } from '../../domain/project-file/project-types'
 import { metersToPlanPx } from '../../domain/shared/scale-calibration-calculator'
-import type { PlacedSensor, PlacedSensorPatch } from '../../domain/sensor/sensor-types'
-import { DEFAULT_VIEW_CONFIG, type ViewConfig } from '../../domain/view/view-config-types'
-import type { WallNode } from '../../domain/wall/wall-node-editing'
+import { DEFAULT_VIEW_CONFIG } from '../../domain/view/view-config-types'
 import { WALL_MOUNT_CLEARANCE_M } from '../../domain/wall/wall-segment-geometry'
 import { useConeLiveHandles } from '../camera/use-cone-live-handles'
 import { WallSegmentsLayer } from '../wall/wall-segments-layer'
 import { computeIconRadiusPx, computeWallStrokeWidthPx } from '../shared/brand-and-dori-color-palette'
-import { usePlanSceneCabling, type PlanSceneCabling, type PlanSceneCablingInteraction } from '../cable/use-plan-scene-cabling'
+import { usePlanSceneCabling } from '../cable/use-plan-scene-cabling'
 import { PlanSceneCoverageLayer } from './plan-scene-coverage-layer'
 import { PlanSceneMarkersLayer } from './plan-scene-markers-layer'
+import type { PlanSceneLayersProps } from './plan-scene-layers-props'
 import { usePlanSceneViewVisibility } from './use-plan-scene-view-visibility'
+
+export type { PlanSceneLayersProps }
 
 /** Shared empty list: hidden walls draw no lines / handles, while cones, coverage and beams keep the real `walls` (occlusion unchanged). */
 const NO_WALLS: Wall[] = []
-
-export interface PlanSceneLayersProps {
-  decodedImage: HTMLImageElement
-  imageWidthPx: number
-  imageHeightPx: number
-  cameras: PlacedCamera[]
-  walls: Wall[]
-  sensors: PlacedSensor[]
-  fireAlarmDevices: PlacedFireAlarmDevice[]
-  fireAlarmSettings: FireAlarmSettings
-  planPxPerMeter: number
-  /** True only with a real scale set - gates fire-detector coverage circles (never drawn against the `planPxPerMeter ?? 1` drawing fallback the caller uses for cameras/sensors). */
-  scaleIsSet: boolean
-  /** Hubs, cables, cable types + settings and the real scale (null = no over-length styling). */
-  cabling: PlanSceneCabling
-  /** Hub / cable selection and editing. Omitted (export, dev spike) = hubs and cables are a static render. */
-  cablingInteraction?: PlanSceneCablingInteraction
-  /** False hides every camera cone, sensor coverage shape and fire-detector coverage circle (the cable tool: routes are drawn on a clear plan). Default true. */
-  coverageVisible?: boolean
-  /** Which kinds of items are drawn (the caller passes the tool-effective config). Items are hidden by id, never by filtering the arrays. Default: everything. */
-  viewConfig?: ViewConfig
-  /** False strips drag/selection/rotation-handle wiring for a pure static render - the PNG export reuses this component that way. */
-  interactive: boolean
-  selectedCameraId: string | null
-  selectedWallId: string | null
-  selectedSensorId: string | null
-  selectedFireAlarmDeviceId: string | null
-  /** True only in select mode: walls can be clicked. Ignored when `interactive` is false. */
-  wallsSelectable: boolean
-  /** False while a drawing tool (walls, hubs, cables) is on, so a click on a camera (cameras sit ON walls) reaches the Stage as a tool click instead of grabbing the camera. Ignored when `interactive` is false. */
-  markersListening?: boolean
-  /** Needed only to size the screen-constant selection ring/rotation handle and wall click target; irrelevant (and unused) when `interactive` is false. */
-  viewportScale: number
-  onSelectCamera: (id: string | null) => void
-  onSelectWall: (id: string) => void
-  onSelectSensor: (id: string) => void
-  onSelectFireAlarmDevice: (id: string) => void
-  onMoveWallNode: (from: WallNode, to: WallNode) => void
-  onCameraDragEnd: (id: string, x: number, y: number) => void
-  onCameraRotateEnd: (id: string, rotationDeg: number) => void
-  /** One commit callback covering a sensor's move, rotate and (for a beam) either end's drag. */
-  onSensorCommit: (id: string, patch: PlacedSensorPatch) => void
-  onFireAlarmDeviceCommit: (id: string, patch: PlacedFireAlarmDevicePatch) => void
-}
 
 /**
  * The single renderer of the plan image + every camera's FOV cone + every
@@ -101,6 +56,7 @@ export function PlanSceneLayers({
   selectedFireAlarmDeviceId,
   wallsSelectable,
   markersListening = true,
+  trunkEditingEnabled = true,
   viewportScale,
   onSelectCamera,
   onSelectWall,
@@ -122,7 +78,15 @@ export function PlanSceneLayers({
     index: cableEndpointIndex,
     limitStatusById,
     cableLines,
-  } = usePlanSceneCabling({ cameras, sensors, cabling, interaction: cablingInteractionIfInteractive, iconRadiusPx, viewportScale })
+  } = usePlanSceneCabling({
+    cameras,
+    sensors,
+    cabling,
+    interaction: cablingInteractionIfInteractive,
+    iconRadiusPx,
+    viewportScale,
+    trunkEditingEnabled,
+  })
 
   return (
     <>
@@ -173,6 +137,7 @@ export function PlanSceneLayers({
         hiddenSensorIds={sensorHidden.markers}
         hubsVisible={viewConfig.hubs}
         cablesVisible={viewConfig.cables}
+        trunkEditingEnabled={trunkEditingEnabled}
         cabling={cabling}
         cablingInteraction={cablingInteractionIfInteractive}
         cableEndpointIndex={cableEndpointIndex}

@@ -3,6 +3,7 @@ import type { Project } from '../project-file/project-types'
 import { planPxToMeters } from '../shared/scale-calibration-calculator'
 import { hubLabels } from './cable-endpoint-index'
 import { resolveCrossFloorExit } from './cross-floor-exit-resolver'
+import { resolveHubTrunkPathPx } from './hub-trunk-path'
 import { computeScaleUncertainty, polylineLengthPx, sumMetersIntervals, type MetersInterval } from './cable-length-estimate-calculator'
 import { hubEffectiveHeightM, type Cable, type Hub, type HubRef } from './cable-layout-types'
 
@@ -76,9 +77,10 @@ function resolveBeyond(
   const trunk = partnerHub.trunk
   // Pruning keeps this resolvable; defensive fallback only (should not happen on a live project).
   const targetHub = trunk ? qFloor.hubs.find((candidate) => candidate.id === trunk.hubId) : undefined
-  if (!trunk || !targetHub) return typedBeyond(project.cableSettings.routeHeightM, hub)
+  const trunkPath = trunk ? resolveHubTrunkPathPx(partnerHub, qFloor.hubs) : null
+  if (!trunk || !targetHub || !trunkPath) return typedBeyond(project.cableSettings.routeHeightM, hub)
 
-  const horizPx = polylineLengthPx([{ x: partnerHub.x, y: partnerHub.y }, ...trunk.points, { x: targetHub.x, y: targetHub.y }])
+  const horizPx = polylineLengthPx(trunkPath)
   const horizM = planPxToMeters(horizPx, qFloor.scale.planPxPerMeter)
   const uncertainty = computeScaleUncertainty(qFloor.scale, project.cableSettings.clickErrorPx)
   const horizInterval: MetersInterval = {

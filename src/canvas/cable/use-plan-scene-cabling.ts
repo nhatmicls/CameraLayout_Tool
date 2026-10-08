@@ -1,4 +1,4 @@
-import { createElement, useMemo, type ReactNode } from 'react'
+import { createElement, Fragment, useMemo, type ReactNode } from 'react'
 import { buildCableEndpointIndex, type CableEndpointIndex } from '../../domain/cable/cable-endpoint-index'
 import type { CableLayout, CablePoint } from '../../domain/cable/cable-layout-types'
 import type { CableLimitStatus } from '../../domain/cable/cable-length-estimate-calculator'
@@ -6,6 +6,7 @@ import type { PlacedCamera, ScaleCalibration } from '../../domain/project-file/p
 import type { PlacedSensor } from '../../domain/sensor/sensor-types'
 import { CableRouteLines } from './cable-route-lines'
 import { computeCableStrokeWidthPx } from './cable-type-color-palette'
+import { HubTrunkRouteLines } from './hub-trunk-route-lines'
 
 const NO_LIMIT_STATUSES: ReadonlyMap<string, CableLimitStatus> = new Map()
 
@@ -32,6 +33,8 @@ export interface PlanSceneCablingInteraction {
   onSelectCable: (id: string) => void
   onHubDragEnd: (id: string, x: number, y: number) => void
   onCablePointsChange: (id: string, points: CablePoint[]) => void
+  /** The selected hub's own trunk edited point-by-point: `hubId` is always the OWNER hub (the target hub is unchanged - looked up live, never passed back here). */
+  onHubTrunkPointsChange: (hubId: string, points: CablePoint[]) => void
 }
 
 interface PlanSceneCablingInput {
@@ -41,6 +44,12 @@ interface PlanSceneCablingInput {
   interaction: PlanSceneCablingInteraction | undefined
   iconRadiusPx: number
   viewportScale: number
+  /** Same flag `HubAndSelectedCableNodes` gates its trunk editor on (true in select mode only).
+   * Determines whether the selected hub's trunk is hidden from the plain `HubTrunkRouteLines`
+   * (H2 fix): hide it ONLY when the editor is actually about to draw it instead - in every other
+   * tool mode (wall, calibrate, hub/riser/drop, cable, and `'trunk'` itself while redrawing) the
+   * plain dotted line stays visible, so the OLD route never just disappears. Default true. */
+  trunkEditingEnabled?: boolean
 }
 
 /**
@@ -49,12 +58,22 @@ interface PlanSceneCablingInput {
  * which cables are over / possibly over their type's length limit, and the
  * cable lines themselves.
  *
- * `cableLines` goes into `WallSegmentsLayer`'s children slot. It is
- * memoised, and null without cables, so that layer's memo still holds for a
- * cable-free plan; with cables, a camera drop re-reconciles the wall lines
- * (the cable ends moved).
+ * `cableLines` goes into `WallSegmentsLayer`'s children slot: every hub's
+ * trunk line (`HubTrunkRouteLines`, dotted, drawn first so a cable line
+ * paints over it where the two cross) then every cable line
+ * (`CableRouteLines`). Memoised, and null without cables or trunks, so that
+ * layer's memo still holds for a plain plan; with either, a camera drop
+ * re-reconciles the wall lines (an end moved).
  */
-export function usePlanSceneCabling({ cameras, sensors, cabling, interaction, iconRadiusPx, viewportScale }: PlanSceneCablingInput): {
+export function usePlanSceneCabling({
+  cameras,
+  sensors,
+  cabling,
+  interaction,
+  iconRadiusPx,
+  viewportScale,
+  trunkEditingEnabled = true,
+}: PlanSceneCablingInput): {
   index: CableEndpointIndex
   limitStatusById: ReadonlyMap<string, CableLimitStatus>
   cableLines: ReactNode
@@ -63,22 +82,36 @@ export function usePlanSceneCabling({ cameras, sensors, cabling, interaction, ic
   const limitStatusById = cabling.limitStatusById ?? NO_LIMIT_STATUSES
 
   const hiddenCableId = interaction?.selectedCableId ?? null
+  // The selected hub's trunk is drawn by `SelectedRouteVertexEditor` (markers Layer) instead -
+  // but ONLY while that editor actually mounts (`trunkEditingEnabled`, select mode). Outside
+  // select mode (including `'trunk'` mode itself, mid-redraw) this stays null, so the plain dotted
+  // line keeps drawing the stored route until a new one commits (H2 fix).
+  const hiddenHubId = trunkEditingEnabled ? (interaction?.selectedHubId ?? null) : null
   const onSelectCable = interaction?.onSelectCable
+  const strokeWidthPx = computeCableStrokeWidthPx(iconRadiusPx)
+  const hasTrunks = cabling.hubs.some((hub) => hub.trunk)
   const cableLines = useMemo(
     () =>
-      cabling.cables.length === 0
+      cabling.cables.length === 0 && !hasTrunks
         ? null
-        : createElement(CableRouteLines, {
-            cables: cabling.cables,
-            index,
-            cableTypes: cabling.cableTypes,
-            limitStatusById,
-            hiddenCableId,
-            strokeWidthPx: computeCableStrokeWidthPx(iconRadiusPx),
-            viewportScale,
-            onSelectCable,
-          }),
-    [cabling.cables, cabling.cableTypes, index, limitStatusById, hiddenCableId, iconRadiusPx, viewportScale, onSelectCable],
+        : createElement(
+            Fragment,
+            null,
+            createElement(HubTrunkRouteLines, { hubs: cabling.hubs, hiddenHubId, strokeWidthPx }),
+            cabling.cables.length === 0
+              ? null
+              : createElement(CableRouteLines, {
+                  cables: cabling.cables,
+                  index,
+                  cableTypes: cabling.cableTypes,
+                  limitStatusById,
+                  hiddenCableId,
+                  strokeWidthPx,
+                  viewportScale,
+                  onSelectCable,
+                }),
+          ),
+    [cabling.cables, cabling.cableTypes, cabling.hubs, hasTrunks, index, limitStatusById, hiddenCableId, hiddenHubId, strokeWidthPx, viewportScale, onSelectCable],
   )
 
   return { index, limitStatusById, cableLines }

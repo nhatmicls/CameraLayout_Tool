@@ -3,8 +3,8 @@ import type { WallKind } from '../domain/project-file/project-types'
 import { DEFAULT_VIEW_CONFIG, type ViewConfig } from '../domain/view/view-config-types'
 import { installProjectStoreToEditorUiSync } from './project-store-to-editor-ui-sync'
 
-/** `select`: default, drag/pan/select cameras, sensors, walls, hubs, cables and fire-alarm devices. `calibrate`: next two clicks on the stage draw a reference line. `wall`: clicks draw a chain of wall segments. `hub` / `riser` / `drop`: each click places a hub / a riser / a drop (the point where cables go up to the floor above / down to the floor below). `cable`: clicks draw one cable route from a device to a hub (or the reverse). */
-export type ToolMode = 'select' | 'calibrate' | 'wall' | 'hub' | 'riser' | 'drop' | 'cable'
+/** `select`: default, drag/pan/select cameras, sensors, walls, hubs, cables and fire-alarm devices. `calibrate`: next two clicks on the stage draw a reference line. `wall`: clicks draw a chain of wall segments. `hub` / `riser` / `drop`: each click places a hub / a riser / a drop (the point where cables go up to the floor above / down to the floor below). `cable`: clicks draw one cable route from a device to a hub (or the reverse). `trunk`: a linked riser/drop's own route to another hub on its own floor (entered from the hub panel, not a toolbar toggle) - clicks add vertices, a click on another hub commits. */
+export type ToolMode = 'select' | 'calibrate' | 'wall' | 'hub' | 'riser' | 'drop' | 'cable' | 'trunk'
 
 /** Stage transform. Lives here, never in `project-store`, so pan/zoom never touches undo history or the save payload. */
 export interface Viewport {

@@ -4,7 +4,7 @@ import { resolveEffectiveViewConfig, type ViewConfigToolMode } from './view-conf
 import { DEFAULT_VIEW_CONFIG } from './view-config-types'
 
 const ALL_OFF = VIEW_TOGGLES.reduce((config, toggle) => withViewToggle(config, toggle.key, false), DEFAULT_VIEW_CONFIG)
-const ALL_MODES: ViewConfigToolMode[] = ['select', 'calibrate', 'wall', 'hub', 'riser', 'drop', 'cable']
+const ALL_MODES: ViewConfigToolMode[] = ['select', 'calibrate', 'wall', 'hub', 'riser', 'drop', 'cable', 'trunk']
 
 /** Ids of the toggles that are on in the effective config for `toolMode`, starting from everything off. */
 const forcedOn = (toolMode: ViewConfigToolMode) => {
@@ -44,6 +44,10 @@ describe('resolveEffectiveViewConfig', () => {
       'hubs',
       'cables',
     ])
+  })
+
+  it('trunk tool forces hubs and cables only (no device markers - it never snaps to a device)', () => {
+    expect(forcedOn('trunk')).toEqual(['hubs', 'cables'])
   })
 
   it('returns the same object when the tool is already satisfied', () => {

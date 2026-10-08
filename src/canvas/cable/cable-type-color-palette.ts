@@ -33,7 +33,20 @@ export function cableTypeColor(typeIndex: number): string {
 /** A cable whose run exceeds its type's length limit (drawn dashed in this colour). */
 export const CABLE_OVER_LIMIT_COLOR = '#dc2626' // red-600
 
+/** A cable over (or possibly over) its type's length limit. Shared by `CableRouteLines` and the selected-cable editor, so both draw the exact same dash (DRY). */
+export function computeCableOverLimitDashPattern(strokeWidthPx: number): number[] {
+  return [5 * strokeWidthPx, 4 * strokeWidthPx]
+}
+
 export const HUB_FILL_COLOR = '#0f172a' // slate-900
+
+/** A hub's own trunk route (phase 5): neutral, not a cable type colour (a trunk has no type). */
+export const TRUNK_LINE_COLOR = '#64748b' // slate-500
+
+/** Short dots - visually distinct from a cable's over-length dash (`[5w, 4w]`), per "dotted = route to hub" in the PNG legend. */
+export function computeTrunkDashPattern(strokeWidthPx: number): number[] {
+  return [strokeWidthPx * 0.5, strokeWidthPx * 1.5]
+}
 
 /** Cable line width in image px, from the icon radius: thinner than a wall, never hairline. */
 export function computeCableStrokeWidthPx(iconRadiusPx: number): number {

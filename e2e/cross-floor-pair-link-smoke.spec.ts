@@ -93,7 +93,8 @@ test.describe('cross-floor-pair-link-smoke', () => {
 
       const linkSelect = page.locator('[data-testid="properties-hub-link-select"]')
       await expect(linkSelect).toHaveValue(/.+/)
-      await expect(page.locator('[data-testid="properties-hub-cross-floor-mode"]')).toContainText('No route drawn')
+      // M1 wording (phase 5 review): the sentence is about the PARTNER's trunk, not this hub's own.
+      await expect(page.locator('[data-testid="properties-hub-cross-floor-mode"]')).toContainText('no route drawn')
 
       const floors = await page.evaluate(() => window.__cameraLayoutToolTestHooks!.getFloors())
       expect(floors[0].hubs[0].link).toBeTruthy()

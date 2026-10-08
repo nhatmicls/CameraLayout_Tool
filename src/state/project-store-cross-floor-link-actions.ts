@@ -32,8 +32,8 @@ export interface CrossFloorLinkActions {
   relinkHub: (ref: HubRef, newPartner: HubRef | null) => void
   /** One click: creates the opposite-kind point on the one legal adjacent floor and links both. */
   createPairedHub: (ref: HubRef, newHubId: string) => { ok: true } | { ok: false; problem: string }
-  /** Sets (or, with `trunk: null`, clears) `ref`'s own route to another hub on its own floor. No-op if `ref` isn't linked. */
-  setHubTrunk: (ref: HubRef, trunk: { hubId: string; points: CablePoint[] } | null) => void
+  /** Sets (or, with `trunk: null`, clears) `ref`'s own route to another hub on its own floor. No-op (returns `false`) if `ref` isn't linked, the target is itself/unknown, or `ref` itself doesn't resolve - the caller (the drawing overlay) uses this to warn instead of silently discarding a just-drawn route. */
+  setHubTrunk: (ref: HubRef, trunk: { hubId: string; points: CablePoint[] } | null) => boolean
 }
 
 export function createCrossFloorLinkActions(
@@ -70,7 +70,9 @@ export function createCrossFloorLinkActions(
     setHubTrunk: (ref, trunk) => {
       const { floors } = get()
       const next = domainSetHubTrunk(floors, ref, trunk)
-      if (next !== floors) set({ floors: next })
+      if (next === floors) return false
+      set({ floors: next })
+      return true
     },
   }
 }

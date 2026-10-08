@@ -39,7 +39,13 @@ export function buildExportLegends(
   const viewFilterNote = buildViewFilterNote(options.viewConfig)
   return {
     sensorKindsPresent: resolveSensorKindsPresent(options.sensors, sensorModelById),
-    cableLegend: buildCableLegend(options.cables, options.cableTypes, options.cableSettings, options.cableEstimate),
+    cableLegend: buildCableLegend(
+      options.cables,
+      options.cableTypes,
+      options.cableSettings,
+      options.cableEstimate,
+      options.hubs.some((hub) => hub.trunk !== undefined),
+    ),
     fireAlarmLegend: resolveFireAlarmLegend(options.fireAlarmDevices, fireAlarmModelSpecById, options.fireAlarmSettings, scaleIsSet),
     compatibilityWarningText: resolveCompatibilityWarningText(options.fireAlarmDevices, fireAlarmWarnings),
     viewFilterNoteLines: viewFilterNote

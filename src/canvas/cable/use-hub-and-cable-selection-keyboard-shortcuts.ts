@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
+import { isTypingTarget } from '../shared/is-typing-target'
 
 /**
  * Delete/Backspace removes the selected hub (with its cables, one undo step)
@@ -12,9 +13,7 @@ import { useProjectStore } from '../../state/project-store'
 export function useHubAndCableSelectionKeyboardShortcuts(): void {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      const target = e.target
-      const isTyping = target instanceof HTMLElement && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT')
-      if (isTyping) return
+      if (isTypingTarget(e.target)) return
 
       const { toolMode, selectedHubId, selectedCableId, setSelectedHubId, setSelectedCableId } = useEditorUiStore.getState()
       if (toolMode !== 'select') return

@@ -20,8 +20,8 @@ export type CableDrawingStep =
   | { kind: 'continue'; chain: CableDrawingChain }
   | { kind: 'commit'; cable: { device: CableEndRef; hubId: string; points: CablePoint[] } }
 
-/** A click closer than this to the previous point adds nothing (a double-click's second click). */
-const MIN_VERTEX_SPACING_PX = 1
+/** A click closer than this to the previous point adds nothing (a double-click's second click). Exported for `hub-trunk-drawing-chain.ts` (same rule, same value - DRY). */
+export const MIN_VERTEX_SPACING_PX = 1
 
 /** Which snap targets the next click may land on: anything to start, then only the opposite kind of the start. */
 export function acceptedSnapKind(chain: CableDrawingChain | null): 'any' | 'device' | 'hub' {

@@ -7,11 +7,13 @@ import { expect, type Page } from '@playwright/test'
  * transpiles without type-checking.
  */
 export interface TestHooks {
+  getViewport: () => { x: number; y: number; scale: number }
   getScale: () => { planPxPerMeter: number } | null
   getCameras: () => Array<{ id: string }>
   getSensors: () => Array<{ id: string }>
   getHubs: () => Array<{ id: string }>
   getCables: () => Array<{ id: string }>
+  getSelectedHubId: () => string | null
   getFireAlarmDevices: () => Array<{ id: string }>
   getFloors: () => Array<{
     id: string
@@ -35,6 +37,10 @@ export interface TestHooks {
   selectHub: (id: string) => void
   selectCable: (id: string) => void
   setHubTrunk: (ref: { floorId: string; hubId: string }, trunk: { hubId: string; points: Array<{ x: number; y: number }> } | null) => void
+  imagePxToClient: (x: number, y: number) => { x: number; y: number } | null
+  dismissAllNotifications: () => void
+  getTrunkRouteLineHubIds: () => string[]
+  getLayerCount: () => number
 }
 
 declare global {
@@ -119,4 +125,59 @@ export async function waitForDecodedImageSize(page: Page, widthPx: number, heigh
     { widthPx, heightPx },
     { timeout: timeoutMs },
   )
+}
+
+/**
+ * Clears every pending notification toast. The toast banner is `fixed`/
+ * `z-50` over the stage (`notification-banner.tsx`) - a script clicking
+ * much faster than a real user (so several 4s-auto-dismiss info toasts
+ * stack up at once) risks a click landing on a still-visible toast instead
+ * of the canvas underneath it. Call this right after any action that pushes
+ * a hint toast and before the next `clickImagePx`/`dragImagePx` call.
+ */
+export async function clearNotifications(page: Page): Promise<void> {
+  await page.evaluate(() => window.__cameraLayoutToolTestHooks!.dismissAllNotifications())
+}
+
+/**
+ * Clicks the real stage at an IMAGE px position, via `imagePxToClient` (the
+ * stage container's on-screen rect combined with the live pan/zoom
+ * viewport) + `page.mouse.click` - drives the canvas exactly like a user,
+ * rather than calling a store action directly.
+ */
+export async function clickImagePx(page: Page, x: number, y: number): Promise<void> {
+  const client = await page.evaluate(({ x, y }) => window.__cameraLayoutToolTestHooks!.imagePxToClient(x, y), { x, y })
+  if (!client) throw new Error(`clickImagePx(${x}, ${y}): stage container not found`)
+  await page.mouse.click(client.x, client.y)
+}
+
+/**
+ * Same as `clickImagePx` but double-clicks (adds a cable/trunk route point
+ * on a line). `Mouse` has no `dblclick` - `click(x, y, { clickCount: 2 })`
+ * is Playwright's own way to fire a real double-click at a coordinate.
+ */
+export async function doubleClickImagePx(page: Page, x: number, y: number): Promise<void> {
+  const client = await page.evaluate(({ x, y }) => window.__cameraLayoutToolTestHooks!.imagePxToClient(x, y), { x, y })
+  if (!client) throw new Error(`doubleClickImagePx(${x}, ${y}): stage container not found`)
+  await page.mouse.click(client.x, client.y, { clickCount: 2 })
+}
+
+/**
+ * Drags a handle from one IMAGE px position to another (a cable/trunk
+ * vertex handle), via real mouse events - `move` then `down` so Konva sees
+ * the pointer land on the handle before the drag starts, then a few
+ * intermediate `move`s (Konva's drag threshold needs more than one pixel of
+ * travel to register as a drag rather than a click) before `up`.
+ */
+export async function dragImagePx(page: Page, from: { x: number; y: number }, to: { x: number; y: number }): Promise<void> {
+  const start = await page.evaluate(({ x, y }) => window.__cameraLayoutToolTestHooks!.imagePxToClient(x, y), from)
+  const end = await page.evaluate(({ x, y }) => window.__cameraLayoutToolTestHooks!.imagePxToClient(x, y), to)
+  if (!start || !end) throw new Error('dragImagePx: stage container not found')
+  await page.mouse.move(start.x, start.y)
+  await page.mouse.down()
+  const steps = 5
+  for (let i = 1; i <= steps; i++) {
+    await page.mouse.move(start.x + ((end.x - start.x) * i) / steps, start.y + ((end.y - start.y) * i) / steps)
+  }
+  await page.mouse.up()
 }

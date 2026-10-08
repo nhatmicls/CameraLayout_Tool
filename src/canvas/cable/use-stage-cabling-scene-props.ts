@@ -20,6 +20,8 @@ export function useStageCablingSceneProps(): { cabling: PlanSceneCabling; cablin
   const scale = useProjectStore(selectScale)
   const updateHub = useProjectStore((s) => s.updateHub)
   const updateCable = useProjectStore((s) => s.updateCable)
+  const setHubTrunk = useProjectStore((s) => s.setHubTrunk)
+  const activeFloorId = useProjectStore((s) => s.activeFloorId)
   const selectedHubId = useEditorUiStore((s) => s.selectedHubId)
   const selectedCableId = useEditorUiStore((s) => s.selectedCableId)
   const setSelectedHubId = useEditorUiStore((s) => s.setSelectedHubId)
@@ -40,6 +42,16 @@ export function useStageCablingSceneProps(): { cabling: PlanSceneCabling; cablin
 
   const onHubDragEnd = useCallback((id: string, x: number, y: number) => updateHub(id, { x, y }), [updateHub])
   const onCablePointsChange = useCallback((id: string, points: CablePoint[]) => updateCable(id, { points }), [updateCable])
+  // The target hub is never passed back by the editor - it stays whatever the hub's own LIVE trunk
+  // currently points at (looked up here, not trusted from a stale closure).
+  const onHubTrunkPointsChange = useCallback(
+    (hubId: string, points: CablePoint[]) => {
+      const hub = hubs.find((candidate) => candidate.id === hubId)
+      if (!hub?.trunk) return
+      setHubTrunk({ floorId: activeFloorId, hubId }, { hubId: hub.trunk.hubId, points })
+    },
+    [hubs, activeFloorId, setHubTrunk],
+  )
 
   const cablingInteraction = useMemo(
     () => ({
@@ -49,8 +61,9 @@ export function useStageCablingSceneProps(): { cabling: PlanSceneCabling; cablin
       onSelectCable: setSelectedCableId,
       onHubDragEnd,
       onCablePointsChange,
+      onHubTrunkPointsChange,
     }),
-    [selectedHubId, selectedCableId, setSelectedHubId, setSelectedCableId, onHubDragEnd, onCablePointsChange],
+    [selectedHubId, selectedCableId, setSelectedHubId, setSelectedCableId, onHubDragEnd, onCablePointsChange, onHubTrunkPointsChange],
   )
 
   return { cabling, cablingInteraction }

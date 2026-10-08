@@ -22,6 +22,16 @@ describe('buildCableLegend - unestimated note (HIGH fix)', () => {
     expect(legend?.noteText).toContain('1 cable not estimated: a linked floor has no scale set (1).')
   })
 
+  it('hasTrunkRoute defaults to false (every pre-phase-5 call site unaffected)', () => {
+    const legend = buildCableLegend([CABLE], [TYPE], DEFAULT_CABLE_SETTINGS, EMPTY_CABLE_LAYOUT_ESTIMATE)
+    expect(legend?.hasTrunkRoute).toBe(false)
+  })
+
+  it('carries hasTrunkRoute through when the caller passes it', () => {
+    const legend = buildCableLegend([CABLE], [TYPE], DEFAULT_CABLE_SETTINGS, EMPTY_CABLE_LAYOUT_ESTIMATE, true)
+    expect(legend?.hasTrunkRoute).toBe(true)
+  })
+
   it('is just the provisional note when nothing is unestimated', () => {
     const estimate = {
       ...EMPTY_CABLE_LAYOUT_ESTIMATE,

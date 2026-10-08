@@ -2,7 +2,7 @@ import { Line } from 'react-konva'
 import { resolveCablePathPx, type CableEndpointIndex } from '../../domain/cable/cable-endpoint-index'
 import type { Cable, CableType } from '../../domain/cable/cable-layout-types'
 import type { CableLimitStatus } from '../../domain/cable/cable-length-estimate-calculator'
-import { CABLE_OVER_LIMIT_COLOR, cableTypeColor } from './cable-type-color-palette'
+import { CABLE_OVER_LIMIT_COLOR, cableTypeColor, computeCableOverLimitDashPattern } from './cable-type-color-palette'
 
 export interface CableRouteLinesProps {
   cables: Cable[]
@@ -42,7 +42,7 @@ export function CableRouteLines({
   viewportScale,
   onSelectCable,
 }: CableRouteLinesProps) {
-  const dash = [5 * strokeWidthPx, 4 * strokeWidthPx]
+  const dash = computeCableOverLimitDashPattern(strokeWidthPx)
 
   return (
     <>

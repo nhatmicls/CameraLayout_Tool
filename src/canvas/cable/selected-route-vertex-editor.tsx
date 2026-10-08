@@ -1,19 +1,27 @@
 import { useState } from 'react'
 import type { KonvaEventObject } from 'konva/lib/Node'
 import { Circle, Line } from 'react-konva'
-import { resolveCablePathPx, type CableEndpointIndex } from '../../domain/cable/cable-endpoint-index'
-import { MAX_CABLE_POINTS, type Cable, type CablePoint } from '../../domain/cable/cable-layout-types'
+import { MAX_CABLE_POINTS, type CablePoint } from '../../domain/cable/cable-layout-types'
 import { insertCablePointOnNearestSegment, moveCablePoint, removeCablePoint } from '../../domain/cable/cable-polyline-editing'
 import { clampPointToImageBounds } from '../../domain/shared/clamp'
 import { WALL_SELECTED_COLOR } from '../shared/brand-and-dori-color-palette'
 
-export interface SelectedCableVertexEditorProps {
-  cable: Cable
-  index: CableEndpointIndex
-  /** The cable's own line colour (type colour, or red when over its limit). */
+export interface SelectedRouteVertexEditorProps {
+  /** The owning cable's or hub's id - `onPointsChange`'s first argument, nothing else. */
+  routeId: string
+  /** Intermediate points only; the two ends come from `startPx`/`endPx`. */
+  points: CablePoint[]
+  /** Device or hub position (a cable's start), or a hub's own position (a trunk's start). */
+  startPx: CablePoint
+  /** Hub position (a cable's end, or a trunk's target hub). */
+  endPx: CablePoint
+  /** The route's own line colour (type colour for a cable, or red when over its limit; a neutral colour for a trunk). */
   color: string
-  /** True when the cable is over, or possibly over, its length limit - it stays dashed while selected. */
-  dashed: boolean
+  /** The route's own dash pattern (undefined = solid) - the caller decides: a cable is dashed only
+   * over/possibly-over its limit, a trunk is ALWAYS dotted (same pattern as the unselected
+   * `HubTrunkRouteLines`, per the PNG legend's "dotted = route to hub") - selection is conveyed by
+   * the highlighted glow line underneath, not by switching to solid. */
+  dash: number[] | undefined
   strokeWidthPx: number
   viewportScale: number
   imageWidthPx: number
@@ -24,35 +32,39 @@ export interface SelectedCableVertexEditorProps {
 
 const HANDLE_RADIUS_SCREEN_PX = 5
 
-/** Stops a click from reaching the Stage, whose "click on empty canvas" handler would deselect the cable. */
+/** Stops a click from reaching the Stage, whose "click on empty canvas" handler would deselect the cable/hub. */
 const stopClick = (e: KonvaEventObject<Event>) => {
   e.cancelBubble = true
 }
 
 /**
- * The selected cable, drawn here ONLY (the walls-Layer lines skip it): a
+ * The ONE vertex editor for a point-editable route - a selected cable
+ * (device -> hub) or a selected hub's own trunk (hub -> hub) - generalised
+ * over plain start/end points so neither kind needs its own copy (DRY): a
  * highlighted line plus one handle per intermediate vertex. Drag a handle to
  * move the vertex, double-click the line to insert one, double-click a
- * handle to remove it. The two ends belong to the device and the hub.
+ * handle to remove it. The two ends are never edited here - they derive from
+ * the live device/hub positions the caller resolved into `startPx`/`endPx`.
  *
  * Nothing is written to the store mid-drag: the line is redrawn from a
  * local preview and the drop is one undo step. Mounted last in the markers
  * Layer, so it is never part of the PNG export.
  */
-export function SelectedCableVertexEditor({
-  cable,
-  index,
+export function SelectedRouteVertexEditor({
+  routeId,
+  points,
+  startPx,
+  endPx,
   color,
-  dashed,
+  dash,
   strokeWidthPx,
   viewportScale,
   imageWidthPx,
   imageHeightPx,
   onPointsChange,
-}: SelectedCableVertexEditorProps) {
+}: SelectedRouteVertexEditorProps) {
   const [preview, setPreview] = useState<CablePoint[] | null>(null)
-  const path = resolveCablePathPx(preview ? { ...cable, points: preview } : cable, index)
-  if (!path) return null
+  const path = [startPx, ...(preview ?? points), endPx]
 
   const linePoints = path.flatMap((point) => [point.x, point.y])
   const clampHandle = (e: KonvaEventObject<DragEvent>): CablePoint => {
@@ -76,7 +88,7 @@ export function SelectedCableVertexEditor({
         points={linePoints}
         stroke={color}
         strokeWidth={strokeWidthPx}
-        dash={dashed ? [5 * strokeWidthPx, 4 * strokeWidthPx] : undefined}
+        dash={dash}
         lineJoin="round"
         lineCap="round"
         hitStrokeWidth={Math.max(strokeWidthPx, 12 / viewportScale)}
@@ -86,12 +98,12 @@ export function SelectedCableVertexEditor({
           e.cancelBubble = true
           const pointer = e.target.getStage()?.getRelativePointerPosition()
           // At the cap nothing would change: skip the store write (it would still record an undo step).
-          if (!pointer || cable.points.length >= MAX_CABLE_POINTS) return
+          if (!pointer || points.length >= MAX_CABLE_POINTS) return
           const at = clampPointToImageBounds(pointer, imageWidthPx, imageHeightPx)
-          onPointsChange(cable.id, insertCablePointOnNearestSegment(path, at))
+          onPointsChange(routeId, insertCablePointOnNearestSegment(path, at))
         }}
       />
-      {cable.points.map((point, i) => (
+      {points.map((point, i) => (
         <Circle
           // Keyed by position too: after a drop the vertex has new coordinates, so a fresh handle replaces the dragged one.
           key={`${i}:${point.x},${point.y}`}
@@ -107,14 +119,14 @@ export function SelectedCableVertexEditor({
           onTap={stopClick}
           onDblClick={(e) => {
             e.cancelBubble = true
-            onPointsChange(cable.id, removeCablePoint(cable.points, i))
+            onPointsChange(routeId, removeCablePoint(points, i))
           }}
-          onDragMove={(e) => setPreview(moveCablePoint(cable.points, i, clampHandle(e)))}
+          onDragMove={(e) => setPreview(moveCablePoint(points, i, clampHandle(e)))}
           onDragEnd={(e) => {
             const to = clampHandle(e)
             setPreview(null)
             // A drag that ends where it started is a no-op: the store ignores an unchanged patch only by reference.
-            if (to.x !== point.x || to.y !== point.y) onPointsChange(cable.id, moveCablePoint(cable.points, i, to))
+            if (to.x !== point.x || to.y !== point.y) onPointsChange(routeId, moveCablePoint(points, i, to))
           }}
         />
       ))}

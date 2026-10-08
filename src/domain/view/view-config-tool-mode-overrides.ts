@@ -10,7 +10,7 @@ import { DEFAULT_VIEW_CONFIG, type ViewConfig } from './view-config-types'
  * here because the domain must not import `src/state`; passing the store's
  * `ToolMode` to `resolveEffectiveViewConfig` is the compile-time drift check.
  */
-export type ViewConfigToolMode = 'select' | 'calibrate' | 'wall' | 'hub' | 'riser' | 'drop' | 'cable'
+export type ViewConfigToolMode = 'select' | 'calibrate' | 'wall' | 'hub' | 'riser' | 'drop' | 'cable' | 'trunk'
 
 /**
  * The view config with the current tool's layers forced ON (never off).
@@ -23,6 +23,9 @@ export type ViewConfigToolMode = 'select' | 'calibrate' | 'wall' | 'hub' | 'rise
  *   every camera, sensor and hub in the store, so all of them must be on
  *   screen. Cones / coverage flags are left alone (the cable tool hides them
  *   through `coverageVisible`).
+ * - `trunk`: hubs and cables (the "cable routes" toggle also covers trunk
+ *   lines - no separate toggle) - the trunk tool snaps only to other hubs,
+ *   never a device, so no device-marker toggle needs forcing.
  */
 export function resolveEffectiveViewConfig(config: ViewConfig, toolMode: ViewConfigToolMode): ViewConfig {
   switch (toolMode) {
@@ -51,6 +54,8 @@ export function resolveEffectiveViewConfig(config: ViewConfig, toolMode: ViewCon
         sensorKinds: DEFAULT_VIEW_CONFIG.sensorKinds,
       }
     }
+    case 'trunk':
+      return config.hubs && config.cables ? config : { ...config, hubs: true, cables: true }
     case 'select':
     case 'calibrate':
       return config

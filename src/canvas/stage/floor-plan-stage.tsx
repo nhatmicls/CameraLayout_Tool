@@ -82,13 +82,18 @@ export function FloorPlanStage() {
     [pendingLine, setScale, setToolMode, pushNotification],
   )
 
-  // Clicking empty canvas (the Stage itself, not a camera/wall/sensor/hub/cable) deselects everything.
+  // Clicking empty canvas (the Stage itself, not a camera/wall/sensor/hub/cable) deselects
+  // everything - EXCEPT in trunk-drawing mode, where every click (markers never listen while a
+  // drawing tool is on, so every click lands on the bare Stage) must leave the owner hub selected:
+  // the tool is entered from its OWN properties panel and the hub stays selected throughout, so
+  // the panel (and its "Draw/Redraw/Remove route" buttons) is still there right after a commit.
   const handleStageClick = useCallback(
     (e: KonvaEventObject<MouseEvent | TouchEvent>) => {
       if (e.target !== e.target.getStage()) return
+      if (toolMode === 'trunk') return
       clearSelection()
     },
-    [clearSelection],
+    [clearSelection, toolMode],
   )
 
   const handleCameraDragEnd = useCallback((id: string, x: number, y: number) => updateCamera(id, { x, y }), [updateCamera])
@@ -143,7 +148,7 @@ export function FloorPlanStage() {
             scaleIsSet={scale !== null}
             cabling={cabling}
             cablingInteraction={cablingInteraction}
-            coverageVisible={toolMode !== 'cable'}
+            coverageVisible={toolMode !== 'cable' && toolMode !== 'trunk'}
             viewConfig={effectiveViewConfig}
             interactive
             selectedCameraId={selectedCameraId}
@@ -152,6 +157,7 @@ export function FloorPlanStage() {
             selectedFireAlarmDeviceId={selectedFireAlarmDeviceId}
             wallsSelectable={toolMode === 'select'}
             markersListening={!isDrawingTool}
+            trunkEditingEnabled={toolMode === 'select'}
             viewportScale={viewport.scale}
             onSelectCamera={setSelectedCameraId}
             onSelectWall={setSelectedWallId}

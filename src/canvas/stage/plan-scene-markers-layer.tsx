@@ -21,6 +21,8 @@ export interface PlanSceneMarkersLayerProps {
   hiddenSensorIds: ReadonlySet<string>
   hubsVisible: boolean
   cablesVisible: boolean
+  /** False while the trunk-drawing tool is active for the selected hub (see `hub-and-selected-cable-nodes.tsx`). Default true. */
+  trunkEditingEnabled?: boolean
   cabling: PlanSceneCabling
   cablingInteraction: PlanSceneCablingInteraction | undefined
   cableEndpointIndex: CableEndpointIndex
@@ -62,6 +64,7 @@ export function PlanSceneMarkersLayer({
   hiddenSensorIds,
   hubsVisible,
   cablesVisible,
+  trunkEditingEnabled = true,
   cabling,
   cablingInteraction,
   cableEndpointIndex,
@@ -141,6 +144,7 @@ export function PlanSceneMarkersLayer({
         interaction={cablingInteraction}
         hubsVisible={hubsVisible}
         cablesVisible={cablesVisible}
+        trunkEditingEnabled={trunkEditingEnabled}
         iconRadiusPx={iconRadiusPx}
         viewportScale={viewportScale}
         imageWidthPx={imageWidthPx}

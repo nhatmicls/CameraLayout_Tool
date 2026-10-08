@@ -1,5 +1,7 @@
+import { hubLabels } from '../../domain/cable/cable-endpoint-index'
 import { useEditorUiStore, type ToolMode } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
+import { selectHubs } from '../../state/project-store-floor-selectors'
 
 interface CableToolControlsProps {
   hasImage: boolean
@@ -26,6 +28,13 @@ export function CableToolControls({ hasImage, buttonClass }: CableToolControlsPr
   const cableDrawTypeId = useEditorUiStore((s) => s.cableDrawTypeId)
   const setCableDrawTypeId = useEditorUiStore((s) => s.setCableDrawTypeId)
   const cableTypes = useProjectStore((s) => s.cableTypes)
+  const selectedHubId = useEditorUiStore((s) => s.selectedHubId)
+  const hubs = useProjectStore(selectHubs)
+
+  // The trunk tool (`ToolMode 'trunk'`) is entered from the hub panel, not a toolbar toggle - this
+  // is a status readout + a way out, not a mode button like the others.
+  const startHubIndex = hubs.findIndex((hub) => hub.id === selectedHubId)
+  const startHubLabel = startHubIndex >= 0 ? hubLabels(hubs)[startHubIndex] : 'this point'
 
   // The remembered id can be stale (type deleted, project replaced): fall back to the first type.
   const drawType = cableTypes.find((type) => type.id === cableDrawTypeId) ?? cableTypes[0]
@@ -77,6 +86,17 @@ export function CableToolControls({ hasImage, buttonClass }: CableToolControlsPr
             ))}
           </select>
         </label>
+      )}
+
+      {toolMode === 'trunk' && (
+        <>
+          <span data-testid="trunk-draw-hint" className="text-xs text-neutral-500">
+            {`Drawing route from ${startHubLabel} - click a hub to finish.`}
+          </span>
+          <button type="button" data-testid="cancel-trunk-draw-button" onClick={() => setToolMode('select')} className={buttonClass}>
+            Cancel
+          </button>
+        </>
       )}
     </>
   )
