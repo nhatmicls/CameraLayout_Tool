@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildCombinedBomRows, type BomProjectSlice } from './build-combined-bom-rows'
-import { createEmptyCableLayout } from '../../domain/cable/cable-layout-types'
+import { EMPTY_CABLE_LAYOUT_ESTIMATE } from '../../domain/cable/cable-layout-estimate'
 import type { PlacedCamera } from '../../domain/project-file/project-types'
 import type { PlacedSectorSensor } from '../../domain/sensor/sensor-types'
 import type { PlacedFireAlarmDevice } from '../../domain/fire-alarm/fire-alarm-device-types'
@@ -17,8 +17,7 @@ function baseProject(overrides: Partial<BomProjectSlice> = {}): BomProjectSlice 
     cameras: [],
     sensors: [],
     fireAlarmDevices: [],
-    scale: null,
-    ...createEmptyCableLayout(),
+    cableEstimate: EMPTY_CABLE_LAYOUT_ESTIMATE,
     ...overrides,
   }
 }
@@ -71,5 +70,34 @@ describe('buildCombinedBomRows', () => {
     const result = buildCombinedBomRows(baseProject({ cameras: [camera('cam-1', CAMERA_MODEL_ID)] }))
     expect(result.fireAlarmRows).toEqual([])
     expect(result.fireAlarmWarnings).toEqual([])
+  })
+
+  it('cable rows come straight from the given `cableEstimate` - this module computes no estimate of its own', () => {
+    const cableEstimate = {
+      ...EMPTY_CABLE_LAYOUT_ESTIMATE,
+      hasScale: true,
+      totals: [
+        {
+          type: { id: 'cat6-utp', name: 'Cat6 UTP', lengthLimitM: 90, pricePerMeterVnd: 8000 },
+          cableCount: 1,
+          labels: ['C1-H1'],
+          run: { nominal: 10, min: 10, max: 10 },
+          purchase: { nominal: 11.5, min: 11.5, max: 11.5 },
+          purchaseWholeM: 12,
+          lineTotalVnd: 96000,
+        },
+      ],
+    }
+    const result = buildCombinedBomRows(
+      baseProject({
+        cameras: [camera('cam-1', CAMERA_MODEL_ID)],
+        fireAlarmDevices: [fireDevice('fire-1', SMOKE_MODEL_ID)],
+        cableEstimate,
+      }),
+    )
+    expect(result.cableRows).toHaveLength(1)
+    expect(result.cableRows[0]).toMatchObject({ type: 'Cable', model: 'Cat6 UTP', quantity: 12, unit: 'm' })
+    expect(result.allRows.map((r) => r.type)).toEqual([result.cameraRows[0].type, result.fireAlarmRows[0].type, 'Cable']) // cables come last
+    expect(result.cableEstimate).toBe(cableEstimate)
   })
 })

@@ -5,6 +5,7 @@ import {
   PIR_SENSOR_MODEL_ID,
   canvasCount,
   loadImage,
+  triggerImageLoadWithoutWaiting,
   waitForDecodedImageSize,
   waitForTestHooks,
 } from './helpers/test-hooks'
@@ -340,9 +341,10 @@ test.describe('multi-floor-tabs-smoke', () => {
     // mid-flight (measured consistently hundreds of ms in the latency test below).
     const bigImage = buildSolidColorPng(5000, 4096, [10, 10, 10])
 
-    // Deliberately NOT awaited beyond the input's change event (loadImage only waits for that) -
-    // the point of this test is to act WHILE the async decode is still in flight.
-    const loadPromise = loadImage(page, bigImage, 'big-race.png')
+    // Deliberately NOT awaited beyond the input's change event (`loadImage` itself now waits for
+    // the decode to actually land, which would defeat this test) - the point here is to act
+    // WHILE the async decode is still in flight.
+    const loadPromise = triggerImageLoadWithoutWaiting(page, bigImage, 'big-race.png')
     await page.locator('[data-testid="floor-tab-button-1"]').click() // switch away from floor 1 before the decode resolves
     await loadPromise
 

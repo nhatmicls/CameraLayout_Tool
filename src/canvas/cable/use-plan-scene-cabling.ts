@@ -1,6 +1,5 @@
 import { createElement, useMemo, type ReactNode } from 'react'
 import { buildCableEndpointIndex, type CableEndpointIndex } from '../../domain/cable/cable-endpoint-index'
-import { computeCableLayoutEstimate } from '../../domain/cable/cable-layout-estimate'
 import type { CableLayout, CablePoint } from '../../domain/cable/cable-layout-types'
 import type { CableLimitStatus } from '../../domain/cable/cable-length-estimate-calculator'
 import type { PlacedCamera, ScaleCalibration } from '../../domain/project-file/project-types'
@@ -8,9 +7,21 @@ import type { PlacedSensor } from '../../domain/sensor/sensor-types'
 import { CableRouteLines } from './cable-route-lines'
 import { computeCableStrokeWidthPx } from './cable-type-color-palette'
 
-/** The cable data `PlanSceneLayers` draws. `scale` is the real calibration (null = no metres, so no over-length styling) - never the `?? 1` drawing fallback. */
+const NO_LIMIT_STATUSES: ReadonlyMap<string, CableLimitStatus> = new Map()
+
+/**
+ * The cable data `PlanSceneLayers` draws. `scale` is the real calibration
+ * (null = no metres, so no over-length styling) - never the `?? 1` drawing
+ * fallback. `limitStatusById` is this floor's own slice of the ONE project
+ * cable estimate (`useCableLayoutEstimate`/`computeProjectCableEstimate`),
+ * computed by the caller - this module never calls an estimate function
+ * itself, so screen and PNG style over-length cables alike from the SAME
+ * cross-floor-aware source. Omitted (the dev spike, tests) = nothing styled
+ * as over-length.
+ */
 export interface PlanSceneCabling extends CableLayout {
   scale: ScaleCalibration | null
+  limitStatusById?: ReadonlyMap<string, CableLimitStatus>
 }
 
 /** Editor-only wiring; omitted in the PNG export and the dev spike, where hubs and cables are a static render. */
@@ -49,15 +60,7 @@ export function usePlanSceneCabling({ cameras, sensors, cabling, interaction, ic
   cableLines: ReactNode
 } {
   const index = useMemo(() => buildCableEndpointIndex(cameras, sensors, cabling.hubs), [cameras, sensors, cabling.hubs])
-
-  const limitStatusById = useMemo(() => {
-    const statuses = new Map<string, CableLimitStatus>()
-    if (cabling.cables.length === 0) return statuses
-    for (const cable of computeCableLayoutEstimate({ ...cabling, cameras, sensors }).cables) {
-      statuses.set(cable.cableId, cable.limitStatus)
-    }
-    return statuses
-  }, [cameras, sensors, cabling])
+  const limitStatusById = cabling.limitStatusById ?? NO_LIMIT_STATUSES
 
   const hiddenCableId = interaction?.selectedCableId ?? null
   const onSelectCable = interaction?.onSelectCable

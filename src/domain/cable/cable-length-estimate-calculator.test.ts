@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { buildCableEndpointIndex } from './cable-endpoint-index'
 import { DEFAULT_CABLE_SETTINGS, type Cable, type CableSettings, type CableType, type Hub } from './cable-layout-types'
+import { resolveHubBeyondLength } from './cross-floor-hub-beyond-length-resolver'
+import { CROSS_FLOOR_CABLE, CROSS_FLOOR_CAMERA, RISER_1, twoFloorLinkedProject } from './cross-floor-worked-example.test-fixtures'
 import { computeScaleUncertainty, estimateCableLength, polylineLengthPx } from './cable-length-estimate-calculator'
 import { CABLE_A, CABLE_B, CAMERA_C1, CAMERA_C2, HUB_H1, SCALE_100_PX_PER_M } from './cable-worked-example.test-fixtures'
 
@@ -77,6 +79,19 @@ describe('estimateCableLength - worked example', () => {
     expect(a.purchase.min).toBeCloseTo(17.655049, 4)
     expect(a.purchase.max).toBeCloseTo(18.000127, 4)
     expect(a.limitStatus).toBe('ok')
+  })
+
+  it('REGRESSION (item 7): typed mode is bit-identical to the pre-phase-4 formula\'s own addition order', () => {
+    // HEAD's formula (before `beyond` existed): fixedM = deviceRiseM + hubDropM + hubExtraM +
+    // slackM; run.min/max = horizM * factor + fixedM. A mathematically-equal but differently
+    // GROUPED expression can differ at the float ULP level - `toBe` (exact), not `toBeCloseTo`,
+    // catches that; the literals here mirror HEAD's own expression, not a rounded decimal.
+    const a = estimate(CABLE_A)
+    const fixedM = 0.5 + 1.5 + 0 + 3.5 // deviceRiseM + hubDropM + hubExtraM + slackM, HEAD's order
+    expect(a.fixedM).toBe(fixedM)
+    expect(a.run.nominal).toBe(10 + fixedM)
+    expect(a.run.min).toBe(10 * (400 / 406) + fixedM)
+    expect(a.run.max).toBe(10 * (400 / 394) + fixedM)
   })
 
   it('cable B: unmounted camera uses the default device height, no vertices', () => {
@@ -186,6 +201,54 @@ describe('estimateCableLength - limit status (limit 90, fixed 5.5)', () => {
     })
     expect(result?.run).toMatchObject({ min: null, max: null })
     expect(result?.limitStatus).toBe('ok')
+  })
+})
+
+describe('estimateCableLength - beyond (cross-floor), the two-floor worked example', () => {
+  const project = twoFloorLinkedProject()
+  const beyond = resolveHubBeyondLength(project, { floorId: 'floor-0', hubId: 'riser-1' }, CROSS_FLOOR_CABLE)
+  const crossFloorIndex = buildCableEndpointIndex([CROSS_FLOOR_CAMERA], [], [RISER_1])
+  const crossFloorUncertainty = computeScaleUncertainty(project.floors[0].scale!, 3)
+
+  function estimateWithBeyond(beyondInput: typeof beyond | undefined) {
+    const result = estimateCableLength({
+      cable: CROSS_FLOOR_CABLE,
+      index: crossFloorIndex,
+      type: CAT6,
+      settings: DEFAULT_CABLE_SETTINGS,
+      planPxPerMeter: 100,
+      uncertainty: crossFloorUncertainty,
+      beyond: beyondInput,
+    })
+    if (!result) throw new Error('expected an estimate')
+    return result
+  }
+
+  it('route mode: hubDropM is just the crossing, hubExtraM the rest, beyondVia names where it leads', () => {
+    const result = estimateWithBeyond(beyond)
+    expect(result.hubDropM).toBeCloseTo(3, 9) // crossingVerticalM
+    expect(result.hubExtraM).toBeCloseTo(11.5, 6) // 14.5 - 3
+    expect(result.beyondVia).toBe('Floor 2 D1')
+    expect(result.fixedM).toBeCloseTo(18.5, 6) // deviceRiseM 0.5 + slackM 3.5 + beyond 14.5
+    expect(result.run.nominal).toBeCloseTo(28.5, 6)
+    expect(result.run.min!).toBeCloseTo(28.204433, 6)
+    expect(result.run.max!).toBeCloseTo(28.804569, 6)
+    expect(result.purchase.nominal).toBeCloseTo(32.775, 6)
+    expect(result.purchase.min!).toBeCloseTo(32.435099, 5)
+    expect(result.purchase.max!).toBeCloseTo(33.125254, 5)
+  })
+
+  it('omitting `beyond` and an explicit `source: "typed"` are byte-identical to today\'s formula', () => {
+    const withoutBeyond = estimateWithBeyond(undefined)
+    expect(withoutBeyond.hubDropM).toBeCloseTo(0, 9) // |routeHeightM 3 - RISER_1.mountHeightM 3|
+    expect(withoutBeyond.hubExtraM).toBe(0)
+    expect(withoutBeyond.beyondVia).toBeUndefined()
+    expect('beyondVia' in withoutBeyond).toBe(false) // never present (not even as `undefined`) so `toEqual` stays exact
+
+    const typedExplicit = estimateWithBeyond({ source: 'typed', run: { nominal: 42, min: 42, max: 42 } })
+    expect(typedExplicit.hubDropM).toBe(withoutBeyond.hubDropM) // an explicit `typed` source still reads the hub endpoint's OWN fields, not `run`
+    expect(typedExplicit.hubExtraM).toBe(withoutBeyond.hubExtraM)
+    expect(typedExplicit.run).toEqual(withoutBeyond.run)
   })
 })
 

@@ -2,17 +2,12 @@ import { useMemo } from 'react'
 import { computeBomTotal, formatVnd, type BomRow } from '../../domain/bom/bill-of-materials-grouping'
 import { formatBomUnpricedNote } from '../../domain/bom/cable-bill-of-materials-grouping'
 import { SCALE_NOT_SET_CABLE_MESSAGE } from '../../domain/cable/cable-layout-estimate'
+import { describeUnestimatedCables } from '../../domain/cable/unestimated-cables-summary'
 import { buildCombinedBomRows } from '../../export/shared/build-combined-bom-rows'
 import { FireAlarmCompatibilityWarningsBlock } from '../fire-alarm/fire-alarm-compatibility-warnings-block'
 import { useProjectStore } from '../../state/project-store'
-import {
-  selectCables,
-  selectCameras,
-  selectFireAlarmDevices,
-  selectHubs,
-  selectScale,
-  selectSensors,
-} from '../../state/project-store-floor-selectors'
+import { selectCables, selectCameras, selectFireAlarmDevices, selectScale, selectSensors } from '../../state/project-store-floor-selectors'
+import { useCableLayoutEstimate } from '../../state/use-cable-layout-estimate'
 import { BillOfMaterialsCableRowsTable } from './bill-of-materials-cable-rows-table'
 import { BillOfMaterialsRow } from './bill-of-materials-row'
 import { BillOfMaterialsTableHeaderRow } from './bill-of-materials-table-header-row'
@@ -35,15 +30,14 @@ export function BillOfMaterialsPanel() {
   const cameras = useProjectStore(selectCameras)
   const sensors = useProjectStore(selectSensors)
   const fireAlarmDevices = useProjectStore(selectFireAlarmDevices)
-  const hubs = useProjectStore(selectHubs)
   const cables = useProjectStore(selectCables)
-  const cableTypes = useProjectStore((s) => s.cableTypes)
-  const cableSettings = useProjectStore((s) => s.cableSettings)
   const scale = useProjectStore(selectScale)
+  // The active floor's own slice of the one project-wide cable estimate (cross-floor metres resolved).
+  const cableEstimate = useCableLayoutEstimate()
 
   const { cameraRows, sensorRows, fireAlarmRows, cableRows, allRows, fireAlarmWarnings } = useMemo(
-    () => buildCombinedBomRows({ cameras, sensors, fireAlarmDevices, hubs, cables, cableTypes, cableSettings, scale }),
-    [cameras, sensors, fireAlarmDevices, hubs, cables, cableTypes, cableSettings, scale],
+    () => buildCombinedBomRows({ cameras, sensors, fireAlarmDevices, cableEstimate }),
+    [cameras, sensors, fireAlarmDevices, cableEstimate],
   )
   const cameraCount = cameraRows.reduce((sum, row) => sum + row.quantity, 0)
   const sensorCount = sensorRows.reduce((sum, row) => sum + row.quantity, 0)
@@ -56,6 +50,10 @@ export function BillOfMaterialsPanel() {
   const hasFireAlarm = fireAlarmRows.length > 0
   const hasCables = cables.length > 0
   const showSubHeadings = [hasCameras, hasSensors, hasFireAlarm, hasCables].filter(Boolean).length > 1
+  // HIGH fix: a cross-floor cable excluded from the estimate (unscaled partner floor, a link
+  // cycle) must never just silently show short metres here - name it, same wording the CSV
+  // notification and the PNG legend use.
+  const unestimatedNote = describeUnestimatedCables(cableEstimate.unestimatedCableCount, cableEstimate.warnings)
 
   return (
     <div data-testid="bom-panel" className="mt-4 border-t border-neutral-200 pt-3">
@@ -129,6 +127,11 @@ export function BillOfMaterialsPanel() {
               ) : (
                 <p data-testid="bom-cables-no-scale" className="text-xs font-medium text-amber-600">
                   {SCALE_NOT_SET_CABLE_MESSAGE}
+                </p>
+              )}
+              {unestimatedNote && (
+                <p data-testid="bom-cables-unestimated" className="mt-1 text-xs font-medium text-amber-600">
+                  {unestimatedNote}
                 </p>
               )}
             </>

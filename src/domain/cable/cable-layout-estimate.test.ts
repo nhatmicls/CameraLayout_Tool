@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { computeCableLayoutEstimate } from './cable-layout-estimate'
 import type { Cable } from './cable-layout-types'
+import { resolveCableBeyondLengths } from './cross-floor-hub-beyond-length-resolver'
+import { CROSS_FLOOR_CABLE, twoFloorLinkedProject } from './cross-floor-worked-example.test-fixtures'
 import { CABLE_A, CABLE_B, workedExampleInput } from './cable-worked-example.test-fixtures'
 
 describe('computeCableLayoutEstimate - worked example', () => {
@@ -113,5 +115,79 @@ describe('computeCableLayoutEstimate - warnings and edges', () => {
     expect(estimate.cables).toEqual([])
     expect(estimate.totals).toEqual([])
     expect(estimate.grandPurchase).toBeNull()
+  })
+
+  it('unestimatedCableCount is 0 by default (no `beyondByCableId`)', () => {
+    expect(computeCableLayoutEstimate(workedExampleInput()).unestimatedCableCount).toBe(0)
+  })
+})
+
+describe('computeCableLayoutEstimate - beyondByCableId (cross-floor)', () => {
+  const project = twoFloorLinkedProject()
+  const floor0 = project.floors[0]
+  const beyondByCableId = resolveCableBeyondLengths(project).get('floor-0')
+  const baseInput = {
+    cameras: floor0.cameras,
+    sensors: [],
+    hubs: floor0.hubs,
+    cables: floor0.cables,
+    cableTypes: project.cableTypes,
+    cableSettings: project.cableSettings,
+    scale: floor0.scale,
+  }
+
+  it('route mode: the cable estimate uses the resolved beyond-length, not the typed hub fields', () => {
+    const estimate = computeCableLayoutEstimate({ ...baseInput, beyondByCableId })
+    expect(estimate.cables).toHaveLength(1)
+    expect(estimate.cables[0].run.nominal).toBeCloseTo(28.5, 6)
+    expect(estimate.cables[0].beyondVia).toBe('Floor 2 D1')
+    expect(estimate.unestimatedCableCount).toBe(0)
+    expect(estimate.warnings).toEqual([])
+  })
+
+  it('the other floor has no scale: excluded from the estimate, warned, counted - never 0', () => {
+    const noScale = twoFloorLinkedProject({ floor1: { scale: null } })
+    const beyond = resolveCableBeyondLengths(noScale).get('floor-0')
+    const estimate = computeCableLayoutEstimate({ ...baseInput, beyondByCableId: beyond })
+    expect(estimate.cables).toEqual([])
+    expect(estimate.totals).toEqual([])
+    expect(estimate.unestimatedCableCount).toBe(1)
+    expect(estimate.warnings).toEqual([
+      { code: 'linked-floor-scale-not-set', cableId: CROSS_FLOOR_CABLE.id, message: expect.stringContaining('Floor 2') },
+    ])
+  })
+
+  it('a cycle: excluded, warned, counted', () => {
+    const cyclic = twoFloorLinkedProject({
+      floor0: {
+        hubs: [
+          { id: 'riser-1', kind: 'riser', x: 700, y: 500, mountHeightM: 3, link: { floorId: 'floor-1', hubId: 'drop-1' } },
+          { id: 'drop-2', kind: 'drop', x: 0, y: 0, mountHeightM: 0, link: { floorId: 'floor-1', hubId: 'riser-2' }, trunk: { hubId: 'riser-1', points: [] } },
+        ],
+      },
+      floor1: {
+        hubs: [
+          { id: 'drop-1', kind: 'drop', x: 700, y: 500, mountHeightM: 0, link: { floorId: 'floor-0', hubId: 'riser-1' }, trunk: { hubId: 'riser-2', points: [] } },
+          { id: 'riser-2', kind: 'riser', x: 700, y: 500, mountHeightM: 3, link: { floorId: 'floor-0', hubId: 'drop-2' } },
+        ],
+      },
+    })
+    const beyond = resolveCableBeyondLengths(cyclic).get('floor-0')
+    const estimate = computeCableLayoutEstimate({ ...baseInput, cables: cyclic.floors[0].cables, hubs: cyclic.floors[0].hubs, beyondByCableId: beyond })
+    expect(estimate.cables).toEqual([])
+    expect(estimate.unestimatedCableCount).toBe(1)
+    expect(estimate.warnings).toEqual([{ code: 'link-cycle', cableId: CROSS_FLOOR_CABLE.id, message: expect.stringContaining('cycle') }])
+  })
+
+  it('typed mode (unlinked, or linked without a trunk) is byte-identical whether or not `beyondByCableId` is passed', () => {
+    const typedProject = twoFloorLinkedProject({ floor1: { hubs: [{ id: 'drop-1', kind: 'drop', x: 700, y: 500, mountHeightM: 0, link: { floorId: 'floor-0', hubId: 'riser-1' } }] } })
+    const withBeyond = computeCableLayoutEstimate({
+      ...baseInput,
+      hubs: typedProject.floors[0].hubs,
+      beyondByCableId: resolveCableBeyondLengths(typedProject).get('floor-0'),
+    })
+    const withoutBeyond = computeCableLayoutEstimate({ ...baseInput, hubs: typedProject.floors[0].hubs })
+    expect(withBeyond.cables).toEqual(withoutBeyond.cables)
+    expect(withBeyond.totals).toEqual(withoutBeyond.totals)
   })
 })

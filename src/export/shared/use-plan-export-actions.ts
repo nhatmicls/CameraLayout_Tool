@@ -1,4 +1,7 @@
 import { useCallback, useState } from 'react'
+import { EMPTY_CABLE_LAYOUT_ESTIMATE } from '../../domain/cable/cable-layout-estimate'
+import { computeProjectCableEstimate } from '../../domain/cable/project-cable-layout-estimate'
+import { describeUnestimatedCables } from '../../domain/cable/unestimated-cables-summary'
 import { useProjectStore } from '../../state/project-store'
 import { getActiveFloor, selectImage, selectScale } from '../../state/project-store-floor-selectors'
 import { useEditorUiStore } from '../../state/editor-ui-store'
@@ -13,7 +16,10 @@ import { exportBomCsv } from '../csv/export-bom-csv'
  * touch `app.tsx` for export wiring. The placed items and the cable layout are read via
  * `useProjectStore.getState()` at call time rather than subscribed - they
  * only matter at the instant export runs, so a camera move no longer forces
- * these callbacks to be recreated.
+ * these callbacks to be recreated. `computeProjectCableEstimate` (the one
+ * project-wide cable estimate entry point) is called directly here, a plain
+ * function call at export time rather than the `useCableLayoutEstimate`/
+ * `useProjectCableEstimate` hooks a render needs - same source either way.
  */
 export function usePlanExportActions() {
   const image = useProjectStore(selectImage)
@@ -32,8 +38,13 @@ export function usePlanExportActions() {
     setIsExportingPng(true)
     try {
       const store = useProjectStore.getState()
-      const { cameras, walls, sensors, hubs, cables, fireAlarmDevices } = getActiveFloor(store)
+      const activeFloor = getActiveFloor(store)
+      const { cameras, walls, sensors, hubs, cables, fireAlarmDevices } = activeFloor
       const { cableTypes, cableSettings, fireAlarmSettings } = store
+      const cableEstimate =
+        computeProjectCableEstimate({ floors: store.floors, shafts: store.shafts, cableTypes, cableSettings, fireAlarmSettings }).byFloorId.get(
+          activeFloor.id,
+        ) ?? EMPTY_CABLE_LAYOUT_ESTIMATE
       // The drawing shows what is on screen: the stored view config with the active tool's layers forced on.
       const { viewConfig, toolMode } = useEditorUiStore.getState()
       await exportPlanPng({
@@ -49,6 +60,7 @@ export function usePlanExportActions() {
         fireAlarmDevices,
         fireAlarmSettings,
         scale,
+        cableEstimate,
         viewConfig: resolveEffectiveViewConfig(viewConfig, toolMode),
         onDownscaled: (widthPx, heightPx, scaleFactor) =>
           pushNotification(
@@ -67,12 +79,22 @@ export function usePlanExportActions() {
     if (!image) return
     try {
       const store = useProjectStore.getState()
-      const { cameras, sensors, fireAlarmDevices, hubs, cables, scale: currentScale } = getActiveFloor(store)
-      const { cableTypes, cableSettings } = store
-      exportBomCsv({ image, cameras, sensors, fireAlarmDevices, hubs, cables, cableTypes, cableSettings, scale: currentScale })
+      const activeFloor = getActiveFloor(store)
+      const { cameras, sensors, fireAlarmDevices, cables, scale: currentScale } = activeFloor
+      const { cableTypes, cableSettings, fireAlarmSettings } = store
+      const cableEstimate =
+        computeProjectCableEstimate({ floors: store.floors, shafts: store.shafts, cableTypes, cableSettings, fireAlarmSettings }).byFloorId.get(
+          activeFloor.id,
+        ) ?? EMPTY_CABLE_LAYOUT_ESTIMATE
+      exportBomCsv({ image, cameras, sensors, fireAlarmDevices, cableEstimate })
       if (cables.length > 0 && !currentScale) {
         pushNotification('warning', 'Cable rows were left out of the CSV: set the scale first.')
       }
+      // HIGH fix: a cross-floor cable excluded from the estimate (unscaled partner floor, a link
+      // cycle) left the CSV with no row for it at all, and no mention anywhere - warn, same
+      // wording the BOM panel and the PNG legend use.
+      const unestimatedNote = describeUnestimatedCables(cableEstimate.unestimatedCableCount, cableEstimate.warnings)
+      if (unestimatedNote) pushNotification('warning', `${unestimatedNote} (left out of the CSV).`)
     } catch (err) {
       pushNotification('error', err instanceof Error ? err.message : 'Failed to export the CSV.')
     }

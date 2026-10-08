@@ -74,23 +74,29 @@ export function nearestFloorIndexAfterRemoval(removedIndex: number, remainingCou
 }
 
 /**
- * Identity diff for the undo/redo auto-switch: returns the id of the ONE
- * floor whose object reference changed between `before` and `after`, or
+ * Identity diff for the undo/redo auto-switch: the ids of every floor whose
+ * object reference changed between `before` and `after`, in floor order.
  * `null` when the lists differ in length (a floor was added/removed - a
- * structural change, not a content edit), when a floor moved position
- * (same objects, different order - nothing to "switch to"), or when more
- * than one floor's content changed. Immutable updates mean an untouched
+ * structural change, not a content edit) or when a floor moved position
+ * (same objects, different order - nothing to "switch to", and NOT the
+ * same thing as a content edit even though a reorder also leaves `before[i]
+ * !== after[i]` at some positions). Immutable updates mean an untouched
  * floor keeps its exact object reference, so a plain `===` scan is enough -
  * no deep comparison.
  */
-export function findSingleChangedFloorId(before: Floor[], after: Floor[]): string | null {
+export function findChangedFloorIds(before: Floor[], after: Floor[]): string[] | null {
   if (before.length !== after.length) return null
-  let changedId: string | null = null
+  const changed: string[] = []
   for (let i = 0; i < after.length; i++) {
     if (before[i] === after[i]) continue
     if (before[i].id !== after[i].id) return null // reordered, not edited
-    if (changedId !== null) return null // more than one floor changed
-    changedId = after[i].id
+    changed.push(after[i].id)
   }
-  return changedId
+  return changed
+}
+
+/** `findChangedFloorIds`, narrowed to the single-floor-content-change case the original (phase 2/3) auto-switch rule needs. `null` for zero, two-or-more, or an unreorderable diff. */
+export function findSingleChangedFloorId(before: Floor[], after: Floor[]): string | null {
+  const changed = findChangedFloorIds(before, after)
+  return changed?.length === 1 ? changed[0] : null
 }

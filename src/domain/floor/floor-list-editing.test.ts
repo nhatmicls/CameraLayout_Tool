@@ -4,6 +4,7 @@ import { createEmptyFloor, MAX_FLOORS, type Floor } from './floor-types'
 import {
   addFloorToList,
   defaultFloorName,
+  findChangedFloorIds,
   findSingleChangedFloorId,
   moveFloorInList,
   nearestFloorIndexAfterRemoval,
@@ -164,5 +165,26 @@ describe('findSingleChangedFloorId', () => {
   it('returns null when nothing changed', () => {
     const before = [floorA(), floorB()]
     expect(findSingleChangedFloorId(before, before)).toBeNull()
+  })
+})
+
+describe('findChangedFloorIds (item 6: the two-floor-changed undo/redo case)', () => {
+  it('lists every changed id, in floor order, for exactly two content changes', () => {
+    const before = [floorA(), floorB(), floorC()]
+    const after = [{ ...before[0], name: 'X' }, before[1], { ...before[2], name: 'Y' }]
+    expect(findChangedFloorIds(before, after)).toEqual(['a', 'c'])
+  })
+
+  it('one changed floor is still a valid (length-1) result', () => {
+    const before = [floorA(), floorB()]
+    const after = [{ ...before[0], name: 'X' }, before[1]]
+    expect(findChangedFloorIds(before, after)).toEqual(['a'])
+  })
+
+  it('is null on length mismatch or a pure reorder; [] when nothing changed', () => {
+    const before = [floorA(), floorB()]
+    expect(findChangedFloorIds(before, [floorA()])).toBeNull()
+    expect(findChangedFloorIds(before, [before[1], before[0]])).toBeNull() // reorder
+    expect(findChangedFloorIds(before, before)).toEqual([])
   })
 })

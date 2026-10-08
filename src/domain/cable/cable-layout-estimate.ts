@@ -1,10 +1,12 @@
 import type { PlacedCamera, ScaleCalibration } from '../project-file/project-types'
 import type { PlacedSensor } from '../sensor/sensor-types'
-import { buildCableEndpointIndex } from './cable-endpoint-index'
+import { buildCableEndpointIndex, cableLabel } from './cable-endpoint-index'
+import type { HubBeyondLength } from './cross-floor-hub-beyond-length-resolver'
 import type { CableLayout, CableType } from './cable-layout-types'
 import {
   computeScaleUncertainty,
   estimateCableLength,
+  sumMetersIntervals,
   type CableLengthEstimate,
   type MetersInterval,
   type ScaleUncertainty,
@@ -30,7 +32,14 @@ export interface CableTypeTotal {
 }
 
 export interface CableEstimateWarning {
-  code: 'scale-not-set' | 'ref-line-too-short' | 'scale-uncertain' | 'cable-over-limit' | 'cable-maybe-over-limit'
+  code:
+    | 'scale-not-set'
+    | 'ref-line-too-short'
+    | 'scale-uncertain'
+    | 'cable-over-limit'
+    | 'cable-maybe-over-limit'
+    | 'linked-floor-scale-not-set'
+    | 'link-cycle'
   message: string
   cableId?: string
 }
@@ -46,6 +55,8 @@ export interface CableLayoutEstimate {
   /** Sum of the priced types' line totals. */
   grandTotalVnd: number
   unpricedTypeCount: number
+  /** Cables that COULD NOT be estimated because their cross-floor route hit a floor with no scale, or a cycle - counted here and warned about, never dropped silently and never shown as 0. Does not include a cable dangling on a deleted device/hub (that is simply absent from `cables`, same as before this phase). */
+  unestimatedCableCount: number
   warnings: CableEstimateWarning[]
 }
 
@@ -53,19 +64,24 @@ export interface CableLayoutEstimateInput extends CableLayout {
   cameras: readonly PlacedCamera[]
   sensors: readonly PlacedSensor[]
   scale: ScaleCalibration | null
+  /** This floor's cross-floor "beyond the hub" contribution per cable (`resolveCableBeyondLengths`). Absent = every cable stays in typed mode - today's behaviour, byte-identical (used by every pre-existing test). */
+  beyondByCableId?: ReadonlyMap<string, HubBeyondLength>
 }
 
 export const SCALE_NOT_SET_CABLE_MESSAGE = 'Calibrate the scale to estimate cable lengths.'
 
-/** Sums unrounded values. The interval of a sum is undefined as soon as one part's is. */
-export function sumMetersIntervals(intervals: readonly MetersInterval[]): MetersInterval {
-  const sum: MetersInterval = { nominal: 0, min: 0, max: 0 }
-  for (const interval of intervals) {
-    sum.nominal += interval.nominal
-    sum.min = sum.min === null || interval.min === null ? null : sum.min + interval.min
-    sum.max = sum.max === null || interval.max === null ? null : sum.max + interval.max
-  }
-  return sum
+/** A defensive fallback only - every floor in a `Project` gets an entry in `computeProjectCableEstimate`'s `byFloorId`, so a lookup by a live `activeFloorId` should never miss. */
+export const EMPTY_CABLE_LAYOUT_ESTIMATE: CableLayoutEstimate = {
+  hasScale: false,
+  uncertainty: null,
+  cables: [],
+  byCableId: new Map(),
+  totals: [],
+  grandPurchase: null,
+  grandTotalVnd: 0,
+  unpricedTypeCount: 0,
+  unestimatedCableCount: 0,
+  warnings: [],
 }
 
 function scaleWarnings(uncertainty: ScaleUncertainty): CableEstimateWarning[] {
@@ -91,9 +107,29 @@ function limitWarning(cable: CableLengthEstimate, type: CableType): CableEstimat
   return null
 }
 
+/** Human text for the two "could not estimate" reasons, named by the cable's own label. */
+function unavailableWarning(label: string, cableId: string, beyond: Extract<HubBeyondLength, { source: 'unavailable' }>): CableEstimateWarning {
+  if (beyond.reason === 'link-cycle') {
+    return { code: 'link-cycle', cableId, message: `${label}: its cross-floor route forms a cycle - excluded from the estimate.` }
+  }
+  return {
+    code: 'linked-floor-scale-not-set',
+    cableId,
+    message: `${label}: the route continues on "${beyond.floorName}", which has no scale set - excluded from the estimate.`,
+  }
+}
+
 export function computeCableLayoutEstimate(input: CableLayoutEstimateInput): CableLayoutEstimate {
-  const { cables, cableTypes, cableSettings, scale } = input
-  const empty = { cables: [], byCableId: new Map(), totals: [], grandPurchase: null, grandTotalVnd: 0, unpricedTypeCount: 0 }
+  const { cables, cableTypes, cableSettings, scale, beyondByCableId } = input
+  const empty = {
+    cables: [],
+    byCableId: new Map(),
+    totals: [],
+    grandPurchase: null,
+    grandTotalVnd: 0,
+    unpricedTypeCount: 0,
+    unestimatedCableCount: 0,
+  }
   if (!scale) {
     const warnings: CableEstimateWarning[] = cables.length > 0 ? [{ code: 'scale-not-set', message: SCALE_NOT_SET_CABLE_MESSAGE }] : []
     return { ...empty, hasScale: false, uncertainty: null, warnings }
@@ -104,11 +140,18 @@ export function computeCableLayoutEstimate(input: CableLayoutEstimateInput): Cab
   const typeById = new Map(cableTypes.map((type): [string, CableType] => [type.id, type]))
   const estimates: CableLengthEstimate[] = []
   const warnings: CableEstimateWarning[] = cables.length > 0 ? scaleWarnings(uncertainty) : []
+  let unestimatedCableCount = 0
 
   for (const cable of cables) {
     const type = typeById.get(cable.typeId)
     if (!type) continue
-    const estimate = estimateCableLength({ cable, index, type, settings: cableSettings, planPxPerMeter: scale.planPxPerMeter, uncertainty })
+    const beyond = beyondByCableId?.get(cable.id)
+    if (beyond?.source === 'unavailable') {
+      unestimatedCableCount += 1
+      warnings.push(unavailableWarning(cableLabel(cable, index), cable.id, beyond))
+      continue
+    }
+    const estimate = estimateCableLength({ cable, index, type, settings: cableSettings, planPxPerMeter: scale.planPxPerMeter, uncertainty, beyond })
     if (!estimate) continue
     estimates.push(estimate)
     const warning = limitWarning(estimate, type)
@@ -141,6 +184,7 @@ export function computeCableLayoutEstimate(input: CableLayoutEstimateInput): Cab
     grandPurchase: totals.length > 0 ? sumMetersIntervals(totals.map((total) => total.purchase)) : null,
     grandTotalVnd: totals.reduce((sum, total) => sum + (total.lineTotalVnd ?? 0), 0),
     unpricedTypeCount: totals.filter((total) => total.lineTotalVnd === null).length,
+    unestimatedCableCount,
     warnings,
   }
 }

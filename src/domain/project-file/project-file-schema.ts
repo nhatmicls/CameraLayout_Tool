@@ -4,6 +4,7 @@ import { DEFAULT_FIRE_ALARM_SETTINGS, type FireAlarmSettings } from '../fire-ala
 import type { Project } from './project-types'
 import { cableSettingsSchema, cableTypeSchema, normaliseLoadedCableTypes, shaftsArraySchema } from './project-file-cable-schema'
 import { fireAlarmSettingsSchema } from './project-file-fire-alarm-schema'
+import { pruneInvalidCrossFloorLinks } from '../cable/cross-floor-hub-link-integrity'
 import { MAX_PROJECT_TEXT_LENGTH_BYTES, floorsArraySchema, normaliseLoadedFloor, type FloorNormalisationLookups, type LoadedFloor } from './project-file-floor-schema'
 import { legacyFlatProjectFileSchema, wrapLegacyFlatProjectAsOneFloor } from './project-file-legacy-flat-migration'
 import type { SensorModelLookup } from './project-file-sensor-schema'
@@ -146,8 +147,15 @@ export function parseProjectFile(text: string, lookups: ProjectFileLookups): Par
       return floor
     })
 
+    // Cross-floor link/trunk integrity needs every floor at once (an invalid or one-sided link/trunk
+    // is dropped with a warning here, never rejects the file) - run once all floors are normalised.
+    // Hub ids are unique project-wide in practice, so these warnings are not floor-prefixed.
+    const linkWarnings: string[] = []
+    const prunedFloors = pruneInvalidCrossFloorLinks(floors, linkWarnings)
+    warnings.push(...linkWarnings)
+
     const project: Project = {
-      floors,
+      floors: prunedFloors,
       shafts: shaftsRaw,
       cableTypes,
       cableSettings: cableSettingsRaw ?? { ...DEFAULT_CABLE_SETTINGS },

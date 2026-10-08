@@ -1,24 +1,17 @@
-import { useMemo } from 'react'
-import { computeCableLayoutEstimate, type CableLayoutEstimate } from '../domain/cable/cable-layout-estimate'
+import { EMPTY_CABLE_LAYOUT_ESTIMATE, type CableLayoutEstimate } from '../domain/cable/cable-layout-estimate'
 import { useProjectStore } from './project-store'
-import { selectCables, selectCameras, selectHubs, selectScale, selectSensors } from './project-store-floor-selectors'
+import { useProjectCableEstimate } from './use-project-cable-estimate'
 
 /**
- * The live cable estimate over the project store. Recomputed when anything
- * it reads changes; cheap enough (<= 1000 cables) that panels each call this
- * hook instead of sharing a cache.
+ * The active floor's own slice of `useProjectCableEstimate()` - same
+ * return shape as before this phase, so every existing consumer (cable
+ * properties panel, estimate panel/totals table) needs no change, while
+ * now correctly including any cross-floor (linked riser/drop) contribution.
+ * Recomputed only when the underlying project estimate or the active floor
+ * changes (that hook's own `useMemo`, not a second one here).
  */
 export function useCableLayoutEstimate(): CableLayoutEstimate {
-  const cameras = useProjectStore(selectCameras)
-  const sensors = useProjectStore(selectSensors)
-  const hubs = useProjectStore(selectHubs)
-  const cables = useProjectStore(selectCables)
-  const cableTypes = useProjectStore((s) => s.cableTypes)
-  const cableSettings = useProjectStore((s) => s.cableSettings)
-  const scale = useProjectStore(selectScale)
-
-  return useMemo(
-    () => computeCableLayoutEstimate({ cameras, sensors, hubs, cables, cableTypes, cableSettings, scale }),
-    [cameras, sensors, hubs, cables, cableTypes, cableSettings, scale],
-  )
+  const activeFloorId = useProjectStore((s) => s.activeFloorId)
+  const projectEstimate = useProjectCableEstimate()
+  return projectEstimate.byFloorId.get(activeFloorId) ?? EMPTY_CABLE_LAYOUT_ESTIMATE
 }

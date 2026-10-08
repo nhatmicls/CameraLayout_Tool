@@ -1,9 +1,12 @@
+import { useMemo } from 'react'
 import { hubLabels } from '../../domain/cable/cable-endpoint-index'
 import { HUB_EXTRA_LENGTH_BOUNDS, HUB_MOUNT_HEIGHT_BOUNDS } from '../../domain/cable/cable-layout-types'
+import { resolveHubBeyondLength } from '../../domain/cable/cross-floor-hub-beyond-length-resolver'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
 import { selectCables, selectHubs } from '../../state/project-store-floor-selectors'
 import { fieldLabelClass, inputClass } from '../camera/camera-properties-form-helpers'
+import { HubCrossFloorLinkSection } from './hub-cross-floor-link-section'
 import { NullableNumberInput } from '../shared/nullable-number-input'
 
 /**
@@ -27,11 +30,28 @@ export function HubPropertiesPanel() {
   const deleteHub = useProjectStore((s) => s.deleteHub)
   const selectedHubId = useEditorUiStore((s) => s.selectedHubId)
   const setSelectedHubId = useEditorUiStore((s) => s.setSelectedHubId)
+  const floors = useProjectStore((s) => s.floors)
+  const activeFloorId = useProjectStore((s) => s.activeFloorId)
+  const shafts = useProjectStore((s) => s.shafts)
+  const cableTypes = useProjectStore((s) => s.cableTypes)
+  const cableSettings = useProjectStore((s) => s.cableSettings)
+  const fireAlarmSettings = useProjectStore((s) => s.fireAlarmSettings)
 
   // Looked up rather than trusted: an undo can remove the hub while its id is still selected.
   const index = hubs.findIndex((hub) => hub.id === selectedHubId)
   const hub = index >= 0 ? hubs[index] : null
+  const floorIndex = floors.findIndex((floor) => floor.id === activeFloorId)
+  // Computed unconditionally (hooks rule) - cheap, and only actually used once `hub` is known riser/drop below.
+  const project = useMemo(
+    () => ({ floors, shafts, cableTypes, cableSettings, fireAlarmSettings }),
+    [floors, shafts, cableTypes, cableSettings, fireAlarmSettings],
+  )
+
   if (!hub) return null
+
+  const showCrossFloorSection = (hub.kind === 'riser' || hub.kind === 'drop') && floors.length > 1
+  const beyond = showCrossFloorSection ? resolveHubBeyondLength(project, { floorId: activeFloorId, hubId: hub.id }) : null
+  const isComputedMode = beyond?.source === 'route'
 
   const cableCount = cables.filter((cable) => cable.hubId === hub.id).length
   const { noun, heightLabel, help } = WORDING[hub.kind ?? 'hub']
@@ -70,6 +90,7 @@ export function HubPropertiesPanel() {
         max={HUB_MOUNT_HEIGHT_BOUNDS.max}
         step={0.1}
         allowEmpty={false}
+        disabled={isComputedMode}
         onCommit={(mountHeightM) => {
           if (mountHeightM !== null) updateHub(hub.id, { mountHeightM })
         }}
@@ -89,14 +110,21 @@ export function HubPropertiesPanel() {
             max={HUB_EXTRA_LENGTH_BOUNDS.max}
             step={0.5}
             allowEmpty={false}
+            disabled={isComputedMode}
             onCommit={(extraLengthM) => {
               if (extraLengthM !== null) updateHub(hub.id, { extraLengthM })
             }}
             className={inputClass}
           />
-          <p className="mt-1 text-[10px] leading-tight text-neutral-400">Added to every cable ending here: the run from this point to its hub on the other floor.</p>
+          <p className="mt-1 text-[10px] leading-tight text-neutral-400">
+            {isComputedMode
+              ? 'Computed from the linked route instead - see below.'
+              : 'Added to every cable ending here: the run from this point to its hub on the other floor.'}
+          </p>
         </>
       )}
+
+      {showCrossFloorSection && <HubCrossFloorLinkSection floors={floors} floorIndex={floorIndex} hub={hub} beyond={beyond} />}
 
       <p data-testid="properties-hub-cable-count" className="mt-3 text-xs text-neutral-600">
         {cableCount} cable{cableCount === 1 ? '' : 's'} connected

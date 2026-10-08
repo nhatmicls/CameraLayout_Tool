@@ -5,11 +5,25 @@
  * object identity (zundo's undo history, and `findSingleChangedFloorId`,
  * both rely on that).
  */
+import { pruneInvalidCrossFloorLinks } from '../domain/cable/cross-floor-hub-link-integrity'
 import type { Floor } from '../domain/floor/floor-types'
 import { selectActiveFloor } from './project-store-floor-selectors'
 
 /** The floor fields an action patches - everything except `id`/`name` (edited only via the floor-list actions). */
 export type FloorContent = Omit<Floor, 'id' | 'name'>
+
+/**
+ * A patch touching `hubs` (hub add/update/delete) or `image` (`setImage`,
+ * which also clears `hubs`) can invalidate a link/trunk on ANY floor - the
+ * partner side of a deleted hub lives elsewhere. Run the one prune rule set
+ * after every such patch, in the SAME `set()` as the cause (one undo step).
+ * A patch touching neither key cannot affect a link, so every other write
+ * (camera drag, wall edit, ...) skips the extra pass entirely.
+ */
+function pruneIfCablingTouched(patch: Partial<FloorContent>, floors: Floor[]): Floor[] {
+  if (patch.hubs === undefined && patch.image === undefined) return floors
+  return pruneInvalidCrossFloorLinks(floors)
+}
 
 /**
  * Patches the ACTIVE floor. Every other floor keeps its exact reference.
@@ -25,9 +39,8 @@ export function patchActiveFloor(
   patch: Partial<FloorContent>,
 ): Pick<{ floors: Floor[] }, 'floors'> {
   const activeId = selectActiveFloor(state).id
-  return {
-    floors: state.floors.map((floor) => (floor.id === activeId ? { ...floor, ...patch } : floor)),
-  }
+  const patched = state.floors.map((floor) => (floor.id === activeId ? { ...floor, ...patch } : floor))
+  return { floors: pruneIfCablingTouched(patch, patched) }
 }
 
 /** Patches the floor with `floorId`. Returns the SAME `floors` array when that id is unknown. */
@@ -38,5 +51,6 @@ export function patchFloorById(
 ): Pick<{ floors: Floor[] }, 'floors'> {
   const index = state.floors.findIndex((floor) => floor.id === floorId)
   if (index === -1) return { floors: state.floors }
-  return { floors: state.floors.map((floor, i) => (i === index ? { ...floor, ...patch } : floor)) }
+  const patched = state.floors.map((floor, i) => (i === index ? { ...floor, ...patch } : floor))
+  return { floors: pruneIfCablingTouched(patch, patched) }
 }

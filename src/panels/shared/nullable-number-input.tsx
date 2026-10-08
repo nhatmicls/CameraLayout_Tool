@@ -14,6 +14,8 @@ interface NullableNumberInputProps {
   allowEmpty?: boolean
   placeholder?: string
   className?: string
+  /** True shows the field disabled (e.g. a hub's computed cross-floor mode, where the typed value is unused) - the DOM input stays disabled, never hidden, so its last value is still visible. */
+  disabled?: boolean
   onCommit: (value: number | null) => void
 }
 
@@ -36,6 +38,7 @@ export function NullableNumberInput({
   allowEmpty = true,
   placeholder,
   className,
+  disabled = false,
   onCommit,
 }: NullableNumberInputProps) {
   const [draft, setDraft] = useState<string | null>(null)
@@ -77,6 +80,7 @@ export function NullableNumberInput({
       onBlur={commit}
       onKeyDown={handleKeyDown}
       className={className}
+      disabled={disabled}
     />
   )
 }

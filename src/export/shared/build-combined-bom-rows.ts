@@ -2,7 +2,7 @@ import { groupCamerasIntoBom, type BomRow } from '../../domain/bom/bill-of-mater
 import { groupCablesIntoBom } from '../../domain/bom/cable-bill-of-materials-grouping'
 import { groupFireAlarmDevicesIntoBom } from '../../domain/bom/fire-alarm-bill-of-materials-grouping'
 import { groupSensorsIntoBom } from '../../domain/bom/sensor-bill-of-materials-grouping'
-import { computeCableLayoutEstimate, type CableLayoutEstimate, type CableLayoutEstimateInput } from '../../domain/cable/cable-layout-estimate'
+import type { CableLayoutEstimate } from '../../domain/cable/cable-layout-estimate'
 import { checkFireAlarmCompatibility, type CompatibilityWarning } from '../../domain/fire-alarm/fire-alarm-compatibility-checker'
 import type { PlacedFireAlarmDevice } from '../../domain/fire-alarm/fire-alarm-device-types'
 import type { PlacedCamera } from '../../domain/project-file/project-types'
@@ -24,11 +24,19 @@ export interface CombinedBomRows {
   fireAlarmWarnings: CompatibilityWarning[]
 }
 
-/** What the BOM is built from: the placed items, the cable layout and the scale. */
-export interface BomProjectSlice extends CableLayoutEstimateInput {
+/**
+ * What the BOM is built from: the placed items plus an ALREADY-COMPUTED
+ * cable estimate. The caller gets `cableEstimate` from the one project-wide
+ * entry point (`useCableLayoutEstimate`/`computeProjectCableEstimate`'s
+ * `byFloorId`, this floor's own slice) - this module never calls an
+ * estimate function itself, so the BOM panel, CSV and PNG strip can never
+ * compute cable metres a different way than the canvas/panel do.
+ */
+export interface BomProjectSlice {
   cameras: PlacedCamera[]
   sensors: PlacedSensor[]
   fireAlarmDevices: PlacedFireAlarmDevice[]
+  cableEstimate: CableLayoutEstimate
 }
 
 /**
@@ -40,15 +48,14 @@ export function buildCombinedBomRows(project: BomProjectSlice): CombinedBomRows 
   const sensorRows = groupSensorsIntoBom(project.sensors, buildSensorModelByIdRecord())
   const fireAlarmWarnings = checkFireAlarmCompatibility(project.fireAlarmDevices, fireAlarmModelSpecById, fireAlarmCompatibilityIndex)
   const fireAlarmRows = groupFireAlarmDevicesIntoBom(project.fireAlarmDevices, fireAlarmModelSpecById, fireAlarmWarnings)
-  const cableEstimate = computeCableLayoutEstimate(project)
-  const cableRows = groupCablesIntoBom(cableEstimate)
+  const cableRows = groupCablesIntoBom(project.cableEstimate)
   return {
     cameraRows,
     sensorRows,
     fireAlarmRows,
     cableRows,
     allRows: [...cameraRows, ...sensorRows, ...fireAlarmRows, ...cableRows],
-    cableEstimate,
+    cableEstimate: project.cableEstimate,
     fireAlarmWarnings,
   }
 }

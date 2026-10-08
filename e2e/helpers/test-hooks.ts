@@ -13,16 +13,28 @@ export interface TestHooks {
   getHubs: () => Array<{ id: string }>
   getCables: () => Array<{ id: string }>
   getFireAlarmDevices: () => Array<{ id: string }>
-  getFloors: () => Array<{ id: string; name: string; floorHeightM: number; image: { fileName: string } | null; cameras: unknown[]; sensors: unknown[] }>
+  getFloors: () => Array<{
+    id: string
+    name: string
+    floorHeightM: number
+    image: { fileName: string } | null
+    cameras: unknown[]
+    sensors: unknown[]
+    hubs: Array<{ id: string; kind?: 'riser' | 'drop'; x: number; y: number; link?: { floorId: string; hubId: string }; trunk?: { hubId: string; points: unknown[] } }>
+    cables: Array<{ id: string }>
+  }>
   getActiveFloorId: () => string
   seedFloor: (name?: string) => string
   getDecodedImageInfo: () => { widthPx: number; heightPx: number } | null
   setScale: (scale: { planPxPerMeter: number; refLine: { x1: number; y1: number; x2: number; y2: number }; refLengthM: number }) => void
   seedCamera: (camera: { modelId: string; x: number; y: number; rotationDeg: number; rangeM: number }) => void
   seedSensor: (sensor: { modelId: string; shape: 'sector'; x: number; y: number; rotationDeg: number; rangeM: number }) => void
-  seedHub: (hub: { x: number; y: number; mountHeightM: number }) => void
+  seedHub: (hub: { kind?: 'riser' | 'drop'; x: number; y: number; mountHeightM: number }) => void
   seedCable: (cable: { device: { kind: 'camera'; id: string }; hubId: string; typeId: string; points: Array<{ x: number; y: number }> }) => void
   seedFireAlarmDevice: (device: { modelId: string; x: number; y: number }) => void
+  selectHub: (id: string) => void
+  selectCable: (id: string) => void
+  setHubTrunk: (ref: { floorId: string; hubId: string }, trunk: { hubId: string; points: Array<{ x: number; y: number }> } | null) => void
 }
 
 declare global {
@@ -40,8 +52,41 @@ export async function waitForTestHooks(page: Page): Promise<void> {
   await page.waitForFunction(() => !!window.__cameraLayoutToolTestHooks, { timeout: 10_000 })
 }
 
-export async function loadImage(page: Page, buffer: Buffer, fileName: string): Promise<void> {
+/**
+ * Fires the file input's `change` event and returns immediately, before the
+ * async decode (`FileReader` + `Image.decode()` inside `useFloorPlanImageLoader`)
+ * resolves. This is the raw primitive - almost every spec wants `loadImage`
+ * below instead; only a spec that deliberately exercises the race (switching
+ * floors or seeding other state WHILE the decode is still in flight, e.g.
+ * the C2 regression test) should call this directly.
+ */
+export async function triggerImageLoadWithoutWaiting(page: Page, buffer: Buffer, fileName: string): Promise<void> {
   await page.locator('[data-testid="load-image-input"]').setInputFiles({ name: fileName, mimeType: 'image/png', buffer })
+}
+
+/**
+ * Loads an image file and waits until the floor that was ACTIVE at the
+ * START of the call has actually received it (`floor.image.fileName`
+ * matches) before returning. Fixes a real flake: `setInputFiles` only
+ * waits for the input's `change` event, not for the async decode it kicks
+ * off - a spec that immediately called `setScale` or switched floors right
+ * after could have that land BEFORE `setImage` actually applied (wiping the
+ * scale it just set, or tripping the "floor changed during load" guard and
+ * silently refusing the whole load). Every spec except the one deliberately
+ * racing this (`triggerImageLoadWithoutWaiting`) should use this.
+ */
+export async function loadImage(page: Page, buffer: Buffer, fileName: string): Promise<void> {
+  const targetFloorId = await page.evaluate(() => window.__cameraLayoutToolTestHooks!.getActiveFloorId())
+  await triggerImageLoadWithoutWaiting(page, buffer, fileName)
+  await page.waitForFunction(
+    ({ targetFloorId, fileName }) => {
+      const hooks = window.__cameraLayoutToolTestHooks
+      const floor = hooks?.getFloors().find((f) => f.id === targetFloorId)
+      return floor?.image?.fileName === fileName
+    },
+    { targetFloorId, fileName },
+    { timeout: 15_000 },
+  )
 }
 
 export async function canvasCount(page: Page): Promise<number> {

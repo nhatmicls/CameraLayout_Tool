@@ -37,6 +37,10 @@ export function CablePropertiesPanel() {
 
   const type = cableTypes.find((candidate) => candidate.id === cable.typeId)
   const estimate = layoutEstimate.byCableId.get(cable.id)
+  // HIGH fix: a cable excluded from the estimate (unscaled partner floor, a link cycle) has its
+  // OWN warning in `layoutEstimate.warnings` (unlike a dangling cable, which has none) - show its
+  // specific reason instead of the generic "lost an end" text.
+  const unestimatedWarning = !estimate ? layoutEstimate.warnings.find((warning) => warning.cableId === cable.id) : undefined
   const handleDelete = () => {
     deleteCable(cable.id)
     setSelectedCableId(null)
@@ -46,7 +50,15 @@ export function CablePropertiesPanel() {
         ['horizontal', 'Horizontal route', formatMeters(estimate.horizM)],
         ['device-rise', 'Rise at device', formatMeters(estimate.deviceRiseM)],
         ['hub-drop', 'Vertical at hub', formatMeters(estimate.hubDropM)],
-        ...(estimate.hubExtraM > 0 ? [['hub-extra', 'On the other floor', formatMeters(estimate.hubExtraM)] as [string, string, string]] : []),
+        ...(estimate.hubExtraM > 0
+          ? [
+              [
+                'hub-extra',
+                estimate.beyondVia ? `On the other floor (via ${estimate.beyondVia})` : 'On the other floor',
+                formatMeters(estimate.hubExtraM),
+              ] as [string, string, string],
+            ]
+          : []),
         ['slack', 'End slack', formatMeters(estimate.slackM)],
         ['run', 'Run', formatMetersInterval(estimate.run)],
         ['waste', 'Waste', formatMeters(estimate.wasteM)],
@@ -106,7 +118,7 @@ export function CablePropertiesPanel() {
         </>
       ) : (
         <p data-testid="properties-cable-no-estimate" className="mt-3 text-xs font-medium text-amber-600">
-          {layoutEstimate.hasScale ? 'This cable has lost one of its ends.' : SCALE_NOT_SET_CABLE_MESSAGE}
+          {unestimatedWarning?.message ?? (layoutEstimate.hasScale ? 'This cable has lost one of its ends.' : SCALE_NOT_SET_CABLE_MESSAGE)}
         </p>
       )}
 

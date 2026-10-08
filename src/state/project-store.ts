@@ -1,11 +1,10 @@
 import { create } from 'zustand'
 import { temporal } from 'zundo'
 import type { CableLayout } from '../domain/cable/cable-layout-types'
-import { findSingleChangedFloorId, nearestFloorIndexAfterRemoval } from '../domain/floor/floor-list-editing'
-import type { Floor } from '../domain/floor/floor-types'
 import type { FireAlarmLayout } from '../domain/project-file/project-types'
 import { patchActiveFloor, type FloorContent } from './project-store-active-floor-update'
 import { createCablingActions } from './project-store-cabling-actions'
+import { createCrossFloorLinkActions } from './project-store-cross-floor-link-actions'
 import { createFireAlarmActions } from './project-store-fire-alarm-actions'
 import { createFloorActions } from './project-store-floor-actions'
 import { selectActiveFloor } from './project-store-floor-selectors'
@@ -81,6 +80,12 @@ export const useProjectStore = create<ProjectStore>()(
         (partial) => set(routeFireAlarmPartial(get(), partial)),
         () => ({ fireAlarmDevices: selectActiveFloor(get()).fireAlarmDevices, fireAlarmSettings: get().fireAlarmSettings }),
       ),
+      // A link/trunk can touch two floors at once, so this slice sets `floors` directly
+      // instead of going through `patchActiveFloor` (which only ever patches one).
+      ...createCrossFloorLinkActions(
+        (partial) => set(partial),
+        () => ({ floors: get().floors, cableSettings: get().cableSettings }),
+      ),
 
       replaceProject: (project) => {
         // C1: activate the first floor that actually HAS an image, not always `floors[0]` -
@@ -133,65 +138,6 @@ export const useProjectStore = create<ProjectStore>()(
   ),
 )
 
-/**
- * H2 fix: exactly THREE rules decide whether undo/redo moves the active
- * floor - no module-level "remember where I came from" state (the old
- * approach misfired: it could jump the user off a floor they had
- * deliberately switched to, or land on the wrong floor after an
- * undo/redo/undo round-trip, since it only ever remembered the SINGLE most
- * recent `addFloor` call regardless of what happened since).
- *
- *  (i)   Exactly one floor's CONTENT changed (`findSingleChangedFloorId`):
- *        switch to it - the existing, well-tested auto-switch.
- *  (ii)  The floor list GREW during an UNDO specifically: that can only mean
- *        undoing a `deleteFloor` (redoing an `addFloor` also grows the list,
- *        but during a REDO - deliberately left alone below, since nothing
- *        was just taken away from the user to restore). Switch to the
- *        floor that reappeared.
- *  (iii) The floor the user was ACTUALLY looking at just vanished (shrink,
- *        either direction - undo of an add, or redo of a delete): move to
- *        its nearest neighbour by index, not always tab 1. If some OTHER
- *        floor vanished while a different one was active, the active floor
- *        is untouched - no stale memory needed, this is re-checked fresh
- *        every time.
- *
- * Direction-aware on purpose: `before`/`after` alone cannot distinguish
- * "undoing a delete" from "redoing an add" (both grow the list) - only the
- * caller (`undoProject`/`redoProject`) knows which one this is.
- */
-function autoSwitchAndClamp(before: Floor[], direction: 'undo' | 'redo'): void {
-  const after = useProjectStore.getState().floors
-  const changedFloorId = findSingleChangedFloorId(before, after)
-  if (changedFloorId !== null) {
-    useProjectStore.getState().setActiveFloor(changedFloorId)
-  } else if (after.length > before.length && direction === 'undo') {
-    const reappearedId = after.find((floor) => !before.some((b) => b.id === floor.id))?.id
-    if (reappearedId) useProjectStore.getState().setActiveFloor(reappearedId)
-  } else if (after.length < before.length) {
-    const activeFloorId = useProjectStore.getState().activeFloorId // unchanged by undo/redo itself
-    if (!after.some((floor) => floor.id === activeFloorId)) {
-      const vanishedIndex = before.findIndex((floor) => floor.id === activeFloorId)
-      const neighbourIndex = nearestFloorIndexAfterRemoval(vanishedIndex, after.length)
-      useProjectStore.getState().setActiveFloor(after[neighbourIndex].id)
-    }
-  }
-
-  const { floors, activeFloorId } = useProjectStore.getState()
-  if (!floors.some((floor) => floor.id === activeFloorId)) {
-    useProjectStore.setState({ activeFloorId: floors[0].id })
-  }
-}
-
-/** Undoes one step, then auto-switches per the three rules above and clamps `activeFloorId` - the one place every undo trigger (toolbar button, keyboard shortcut) goes through. */
-export function undoProject(): void {
-  const before = useProjectStore.getState().floors
-  useProjectStore.temporal.getState().undo()
-  autoSwitchAndClamp(before, 'undo')
-}
-
-/** Redo counterpart of `undoProject`. */
-export function redoProject(): void {
-  const before = useProjectStore.getState().floors
-  useProjectStore.temporal.getState().redo()
-  autoSwitchAndClamp(before, 'redo')
-}
+// Re-exported so every existing `import { undoProject } from './project-store'` keeps working -
+// see `project-store-undo-redo.ts` (split out to keep this file under 200 lines).
+export { undoProject, redoProject } from './project-store-undo-redo'

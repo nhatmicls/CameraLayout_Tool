@@ -1,3 +1,4 @@
+import { pruneInvalidCrossFloorLinks } from '../domain/cable/cross-floor-hub-link-integrity'
 import {
   addFloorToList,
   defaultFloorName,
@@ -69,18 +70,21 @@ export function createFloorActions(
 
     moveFloor: (id, toIndex) => {
       const { floors } = get()
-      const next = moveFloorInList(floors, id, toIndex)
-      if (next !== floors) set({ floors: next })
+      const moved = moveFloorInList(floors, id, toIndex)
+      if (moved === floors) return
+      // Reordering can break a link's "ONE legal adjacent floor" rule even though no hub moved.
+      set({ floors: pruneInvalidCrossFloorLinks(moved) })
     },
 
     deleteFloor: (id) => {
       const { floors, activeFloorId } = get()
       const deletedIndex = floors.findIndex((floor) => floor.id === id)
-      const next = removeFloorFromList(floors, id)
-      if (next === floors) return
+      const removed = removeFloorFromList(floors, id)
+      if (removed === floors) return
       // H2: nearest neighbour by index when deleting the ACTIVE floor, not always `next[0]`.
-      const nextActiveFloorId = activeFloorId === id ? next[nearestFloorIndexAfterRemoval(deletedIndex, next.length)].id : activeFloorId
-      set({ floors: next, activeFloorId: nextActiveFloorId })
+      const nextActiveFloorId = activeFloorId === id ? removed[nearestFloorIndexAfterRemoval(deletedIndex, removed.length)].id : activeFloorId
+      // The deleted floor's hubs are gone too - any OTHER floor linked to one of them gets pruned here, same undo step.
+      set({ floors: pruneInvalidCrossFloorLinks(removed), activeFloorId: nextActiveFloorId })
     },
 
     setFloorHeight: (id, floorHeightM) => {

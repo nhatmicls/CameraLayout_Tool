@@ -35,6 +35,17 @@ function bounded(bounds: { min: number; max: number }) {
   return z.number().finite().gte(bounds.min).lte(bounds.max)
 }
 
+const hubLinkSchema = z.strictObject({ floorId: id, hubId: id })
+const hubTrunkSchema = z.strictObject({ hubId: id, points: z.array(z.strictObject({ x: coord, y: coord })).max(MAX_CABLE_POINTS) })
+
+/**
+ * `link`/`trunk` (phase 4): structural shape only - whether a link is
+ * really symmetric, adjacent-floor and riser-below/drop-above, and whether
+ * a trunk really targets a hub on the SAME floor of a validly linked
+ * point, needs the whole `floors[]` array and is checked once every floor
+ * is assembled (`pruneInvalidCrossFloorLinks`, `project-file-schema.ts`) -
+ * never rejects the file, drops with a warning instead.
+ */
 export const hubSchema = z.strictObject({
   id,
   kind: z.enum(['riser', 'drop']).optional(),
@@ -42,6 +53,8 @@ export const hubSchema = z.strictObject({
   y: coord,
   mountHeightM: bounded(HUB_MOUNT_HEIGHT_BOUNDS),
   extraLengthM: bounded(HUB_EXTRA_LENGTH_BOUNDS).optional(),
+  link: hubLinkSchema.optional(),
+  trunk: hubTrunkSchema.optional(),
 })
 
 const cableEndRefSchema = z.discriminatedUnion('kind', [

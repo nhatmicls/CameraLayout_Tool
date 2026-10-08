@@ -3,6 +3,7 @@ import type { CableLayoutEstimate } from '../../domain/cable/cable-layout-estima
 import type { Cable, CableSettings, CableType } from '../../domain/cable/cable-layout-types'
 import { formatCableEstimateNote } from '../../domain/cable/cable-length-format'
 import { isCableTypeInUse } from '../../domain/cable/cable-reference-integrity'
+import { describeUnestimatedCables } from '../../domain/cable/unestimated-cables-summary'
 import { truncateCanvasTextToWidth } from './truncate-canvas-text-to-width'
 
 /** The cable legend line of the PNG strip; null on the strip content = the plan has no cables, so no line is drawn. */
@@ -32,10 +33,15 @@ export function buildCableLegend(
   const wholeM = estimate.totals.reduce((sum, total) => sum + total.purchaseWholeM, 0)
   const { grandPurchase } = estimate
   const noteInterval = grandPurchase && { ...grandPurchase, nominal: wholeM, max: grandPurchase.max === null ? null : Math.max(grandPurchase.max, wholeM) }
+  const provisionalNote = noteInterval ? formatCableEstimateNote(noteInterval, cableSettings.wastePercent) : ''
+  // HIGH fix: a cross-floor cable excluded from the estimate (unscaled partner floor, a link
+  // cycle) must never just silently print a shorter total - same wording the BOM panel and the
+  // CSV export notification use.
+  const unestimatedNote = describeUnestimatedCables(estimate.unestimatedCableCount, estimate.warnings) ?? ''
   return {
     types: cableTypes.flatMap((type, i) => (isCableTypeInUse(cables, type.id) ? [{ name: type.name, color: cableTypeColor(i) }] : [])),
     hasDashedCable: estimate.cables.some((cable) => cable.limitStatus === 'over' || cable.limitStatus === 'maybe-over'),
-    noteText: noteInterval ? formatCableEstimateNote(noteInterval, cableSettings.wastePercent) : '',
+    noteText: [unestimatedNote, provisionalNote].filter(Boolean).join('  ·  '),
   }
 }
 

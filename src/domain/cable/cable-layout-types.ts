@@ -29,11 +29,33 @@ export interface Hub {
   mountHeightM: number
   /** Riser / drop only: cable length on the other floor, beyond this point, metres. Omitted = 0. */
   extraLengthM?: number
+  /**
+   * Riser / drop only: the matching point on the ONE legal adjacent floor
+   * (riser -> a drop on the next floor up; drop -> a riser on the next
+   * floor down), always symmetric - both sides store the same pair. Unset
+   * = typed mode (today's behaviour). See `cross-floor-hub-link-integrity.ts`.
+   */
+  link?: { floorId: string; hubId: string }
+  /**
+   * Riser / drop only, and only meaningful while `link` is set: the drawn
+   * route from THIS point to another hub on ITS OWN floor, continuing the
+   * crossing for cables arriving via the partner on the other floor (see
+   * `cross-floor-exit-resolver.ts` / `cross-floor-hub-beyond-length-resolver.ts`).
+   * `points` are the intermediate vertices, same convention as `Cable.points`.
+   * Drawn starting phase 5; stored and estimated from this phase on.
+   */
+  trunk?: { hubId: string; points: CablePoint[] }
 }
 
 /** Height of the hub end relative to this floor: negative for a drop, which ends below it. */
 export function hubEffectiveHeightM(hub: Pick<Hub, 'kind' | 'mountHeightM'>): number {
   return hub.kind === 'drop' ? -hub.mountHeightM : hub.mountHeightM
+}
+
+/** Addresses one hub on one floor - shared by every cross-floor-link function and store action (`Hub.link`/`Hub.trunk.hubId` use the same two-key shape). */
+export interface HubRef {
+  floorId: string
+  hubId: string
 }
 
 /**

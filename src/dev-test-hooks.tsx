@@ -42,6 +42,12 @@ declare global {
       seedFireAlarmDevice: (device: Omit<PlacedFireAlarmDevice, 'id'>) => void
       setFireAlarmSettings: (patch: Partial<FireAlarmSettings>) => void
       runExportSpike: () => Promise<{ dataUrlLength: number; widthPx: number; heightPx: number }>
+      /** Selects a hub (clears any other selection) - the right panel then shows `HubPropertiesPanel`. No canvas click needed. */
+      selectHub: (id: string) => void
+      /** Selects a cable (clears any other selection) - the right panel then shows `CablePropertiesPanel`. */
+      selectCable: (id: string) => void
+      /** Phase 4: sets (or, with `trunk: null`, clears) a LINKED riser/drop's own route to another hub on its own floor - no drawing UI for this yet (phase 5). Delegates to the store's `setHubTrunk` action, one undo step. */
+      setHubTrunk: (ref: { floorId: string; hubId: string }, trunk: { hubId: string; points: Array<{ x: number; y: number }> } | null) => void
     }
   }
 }
@@ -182,5 +188,8 @@ export function installDevTestHooks(): void {
     seedFireAlarmDevice: (device) => useProjectStore.getState().addFireAlarmDevice({ id: crypto.randomUUID(), ...device }),
     setFireAlarmSettings: (patch) => useProjectStore.getState().setFireAlarmSettings(patch),
     runExportSpike,
+    selectHub: (id) => useEditorUiStore.getState().setSelectedHubId(id),
+    selectCable: (id) => useEditorUiStore.getState().setSelectedCableId(id),
+    setHubTrunk: (ref, trunk) => useProjectStore.getState().setHubTrunk(ref, trunk),
   }
 }

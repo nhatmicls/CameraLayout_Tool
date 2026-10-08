@@ -1,7 +1,11 @@
-import type { ScaleCalibration } from '../project-file/project-types'
 import { planPxToMeters } from '../shared/scale-calibration-calculator'
+import type { ScaleUncertainty } from './cable-scale-uncertainty'
 import { cableEndRefKey, cableLabel, resolveCablePathPx, type CableEndpointIndex } from './cable-endpoint-index'
+import type { HubBeyondLength } from './cross-floor-hub-beyond-length-resolver'
 import type { Cable, CablePoint, CableSettings, CableType } from './cable-layout-types'
+
+export type { ScaleUncertainty } from './cable-scale-uncertainty'
+export { computeScaleUncertainty, SCALE_UNRELIABLE_RELATIVE_ERROR } from './cable-scale-uncertainty'
 
 /**
  * Length estimate of ONE cable, in metres.
@@ -10,12 +14,10 @@ import type { Cable, CablePoint, CableSettings, CableType } from './cable-layout
  * - Vertical runs (route height vs device / hub height), the length beyond
  *   a riser / drop and end slack are typed in metres, so the scale error
  *   never touches them.
- * - The scale error is one systematic factor shared by every cable: each
- *   calibration click may be `e` px off, so the true reference length in px
- *   lies within `Lref +- 2e`. Measured too short => the real route is
- *   shorter: `min = horizM * Lref/(Lref+2e)`, `max = horizM * Lref/(Lref-2e)`.
- *   Because the factor is shared, per-cable min/max sum exactly to the total
- *   min/max (no root-sum-square).
+ * - The scale error range comes from `cable-scale-uncertainty.ts`
+ *   (`computeScaleUncertainty`, re-exported here for every existing
+ *   importer): one systematic factor shared by every cable, so per-cable
+ *   min/max sum exactly to the total min/max (no root-sum-square).
  */
 
 /** min/max null = the interval is undefined (reference line no longer than the click error). */
@@ -23,36 +25,6 @@ export interface MetersInterval {
   nominal: number
   min: number | null
   max: number | null
-}
-
-export interface ScaleUncertainty {
-  refLengthPx: number
-  /** 2e / Lref. */
-  relativeError: number
-  minFactor: number | null
-  maxFactor: number | null
-  /** The interval is undefined, or the relative error is above `SCALE_UNRELIABLE_RELATIVE_ERROR`. */
-  isUnreliable: boolean
-}
-
-export const SCALE_UNRELIABLE_RELATIVE_ERROR = 0.05
-
-export function computeScaleUncertainty(scale: ScaleCalibration, clickErrorPx: number): ScaleUncertainty {
-  const { x1, y1, x2, y2 } = scale.refLine
-  const refLengthPx = Math.hypot(x2 - x1, y2 - y1)
-  const spreadPx = 2 * clickErrorPx
-  const relativeError = spreadPx / refLengthPx
-  // Lref <= 2e: the true length could be zero, so no upper bound exists.
-  if (!(refLengthPx > spreadPx)) {
-    return { refLengthPx, relativeError, minFactor: null, maxFactor: null, isUnreliable: true }
-  }
-  return {
-    refLengthPx,
-    relativeError,
-    minFactor: refLengthPx / (refLengthPx + spreadPx),
-    maxFactor: refLengthPx / (refLengthPx - spreadPx),
-    isUnreliable: relativeError > SCALE_UNRELIABLE_RELATIVE_ERROR,
-  }
 }
 
 export type CableLimitStatus = 'ok' | 'maybe-over' | 'over' | 'no-limit'
@@ -64,11 +36,14 @@ export interface CableLengthEstimate {
   horizPx: number
   horizM: number
   deviceRiseM: number
+  /** Typed mode: `|routeHeightM - hub height|`. Computed (route) mode: just the floor-height crossing - see `hubExtraM`/`beyondVia`. */
   hubDropM: number
-  /** Length on the other floor, beyond a riser / drop; 0 for a plain hub. */
+  /** Typed mode: the hub's typed "length on the other floor"; 0 for a plain hub. Computed (route) mode: the trunk's own route metres plus whatever is beyond its target hub. */
   hubExtraM: number
+  /** Set only in computed (route) mode: where `hubExtraM` leads, e.g. "Floor 2 D1" - the cable panel's breakdown line. */
+  beyondVia?: string
   slackM: number
-  /** Everything typed in metres: rise + drop + beyond + slack. */
+  /** Everything beyond the horizontal route: `deviceRiseM + hubDropM + hubExtraM + slackM` in typed mode, or `deviceRiseM + slackM + beyond.run.nominal` (the floor crossing + trunk route + whatever is past it) in computed mode. */
   fixedM: number
   /** Installed length: horizontal + fixed, without waste. This is what the length limit checks. */
   run: MetersInterval
@@ -92,6 +67,17 @@ export function scaleMetersInterval(interval: MetersInterval, factor: number): M
   }
 }
 
+/** Sums unrounded values. The interval of a sum is undefined as soon as one part's is. */
+export function sumMetersIntervals(intervals: readonly MetersInterval[]): MetersInterval {
+  const sum: MetersInterval = { nominal: 0, min: 0, max: 0 }
+  for (const interval of intervals) {
+    sum.nominal += interval.nominal
+    sum.min = sum.min === null || interval.min === null ? null : sum.min + interval.min
+    sum.max = sum.max === null || interval.max === null ? null : sum.max + interval.max
+  }
+  return sum
+}
+
 /** Limit comparison is a strict `>`: a run of exactly the limit is still within it. */
 function limitStatusOf(run: MetersInterval, limitM: number | null): CableLimitStatus {
   if (limitM === null) return 'no-limit'
@@ -99,7 +85,21 @@ function limitStatusOf(run: MetersInterval, limitM: number | null): CableLimitSt
   return (run.max ?? run.nominal) > limitM ? 'maybe-over' : 'ok'
 }
 
-/** null = the cable is dangling (its device or hub no longer exists). `planPxPerMeter` must be the calibrated scale - never a fallback. */
+/**
+ * null = the cable is dangling (its device or hub no longer exists).
+ * `planPxPerMeter` must be the calibrated scale - never a fallback.
+ *
+ * `beyond` is this cable's resolved `HubBeyondLength` (`resolveCableBeyondLengths`).
+ * Omitted = typed mode using the hub endpoint's own fields, EXACTLY today's
+ * formula (every pre-existing test omits it and stays byte-identical).
+ * `source: 'typed'` is the same formula, reached explicitly (an unlinked
+ * point, or a linked one whose partner has no trunk yet). `source: 'route'`
+ * is the pair's computed mode: `hubDropM` becomes just the floor-height
+ * crossing, `hubExtraM` becomes the trunk route + whatever is beyond its
+ * target, and `beyondVia` names where that leads. The caller never passes
+ * `source: 'unavailable'` here - it is filtered out one layer up
+ * (`computeCableLayoutEstimate`), which counts and warns about it instead.
+ */
 export function estimateCableLength(input: {
   cable: Cable
   index: CableEndpointIndex
@@ -107,8 +107,9 @@ export function estimateCableLength(input: {
   settings: CableSettings
   planPxPerMeter: number
   uncertainty: ScaleUncertainty
+  beyond?: HubBeyondLength
 }): CableLengthEstimate | null {
-  const { cable, index, type, settings, planPxPerMeter, uncertainty } = input
+  const { cable, index, type, settings, planPxPerMeter, uncertainty, beyond } = input
   const path = resolveCablePathPx(cable, index)
   const device = index.deviceByKey.get(cableEndRefKey(cable.device))
   const hub = index.hubById.get(cable.hubId)
@@ -118,16 +119,38 @@ export function estimateCableLength(input: {
   const horizM = planPxToMeters(horizPx, planPxPerMeter)
   const deviceHeightM = device.mountHeightM ?? settings.defaultDeviceHeightM
   const deviceRiseM = Math.abs(settings.routeHeightM - deviceHeightM)
-  const hubDropM = Math.abs(settings.routeHeightM - hub.mountHeightM)
   const slackM = settings.deviceEndSlackM + settings.hubEndSlackM
-  const hubExtraM = hub.extraLengthM
-  const fixedM = deviceRiseM + hubDropM + hubExtraM + slackM
 
   const { minFactor, maxFactor } = uncertainty
-  const run: MetersInterval = {
-    nominal: horizM + fixedM,
-    min: minFactor === null ? null : horizM * minFactor + fixedM,
-    max: maxFactor === null ? null : horizM * maxFactor + fixedM,
+  let hubDropM: number
+  let hubExtraM: number
+  let beyondVia: string | undefined
+  let fixedM: number
+  let run: MetersInterval
+
+  if (beyond?.source === 'route') {
+    hubDropM = beyond.crossingVerticalM
+    hubExtraM = beyond.run.nominal - beyond.crossingVerticalM
+    beyondVia = beyond.viaLabel
+    fixedM = deviceRiseM + slackM + beyond.run.nominal
+    run = {
+      nominal: horizM + fixedM,
+      min: minFactor === null || beyond.run.min === null ? null : horizM * minFactor + deviceRiseM + slackM + beyond.run.min,
+      max: maxFactor === null || beyond.run.max === null ? null : horizM * maxFactor + deviceRiseM + slackM + beyond.run.max,
+    }
+  } else {
+    // Undefined or `source: 'typed'` - the hub endpoint's own typed fields, EXACTLY today's
+    // formula and addition order (item 7 nit fix: a reordered-but-mathematically-equal
+    // expression could differ at the float ULP level - this stays bit-identical to pre-phase-4
+    // behaviour, verified by `cable-length-estimate-calculator.test.ts`'s literal HEAD values).
+    hubDropM = Math.abs(settings.routeHeightM - hub.mountHeightM)
+    hubExtraM = hub.extraLengthM
+    fixedM = deviceRiseM + hubDropM + hubExtraM + slackM
+    run = {
+      nominal: horizM + fixedM,
+      min: minFactor === null ? null : horizM * minFactor + fixedM,
+      max: maxFactor === null ? null : horizM * maxFactor + fixedM,
+    }
   }
   const purchase = scaleMetersInterval(run, 1 + settings.wastePercent / 100)
 
@@ -140,6 +163,7 @@ export function estimateCableLength(input: {
     deviceRiseM,
     hubDropM,
     hubExtraM,
+    ...(beyondVia !== undefined ? { beyondVia } : {}),
     slackM,
     fixedM,
     run,

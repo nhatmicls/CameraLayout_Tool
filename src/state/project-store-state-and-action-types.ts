@@ -5,6 +5,7 @@ import { createEmptyFloor, type Floor } from '../domain/floor/floor-types'
 import { DEFAULT_FIRE_ALARM_SETTINGS, type FireAlarmSettings } from '../domain/fire-alarm/fire-alarm-device-types'
 import type { Project } from '../domain/project-file/project-types'
 import type { CablingActions } from './project-store-cabling-actions'
+import type { CrossFloorLinkActions } from './project-store-cross-floor-link-actions'
 import type { FireAlarmActions } from './project-store-fire-alarm-actions'
 import type { FloorListActions } from './project-store-floor-actions'
 import type { PlacedItemActions } from './project-store-placed-item-actions'
@@ -46,7 +47,7 @@ export interface ProjectState {
   loadSeq: number
 }
 
-export interface ProjectActions extends FloorListActions, PlacedItemActions, CablingActions, FireAlarmActions {
+export interface ProjectActions extends FloorListActions, PlacedItemActions, CablingActions, FireAlarmActions, CrossFloorLinkActions {
   /** Replaces the whole project (used when loading a project file). Sets the active floor to `project.floors[0]` (tab 1 = lowest floor) and clears undo history. */
   replaceProject: (project: Project) => void
   /** Clears back to the empty-project state: one empty floor, no shafts, default cable types/settings/fire-alarm settings. Clears undo history. */
