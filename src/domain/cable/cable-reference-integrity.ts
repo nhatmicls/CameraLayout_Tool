@@ -26,6 +26,11 @@ export function isCableTypeInUse(cables: readonly Cable[], typeId: string): bool
   return cables.some((cable) => cable.typeId === typeId)
 }
 
+/** Same check across EVERY floor's cables, not just one - a cable type can be in use on a floor that is not the active one. Shared by the store's `deleteCableType` guard and the cable-types editor table's per-row "in use" flag, so both agree on what "in use" means. */
+export function isCableTypeInUseOnAnyFloor(floorsCables: readonly (readonly Cable[])[], typeId: string): boolean {
+  return floorsCables.some((cables) => isCableTypeInUse(cables, typeId))
+}
+
 export interface CableRefContext {
   cameraIds: ReadonlySet<string>
   /** Placed shape (`sector` / `circle` / `beam`) of every placed sensor, by sensor id. */

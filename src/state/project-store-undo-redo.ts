@@ -73,7 +73,7 @@ function autoSwitchAndClamp(before: Floor[], direction: 'undo' | 'redo'): void {
   }
 }
 
-/** Undoes one step, then auto-switches per the three rules above and clamps `activeFloorId` - the one place every undo trigger (toolbar button, keyboard shortcut) goes through. */
+/** Undoes one step, then auto-switches per the four rules above and clamps `activeFloorId` - the one place every undo trigger (toolbar button, keyboard shortcut) goes through. */
 export function undoProject(): void {
   const before = useProjectStore.getState().floors
   useProjectStore.temporal.getState().undo()

@@ -138,11 +138,29 @@ export function estimateCableLength(input: {
       min: minFactor === null || beyond.run.min === null ? null : horizM * minFactor + deviceRiseM + slackM + beyond.run.min,
       max: maxFactor === null || beyond.run.max === null ? null : horizM * maxFactor + deviceRiseM + slackM + beyond.run.max,
     }
+  } else if (beyond?.source === 'typed' && beyond.shaftNoExit) {
+    // A shaft marker with NO exit anywhere (decision D2): 0 m AT the marker + its own typed
+    // `extraLengthM`, no `routeHeightM` term - `beyond.run` already holds exactly that
+    // (`typedBeyond` in `cross-floor-hub-beyond-length-resolver.ts`, which sets `shaftNoExit`
+    // since this function only sees a `CableHubEndpoint`, not the raw `Hub`, and so cannot check
+    // `hub.kind` itself). A shaft marker's `mountHeightM` is always 0 and carries no
+    // floor-crossing meaning, so the riser/drop/plain hub formula below must NOT be reused here
+    // (that was the bug: it silently added a spurious `routeHeightM` term via
+    // `|routeHeightM - 0|`).
+    hubDropM = 0
+    hubExtraM = beyond.run.nominal
+    fixedM = deviceRiseM + slackM + beyond.run.nominal
+    run = {
+      nominal: horizM + fixedM,
+      min: minFactor === null || beyond.run.min === null ? null : horizM * minFactor + deviceRiseM + slackM + beyond.run.min,
+      max: maxFactor === null || beyond.run.max === null ? null : horizM * maxFactor + deviceRiseM + slackM + beyond.run.max,
+    }
   } else {
-    // Undefined or `source: 'typed'` - the hub endpoint's own typed fields, EXACTLY today's
-    // formula and addition order (item 7 nit fix: a reordered-but-mathematically-equal
-    // expression could differ at the float ULP level - this stays bit-identical to pre-phase-4
-    // behaviour, verified by `cable-length-estimate-calculator.test.ts`'s literal HEAD values).
+    // Undefined or `source: 'typed'` on a riser/drop/plain hub - the hub endpoint's own typed
+    // fields, EXACTLY today's formula and addition order (item 7 nit fix: a
+    // reordered-but-mathematically-equal expression could differ at the float ULP level - this
+    // stays bit-identical to pre-phase-4 behaviour, verified by
+    // `cable-length-estimate-calculator.test.ts`'s literal HEAD values).
     hubDropM = Math.abs(settings.routeHeightM - hub.mountHeightM)
     hubExtraM = hub.extraLengthM
     fixedM = deviceRiseM + hubDropM + hubExtraM + slackM

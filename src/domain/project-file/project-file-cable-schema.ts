@@ -101,11 +101,12 @@ export const cableSettingsSchema = z.strictObject({
 })
 
 /**
- * Project-wide vertical tube (schema v7 only). Phase 1 stores just the list -
- * no marker/route keys yet (phase 6) - so duplicate ids are rejected outright
- * (schema-level `.refine` on `shaftsArraySchema`, below) rather than dropped
- * with a warning like a per-floor item: a hand-written v7 file is the only
- * source, there is nothing yet to "normalise against".
+ * Project-wide vertical tube (schema v7 only): just `{ id, name }` - its
+ * markers/routes live on each floor's own `hubs[]` (`Hub.kind: 'shaft'`),
+ * not here. Duplicate ids are rejected outright (schema-level `.refine` on
+ * `shaftsArraySchema`, below) rather than dropped with a warning like a
+ * per-floor item: a hand-written v7 file is the only source, there is
+ * nothing to "normalise against".
  */
 export const shaftSchema = z.strictObject({
   id,

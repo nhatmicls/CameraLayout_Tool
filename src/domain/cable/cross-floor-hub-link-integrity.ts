@@ -36,8 +36,17 @@ export function updateHubInFloors(floors: readonly Floor[], ref: HubRef, updater
   return floors.map((f, i) => (i === floorIndex ? { ...f, hubs } : f))
 }
 
-/** Exported for `cross-floor-hub-link-writer.ts` (`unlinkHub`). */
-export const clearLinkAndTrunk = (hub: Hub): Hub => ({ ...hub, link: undefined, trunk: undefined })
+/** Drops `trunk` (and, with `alsoLink`, `link` too) by DELETING the keys, not just setting them to `undefined` - so in-memory state deep-equals a project reloaded from a saved file, which never writes an absent key as `null`/`undefined` in the first place. Exported for `cross-floor-hub-link-writer.ts`/`pruneInvalidCrossFloorLinks` below. */
+export function clearTrunk(hub: Hub, alsoLink = false): Hub {
+  if (hub.trunk === undefined && (!alsoLink || hub.link === undefined)) return hub
+  const next = { ...hub }
+  delete next.trunk
+  if (alsoLink) delete next.link
+  return next
+}
+
+/** `clearTrunk(hub, true)` - exported under its own name for `cross-floor-hub-link-writer.ts` (`unlinkHub`), which clears BOTH a hub's link and its (now meaningless) trunk. */
+export const clearLinkAndTrunk = (hub: Hub): Hub => clearTrunk(hub, true)
 
 /**
  * Validates a hub's OWN stored `link` against the actual floor list: wrong
@@ -148,7 +157,7 @@ export function pruneInvalidCrossFloorLinks(floors: readonly Floor[], shaftIds?:
   let next = floors as Floor[]
   for (const item of toClear) {
     warnings?.push(`${item.label} ${item.reason}; ${item.trunkOnly ? 'route' : 'link'} dropped.`)
-    next = updateHubInFloors(next, item.ref, (hub) => (item.trunkOnly ? { ...hub, trunk: undefined } : clearLinkAndTrunk(hub)))
+    next = updateHubInFloors(next, item.ref, (hub) => clearTrunk(hub, !item.trunkOnly))
   }
   return next
 }

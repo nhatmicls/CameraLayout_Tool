@@ -182,10 +182,10 @@ export function createEmptyCableLayout(): CableLayout {
 }
 
 /**
- * A vertical tube through several floors (phase 1: project-wide list only).
- * Its openings are hub markers on each floor it passes through
- * (`Hub.kind: 'shaft'`, `Hub.shaftId`) - added in a later phase, so a shaft
- * with no markers yet still loads as-is.
+ * A vertical tube through several floors: a project-wide `{ id, name }`
+ * entry. Its openings are hub markers on each floor it passes through
+ * (`Hub.kind: 'shaft'`, `Hub.shaftId`), added separately - a shaft with no
+ * markers yet still loads as-is.
  */
 export interface Shaft {
   id: string

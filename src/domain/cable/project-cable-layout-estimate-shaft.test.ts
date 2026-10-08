@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
+import { DEFAULT_CABLE_SETTINGS } from './cable-layout-types'
 import { computeProjectCableEstimate } from './project-cable-layout-estimate'
-import { SHAFT_MARKER_F1, SHAFT_MARKER_F3, shaftCable, shaftFourFloorProject } from './shaft-worked-example.test-fixtures'
+import { SHAFT_MARKER_F1, SHAFT_MARKER_F2, SHAFT_MARKER_F3, shaftCable, shaftFourFloorProject } from './shaft-worked-example.test-fixtures'
 
 describe('computeProjectCableEstimate - shaft warnings', () => {
   it('one "shaft-no-exit" warning when a shaft has markers but no exit anywhere - never per cable, never per floor', () => {
@@ -33,6 +34,36 @@ describe('computeProjectCableEstimate - shaft warnings', () => {
     const warning = floorEstimate.warnings.find((w) => w.code === 'shaft-exit-not-chosen')
     expect(warning?.cableId).toBe('unassigned')
     expect(warning?.message).toMatch(/no exit chosen/)
+  })
+})
+
+describe('computeProjectCableEstimate - shaft marker with NO exit: 0 m at the marker + its own extraLengthM, no routeHeightM term (decision D2)', () => {
+  const cam1 = { id: 'cam-c1', modelId: 'm', x: SHAFT_MARKER_F2.x, y: SHAFT_MARKER_F2.y, rotationDeg: 0, rangeM: 10 } // AT the marker: horizM = 0
+
+  /** Every term but the shaft's own `extraLengthM` zeroed out, so the whole project-level run is exactly that one number - the hand-computed assertion the review asked for. */
+  function noExitProject(extraLengthM: number) {
+    const project = shaftFourFloorProject([
+      { hubs: [{ ...SHAFT_MARKER_F1, trunk: undefined }] }, // no exit on F1 either
+      { cameras: [cam1], cables: [shaftCable('c1', 'sm2')], hubs: [{ ...SHAFT_MARKER_F2, extraLengthM }] },
+      { hubs: [{ ...SHAFT_MARKER_F3, trunk: undefined }] }, // no exit on F3 either - whole shaft has NONE
+    ])
+    return { ...project, cableSettings: { ...DEFAULT_CABLE_SETTINGS, wastePercent: 0, deviceEndSlackM: 0, hubEndSlackM: 0 } }
+  }
+
+  it('extraLengthM 0 -> the hub-end contribution is 0 m, full run 0 m', () => {
+    const result = computeProjectCableEstimate(noExitProject(0))
+    const estimate = result.byFloorId.get('sf1')!.cables[0]
+    expect(estimate.hubDropM).toBe(0) // no routeHeightM term at all - NOT |routeHeightM(3) - mountHeightM(0)| = 3
+    expect(estimate.hubExtraM).toBe(0)
+    expect(estimate.run.nominal).toBe(0) // horizM 0 + deviceRiseM 0 + slackM 0 + beyond 0
+  })
+
+  it('extraLengthM 7 -> the hub-end contribution is exactly 7 m, full run 7 m', () => {
+    const result = computeProjectCableEstimate(noExitProject(7))
+    const estimate = result.byFloorId.get('sf1')!.cables[0]
+    expect(estimate.hubDropM).toBe(0)
+    expect(estimate.hubExtraM).toBe(7)
+    expect(estimate.run.nominal).toBe(7) // horizM 0 + deviceRiseM 0 + slackM 0 + beyond 7
   })
 })
 

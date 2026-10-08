@@ -56,12 +56,6 @@ export function onlyFloor(result: ParseProjectResult): Floor {
   return result.project.floors[0]
 }
 
-/** Asserts a successful parse and returns the whole project - for tests that also need `shafts`/`cableTypes`/`cableSettings`/`fireAlarmSettings`. */
-export function expectOkProject(result: ParseProjectResult): Project {
-  if (!result.ok) throw new Error(`expected ok, got: ${result.error}`)
-  return result.project
-}
-
 /**
  * Builds a legacy (schema versions 1-6) flat raw file object directly - for
  * back-compat tests that need a hand-shaped pre-v7 file rather than one

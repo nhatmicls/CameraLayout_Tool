@@ -1,5 +1,5 @@
 import type { Hub, HubRef } from './cable-layout-types'
-import { clearLinkAndTrunk, resolveHubRef, updateHubInFloors } from './cross-floor-hub-link-integrity'
+import { clearLinkAndTrunk, clearTrunk, resolveHubRef, updateHubInFloors } from './cross-floor-hub-link-integrity'
 import type { Floor } from '../floor/floor-types'
 
 /**
@@ -67,6 +67,12 @@ export function linkHubPair(floors: readonly Floor[], a: HubRef, b: HubRef): Flo
  * already be linked to someone else - the UI's own candidate list should
  * never offer such a choice, but this stays safe if it ever did). No-op
  * when `ref` doesn't resolve or is already in the requested state.
+ *
+ * Bug fix: when `newPartner` is refused by `linkHubPair` (bad shape, or
+ * already linked to someone else), the OLD unlink must not stick either -
+ * the caller asked to SWITCH partners, not to go unlinked, so a refused
+ * switch leaves `ref` exactly as it was (same `floors` reference), not
+ * silently unlinked from its old partner.
  */
 export function relinkHub(floors: readonly Floor[], ref: HubRef, newPartner: HubRef | null): Floor[] {
   const resolved = resolveHubRef(floors, ref)
@@ -75,7 +81,8 @@ export function relinkHub(floors: readonly Floor[], ref: HubRef, newPartner: Hub
   if (newPartner === null) return currentLink ? unlinkHub(floors, ref) : (floors as Floor[])
   if (currentLink && isLinkedTo(resolved.hub, newPartner)) return floors as Floor[]
   const unlinked = currentLink ? unlinkHub(floors, ref) : (floors as Floor[])
-  return linkHubPair(unlinked, ref, newPartner)
+  const relinked = linkHubPair(unlinked, ref, newPartner)
+  return relinked === unlinked && unlinked !== floors ? (floors as Floor[]) : relinked
 }
 
 /**
@@ -95,7 +102,7 @@ export function setHubTrunk(
   const resolved = resolveHubRef(floors, ref)
   if (!resolved) return floors as Floor[]
   if (resolved.hub.kind !== 'shaft' && !resolved.hub.link) return floors as Floor[]
-  if (trunk === null) return updateHubInFloors(floors, ref, (hub) => (hub.trunk === undefined ? hub : { ...hub, trunk: undefined }))
+  if (trunk === null) return updateHubInFloors(floors, ref, (hub) => clearTrunk(hub))
   if (trunk.hubId === ref.hubId) return floors as Floor[]
   const target = floors[resolved.floorIndex].hubs.find((candidate) => candidate.id === trunk.hubId)
   if (!target || target.kind === 'shaft') return floors as Floor[]

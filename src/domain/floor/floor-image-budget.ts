@@ -16,11 +16,6 @@ export const FLOOR_IMAGE_BUDGET_WARN_CHARS = 50 * 1024 * 1024
 
 export type ImageBudgetVerdict = 'ok' | 'warn' | 'refuse'
 
-/** Sum of every floor's image data-URL length, in characters. A floor with no image contributes 0. */
-export function totalFloorImageChars(floors: Floor[]): number {
-  return floors.reduce((sum, floor) => sum + (floor.image?.dataUrl.length ?? 0), 0)
-}
-
 /**
  * Verdict for loading `newDataUrlLength` characters onto the floor
  * `activeFloorId`: that floor's OWN current image is replaced in the sum,

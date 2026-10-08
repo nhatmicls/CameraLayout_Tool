@@ -367,6 +367,88 @@ test.describe('multi-floor-tabs-smoke', () => {
     await expect(page.locator('[data-testid="empty-state"]')).toBeVisible() // confirms floor 2 really has no image
     await expect(page.locator('[data-testid="save-project-button"]')).toBeEnabled()
   })
+
+  test('SHIP-BLOCKER regression: a cable type used only on floor 1 cannot be deleted while floor 2 is active', async ({ page }) => {
+    test.setTimeout(60_000)
+    await page.goto('/')
+    await waitForTestHooks(page)
+
+    await loadImage(page, IMAGE_1, 'floor-1.png')
+    await waitForDecodedImageSize(page, 20, 16)
+    await page.evaluate(
+      ({ modelId }) => window.__cameraLayoutToolTestHooks!.seedCamera({ modelId, x: 5, y: 5, rotationDeg: 0, rangeM: 5 }),
+      { modelId: CAMERA_MODEL_ID },
+    )
+    await page.evaluate(() => window.__cameraLayoutToolTestHooks!.seedHub({ x: 10, y: 10, mountHeightM: 1.5 }))
+    const cameraId = (await page.evaluate(() => window.__cameraLayoutToolTestHooks!.getCameras()))[0].id
+    const hubId = (await page.evaluate(() => window.__cameraLayoutToolTestHooks!.getHubs()))[0].id
+    await page.evaluate(
+      ({ cameraId, hubId }) =>
+        window.__cameraLayoutToolTestHooks!.seedCable({ device: { kind: 'camera', id: cameraId }, hubId, typeId: 'cat6-utp', points: [] }),
+      { cameraId, hubId },
+    )
+
+    await page.locator('[data-testid="floor-tab-add-button"]').click() // floor 2, now active, no cables of its own
+    await expect(page.locator('[data-testid="floor-tab-button-1"]')).toHaveAttribute('aria-selected', 'true')
+
+    // The "Cable types" section is collapsed by default when the ACTIVE floor itself has no
+    // hubs/cables - open it explicitly (native <details>/<summary> toggle).
+    const cableTypesSummary = page.locator('[data-testid="cable-estimate-panel"] summary', { hasText: 'Cable types' })
+    await cableTypesSummary.click()
+
+    const deleteButton = page.locator('[data-testid="cable-type-delete-cat6-utp"]')
+    await expect(deleteButton).toBeDisabled() // SHIP-BLOCKER fix: in use on floor 1, even though floor 2 is active
+    await expect(deleteButton).toHaveAttribute('title', 'In use by a cable')
+
+    // Confirms the disabled button is not a dead end for everything: an UNUSED type on either
+    // floor still deletes fine from here.
+    const unusedDeleteButton = page.locator('[data-testid="cable-type-delete-power-2-core"]')
+    await expect(unusedDeleteButton).toBeEnabled()
+    await unusedDeleteButton.click()
+    await expect(page.locator('[data-testid="cable-type-row-power-2-core"]')).toHaveCount(0)
+
+    // Switch back to floor 1: the cable is still there - the refused delete never touched state.
+    await page.locator('[data-testid="floor-tab-button-0"]').click()
+    const floor1Cables = await page.evaluate(() => window.__cameraLayoutToolTestHooks!.getCables())
+    expect(floor1Cables).toHaveLength(1)
+  })
+
+  test('regression: redo of a floor delete does not leave the canvas blank when the neighbour shares the same plan image', async ({ page }) => {
+    test.setTimeout(60_000)
+    page.on('dialog', (dialog) => void dialog.accept())
+
+    await page.goto('/')
+    await waitForTestHooks(page)
+
+    // Floor 1 gets its OWN image (Y); floors 2 and 3 deliberately share the exact same bytes (X) -
+    // the bug only reproduces when the floor that ends up active again shows the SAME data URL the
+    // deleted floor had, so the data-URL-keyed sync never sees it "change" across the round trip.
+    await loadImage(page, IMAGE_1, 'floor-1.png') // Y
+    await waitForDecodedImageSize(page, 20, 16)
+
+    await page.locator('[data-testid="floor-tab-add-button"]').click() // floor 2, now active
+    await loadImage(page, IMAGE_2, 'floor-2.png') // X
+    await waitForDecodedImageSize(page, 28, 22)
+
+    await page.locator('[data-testid="floor-tab-add-button"]').click() // floor 3, now active
+    await loadImage(page, IMAGE_2, 'floor-3.png') // same X bytes as floor 2
+    await waitForDecodedImageSize(page, 28, 22)
+    await expect(page.locator('[data-testid="floor-tab-button-2"]')).toHaveAttribute('aria-selected', 'true')
+
+    await page.locator('[data-testid="floor-tab-delete-button"]').click() // delete floor 3 (active)
+    await expect(page.locator('[data-testid="floor-tab-2"]')).toHaveCount(0)
+
+    await page.locator('[data-testid="undo-button"]').click() // floor 3 reappears, active again
+    await page.locator('[data-testid="redo-button"]').click() // floor 3 gone again -> floor 2 (its neighbour) active
+
+    await expect(page.locator('[data-testid="floor-tab-2"]')).toHaveCount(0)
+    await expect(page.locator('[data-testid="floor-tab-button-1"]')).toHaveAttribute('aria-selected', 'true')
+    // The bug: `decodedImage` got nulled twice during that redo and never came back because the
+    // active floor's data URL (X) read as unchanged start-to-end - canvas stayed blank forever.
+    await waitForDecodedImageSize(page, 28, 22)
+    await expect(page.locator('[data-testid="stage-container"] canvas').first()).toBeVisible()
+    expect(await canvasCount(page)).toBeGreaterThan(0)
+  })
 })
 
 test.describe('multi-floor-tabs-smoke - floor switch latency', () => {

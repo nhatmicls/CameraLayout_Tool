@@ -7,6 +7,7 @@ import { defaultBeamEnvironment, sensorPlacementShape } from '../../domain/senso
 import { DEFAULT_VIEW_CONFIG } from '../../domain/view/view-config-types'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
+import { selectProject } from '../../state/project-store-floor-selectors'
 import { loadProjectFromFile, saveProjectToFile } from './project-file-save-and-load'
 import { summariseProjectLoadWarnings } from './summarise-project-load-warnings'
 
@@ -39,10 +40,10 @@ const PROJECT_FILE_LOOKUPS: ProjectFileLookups = {
  * `editor-ui-store`'s `hasUnsavedChanges` flag. Pulled out of `app.tsx` to
  * keep that file under the project's line-count guideline.
  *
- * Phase 2 removed the phase-1 one-floor bridge: the store now holds the
- * real multi-floor `Project` shape directly, so save/load pass it straight
- * through. `decodedImage` is no longer set here -
- * `use-active-floor-decoded-image-sync.ts` is the only place that does.
+ * The store holds the real multi-floor `Project` shape directly, so
+ * save/load pass it straight through - no flat one-floor bridge type.
+ * `decodedImage` is no longer set here - `use-active-floor-decoded-image-sync.ts`
+ * is the only place that does.
  */
 export function useProjectFileActions() {
   const replaceProject = useProjectStore((s) => s.replaceProject)
@@ -71,13 +72,7 @@ export function useProjectFileActions() {
     // real work even while you happen to be looking at an image-less one.
     if (!current.floors.some((floor) => floor.image !== null)) return
     try {
-      const result = saveProjectToFile({
-        floors: current.floors,
-        shafts: current.shafts,
-        cableTypes: current.cableTypes,
-        cableSettings: current.cableSettings,
-        fireAlarmSettings: current.fireAlarmSettings,
-      })
+      const result = saveProjectToFile(selectProject(current))
       if (!result.ok) {
         pushNotification('error', result.error)
         return

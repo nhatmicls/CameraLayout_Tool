@@ -8,7 +8,7 @@ import {
   type CableType,
   type Hub,
 } from '../domain/cable/cable-layout-types'
-import { isCableTypeInUse, removeCablesOfHub } from '../domain/cable/cable-reference-integrity'
+import { isCableTypeInUseOnAnyFloor, removeCablesOfHub } from '../domain/cable/cable-reference-integrity'
 
 /**
  * The cable slice of the project store: hubs, cables, cable types and the
@@ -20,7 +20,10 @@ import { isCableTypeInUse, removeCablesOfHub } from '../domain/cable/cable-refer
  * Callers pass already-clamped values (the panels clamp through their
  * inputs); the store does not re-validate ranges, same as for cameras.
  */
-export type CablingState = CableLayout
+export interface CablingState extends CableLayout {
+  /** Every floor's cables (the active floor's own included) - used only to check cross-floor cable-type usage before a delete; a SHIP-BLOCKER fix (a type used on another, inactive floor must still refuse the delete). Never written back by any action. */
+  allFloorsCables: readonly Cable[][]
+}
 
 export interface CablingActions {
   /** No-op at `MAX_HUBS`. */
@@ -110,9 +113,9 @@ export function createCablingActions(set: (partial: Partial<CablingState>) => vo
     },
 
     deleteCableType: (id) => {
-      const { cableTypes, cables } = get()
+      const { cableTypes, allFloorsCables } = get()
       const isKnown = cableTypes.some((type) => type.id === id)
-      if (!isKnown || cableTypes.length <= 1 || isCableTypeInUse(cables, id)) return false
+      if (!isKnown || cableTypes.length <= 1 || isCableTypeInUseOnAnyFloor(allFloorsCables, id)) return false
       set({ cableTypes: cableTypes.filter((type) => type.id !== id) })
       return true
     },

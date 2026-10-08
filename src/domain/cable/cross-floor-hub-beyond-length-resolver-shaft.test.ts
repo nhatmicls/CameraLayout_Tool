@@ -62,10 +62,12 @@ describe('resolveHubBeyondLength - shaft markers', () => {
       { hubs: [{ ...SHAFT_MARKER_F3, trunk: undefined }] },
     ])
     const beyond = resolveHubBeyondLength(project, { floorId: 'sf0', hubId: 'sm1' }, shaftCable('c1', 'sm1'))
-    // D2 (phase 6 review): "0 m at the marker + extraLengthM", never `|routeHeightM - 0| + extraLengthM`.
-    // This assertion CHANGES from the original implementation's 7 (= |3-0| + 4): that value was
-    // wrong against the phase file's own spec, not a behaviour this phase deliberately altered.
-    expect(beyond).toEqual({ source: 'typed', run: { nominal: 4, min: 4, max: 4 } })
+    // D2: "0 m at the marker + extraLengthM", never `|routeHeightM - 0| + extraLengthM`.
+    // `shaftNoExit: true` is the flag `estimateCableLength` (`cable-length-estimate-calculator.ts`)
+    // reads to use `run` as-is instead of recomputing from a riser/drop/plain hub's own fields -
+    // ship-blocker fix: the calculator used to ignore this `run` and silently add a spurious
+    // `routeHeightM` term, i.e. 7 (= |3-0| + 4) instead of the correct 4.
+    expect(beyond).toEqual({ source: 'typed', run: { nominal: 4, min: 4, max: 4 }, shaftNoExit: true })
   })
 
   it('several exits, no/stale choice -> unavailable "shaft-exit-not-chosen", never a silent 0', () => {

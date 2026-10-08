@@ -31,6 +31,12 @@ const FLOOR_CHANGED_DURING_LOAD_MESSAGE =
  * FRESH state (`resolveImageLoadTarget`) right after - the confirm prompt
  * and the budget verdict are also computed from that same fresh state, not
  * whatever was captured before the await.
+ *
+ * `loadSeq` is pinned the same way, alongside `targetFloorId`: a whole
+ * project opened (or reset) while the decode is in flight must also abort
+ * the stale apply, even when the newly loaded project's active floor
+ * happens to share an id with `targetFloorId` (two legacy files both using
+ * the fixed pre-v7 floor id) - see `resolveImageLoadTarget`.
  */
 export function useFloorPlanImageLoader() {
   const setImage = useProjectStore((s) => s.setImage)
@@ -43,6 +49,7 @@ export function useFloorPlanImageLoader() {
   const loadImageFile = useCallback(
     async (file: File) => {
       const targetFloorId = useProjectStore.getState().activeFloorId
+      const targetLoadSeq = useProjectStore.getState().loadSeq
 
       try {
         // `decoded.element` goes unused here: `useActiveFloorDecodedImageSync`
@@ -51,10 +58,10 @@ export function useFloorPlanImageLoader() {
         // go through one code path).
         const { image: decoded, warning } = await readImageFileAsDataUrl(file)
 
-        // Everything from here on reads FRESH state - `targetFloorId` is the only thing
-        // captured before the await.
+        // Everything from here on reads FRESH state - `targetFloorId`/`targetLoadSeq` are the
+        // only things captured before the await.
         const freshState = useProjectStore.getState()
-        if (resolveImageLoadTarget(freshState.floors, freshState.activeFloorId, targetFloorId) !== 'ok') {
+        if (resolveImageLoadTarget(freshState.floors, freshState.activeFloorId, targetFloorId, freshState.loadSeq, targetLoadSeq) !== 'ok') {
           pushNotification('warning', FLOOR_CHANGED_DURING_LOAD_MESSAGE)
           return
         }

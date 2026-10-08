@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Hub } from '../cable/cable-layout-types'
+import { setHubTrunk, unlinkHub } from '../cable/cross-floor-hub-link-writer'
 import { parseProjectFile, serializeProject, type ProjectFileLookups } from './project-file-schema'
 import { buildFloor, buildProjectWithFloors } from './project-file-test-fixtures'
 
@@ -49,6 +50,24 @@ describe('project file cross-floor links - round trip', () => {
     expect(result.project.floors[0].hubs).toEqual([RISER])
     expect(result.project.floors[1].hubs).toEqual([DROP, PLAIN_HUB])
     expect(result.warnings).toEqual([])
+  })
+})
+
+describe('unlinkHub / setHubTrunk(null) delete their keys outright, so in-memory state deep-equals a reloaded project (bug fix)', () => {
+  it('after unlinkHub: neither side keeps a stray `link`/`trunk: undefined` key', () => {
+    const project = linkedProject()
+    const floorsAfterUnlink = unlinkHub(project.floors, { floorId: 'floor-1', hubId: 'riser-1' })
+    const reloaded = expectOk(parseRaw(JSON.parse(serializeProject({ ...project, floors: floorsAfterUnlink }))))
+    // toStrictEqual (unlike toEqual) tells apart a MISSING key from one present with value `undefined` -
+    // exactly the bug: `{ ...hub, link: undefined }` is NOT the same shape as a hub that never had `link`.
+    expect(reloaded.project.floors).toStrictEqual(floorsAfterUnlink)
+  })
+
+  it('after setHubTrunk(ref, null): no stray `trunk: undefined` key', () => {
+    const project = linkedProject()
+    const floorsAfterClear = setHubTrunk(project.floors, { floorId: 'floor-2', hubId: 'drop-1' }, null)
+    const reloaded = expectOk(parseRaw(JSON.parse(serializeProject({ ...project, floors: floorsAfterClear }))))
+    expect(reloaded.project.floors).toStrictEqual(floorsAfterClear)
   })
 })
 

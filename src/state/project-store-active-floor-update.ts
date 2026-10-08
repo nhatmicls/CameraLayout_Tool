@@ -2,8 +2,8 @@
  * Write helpers that patch one floor inside `ProjectState.floors` by
  * reference, immutably - every placed-item/cabling/fire-alarm action goes
  * through one of these two so an untouched floor always keeps its exact
- * object identity (zundo's undo history, and `findSingleChangedFloorId`,
- * both rely on that).
+ * object identity (zundo's undo history, and `findChangedFloorIds`'s
+ * undo/redo auto-switch, both rely on that).
  */
 import { pruneInvalidCrossFloorLinks } from '../domain/cable/cross-floor-hub-link-integrity'
 import { clearStaleExitChoices } from '../domain/cable/shaft-cable-exit-cascade'

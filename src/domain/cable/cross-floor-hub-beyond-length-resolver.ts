@@ -19,7 +19,7 @@ import { hubEffectiveHeightM, type Cable, type Hub, type HubRef } from './cable-
  * several exits with none chosen - never silently 0.
  */
 export type HubBeyondLength =
-  | { source: 'typed'; run: MetersInterval }
+  | { source: 'typed'; run: MetersInterval; shaftNoExit?: boolean }
   | { source: 'route'; crossingVerticalM: number; run: MetersInterval; viaLabel: string }
   | { source: 'unavailable'; reason: 'linked-floor-scale-not-set' | 'link-cycle'; floorName: string }
   | { source: 'unavailable'; reason: 'shaft-exit-not-chosen' }
@@ -48,7 +48,10 @@ export function sumFloorHeightsBetween(floors: readonly Floor[], fromIndex: numb
 function typedBeyond(routeHeightM: number, hub: Pick<Hub, 'kind' | 'mountHeightM' | 'extraLengthM'>): HubBeyondLength {
   if (hub.kind === 'shaft') {
     const flat = hub.extraLengthM ?? 0
-    return { source: 'typed', run: { nominal: flat, min: flat, max: flat } }
+    // `shaftNoExit` tells `estimateCableLength` (which only sees a `CableHubEndpoint`, not this
+    // raw `Hub`, and so cannot check `hub.kind` itself) to use `run` as-is instead of recomputing
+    // via the riser/drop/plain-hub formula - see that function's own comment.
+    return { source: 'typed', run: { nominal: flat, min: flat, max: flat }, shaftNoExit: true }
   }
   const flat = Math.abs(routeHeightM - hubEffectiveHeightM(hub)) + (hub.extraLengthM ?? 0)
   return { source: 'typed', run: { nominal: flat, min: flat, max: flat } }

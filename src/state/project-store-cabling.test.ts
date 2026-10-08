@@ -187,6 +187,21 @@ describe('project store cable types and settings', () => {
     expect(store().cableTypes.map((type) => type.id)).toEqual(['cat6-utp'])
   })
 
+  it('refuses to delete a type in use on ANOTHER floor (not the active one); state identity unchanged, no undo step', () => {
+    const floor1 = buildFloor({ id: 'floor-1', cameras: [camera], hubs: [hub], cables: [makeCable('k-cam', { kind: 'camera', id: 'dev-1' })] })
+    const floor2 = buildFloor({ id: 'floor-2', name: 'Floor 2' })
+    store().replaceProject(buildProjectWithFloors([floor1, floor2]))
+    store().setActiveFloor('floor-2')
+    history().clear()
+
+    const typesBefore = store().cableTypes
+    const stepsBefore = steps()
+    expect(getActiveFloor(store()).id).toBe('floor-2')
+    expect(store().deleteCableType('cat6-utp')).toBe(false)
+    expect(store().cableTypes).toBe(typesBefore)
+    expect(steps()).toBe(stepsBefore)
+  })
+
   it('updates the settings in one step', () => {
     store().updateCableSettings({ wastePercent: 10, routeHeightM: 4 })
     expect(store().cableSettings).toEqual({ ...DEFAULT_CABLE_SETTINGS, wastePercent: 10, routeHeightM: 4 })

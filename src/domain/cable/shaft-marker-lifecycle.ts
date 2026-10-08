@@ -53,9 +53,13 @@ export function createShaftMarkers(
 }
 
 /**
- * Deletes every marker of `shaftId` on every floor, their cables, any OTHER
- * hub's trunk that targeted one of them (a shaft marker can be a trunk
- * TARGET too - the chain case), and the shaft's own entry in `shafts[]`.
+ * Deletes every marker of `shaftId` on every floor, their cables, and the
+ * shaft's own entry in `shafts[]`. Also clears any OTHER hub's `trunk` that
+ * targeted one of these markers - a DEFENSIVE cleanup only: decision D1
+ * (`cross-floor-hub-beyond-length-resolver.ts`) means a trunk can never
+ * legally target a shaft marker on a live project, so this branch should be
+ * unreachable in practice, but a deleted marker must never leave a dangling
+ * `trunk.hubId` behind on the off chance one exists.
  */
 export function removeShaft(floors: readonly Floor[], shafts: readonly Shaft[], shaftId: string): { floors: Floor[]; shafts: Shaft[] } {
   const markerHubIds = new Set(findShaftMarkers(floors, shaftId).map((marker) => marker.hub.id))

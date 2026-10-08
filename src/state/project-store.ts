@@ -50,9 +50,10 @@ function routeFireAlarmPartial(
 
 // `replaceProject`/`resetProject` below call `useProjectStore.temporal` - a
 // reference to the store this very `create()(...)` call produces. That's
-// safe despite looking circular: see the long-standing comment this phase
-// carried over from before the floors restructure - it's zundo's own
-// documented pattern for clearing history.
+// safe despite looking circular: by the time either action runs, `create()`
+// has already returned and assigned `useProjectStore`, and zundo's own
+// documented pattern for clearing history is exactly this - call
+// `store.temporal.getState().clear()` from inside a store action.
 export const useProjectStore = create<ProjectStore>()(
   temporal(
     (set, get) => ({
@@ -74,7 +75,15 @@ export const useProjectStore = create<ProjectStore>()(
         () => {
           const state = get()
           const floor = selectActiveFloor(state)
-          return { hubs: floor.hubs, cables: floor.cables, cableTypes: state.cableTypes, cableSettings: state.cableSettings }
+          return {
+            hubs: floor.hubs,
+            cables: floor.cables,
+            cableTypes: state.cableTypes,
+            cableSettings: state.cableSettings,
+            // SHIP-BLOCKER fix: `deleteCableType` must refuse when the type is used on ANY floor,
+            // not only the active one - see `isCableTypeInUseOnAnyFloor`.
+            allFloorsCables: state.floors.map((f) => f.cables),
+          }
         },
       ),
       ...createFireAlarmActions(

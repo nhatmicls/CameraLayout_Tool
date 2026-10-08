@@ -83,6 +83,35 @@ describe('relinkHub (item 4: the hub panel\'s "Linked to" picker, one step)', ()
     const next = relinkHub(floors, { floorId: 'floor-0', hubId: 'riser-2' }, { floorId: 'floor-1', hubId: 'drop-1' })
     expect(next).toBe(floors)
   })
+
+  it('BUG FIX: a refused switch leaves an ALREADY-LINKED hub linked to its OLD partner, not unlinked', () => {
+    // riser-1 <-> drop-1 is already linked (the fixture). Add a THIRD point (riser-3 <-> drop-3,
+    // already linked to each other) and try to switch riser-1 onto drop-3 - already taken.
+    const riser3: { id: string; kind: 'riser'; x: number; y: number; mountHeightM: number; link: { floorId: string; hubId: string } } = {
+      id: 'riser-3',
+      kind: 'riser',
+      x: 2,
+      y: 2,
+      mountHeightM: 3,
+      link: { floorId: 'floor-1', hubId: 'drop-3' },
+    }
+    const drop3: { id: string; kind: 'drop'; x: number; y: number; mountHeightM: number; link: { floorId: string; hubId: string } } = {
+      id: 'drop-3',
+      kind: 'drop',
+      x: 2,
+      y: 2,
+      mountHeightM: 0,
+      link: { floorId: 'floor-0', hubId: 'riser-3' },
+    }
+    const floors = floorsOf({
+      floor0: { hubs: [...floorsOf()[0].hubs, riser3] },
+      floor1: { hubs: [...floorsOf()[1].hubs, drop3] },
+    })
+    const next = relinkHub(floors, { floorId: 'floor-0', hubId: 'riser-1' }, { floorId: 'floor-1', hubId: 'drop-3' })
+    expect(next).toBe(floors) // the whole operation is refused, not just the new link
+    expect(next[0].hubs.find((h) => h.id === 'riser-1')!.link).toEqual({ floorId: 'floor-1', hubId: 'drop-1' }) // still with its ORIGINAL partner
+    expect(next[1].hubs.find((h) => h.id === 'drop-1')!.link).toEqual({ floorId: 'floor-0', hubId: 'riser-1' })
+  })
 })
 
 describe('setHubTrunk', () => {

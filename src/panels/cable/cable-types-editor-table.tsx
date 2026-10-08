@@ -7,14 +7,15 @@ import {
   type Cable,
   type CableType,
 } from '../../domain/cable/cable-layout-types'
-import { isCableTypeInUse } from '../../domain/cable/cable-reference-integrity'
+import { isCableTypeInUseOnAnyFloor } from '../../domain/cable/cable-reference-integrity'
 import { compactInputClass, secondaryButtonClass } from '../camera/camera-properties-form-helpers'
 import { CommittedTextInput } from '../shared/committed-text-input'
 import { NullableNumberInput } from '../shared/nullable-number-input'
 
 interface CableTypesEditorTableProps {
   cableTypes: CableType[]
-  cables: Cable[]
+  /** Every floor's cables (not only the active floor's) - a type in use on ANOTHER floor must still show as in-use and refuse deletion (SHIP-BLOCKER fix). */
+  allFloorsCables: readonly Cable[][]
   onUpdate: (id: string, patch: Partial<Omit<CableType, 'id'>>) => void
   onAdd: () => void
   onDelete: (id: string) => void
@@ -23,16 +24,16 @@ interface CableTypesEditorTableProps {
 /**
  * The project's cable types: name, length limit (empty = none) and price
  * per metre (empty = price on request - prices are typed by the user, never
- * prefilled). A type cannot be deleted while a cable uses it, nor when it
- * is the last one.
+ * prefilled). A type cannot be deleted while a cable on ANY floor uses it,
+ * nor when it is the last one.
  */
-export function CableTypesEditorTable({ cableTypes, cables, onUpdate, onAdd, onDelete }: CableTypesEditorTableProps) {
+export function CableTypesEditorTable({ cableTypes, allFloorsCables, onUpdate, onAdd, onDelete }: CableTypesEditorTableProps) {
   const isLast = cableTypes.length <= 1
 
   return (
     <div className="mt-1">
       {cableTypes.map((type, i) => {
-        const inUse = isCableTypeInUse(cables, type.id)
+        const inUse = isCableTypeInUseOnAnyFloor(allFloorsCables, type.id)
         const deleteTitle = inUse ? 'In use by a cable' : isLast ? 'At least one cable type is needed' : 'Delete this cable type'
         return (
           <div key={type.id} data-testid={`cable-type-row-${type.id}`} className="mt-2 border-t border-neutral-100 pt-2">

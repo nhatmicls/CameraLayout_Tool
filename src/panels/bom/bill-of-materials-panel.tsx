@@ -7,6 +7,7 @@ import { resolveFireAlarmDeviceLabel } from '../../domain/fire-alarm/fire-alarm-
 import { buildCombinedBomRows } from '../../export/shared/build-combined-bom-rows'
 import { FireAlarmCompatibilityWarningsBlock } from '../fire-alarm/fire-alarm-compatibility-warnings-block'
 import { useProjectStore } from '../../state/project-store'
+import { selectProject } from '../../state/project-store-floor-selectors'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { BillOfMaterialsCablesSection } from './bill-of-materials-cables-section'
 import { BillOfMaterialsFloorFilter } from './bill-of-materials-floor-filter'
@@ -39,10 +40,11 @@ export function BillOfMaterialsPanel() {
   const fireAlarmSettings = useProjectStore((s) => s.fireAlarmSettings)
   const activeFloorId = useProjectStore((s) => s.activeFloorId)
   const setSelectedFireAlarmDeviceId = useEditorUiStore((s) => s.setSelectedFireAlarmDeviceId)
-  // Built locally (not a store selector returning a fresh object) - a zustand selector must
-  // return a STABLE reference when nothing changed, or React re-renders forever re-deriving it.
+  // Built locally from stable slices via `selectProject` (not a store selector returning a
+  // fresh object directly) - a zustand selector must return a STABLE reference when nothing
+  // changed, or React re-renders forever re-deriving it.
   const project = useMemo(
-    () => ({ floors, shafts, cableTypes, cableSettings, fireAlarmSettings }),
+    () => selectProject({ floors, shafts, cableTypes, cableSettings, fireAlarmSettings }),
     [floors, shafts, cableTypes, cableSettings, fireAlarmSettings],
   )
   const [selectedFloorId, setSelectedFloorId] = useState<string>('all')

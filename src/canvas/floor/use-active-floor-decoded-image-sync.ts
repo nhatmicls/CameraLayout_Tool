@@ -41,11 +41,29 @@ function pruneStaleCacheEntries(cache: Map<string, HTMLImageElement>): void {
  * in a same-SIZED floor list whose old images are now all unused) - and
  * again right before caching a freshly decoded image, so the cache can
  * never hold more than the live floor count even between those triggers.
+ *
+ * Bug fix (blank canvas after redo of a floor delete): the decode effect
+ * below used to depend on `dataUrl` alone. `project-store-to-editor-ui-sync.ts`
+ * nulls `decodedImage` synchronously, OUTSIDE React, on every project-store
+ * change where the active floor's own data URL differs from what it was
+ * immediately before THAT SAME change - and `undoProject`/`redoProject` can
+ * apply a floor-list change and the matching `setActiveFloor` as TWO separate
+ * `set()` calls. When those two intermediate data URLs round-trip back to the
+ * SAME value by the time React re-renders (e.g. X -> Y -> X, because a stale
+ * `activeFloorId` briefly pointed at a just-removed floor), `dataUrl` here
+ * reads as unchanged across the whole operation even though `decodedImage`
+ * was nulled - so the old dependency array never re-ran this effect, and the
+ * canvas stayed blank forever. Subscribing to `decodedImage` too closes that
+ * gap: whenever it is null while the active floor DOES have an image, this
+ * effect now re-fires regardless of whether `dataUrl` itself moved - a cache
+ * hit (the common case, since the image was very likely already decoded
+ * before) makes that re-run cheap.
  */
 export function useActiveFloorDecodedImageSync(): void {
   const dataUrl = useProjectStore((state) => selectImage(state)?.dataUrl ?? null)
   const floorCount = useProjectStore((state) => state.floors.length)
   const loadSeq = useProjectStore((state) => state.loadSeq)
+  const decodedImage = useEditorUiStore((state) => state.decodedImage)
   const setDecodedImage = useEditorUiStore((state) => state.setDecodedImage)
   const pushNotification = useEditorUiStore((state) => state.pushNotification)
   const cacheRef = useRef(new Map<string, HTMLImageElement>())
@@ -56,6 +74,7 @@ export function useActiveFloorDecodedImageSync(): void {
 
   useEffect(() => {
     if (dataUrl === null) return
+    if (decodedImage !== null) return // already showing something for the active floor - nothing to do
 
     const cached = cacheRef.current.get(dataUrl)
     if (cached) {
@@ -82,5 +101,5 @@ export function useActiveFloorDecodedImageSync(): void {
     return () => {
       cancelled = true
     }
-  }, [dataUrl, setDecodedImage, pushNotification])
+  }, [dataUrl, decodedImage, setDecodedImage, pushNotification])
 }

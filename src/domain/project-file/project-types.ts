@@ -4,15 +4,15 @@
  * no React/Konva imports.
  *
  * Schema v7 made the project multi-floor (`Project.floors`, see `Floor` in
- * `domain/floor/floor-types.ts`); `LegacyFlatProject` below is the pre-v7
- * flat shape (one floor's worth of data at the top level) the legacy reader
- * still produces, now used only by `project-file-legacy-flat-migration.ts`
- * (the store itself holds `floors[]` directly since phase 2).
+ * `domain/floor/floor-types.ts`); the pre-v7 flat shape (one floor's worth
+ * of data at the top level) is read directly off the legacy zod schema
+ * instead (`LegacyFlatProjectFileData`/`WrappedLegacyFlatProject` in
+ * `project-file-legacy-flat-migration.ts`) - the store itself holds
+ * `floors[]` directly, with no separate flat save/load bridge type.
  */
-import type { CableLayout, CableSettings, CableType, Shaft } from '../cable/cable-layout-types'
+import type { CableSettings, CableType, Shaft } from '../cable/cable-layout-types'
 import type { Floor } from '../floor/floor-types'
-import { DEFAULT_FIRE_ALARM_SETTINGS, type FireAlarmSettings, type PlacedFireAlarmDevice } from '../fire-alarm/fire-alarm-device-types'
-import type { PlacedSensor } from '../sensor/sensor-types'
+import type { FireAlarmSettings, PlacedFireAlarmDevice } from '../fire-alarm/fire-alarm-device-types'
 
 /** A camera placed on the floor plan. Position/rotation live in image pixel space (y-down, matching canvas + Konva). */
 export interface PlacedCamera {
@@ -70,47 +70,25 @@ export interface Wall {
 /**
  * The two fire-alarm fields, always present in memory; optional in the file
  * (pre-v6 files have neither). Combinator mirrors `CableLayout`
- * (`cable-layout-types.ts`). Used by the pre-v7 flat shape (`LegacyFlatProject`)
- * and by the store's fire-alarm action slice (`FireAlarmState`, routed onto
- * the active floor's `fireAlarmDevices` + the project-level `fireAlarmSettings`
- * - see `project-store.ts`'s `routeFireAlarmPartial`); v7's `Project` itself
- * keeps `fireAlarmSettings` at project level and moves `fireAlarmDevices`
- * onto each `Floor` instead.
+ * (`cable-layout-types.ts`). Used by the store's fire-alarm action slice
+ * (`FireAlarmState`, routed onto the active floor's `fireAlarmDevices` +
+ * the project-level `fireAlarmSettings` - see `project-store.ts`'s
+ * `routeFireAlarmPartial`); v7's `Project` itself keeps `fireAlarmSettings`
+ * at project level and moves `fireAlarmDevices` onto each `Floor` instead.
  */
 export interface FireAlarmLayout {
   fireAlarmDevices: PlacedFireAlarmDevice[]
   fireAlarmSettings: FireAlarmSettings
 }
 
-/** Fresh empty state for a new/reset project - a defensive clone of `DEFAULT_FIRE_ALARM_SETTINGS` so no two callers ever share one mutable reference (mirrors `createEmptyCableLayout`'s `{ ...DEFAULT_CABLE_SETTINGS }`). */
-export function createEmptyFireAlarmLayout(): FireAlarmLayout {
-  return { fireAlarmDevices: [], fireAlarmSettings: { ...DEFAULT_FIRE_ALARM_SETTINGS } }
-}
-
-/**
- * Pre-v7 flat shape: one floor's worth of data at the top level. The cable
- * and fire-alarm fields are always present in memory; optional in the file
- * (v1-v4 files have no cable keys, v1-v5 have no fire-alarm keys). Used only
- * by the legacy (v1-v6) reader today (`project-file-legacy-flat-migration.ts`
- * wraps it into one `Floor`) - phase 1 also had the still-flat store use it
- * as a save/load bridge type; phase 2 removed that bridge.
- */
-export interface LegacyFlatProject extends CableLayout, FireAlarmLayout {
-  image: PlanImage
-  scale: ScaleCalibration | null
-  cameras: PlacedCamera[]
-  /** Always present in memory; optional in the file (older files have none). */
-  walls: Wall[]
-  /** Always present in memory; optional in the file (v1-v3 files have none). See `sensor-types.ts`. */
-  sensors: PlacedSensor[]
-}
-
 /**
  * Multi-floor project (schema v7). `floors[0]` is the lowest floor (tab
- * order). `shafts` is the project-wide list of vertical tubes (phase 1:
- * names only, no markers yet). `fireAlarmSettings` stays project-level - one
- * coverage-mode setting for the whole building - while each floor's own
- * `fireAlarmDevices` lives on `Floor` (see its doc comment).
+ * order). `shafts` is the project-wide list of vertical tubes; each one's
+ * own openings are hub markers on the floors it passes through
+ * (`Hub.kind: 'shaft'`, `Hub.shaftId`), not stored here. `fireAlarmSettings`
+ * stays project-level - one coverage-mode setting for the whole building -
+ * while each floor's own `fireAlarmDevices` lives on `Floor` (see its doc
+ * comment).
  */
 export interface Project {
   floors: Floor[]
@@ -122,12 +100,11 @@ export interface Project {
 
 /**
  * Minimal structural shape the domain needs from a catalog camera model.
- * Mirrors `src/catalog/camera/camera-catalog-schema.ts` (Phase 2, built concurrently
- * with this phase - see phase-02 "Architecture" section for the full record).
- * Defined locally on purpose: the plan's Key Insights say project/domain
- * modules must stay independent of `src/catalog`. TypeScript structural
- * typing means the real catalog records (with their extra fields such as
- * `id`, `sourceUrl`, `notes`) satisfy this type without any adapter.
+ * Mirrors `src/catalog/camera/camera-catalog-schema.ts`. Defined locally on
+ * purpose: `src/domain/**` must stay independent of `src/catalog`.
+ * TypeScript structural typing means the real catalog records (with their
+ * extra fields such as `id`, `sourceUrl`, `notes`) satisfy this type
+ * without any adapter.
  */
 export type CameraLensSpec =
   | {

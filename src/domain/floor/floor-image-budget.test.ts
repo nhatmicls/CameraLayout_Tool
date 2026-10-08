@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildFloor } from '../project-file/project-file-test-fixtures'
-import {
-  FLOOR_IMAGE_BUDGET_REFUSE_CHARS,
-  FLOOR_IMAGE_BUDGET_WARN_CHARS,
-  imageBudgetVerdict,
-  totalFloorImageChars,
-} from './floor-image-budget'
+import { FLOOR_IMAGE_BUDGET_REFUSE_CHARS, FLOOR_IMAGE_BUDGET_WARN_CHARS, imageBudgetVerdict } from './floor-image-budget'
 
 function floorWithImageChars(id: string, chars: number) {
   return buildFloor({ id, image: { dataUrl: 'x'.repeat(chars), widthPx: 10, heightPx: 10, fileName: 'a.png' } })
@@ -14,17 +9,6 @@ function floorWithImageChars(id: string, chars: number) {
 function floorWithNoImage(id: string) {
   return buildFloor({ id, image: null, scale: null })
 }
-
-describe('totalFloorImageChars', () => {
-  it('sums every floor image data-URL length, skipping image-less floors', () => {
-    const floors = [floorWithImageChars('f1', 100), floorWithNoImage('f2'), floorWithImageChars('f3', 50)]
-    expect(totalFloorImageChars(floors)).toBe(150)
-  })
-
-  it('is 0 for a project with no images at all', () => {
-    expect(totalFloorImageChars([floorWithNoImage('f1')])).toBe(0)
-  })
-})
 
 describe('imageBudgetVerdict', () => {
   it('is "ok" well under both thresholds', () => {

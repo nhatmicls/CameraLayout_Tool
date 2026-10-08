@@ -3,6 +3,7 @@ import type { Cable } from './cable-layout-types'
 import {
   cableRefProblem,
   isCableTypeInUse,
+  isCableTypeInUseOnAnyFloor,
   removeCablesOfDevice,
   removeCablesOfHub,
   type CableRefContext,
@@ -42,6 +43,17 @@ describe('isCableTypeInUse', () => {
   it('is true for a used type and false otherwise', () => {
     expect(isCableTypeInUse(all, 't2')).toBe(true)
     expect(isCableTypeInUse(all, 't3')).toBe(false)
+  })
+})
+
+describe('isCableTypeInUseOnAnyFloor', () => {
+  it('is true when ANY floor (not only the first) uses the type', () => {
+    expect(isCableTypeInUseOnAnyFloor([[], all], 't2')).toBe(true)
+    expect(isCableTypeInUseOnAnyFloor([all, []], 't2')).toBe(true)
+  })
+
+  it('is false when no floor uses the type', () => {
+    expect(isCableTypeInUseOnAnyFloor([[], all], 't3')).toBe(false)
   })
 })
 

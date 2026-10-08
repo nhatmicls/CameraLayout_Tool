@@ -49,7 +49,7 @@ export interface ProjectState {
 }
 
 export interface ProjectActions extends FloorListActions, PlacedItemActions, CablingActions, FireAlarmActions, CrossFloorLinkActions, ShaftActions {
-  /** Replaces the whole project (used when loading a project file). Sets the active floor to `project.floors[0]` (tab 1 = lowest floor) and clears undo history. */
+  /** Replaces the whole project (used when loading a project file). Activates the first floor that actually HAS an image (not always `project.floors[0]` - tab 1 need not be the one with a plan), and clears undo history. */
   replaceProject: (project: Project) => void
   /** Clears back to the empty-project state: one empty floor, no shafts, default cable types/settings/fire-alarm settings. Clears undo history. */
   resetProject: () => void

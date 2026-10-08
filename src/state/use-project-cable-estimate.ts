@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { computeProjectCableEstimate, type ProjectCableEstimate } from '../domain/cable/project-cable-layout-estimate'
 import { useProjectStore } from './project-store'
+import { selectProject } from './project-store-floor-selectors'
 
 /**
  * THE one call to `computeProjectCableEstimate` for the whole app - every
@@ -17,7 +18,7 @@ export function useProjectCableEstimate(): ProjectCableEstimate {
   const fireAlarmSettings = useProjectStore((s) => s.fireAlarmSettings)
 
   return useMemo(
-    () => computeProjectCableEstimate({ floors, shafts, cableTypes, cableSettings, fireAlarmSettings }),
+    () => computeProjectCableEstimate(selectProject({ floors, shafts, cableTypes, cableSettings, fireAlarmSettings })),
     [floors, shafts, cableTypes, cableSettings, fireAlarmSettings],
   )
 }

@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { DEFAULT_CABLE_SETTINGS } from '../../domain/cable/cable-layout-types'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
@@ -18,6 +19,11 @@ const summaryClass = 'cursor-pointer select-none text-xs font-semibold text-neut
 export function CableEstimatePanel() {
   const hubs = useProjectStore(selectHubs)
   const cables = useProjectStore(selectCables)
+  const floors = useProjectStore((s) => s.floors)
+  // Every floor's cables, not just the active one - a cable type in use on ANOTHER floor must
+  // still show as in-use and refuse deletion (SHIP-BLOCKER fix). Stable identity so the table's
+  // own memoisation (if any) is not defeated on every unrelated render.
+  const allFloorsCables = useMemo(() => floors.map((floor) => floor.cables), [floors])
   const cableTypes = useProjectStore((s) => s.cableTypes)
   const cableSettings = useProjectStore((s) => s.cableSettings)
   const addCableType = useProjectStore((s) => s.addCableType)
@@ -53,7 +59,7 @@ export function CableEstimatePanel() {
         <summary className={summaryClass}>Cable types</summary>
         <CableTypesEditorTable
           cableTypes={cableTypes}
-          cables={cables}
+          allFloorsCables={allFloorsCables}
           onUpdate={updateCableType}
           onAdd={handleAddType}
           onDelete={handleDeleteType}

@@ -94,9 +94,3 @@ export function findChangedFloorIds(before: Floor[], after: Floor[]): string[] |
   }
   return changed
 }
-
-/** `findChangedFloorIds`, narrowed to the single-floor-content-change case the original (phase 2/3) auto-switch rule needs. `null` for zero, two-or-more, or an unreorderable diff. */
-export function findSingleChangedFloorId(before: Floor[], after: Floor[]): string | null {
-  const changed = findChangedFloorIds(before, after)
-  return changed?.length === 1 ? changed[0] : null
-}

@@ -5,7 +5,6 @@ import {
   addFloorToList,
   defaultFloorName,
   findChangedFloorIds,
-  findSingleChangedFloorId,
   moveFloorInList,
   nearestFloorIndexAfterRemoval,
   removeFloorFromList,
@@ -133,38 +132,6 @@ describe('nearestFloorIndexAfterRemoval', () => {
 
   it('clamps a negative (not-found) index up to 0', () => {
     expect(nearestFloorIndexAfterRemoval(-1, 3)).toBe(0)
-  })
-})
-
-describe('findSingleChangedFloorId', () => {
-  it('finds the one floor whose object reference changed', () => {
-    const before = [floorA(), floorB()]
-    const editedA = { ...before[0], name: 'Edited A' }
-    const after = [editedA, before[1]]
-    expect(findSingleChangedFloorId(before, after)).toBe('a')
-  })
-
-  it('returns null when the lengths differ (floor added/removed)', () => {
-    const before = [floorA()]
-    const after = [floorA(), floorB()]
-    expect(findSingleChangedFloorId(before, after)).toBeNull()
-  })
-
-  it('returns null on a pure reorder (same objects, different order)', () => {
-    const before = [floorA(), floorB()]
-    const after = [before[1], before[0]]
-    expect(findSingleChangedFloorId(before, after)).toBeNull()
-  })
-
-  it('returns null when more than one floor changed', () => {
-    const before = [floorA(), floorB()]
-    const after = [{ ...before[0], name: 'X' }, { ...before[1], name: 'Y' }]
-    expect(findSingleChangedFloorId(before, after)).toBeNull()
-  })
-
-  it('returns null when nothing changed', () => {
-    const before = [floorA(), floorB()]
-    expect(findSingleChangedFloorId(before, before)).toBeNull()
   })
 })
 
