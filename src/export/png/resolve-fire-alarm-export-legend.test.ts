@@ -95,6 +95,18 @@ describe('resolveCompatibilityWarningText', () => {
     expect(resolveCompatibilityWarningText(devices, warnings)).toBe('Compatibility: 1 device(s) not listed for a placed panel/hub: F2')
   })
 
+  it('C1 fix: never falls back to a raw device id - drops a warning naming a device not in `devices`', () => {
+    // Simulates what used to leak through before the caller pre-filtered: a warning for a device
+    // that belongs to ANOTHER floor (not in this floor's own `devices` list).
+    const warnings: CompatibilityWarning[] = [{ code: 'not-listed-for-placed-controllers', deviceId: 'device-on-another-floor', modelId: 'hik-smoke' }]
+    expect(resolveCompatibilityWarningText(devices, warnings)).toBeNull()
+  })
+
+  it('C1 fix: a no-controller-placed warning drops the ids not in `devices`, keeping the rest', () => {
+    const warnings: CompatibilityWarning[] = [{ code: 'no-controller-placed', deviceIds: ['d2', 'device-on-another-floor'] }]
+    expect(resolveCompatibilityWarningText(devices, warnings)).toBe('No panel/hub placed for: F2')
+  })
+
   it('truncates the label list to "+N more" past two labels', () => {
     const warnings: CompatibilityWarning[] = [
       { code: 'not-listed-for-placed-controllers', deviceId: 'd2', modelId: 'hik-smoke' },

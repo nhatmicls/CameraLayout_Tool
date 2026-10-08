@@ -1,19 +1,20 @@
 import { computeBomStripLayout, computeExportScale } from '../../domain/export/export-image-layout-calculator'
 import { resolveEffectiveHfovDeg } from '../../domain/camera/camera-coverage-resolver'
 import { isApproximateDoriModel } from '../../domain/camera/dori-zone-distance-calculator'
+import type { BomRow } from '../../domain/bom/bill-of-materials-grouping'
 import type { CableLayoutEstimate } from '../../domain/cable/cable-layout-estimate'
 import type { CableLimitStatus } from '../../domain/cable/cable-length-estimate-calculator'
-import type { CableLayout } from '../../domain/cable/cable-layout-types'
+import type { CableLayout, Shaft } from '../../domain/cable/cable-layout-types'
+import type { CompatibilityWarning } from '../../domain/fire-alarm/fire-alarm-compatibility-checker'
 import type { FireAlarmSettings, PlacedFireAlarmDevice } from '../../domain/fire-alarm/fire-alarm-device-types'
 import type { PlacedCamera, PlanImage, ScaleCalibration, Wall } from '../../domain/project-file/project-types'
 import type { PlacedSensor } from '../../domain/sensor/sensor-types'
 import { hasGlassWallClippingAnySensor } from '../../domain/sensor/sensor-wall-blocking-rules'
 import type { ViewConfig } from '../../domain/view/view-config-types'
 import { triggerBrowserFileDownload } from '../../file-io/browser/trigger-browser-file-download'
-import { buildCombinedBomRows } from '../shared/build-combined-bom-rows'
 import { buildCameraModelByIdRecord } from '../shared/camera-model-by-id-record'
 import { buildSensorModelByIdRecord } from '../shared/sensor-model-by-id-record'
-import { buildExportLegends } from './build-export-legends'
+import { buildExportLegends, type FloorPositionContext } from './build-export-legends'
 import { canAllocateCanvas, SAFARI_SAFE_MAX_CANVAS_PIXELS, SAFARI_SAFE_MAX_CANVAS_SIDE_PX } from './probe-max-canvas-size'
 import { renderPlanToOffscreenCanvas } from './render-plan-to-offscreen-canvas'
 import { drawBomTableAndLegendStrip, legendLineCountFor } from './draw-bom-table-and-legend-strip'
@@ -31,10 +32,20 @@ export interface ExportPlanPngOptions extends CableLayout {
   fireAlarmSettings: FireAlarmSettings
   /** Null is valid (e.g. exporting before calibrating) - the plan still renders at a 1:1 pixel/unit fallback, matching `floor-plan-stage.tsx`'s own `scale?.planPxPerMeter ?? 1`. Fire-detector coverage circles draw only when non-null (`renderPlanToOffscreenCanvas`'s `scaleIsSet`). */
   scale: ScaleCalibration | null
-  /** This floor's own slice of the ONE project cable estimate (`useCableLayoutEstimate`/`computeProjectCableEstimate`), cross-floor contributions already resolved - the caller computes this, never `exportPlanPng` itself. Drives the BOM/legend numbers AND which cable lines draw over-length. */
+  /** This floor's own slice of the ONE project cable estimate (`useCableLayoutEstimate`/`computeProjectCableEstimate`), cross-floor contributions already resolved - the caller computes this, never `exportPlanPng` itself. Drives the legend numbers AND which cable lines draw over-length. */
   cableEstimate: CableLayoutEstimate
+  /** This floor's own BOM rows (`buildCombinedBomRows(project, {floorId}).allRows`, phase 7) - the caller computes these, never `exportPlanPng` itself, so the strip's table can never drift from the panel/CSV. */
+  rows: BomRow[]
+  /** Same call's `fireAlarmWarnings` - drives the legend's compatibility-warning line. */
+  fireAlarmWarnings: CompatibilityWarning[]
   /** The project's `shafts[]` ids, in order - so a shaft marker's "T{n}" on the picture matches the screen (phase 6). Omitted on every pre-shaft caller/test. */
   shaftIds?: readonly string[]
+  /** The project's `shafts[]` (id + name) - lets the strip name the shafts that have a marker on THIS floor ("Shafts: T1 Main riser"). Omitted on every pre-phase-7 caller/test (no note). */
+  shafts?: readonly Shaft[]
+  /** This floor's position in the project, for the "F2 of 3 - Level 2" strip note - `undefined` or `count <= 1` draws no note (one-floor regression). */
+  floorPosition?: FloorPositionContext
+  /** Overrides the file name this plan's `buildFloorExportFileName` computed - omitted falls back to today's single-floor name from `image.fileName` (every pre-phase-7 caller/test). */
+  fileName?: string
   /** What the plan DRAWING shows - the caller passes the tool-effective config, i.e. what is on screen. Legend lines and BOM rows never follow it. */
   viewConfig: ViewConfig
   /** Injectable for deterministic tests; defaults to "now". */
@@ -65,12 +76,10 @@ function formatIsoDate(date: Date): string {
 export async function exportPlanPng(options: ExportPlanPngOptions): Promise<void> {
   const modelById = buildCameraModelByIdRecord()
   const sensorModelById = buildSensorModelByIdRecord()
-  const { allRows: rows, cableEstimate, fireAlarmWarnings } = buildCombinedBomRows({
-    cameras: options.cameras,
-    sensors: options.sensors,
-    fireAlarmDevices: options.fireAlarmDevices,
-    cableEstimate: options.cableEstimate,
-  })
+  // Rows/cableEstimate/fireAlarmWarnings are the CALLER's `buildCombinedBomRows(project, {floorId})`
+  // result (phase 7) - this function builds no BOM rows of its own, so the strip can never drift
+  // from the panel/CSV.
+  const { rows, cableEstimate, fireAlarmWarnings } = options
   const limitStatusById: ReadonlyMap<string, CableLimitStatus> = new Map(
     cableEstimate.cables.map((cable) => [cable.cableId, cable.limitStatus]),
   )
@@ -158,7 +167,7 @@ export async function exportPlanPng(options: ExportPlanPngOptions): Promise<void
     }
 
     const blob = await canvasToPngBlob(finalCanvas)
-    const fileName = `${sanitizeExportFileName(options.image.fileName)}-camera-layout.png`
+    const fileName = options.fileName ?? `${sanitizeExportFileName(options.image.fileName)}-camera-layout.png`
     triggerBrowserFileDownload(blob, fileName)
 
     if (scale < 1) {

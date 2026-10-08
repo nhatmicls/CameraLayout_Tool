@@ -1,13 +1,16 @@
 import Konva from 'konva'
 import { useProjectStore } from './state/project-store'
-import { getActiveFloor } from './state/project-store-floor-selectors'
+import { getActiveFloor, selectProject } from './state/project-store-floor-selectors'
 import { useEditorUiStore, type UiNotification, type Viewport } from './state/editor-ui-store'
 import { runExportSpike } from './dev-test-hooks-export-spike'
 import type { Cable, Hub } from './domain/cable/cable-layout-types'
+import { filterCompatibilityWarningsToDeviceIds } from './domain/fire-alarm/fire-alarm-compatibility-checker'
 import type { Floor } from './domain/floor/floor-types'
 import type { PlacedCamera, ScaleCalibration, Wall } from './domain/project-file/project-types'
 import type { FireAlarmSettings, PlacedFireAlarmDevice } from './domain/fire-alarm/fire-alarm-device-types'
 import type { PlacedSensor } from './domain/sensor/sensor-types'
+import { buildCombinedBomRows } from './export/shared/build-combined-bom-rows'
+import { resolveCompatibilityWarningText } from './export/png/resolve-fire-alarm-export-legend'
 
 declare global {
   interface Window {
@@ -64,6 +67,17 @@ declare global {
       getLayerCount: () => number
       /** Phase 6: the project's `shafts[]` (identity + name, project order - `T{n}` label order). */
       getShafts: () => Array<{ id: string; name: string }>
+      /**
+       * Phase 7 test gap: the EXACT compatibility-warning text that floor's
+       * own PNG strip would show (same pipeline `buildExportLegends`/
+       * `exportPlanPng` use: the project-wide warnings filtered to this
+       * floor's own devices, same as `resolveCompatibilityWarningText`) -
+       * lets an e2e spec confirm a floor's strip never names a device on a
+       * DIFFERENT floor, without needing to read pixels out of a downloaded
+       * PNG. `null` for an unknown floor id or when that floor's strip would
+       * show no compatibility line at all.
+       */
+      getFloorCompatibilityWarningText: (floorId: string) => string | null
     }
   }
 }
@@ -139,5 +153,13 @@ export function installDevTestHooks(): void {
     },
     getLayerCount: () => findInteractiveStage()?.getLayers().length ?? 0,
     getShafts: () => useProjectStore.getState().shafts,
+    getFloorCompatibilityWarningText: (floorId) => {
+      const store = useProjectStore.getState()
+      const floor = store.floors.find((candidate) => candidate.id === floorId)
+      if (!floor) return null
+      const { fireAlarmWarnings } = buildCombinedBomRows(selectProject(store), { floorId })
+      const deviceIds = new Set(floor.fireAlarmDevices.map((device) => device.id))
+      return resolveCompatibilityWarningText(floor.fireAlarmDevices, filterCompatibilityWarningsToDeviceIds(fireAlarmWarnings, deviceIds))
+    },
   }
 }

@@ -2,6 +2,7 @@ import type { ScaleCalibration } from '../../domain/project-file/project-types'
 import type { ToolMode } from '../../state/editor-ui-store'
 import { FireCoverageModeControls } from '../fire-alarm/fire-coverage-mode-controls'
 import { CableToolControls } from './cable-tool-controls'
+import { ToolbarExportButtons } from './toolbar-export-buttons'
 import { WallToolControls } from './wall-tool-controls'
 
 interface AppToolbarProps {
@@ -18,11 +19,15 @@ interface AppToolbarProps {
   onZoomOut: () => void
   onFit: () => void
   onToggleShowCalibrationLine: () => void
-  /** PNG/CSV export: disabled with a tooltip until an image is loaded; CSV also needs at least one placed camera, sensor, fire-alarm device or cable (the prop name predates sensors, fire-alarm devices and cables). */
-  hasCameras: boolean
+  /** Export CSV: whether ANY floor has a placed camera, sensor, fire-alarm device or cable (phase 7 - CSV is project-wide). */
+  hasAnyBomContent: boolean
   isExportingPng: boolean
   onExportPng: () => void
   onExportCsv: () => void
+  /** Phase 7: "Export all floors", shown only when there is more than one. */
+  floorCount: number
+  isExportingAllFloors: boolean
+  onExportAllFloors: () => void
   /** Phase 6 (project save/load + undo/redo). */
   onSaveProject: () => void
   onOpenProjectDialog: () => void
@@ -49,10 +54,13 @@ export function AppToolbar({
   onZoomOut,
   onFit,
   onToggleShowCalibrationLine,
-  hasCameras,
+  hasAnyBomContent,
   isExportingPng,
   onExportPng,
   onExportCsv,
+  floorCount,
+  isExportingAllFloors,
+  onExportAllFloors,
   onSaveProject,
   onOpenProjectDialog,
   canUndo,
@@ -61,6 +69,8 @@ export function AppToolbar({
   onRedo,
 }: AppToolbarProps) {
   const isCalibrating = toolMode === 'calibrate'
+  // M2 review fix: disables all three export buttons together while either async export is in flight.
+  const isExporting = isExportingPng || isExportingAllFloors
 
   return (
     <div className="flex min-h-12 flex-shrink-0 flex-wrap items-center gap-2 border-b border-neutral-200 bg-white px-3 py-1">
@@ -121,27 +131,18 @@ export function AppToolbar({
 
       <div className="h-6 w-px bg-neutral-200" />
 
-      <button
-        type="button"
-        data-testid="export-png-button"
-        onClick={onExportPng}
-        disabled={!hasImage || isExportingPng}
-        title={hasImage ? 'Export the plan + BOM as a PNG' : 'Load a floor plan first'}
-        className={buttonClass}
-      >
-        {isExportingPng ? 'Exporting…' : 'Export PNG'}
-      </button>
-
-      <button
-        type="button"
-        data-testid="export-csv-button"
-        onClick={onExportCsv}
-        disabled={!hasImage || !hasCameras}
-        title={hasCameras ? 'Export the BOM as a CSV' : 'Place at least one camera, sensor, fire-alarm device or cable first'}
-        className={buttonClass}
-      >
-        Export CSV
-      </button>
+      <ToolbarExportButtons
+        hasActiveFloorImage={hasImage}
+        isExportingPng={isExportingPng}
+        onExportPng={onExportPng}
+        hasAnyBomContent={hasAnyBomContent}
+        onExportCsv={onExportCsv}
+        floorCount={floorCount}
+        isExportingAllFloors={isExportingAllFloors}
+        onExportAllFloors={onExportAllFloors}
+        isExporting={isExporting}
+        buttonClass={buttonClass}
+      />
 
       <button
         type="button"

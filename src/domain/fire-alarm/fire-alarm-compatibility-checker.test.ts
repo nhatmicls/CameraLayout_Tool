@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { buildFireAlarmCompatibilityIndex, checkFireAlarmCompatibility } from './fire-alarm-compatibility-checker'
+import {
+  buildFireAlarmCompatibilityIndex,
+  checkFireAlarmCompatibility,
+  filterCompatibilityWarningsToDeviceIds,
+  type CompatibilityWarning,
+} from './fire-alarm-compatibility-checker'
 import type { FireAlarmModelSpec, PlacedFireAlarmDevice } from './fire-alarm-device-types'
 
 const PROVENANCE = { sourceUrl: 'https://assets.hikvision.com/x.pdf', sourceRetrieved: '2026-10-07' }
@@ -127,5 +132,27 @@ describe('checkFireAlarmCompatibility', () => {
   it('controllers themselves are never warned', () => {
     const warnings = checkFireAlarmCompatibility([device('pa', 'panel-a'), device('pb', 'panel-b')], specById, index)
     expect(warnings).toEqual([])
+  })
+})
+
+describe('filterCompatibilityWarningsToDeviceIds (C1/H3 review fix: the one shared per-floor filter)', () => {
+  it('drops a not-listed-for-placed-controllers warning whose device is not in the set', () => {
+    const warnings: CompatibilityWarning[] = [{ code: 'not-listed-for-placed-controllers', deviceId: 'd1', modelId: 'smoke-1' }]
+    expect(filterCompatibilityWarningsToDeviceIds(warnings, new Set(['d2']))).toEqual([])
+  })
+
+  it('keeps a not-listed-for-placed-controllers warning whose device IS in the set', () => {
+    const warnings: CompatibilityWarning[] = [{ code: 'not-listed-for-placed-controllers', deviceId: 'd1', modelId: 'smoke-1' }]
+    expect(filterCompatibilityWarningsToDeviceIds(warnings, new Set(['d1']))).toEqual(warnings)
+  })
+
+  it('narrows a no-controller-placed warning to only the device ids in the set', () => {
+    const warnings: CompatibilityWarning[] = [{ code: 'no-controller-placed', deviceIds: ['d1', 'd2', 'd3'] }]
+    expect(filterCompatibilityWarningsToDeviceIds(warnings, new Set(['d2']))).toEqual([{ code: 'no-controller-placed', deviceIds: ['d2'] }])
+  })
+
+  it('drops a no-controller-placed warning entirely once none of its ids are in the set', () => {
+    const warnings: CompatibilityWarning[] = [{ code: 'no-controller-placed', deviceIds: ['d1', 'd2'] }]
+    expect(filterCompatibilityWarningsToDeviceIds(warnings, new Set(['d9']))).toEqual([])
   })
 })

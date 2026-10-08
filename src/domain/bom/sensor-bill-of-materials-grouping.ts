@@ -63,6 +63,11 @@ export function groupSensorsIntoBom(sensors: PlacedSensor[], modelById: Record<s
     }
   })
 
-  rows.sort((a, b) => a.type.localeCompare(b.type) || a.brand.localeCompare(b.brand) || a.model.localeCompare(b.model))
+  rows.sort(compareSensorBomRows)
   return rows
+}
+
+/** Sensor row order: kind label, then brand, then model - exported so `merge-bom-rows-across-floors.ts` re-sorts a cross-floor merge with the SAME comparator instead of re-implementing it. */
+export function compareSensorBomRows(a: BomRow, b: BomRow): number {
+  return a.type.localeCompare(b.type) || a.brand.localeCompare(b.brand) || a.model.localeCompare(b.model)
 }

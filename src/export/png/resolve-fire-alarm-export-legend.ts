@@ -58,10 +58,10 @@ export function resolveFireAlarmLegend(
 
 const MAX_LABELS_SHOWN = 2
 
-/** `F{n}` label from a device's 1-based position in `devices`, or the id itself when it is no longer placed (defensive only). */
-function labelFor(deviceId: string, devices: readonly PlacedFireAlarmDevice[]): string {
+/** `F{n}` label from a device's 1-based position in `devices`, or `null` when it is not in that list - C1 review fix: NEVER the raw id (not user-facing text). The caller must pre-filter `warnings` to `devices`' own ids (`filterCompatibilityWarningsToDeviceIds`), so this is defensive only. */
+function labelFor(deviceId: string, devices: readonly PlacedFireAlarmDevice[]): string | null {
   const index = devices.findIndex((d) => d.id === deviceId)
-  return index >= 0 ? `F${index + 1}` : deviceId
+  return index >= 0 ? `F${index + 1}` : null
 }
 
 /** "F3, F7 +2 more" for > `MAX_LABELS_SHOWN` labels, else the plain joined list. */
@@ -73,11 +73,13 @@ function formatLabelList(labels: readonly string[]): string {
 /**
  * "Compatibility: N device(s) not listed for a placed panel/hub: F3, F7 +2
  * more" or "No panel/hub placed for: F1, F2" - null when there are no
- * warnings. The two `CompatibilityWarning` codes are mutually exclusive at
- * the plan level (`checkFireAlarmCompatibility`: a `no-controller-placed`
- * warning only exists when zero controllers are placed, in which case no
- * `not-listed-for-placed-controllers` warning is ever produced), so at most
- * one of the two branches below ever applies.
+ * warnings (or, defensively, once every named device is filtered out by
+ * `labelFor` returning null - should not happen given a caller that already
+ * pre-filtered `warnings` to `devices`). The two `CompatibilityWarning`
+ * codes are mutually exclusive at the plan level (`checkFireAlarmCompatibility`:
+ * a `no-controller-placed` warning only exists when zero controllers are
+ * placed, in which case no `not-listed-for-placed-controllers` warning is
+ * ever produced), so at most one of the two branches below ever applies.
  */
 export function resolveCompatibilityWarningText(
   devices: readonly PlacedFireAlarmDevice[],
@@ -87,11 +89,13 @@ export function resolveCompatibilityWarningText(
 
   const noControllerWarning = warnings.find((w) => w.code === 'no-controller-placed')
   if (noControllerWarning) {
-    const labels = noControllerWarning.deviceIds.map((id) => labelFor(id, devices))
+    const labels = noControllerWarning.deviceIds.map((id) => labelFor(id, devices)).filter((label): label is string => label !== null)
+    if (labels.length === 0) return null
     return `No panel/hub placed for: ${formatLabelList(labels)}`
   }
 
   const notListed = warnings.filter((w) => w.code === 'not-listed-for-placed-controllers')
-  const labels = notListed.map((w) => labelFor(w.deviceId, devices))
-  return `Compatibility: ${notListed.length} device(s) not listed for a placed panel/hub: ${formatLabelList(labels)}`
+  const labels = notListed.map((w) => labelFor(w.deviceId, devices)).filter((label): label is string => label !== null)
+  if (labels.length === 0) return null
+  return `Compatibility: ${labels.length} device(s) not listed for a placed panel/hub: ${formatLabelList(labels)}`
 }

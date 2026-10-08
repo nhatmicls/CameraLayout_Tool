@@ -72,8 +72,13 @@ export function groupCamerasIntoBom(
     }
   })
 
-  rows.sort((a, b) => a.brand.localeCompare(b.brand) || a.model.localeCompare(b.model))
+  rows.sort(compareCameraBomRows)
   return rows
+}
+
+/** Camera row order: brand, then model - exported so `merge-bom-rows-across-floors.ts` re-sorts a cross-floor merge with the SAME comparator instead of re-implementing it. */
+export function compareCameraBomRows(a: BomRow, b: BomRow): number {
+  return a.brand.localeCompare(b.brand) || a.model.localeCompare(b.model)
 }
 
 export interface BomTotal {

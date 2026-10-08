@@ -1,14 +1,15 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { computeBomTotal, formatVnd, type BomRow } from '../../domain/bom/bill-of-materials-grouping'
 import { formatBomUnpricedNote } from '../../domain/bom/cable-bill-of-materials-grouping'
-import { SCALE_NOT_SET_CABLE_MESSAGE } from '../../domain/cable/cable-layout-estimate'
 import { describeUnestimatedCables } from '../../domain/cable/unestimated-cables-summary'
+import { describeFloorsWithoutCableScale } from '../../domain/floor/floors-without-cable-scale-note'
+import { resolveFireAlarmDeviceLabel } from '../../domain/fire-alarm/fire-alarm-device-label-by-id'
 import { buildCombinedBomRows } from '../../export/shared/build-combined-bom-rows'
 import { FireAlarmCompatibilityWarningsBlock } from '../fire-alarm/fire-alarm-compatibility-warnings-block'
 import { useProjectStore } from '../../state/project-store'
-import { selectCables, selectCameras, selectFireAlarmDevices, selectScale, selectSensors } from '../../state/project-store-floor-selectors'
-import { useCableLayoutEstimate } from '../../state/use-cable-layout-estimate'
-import { BillOfMaterialsCableRowsTable } from './bill-of-materials-cable-rows-table'
+import { useEditorUiStore } from '../../state/editor-ui-store'
+import { BillOfMaterialsCablesSection } from './bill-of-materials-cables-section'
+import { BillOfMaterialsFloorFilter } from './bill-of-materials-floor-filter'
 import { BillOfMaterialsRow } from './bill-of-materials-row'
 import { BillOfMaterialsTableHeaderRow } from './bill-of-materials-table-header-row'
 
@@ -22,22 +23,42 @@ const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ?
 /**
  * Live bill-of-materials table. Pure presentation - the rows come from
  * `buildCombinedBomRows`, the same call the CSV and PNG exports make, so
- * the three can never disagree. Cameras, sensors and cables render as
- * separate tables (sub-headings shown only when the project has more than
- * one of them); cable rows need a scale, since their quantity is metres.
+ * the three can never disagree. Project-wide by default (plan decision d/f):
+ * labels floor-prefixed, cable totals summed across floors; the floor
+ * filter (shown only once there is more than one floor) switches to one
+ * floor's own, unprefixed view. Cameras, sensors, fire-alarm devices and
+ * cables render as separate tables (sub-headings shown only when the view
+ * has more than one of them); a cable row needs a scale on at least one
+ * floor in view, since its quantity is metres.
  */
 export function BillOfMaterialsPanel() {
-  const cameras = useProjectStore(selectCameras)
-  const sensors = useProjectStore(selectSensors)
-  const fireAlarmDevices = useProjectStore(selectFireAlarmDevices)
-  const cables = useProjectStore(selectCables)
-  const scale = useProjectStore(selectScale)
-  // The active floor's own slice of the one project-wide cable estimate (cross-floor metres resolved).
-  const cableEstimate = useCableLayoutEstimate()
+  const floors = useProjectStore((s) => s.floors)
+  const shafts = useProjectStore((s) => s.shafts)
+  const cableTypes = useProjectStore((s) => s.cableTypes)
+  const cableSettings = useProjectStore((s) => s.cableSettings)
+  const fireAlarmSettings = useProjectStore((s) => s.fireAlarmSettings)
+  const activeFloorId = useProjectStore((s) => s.activeFloorId)
+  const setSelectedFireAlarmDeviceId = useEditorUiStore((s) => s.setSelectedFireAlarmDeviceId)
+  // Built locally (not a store selector returning a fresh object) - a zustand selector must
+  // return a STABLE reference when nothing changed, or React re-renders forever re-deriving it.
+  const project = useMemo(
+    () => ({ floors, shafts, cableTypes, cableSettings, fireAlarmSettings }),
+    [floors, shafts, cableTypes, cableSettings, fireAlarmSettings],
+  )
+  const [selectedFloorId, setSelectedFloorId] = useState<string>('all')
 
-  const { cameraRows, sensorRows, fireAlarmRows, cableRows, allRows, fireAlarmWarnings } = useMemo(
-    () => buildCombinedBomRows({ cameras, sensors, fireAlarmDevices, cableEstimate }),
-    [cameras, sensors, fireAlarmDevices, cableEstimate],
+  // Falls back to "All floors" if the selected floor disappeared (deleted/reordered away).
+  const effectiveFloorId = selectedFloorId === 'all' || floors.some((floor) => floor.id === selectedFloorId) ? selectedFloorId : 'all'
+  const floorsInView = useMemo(
+    () => (effectiveFloorId === 'all' ? floors : floors.filter((floor) => floor.id === effectiveFloorId)),
+    [floors, effectiveFloorId],
+  )
+  const cables = useMemo(() => floorsInView.flatMap((floor) => floor.cables), [floorsInView])
+  const hasScaleInView = floorsInView.some((floor) => floor.scale !== null)
+
+  const { cameraRows, sensorRows, fireAlarmRows, cableRows, allRows, fireAlarmWarnings, floorsWithoutScale, cableEstimate } = useMemo(
+    () => buildCombinedBomRows(project, effectiveFloorId === 'all' ? undefined : { floorId: effectiveFloorId }),
+    [project, effectiveFloorId],
   )
   const cameraCount = cameraRows.reduce((sum, row) => sum + row.quantity, 0)
   const sensorCount = sensorRows.reduce((sum, row) => sum + row.quantity, 0)
@@ -50,10 +71,25 @@ export function BillOfMaterialsPanel() {
   const hasFireAlarm = fireAlarmRows.length > 0
   const hasCables = cables.length > 0
   const showSubHeadings = [hasCameras, hasSensors, hasFireAlarm, hasCables].filter(Boolean).length > 1
+  const floorsWithoutScaleNote = describeFloorsWithoutCableScale(floorsWithoutScale)
   // HIGH fix: a cross-floor cable excluded from the estimate (unscaled partner floor, a link
   // cycle) must never just silently show short metres here - name it, same wording the CSV
   // notification and the PNG legend use.
   const unestimatedNote = describeUnestimatedCables(cableEstimate.unestimatedCableCount, cableEstimate.warnings)
+
+  // H3 review fix: label fire-alarm warning lines with the SAME text their BOM row uses (floor-
+  // prefixed in "All floors", bare within a single floor's own view) - never a raw flattened
+  // index that can name an "F3" that exists on no floor. A line is clickable only when its device
+  // is on the floor currently active on the CANVAS (switching floors first would be the fancier
+  // option - this is the simpler one, see the component's own doc comment).
+  const labelForFireAlarmDevice = useCallback(
+    (deviceId: string) => resolveFireAlarmDeviceLabel(floors, deviceId, effectiveFloorId === 'all' ? undefined : effectiveFloorId),
+    [floors, effectiveFloorId],
+  )
+  const isFireAlarmDeviceOnActiveFloor = useCallback(
+    (deviceId: string) => floors.find((floor) => floor.id === activeFloorId)?.fireAlarmDevices.some((device) => device.id === deviceId) ?? false,
+    [floors, activeFloorId],
+  )
 
   return (
     <div data-testid="bom-panel" className="mt-4 border-t border-neutral-200 pt-3">
@@ -64,6 +100,13 @@ export function BillOfMaterialsPanel() {
           {hasCables && `, ${plural(cables.length, 'cable')}`}
         </span>
       </div>
+      {/* M4 review fix: restores the pre-plan one-floor header exactly (h2 left, count right, single
+          row) - the floor filter is an EXTRA row that only exists once there is something to filter. */}
+      {floors.length > 1 && (
+        <div className="mt-1 flex items-baseline justify-end">
+          <BillOfMaterialsFloorFilter floors={floors} selectedFloorId={effectiveFloorId} onChange={setSelectedFloorId} />
+        </div>
+      )}
 
       {!hasCameras && !hasSensors && !hasFireAlarm && !hasCables ? (
         <p data-testid="bom-empty-state" className="mt-2 text-xs text-neutral-400">
@@ -120,21 +163,13 @@ export function BillOfMaterialsPanel() {
           )}
 
           {hasCables && (
-            <>
-              {showSubHeadings && <h3 className="mt-3 text-xs font-semibold text-neutral-600">Cables</h3>}
-              {scale ? (
-                <BillOfMaterialsCableRowsTable rows={cableRows} />
-              ) : (
-                <p data-testid="bom-cables-no-scale" className="text-xs font-medium text-amber-600">
-                  {SCALE_NOT_SET_CABLE_MESSAGE}
-                </p>
-              )}
-              {unestimatedNote && (
-                <p data-testid="bom-cables-unestimated" className="mt-1 text-xs font-medium text-amber-600">
-                  {unestimatedNote}
-                </p>
-              )}
-            </>
+            <BillOfMaterialsCablesSection
+              showHeading={showSubHeadings}
+              hasScaleInView={hasScaleInView}
+              cableRows={cableRows}
+              floorsWithoutScaleNote={floorsWithoutScaleNote}
+              unestimatedNote={unestimatedNote}
+            />
           )}
 
           <p data-testid="bom-total-price" className="mt-2 text-right text-xs font-semibold text-neutral-800">
@@ -145,7 +180,12 @@ export function BillOfMaterialsPanel() {
             Indicative Vietnam reseller prices{hasCables ? '; cable prices as you entered them' : ''} - confirm with your supplier.
           </p>
 
-          <FireAlarmCompatibilityWarningsBlock devices={fireAlarmDevices} warnings={fireAlarmWarnings} />
+          <FireAlarmCompatibilityWarningsBlock
+            warnings={fireAlarmWarnings}
+            labelFor={labelForFireAlarmDevice}
+            isSelectable={isFireAlarmDeviceOnActiveFloor}
+            onSelectDevice={setSelectedFireAlarmDeviceId}
+          />
         </div>
       )}
     </div>

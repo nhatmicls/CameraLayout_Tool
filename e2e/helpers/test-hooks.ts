@@ -50,6 +50,8 @@ export interface TestHooks {
   dismissAllNotifications: () => void
   getTrunkRouteLineHubIds: () => string[]
   getLayerCount: () => number
+  /** Phase 7 test gap: the compatibility-warning text that floor's own PNG strip would show - lets a spec confirm it never names another floor's device. */
+  getFloorCompatibilityWarningText: (floorId: string) => string | null
 }
 
 declare global {

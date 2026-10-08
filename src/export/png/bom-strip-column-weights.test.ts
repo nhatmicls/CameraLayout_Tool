@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { bomToTable } from '../../domain/bom/bill-of-materials-grouping'
 import type { SensorKind } from '../../domain/sensor/sensor-types'
-import { COLUMN_WEIGHTS, legendLineCountFor } from './draw-bom-table-and-legend-strip'
+import { legendLineCountFor } from './draw-bom-table-and-legend-strip'
+import { COLUMN_WEIGHTS } from './draw-bom-table-rows'
 
 describe('PNG strip column weights', () => {
   it('has one weight per BOM table column', () => {
@@ -28,6 +29,8 @@ describe('legendLineCountFor', () => {
     fireAlarmLegend: null,
     compatibilityWarningText: null,
     viewFilterNoteLines: [] as string[],
+    floorNoteLines: [] as string[],
+    shaftsOnFloorLines: [] as string[],
   }
 
   it('is 1 for a plan with no sensors, cables or fire-alarm devices (strip height unchanged)', () => {
@@ -40,6 +43,13 @@ describe('legendLineCountFor', () => {
     expect(legendLineCountFor({ ...base, fireAlarmLegend })).toBe(2)
     expect(legendLineCountFor({ ...base, compatibilityWarningText: 'Compatibility: 1 device(s) not listed for a placed panel/hub: F1' })).toBe(2)
     expect(legendLineCountFor({ ...base, sensorKindsPresent: ['pir', 'beam'], cableLegend, fireAlarmLegend, compatibilityWarningText: 'x' })).toBe(5)
+  })
+
+  it('adds one line per wrapped floor-note / shafts-on-floor line (phase 7, M3: wrapped, can be > 1)', () => {
+    expect(legendLineCountFor({ ...base, floorNoteLines: ['F2 of 3 - Level 2'] })).toBe(2)
+    expect(legendLineCountFor({ ...base, shaftsOnFloorLines: ['Shafts: T1 Main riser'] })).toBe(2)
+    expect(legendLineCountFor({ ...base, floorNoteLines: ['F2 of 3 - Level 2'], shaftsOnFloorLines: ['Shafts: T1 Main riser'] })).toBe(3)
+    expect(legendLineCountFor({ ...base, shaftsOnFloorLines: ['Shafts: T1 Main riser,', 'T2 Back shaft'] })).toBe(3)
   })
 
   it('adds one line per wrapped view-filter note line, and none when nothing is hidden', () => {

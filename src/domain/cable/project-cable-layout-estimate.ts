@@ -1,8 +1,12 @@
 import { computeCableLayoutEstimate, type CableEstimateWarning, type CableLayoutEstimate, type CableTypeTotal } from './cable-layout-estimate'
+import type { Cable, Hub } from './cable-layout-types'
 import { sumMetersIntervals, type MetersInterval } from './cable-length-estimate-calculator'
 import { ceilMeters } from './cable-length-format'
 import { resolveCableBeyondLengths } from './cross-floor-hub-beyond-length-resolver'
+import { resolveCrossFloorExit } from './cross-floor-exit-resolver'
 import { findShaftExits, findShaftMarkers } from './shaft-integrity'
+import { floorLabelPrefix } from '../floor/floor-label-prefix'
+import type { Floor } from '../floor/floor-types'
 import type { Project } from '../project-file/project-types'
 
 /**
@@ -23,8 +27,10 @@ export interface ProjectCableEstimate {
   unpricedTypeCount: number
   /** Floors with no scale set, in floor order - whether or not they currently hold a cable. */
   floorsWithoutScale: { id: string; name: string }[]
-  /** Every floor's own warnings, concatenated in floor order. */
+  /** Every floor's own warnings, concatenated in floor order, plus the project-level shaft-no-exit warnings. */
   warnings: CableEstimateWarning[]
+  /** Sum of every floor's own `unestimatedCableCount` (phase 7: the project-wide BOM/CSV/PNG notice needs one number, not a per-floor lookup). */
+  unestimatedCableCount: number
 }
 
 /**
@@ -60,6 +66,22 @@ export function computeProjectCableEstimate(project: Project): ProjectCableEstim
   return result
 }
 
+/**
+ * ">F3" when `cable` ends on a shaft marker with SEVERAL exits (CLAUDE.md:
+ * the label carries the exit floor only once there is more than one exit to
+ * disambiguate - `C1-T1` stays bare with exactly one, same as a plain hub
+ * or a riser/drop pair, which are never ambiguous and never get this
+ * suffix). `""` when the shaft has no exit yet or this cable's exit is not
+ * (yet) chosen - those cases already carry their own warning
+ * (`shaft-no-exit` / `shaft-exit-not-chosen`); the label itself stays plain.
+ */
+function resolveCableLabelExitSuffix(floors: readonly Floor[], floor: Floor, cable: Cable, hub: Hub): string {
+  if (hub.kind !== 'shaft' || !hub.shaftId) return ''
+  if (findShaftExits(floors, hub.shaftId).length <= 1) return ''
+  const exit = resolveCrossFloorExit(floors, { floorId: floor.id, hubId: hub.id }, cable)
+  return exit.kind === 'exit' ? `>F${exit.floorIndex + 1}` : ''
+}
+
 /** One info warning per shaft that has at least one marker but NO exit anywhere - never per cable, never per floor (`shaft-no-exit`, confirmed behaviour). */
 function shaftNoExitWarnings(project: Project): CableEstimateWarning[] {
   const warnings: CableEstimateWarning[] = []
@@ -93,7 +115,6 @@ function computeProjectCableEstimateUncached(project: Project): ProjectCableEsti
     )
   }
 
-  const multiFloor = project.floors.length > 1
   const totals: CableTypeTotal[] = []
   for (const type of project.cableTypes) {
     const perFloor = project.floors
@@ -106,9 +127,23 @@ function computeProjectCableEstimateUncached(project: Project): ProjectCableEsti
     totals.push({
       type,
       cableCount: perFloor.reduce((sum, entry) => sum + entry.total.cableCount, 0),
-      labels: perFloor.flatMap((entry) =>
-        multiFloor ? entry.total.labels.map((label) => `F${entry.floorIndex + 1}-${label}`) : entry.total.labels,
-      ),
+      // Same cables/order `entry.total.labels` was built from (`cable-layout-estimate.ts`'s own
+      // `ofType` filter) - walked here via the full `CableLengthEstimate[]` instead of the bare
+      // label strings so each one's exit-floor suffix (`resolveCableLabelExitSuffix`) can be
+      // computed from its own `Cable`/`Hub`, then the floor prefix applied as before.
+      labels: perFloor.flatMap((entry) => {
+        const floor = project.floors[entry.floorIndex]
+        const prefix = floorLabelPrefix(entry.floorIndex, project.floors.length)
+        return byFloorId
+          .get(floor.id)!
+          .cables.filter((estimate) => estimate.typeId === type.id)
+          .map((estimate) => {
+            const cable = floor.cables.find((candidate) => candidate.id === estimate.cableId)
+            const hub = cable ? floor.hubs.find((candidate) => candidate.id === cable.hubId) : undefined
+            const suffix = cable && hub ? resolveCableLabelExitSuffix(project.floors, floor, cable, hub) : ''
+            return `${prefix}${estimate.label}${suffix}`
+          })
+      }),
       run: sumMetersIntervals(perFloor.map((entry) => entry.total.run)),
       purchase,
       purchaseWholeM,
@@ -124,5 +159,6 @@ function computeProjectCableEstimateUncached(project: Project): ProjectCableEsti
     unpricedTypeCount: totals.filter((total) => total.lineTotalVnd === null).length,
     floorsWithoutScale: project.floors.filter((floor) => floor.scale === null).map((floor) => ({ id: floor.id, name: floor.name })),
     warnings: [...project.floors.flatMap((floor) => byFloorId.get(floor.id)!.warnings), ...shaftNoExitWarnings(project)],
+    unestimatedCableCount: project.floors.reduce((sum, floor) => sum + byFloorId.get(floor.id)!.unestimatedCableCount, 0),
   }
 }

@@ -110,3 +110,25 @@ export function checkFireAlarmCompatibility(
 
   return warnings
 }
+
+/**
+ * Keeps only the parts of `warnings` that name a device in `deviceIds` - the
+ * ONE shared filter (C1/H3 review fix, phase 7): `checkFireAlarmCompatibility`
+ * is now run once over the WHOLE project, so a single floor's PNG strip or
+ * the BOM panel's per-floor view must filter the result down to the devices
+ * actually in view before labelling them, or a line could name a device
+ * that lives on no floor currently shown. A `no-controller-placed` warning
+ * keeps only its own listed device ids (dropped entirely if none remain);
+ * a `not-listed-for-placed-controllers` warning is kept only if its one
+ * device is in the set.
+ */
+export function filterCompatibilityWarningsToDeviceIds(
+  warnings: readonly CompatibilityWarning[],
+  deviceIds: ReadonlySet<string>,
+): CompatibilityWarning[] {
+  return warnings.flatMap((warning): CompatibilityWarning[] => {
+    if (warning.code === 'not-listed-for-placed-controllers') return deviceIds.has(warning.deviceId) ? [warning] : []
+    const filteredIds = warning.deviceIds.filter((id) => deviceIds.has(id))
+    return filteredIds.length > 0 ? [{ ...warning, deviceIds: filteredIds }] : []
+  })
+}

@@ -14,19 +14,35 @@ const WRAP_SLACK_PX = 2
 const noteFont = (fontPx: number) => `${fontPx}px sans-serif`
 
 /**
- * The note as strip lines: "Shown" and "Hidden" are wrapped separately, so
- * "Hidden" always starts a new line. Measured at full resolution - a
- * downscaled export scales the font and the width together, so the breaks
- * stay valid. Without a 2D context (never in a real browser) the two texts
- * come back unwrapped.
+ * Wraps ONE plain text block to the strip width - the SAME routine the
+ * "Shown / Hidden" note uses below, shared (M3 review fix) so the floor
+ * note and the shafts-on-floor line (`build-export-legends.ts`) wrap
+ * instead of silently overflowing or getting truncated. Measured at full
+ * resolution - a downscaled export scales the font and the width together,
+ * so the breaks stay valid. Without a 2D context (never in a real browser)
+ * the text comes back as a single unwrapped line. Empty/blank text gives
+ * no lines at all - the caller draws nothing (no line reserved either).
  */
-export function wrapViewFilterNoteLines(note: ViewFilterNote, fontPx: number, stripWidthPx: number, sidePaddingPx: number): string[] {
+export function wrapPlainTextToStripWidth(text: string, fontPx: number, stripWidthPx: number, sidePaddingPx: number): string[] {
+  if (!text) return []
+  if (typeof document === 'undefined') return [text]
   const ctx = document.createElement('canvas').getContext('2d')
-  if (!ctx) return [note.shownText, note.hiddenText]
+  if (!ctx) return [text]
   ctx.font = noteFont(fontPx)
   const maxWidthPx = stripWidthPx - sidePaddingPx * 2 - WRAP_SLACK_PX
-  const measure = (text: string) => ctx.measureText(text).width
-  return [...wrapTextToWidth(note.shownText, maxWidthPx, measure), ...wrapTextToWidth(note.hiddenText, maxWidthPx, measure)]
+  const measure = (t: string) => ctx.measureText(t).width
+  return wrapTextToWidth(text, maxWidthPx, measure)
+}
+
+/**
+ * The note as strip lines: "Shown" and "Hidden" are wrapped separately, so
+ * "Hidden" always starts a new line.
+ */
+export function wrapViewFilterNoteLines(note: ViewFilterNote, fontPx: number, stripWidthPx: number, sidePaddingPx: number): string[] {
+  return [
+    ...wrapPlainTextToStripWidth(note.shownText, fontPx, stripWidthPx, sidePaddingPx),
+    ...wrapPlainTextToStripWidth(note.hiddenText, fontPx, stripWidthPx, sidePaddingPx),
+  ]
 }
 
 /** Draws one already-wrapped note line, left-aligned like the legend lines, in the muted note colour. */

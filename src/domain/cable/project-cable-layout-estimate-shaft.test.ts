@@ -35,3 +35,28 @@ describe('computeProjectCableEstimate - shaft warnings', () => {
     expect(warning?.message).toMatch(/no exit chosen/)
   })
 })
+
+describe('computeProjectCableEstimate - BOM-level cable labels on a shaft (test gap: executed fixture)', () => {
+  const cam1 = { id: 'cam-c1', modelId: 'm', x: 1, y: 1, rotationDeg: 0, rangeM: 10 }
+
+  it('C1-T1 on the floor reads "F2-C1-T1" in the project totals - no exit suffix with a SINGLE exit', () => {
+    // Drop F3's trunk (SHAFT_MARKER_F3) so the shaft has exactly one exit, on F1.
+    const project = shaftFourFloorProject([
+      {},
+      { cameras: [cam1], cables: [shaftCable('c1', 'sm2')] }, // F2: implicit exit (only one exists)
+      { hubs: [{ ...SHAFT_MARKER_F3, trunk: undefined }] },
+    ])
+    const result = computeProjectCableEstimate(project)
+    const total = result.totals.find((t) => t.type.id === 'cat6-utp')!
+    expect(total.labels).toContain('F2-C1-T1')
+    expect(total.labels.some((label) => label.includes('>'))).toBe(false)
+  })
+
+  it('C1-T1>F3 in the project totals once the shaft has SEVERAL exits and this cable chose F3', () => {
+    // Default fixture already has two exits (F1 and F3); F2's cable explicitly picks F3 (floor id "sf2").
+    const project = shaftFourFloorProject([{}, { cameras: [cam1], cables: [shaftCable('c1', 'sm2', 'sf2')] }])
+    const result = computeProjectCableEstimate(project)
+    const total = result.totals.find((t) => t.type.id === 'cat6-utp')!
+    expect(total.labels).toContain('F2-C1-T1>F3')
+  })
+})

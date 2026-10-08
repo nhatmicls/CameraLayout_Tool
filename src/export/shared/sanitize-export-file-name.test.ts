@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { sanitizeExportFileName } from './sanitize-export-file-name'
+import { sanitizeExportFileName, sanitizeFileNameFragment } from './sanitize-export-file-name'
 
 describe('sanitizeExportFileName', () => {
   it('strips the extension', () => {
@@ -30,5 +30,20 @@ describe('sanitizeExportFileName', () => {
 
   it('only strips the final extension; any other dots are treated as unsafe and become dashes', () => {
     expect(sanitizeExportFileName('v1.2.plan.png')).toBe('v1-2-plan')
+  })
+})
+
+describe('sanitizeFileNameFragment (Low review fix enabler - no extension guessing)', () => {
+  it('does the same character cleanup as sanitizeExportFileName', () => {
+    expect(sanitizeFileNameFragment('My Office Plan')).toBe('My-Office-Plan')
+    expect(sanitizeFileNameFragment('-- weird --')).toBe('weird')
+  })
+
+  it('never strips a trailing dot-suffix - an internal dot is just an unsafe character, not "the extension"', () => {
+    expect(sanitizeFileNameFragment('F1-Level 2.5')).toBe('F1-Level-2-5')
+  })
+
+  it('can sanitise to an empty string (no fallback) - the caller\'s problem to guard against', () => {
+    expect(sanitizeFileNameFragment('***')).toBe('')
   })
 })

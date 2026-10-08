@@ -1,12 +1,5 @@
 import { useProjectStore } from './state/project-store'
-import {
-  selectCables,
-  selectCameras,
-  selectFireAlarmDevices,
-  selectImage,
-  selectScale,
-  selectSensors,
-} from './state/project-store-floor-selectors'
+import { selectImage, selectScale } from './state/project-store-floor-selectors'
 import { useEditorUiStore } from './state/editor-ui-store'
 import { useProjectUndoRedo } from './state/use-project-undo-redo'
 import { useUndoRedoKeyboardShortcuts } from './state/use-undo-redo-keyboard-shortcuts'
@@ -44,13 +37,15 @@ installDevTestHooks()
 export function App() {
   const image = useProjectStore(selectImage)
   const scale = useProjectStore(selectScale)
-  const cameras = useProjectStore(selectCameras)
-  const sensors = useProjectStore(selectSensors)
-  const fireAlarmDevices = useProjectStore(selectFireAlarmDevices)
-  const cables = useProjectStore(selectCables)
   const activeFloorId = useProjectStore((s) => s.activeFloorId)
+  const floorCount = useProjectStore((s) => s.floors.length)
   const projectLoadEpoch = useEditorUiStore((s) => s.projectLoadEpoch)
   const canSaveProject = useProjectStore((s) => s.floors.some((floor) => floor.image !== null))
+  // Export CSV is project-wide (drift addendum): any floor's own camera/sensor/fire-alarm/cable
+  // counts, not just the active floor's.
+  const hasAnyBomContent = useProjectStore((s) =>
+    s.floors.some((floor) => floor.cameras.length > 0 || floor.sensors.length > 0 || floor.fireAlarmDevices.length > 0 || floor.cables.length > 0),
+  )
 
   const toolMode = useEditorUiStore((s) => s.toolMode)
   const setToolMode = useEditorUiStore((s) => s.setToolMode)
@@ -63,7 +58,7 @@ export function App() {
   useUndoRedoKeyboardShortcuts()
   useActiveFloorDecodedImageSync()
   const { projectFileInputRef, openProjectFileDialog, handleSaveProject, handleProjectFileInputChange } = useProjectFileActions()
-  const { isExportingPng, handleExportPng, handleExportCsv } = usePlanExportActions()
+  const { isExportingPng, handleExportPng, handleExportCsv, isExportingAllFloors, handleExportAllFloors } = usePlanExportActions()
   const { fileInputRef, openFileDialog, loadImageFile, handleFileInputChange } = useFloorPlanImageLoader()
 
   const handleToggleCalibrate = () => {
@@ -89,10 +84,13 @@ export function App() {
         onZoomOut={zoomOut}
         onFit={fitToView}
         onToggleShowCalibrationLine={() => setShowCalibrationLine(!showCalibrationLine)}
-        hasCameras={cameras.length > 0 || sensors.length > 0 || fireAlarmDevices.length > 0 || cables.length > 0}
+        hasAnyBomContent={hasAnyBomContent}
         isExportingPng={isExportingPng}
         onExportPng={handleExportPng}
         onExportCsv={handleExportCsv}
+        floorCount={floorCount}
+        isExportingAllFloors={isExportingAllFloors}
+        onExportAllFloors={handleExportAllFloors}
         onSaveProject={handleSaveProject}
         onOpenProjectDialog={openProjectFileDialog}
         canUndo={canUndo}
