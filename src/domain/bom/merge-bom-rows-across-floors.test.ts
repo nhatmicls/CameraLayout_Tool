@@ -43,53 +43,53 @@ describe('mergeBomRowsAcrossFloors', () => {
 
   it('merges the same model across two floors: quantity and line total summed, labels concatenated with each floor\'s own prefix', () => {
     const perFloor: FloorBomRows[] = [
-      { prefix: 'F1-', rows: [cameraRow('C1', 1, 1000)] },
-      { prefix: 'F2-', rows: [cameraRow('C1, C3', 2, 2000)] },
+      { prefix: 'F1_', rows: [cameraRow('C1', 1, 1000)] },
+      { prefix: 'F2_', rows: [cameraRow('C1, C3', 2, 2000)] },
     ]
     const merged = mergeBomRowsAcrossFloors(perFloor)
     expect(merged).toHaveLength(1)
     expect(merged[0].quantity).toBe(3)
-    expect(merged[0].labels).toBe('F1-C1, F2-C1, F2-C3')
+    expect(merged[0].labels).toBe('F1_C1, F2_C1, F2_C3')
     expect(merged[0].lineTotalVnd).toBe(3000)
   })
 
   it('keeps an unpriced row unpriced when merged with another unpriced row', () => {
     const perFloor: FloorBomRows[] = [
-      { prefix: 'F1-', rows: [cameraRow('C1', 1, null)] },
-      { prefix: 'F2-', rows: [cameraRow('C1', 1, null)] },
+      { prefix: 'F1_', rows: [cameraRow('C1', 1, null)] },
+      { prefix: 'F2_', rows: [cameraRow('C1', 1, null)] },
     ]
     expect(mergeBomRowsAcrossFloors(perFloor)[0].lineTotalVnd).toBeNull()
   })
 
   it('a row with no notes key (camera/sensor) never gains one after merging', () => {
     const perFloor: FloorBomRows[] = [
-      { prefix: 'F1-', rows: [cameraRow('C1', 1)] },
-      { prefix: 'F2-', rows: [cameraRow('C1', 1)] },
+      { prefix: 'F1_', rows: [cameraRow('C1', 1)] },
+      { prefix: 'F2_', rows: [cameraRow('C1', 1)] },
     ]
     expect(mergedHasNoNotesKey(mergeBomRowsAcrossFloors(perFloor)[0])).toBe(true)
   })
 
   it('prefixes the device labels inside a fire-alarm "not listed" note and combines them across floors', () => {
     const perFloor: FloorBomRows[] = [
-      { prefix: 'F1-', rows: [fireRow('F3', 1, 'Not listed for a placed panel/hub: F3')] },
-      { prefix: 'F2-', rows: [fireRow('F5', 1, 'Not listed for a placed panel/hub: F5')] },
+      { prefix: 'F1_', rows: [fireRow('F3', 1, 'Not listed for a placed panel/hub: F3')] },
+      { prefix: 'F2_', rows: [fireRow('F5', 1, 'Not listed for a placed panel/hub: F5')] },
     ]
     const merged = mergeBomRowsAcrossFloors(perFloor)
-    expect(merged[0].notes).toBe('Not listed for a placed panel/hub: F1-F3, F2-F5')
+    expect(merged[0].notes).toBe('Not listed for a placed panel/hub: F1_F3, F2_F5')
   })
 
   it('keeps "No panel/hub placed" as-is when both floors already agree (global compatibility fact)', () => {
     const perFloor: FloorBomRows[] = [
-      { prefix: 'F1-', rows: [fireRow('F1', 1, 'No panel/hub placed')] },
-      { prefix: 'F2-', rows: [fireRow('F1', 1, 'No panel/hub placed')] },
+      { prefix: 'F1_', rows: [fireRow('F1', 1, 'No panel/hub placed')] },
+      { prefix: 'F2_', rows: [fireRow('F1', 1, 'No panel/hub placed')] },
     ]
     expect(mergeBomRowsAcrossFloors(perFloor)[0].notes).toBe('No panel/hub placed')
   })
 
   it('a different lens (different mergeKey) stays a separate row', () => {
     const perFloor: FloorBomRows[] = [
-      { prefix: 'F1-', rows: [cameraRow('C1', 1)] },
-      { prefix: 'F2-', rows: [{ ...cameraRow('C1', 1), lens: '2.8-12 mm' }] },
+      { prefix: 'F1_', rows: [cameraRow('C1', 1)] },
+      { prefix: 'F2_', rows: [{ ...cameraRow('C1', 1), lens: '2.8-12 mm' }] },
     ]
     expect(mergeBomRowsAcrossFloors(perFloor)).toHaveLength(2)
   })

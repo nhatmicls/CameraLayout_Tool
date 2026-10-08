@@ -31,7 +31,7 @@
   floor without a scale has no length and is reported. A cable type in use on any floor cannot
   be deleted.
 - **BOM / CSV / PNG**: one BOM for the project - the same model on several floors is one row,
-  labels carry a floor prefix (`F2-C1`) when the project has more than one floor, cable metres
+  labels carry a floor prefix (`F2_C1`) when the project has more than one floor, cable metres
   are summed over floors and rounded up once per type. The BOM panel has an "All floors" / per
   floor filter. The CSV always covers the whole project. "Export PNG" exports the current floor;
   "Export all floors" downloads one PNG per floor that has a plan and a scale. A panel / hub on

@@ -12,7 +12,7 @@ import {
 
 /** Shaft-specific cases of `resolveHubBeyondLength`/`resolveCableBeyondLengths` - see the hand-computed numbers in `shaft-worked-example.test-fixtures.ts`'s own doc comment. */
 describe('resolveHubBeyondLength - shaft markers', () => {
-  it('a gap floor (F2, no marker/exit of its own) between entry and its F1 exit still contributes only F1-F2\'s own height', () => {
+  it('a gap floor (F2, no marker/exit of its own) between entry and its F1 exit still contributes only F1_F2\'s own height', () => {
     const project = shaftFourFloorProject()
     const beyond = resolveHubBeyondLength(project, { floorId: 'sf1', hubId: 'sm2' }, shaftCable('c1', 'sm2', 'sf0'))
     expect(beyond.source).toBe('route')

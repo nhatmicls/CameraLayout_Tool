@@ -15,9 +15,9 @@ describe('resolveFireAlarmDeviceLabel', () => {
   const floors = [f1, f2]
 
   it('all-floors view: floor-prefixes by project order, matching the merged BOM row labels', () => {
-    expect(resolveFireAlarmDeviceLabel(floors, 'a')).toBe('F1-F1')
-    expect(resolveFireAlarmDeviceLabel(floors, 'b')).toBe('F1-F2')
-    expect(resolveFireAlarmDeviceLabel(floors, 'c')).toBe('F2-F1')
+    expect(resolveFireAlarmDeviceLabel(floors, 'a')).toBe('F1_F1')
+    expect(resolveFireAlarmDeviceLabel(floors, 'b')).toBe('F1_F2')
+    expect(resolveFireAlarmDeviceLabel(floors, 'c')).toBe('F2_F1')
   })
 
   it('single-floor view (`floorId` given): bare label, unprefixed - matches that floor\'s own rows', () => {

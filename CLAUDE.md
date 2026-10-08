@@ -177,7 +177,7 @@ Project rules:
   carry `unit` (`pcs` / `m`); metres never count as unpriced items. BOM rows for the panel,
   CSV and PNG all come from `buildCombinedBomRows(project, { floorId? })` - one signature for
   all three. Pass `floorId` for that floor's rows only (unprefixed); omit for project-wide rows
-  (floor-prefixed `F{n}-` when `floors.length > 1`; cable metres summed per type, rounded once on
+  (floor-prefixed `F{n}_` when `floors.length > 1`; cable metres summed per type, rounded once on
   the total). CSV is always whole project (12 columns: 11 as before + trailing `Notes` for
   fire-alarm compatibility warnings); PNG can be current floor or all floors (fire-alarm rows
   filtered per floor, legend checked for that floor's device ids).

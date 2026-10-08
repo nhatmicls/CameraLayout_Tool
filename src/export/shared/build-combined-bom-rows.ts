@@ -49,7 +49,7 @@ function projectCableEstimateAsLayoutEstimate(estimate: ProjectCableEstimate): C
  * and the PNG strip all call this, so their rows and totals cannot drift.
  * `options.floorId` omitted (or the project has one floor, where the prefix
  * is always `''` anyway) -> project-wide rows, labels floor-prefixed
- * `F{position}-` (plan decision d); `options.floorId` given -> that one
+ * `F{position}_` (plan decision d); `options.floorId` given -> that one
  * floor's own rows, unprefixed, exactly like a single-floor project's
  * (the BOM panel's per-floor filter and a single floor's own PNG strip use
  * this).

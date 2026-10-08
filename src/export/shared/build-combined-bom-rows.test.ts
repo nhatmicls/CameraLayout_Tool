@@ -143,7 +143,7 @@ describe('buildCombinedBomRows - multi-floor merge (plan decision d/f)', () => {
     const result = buildCombinedBomRows(project([f1, f2]))
     expect(result.cameraRows).toHaveLength(1)
     expect(result.cameraRows[0].quantity).toBe(2)
-    expect(result.cameraRows[0].labels).toBe('F1-C1, F2-C1')
+    expect(result.cameraRows[0].labels).toBe('F1_C1, F2_C1')
   })
 
   it('a different lens keeps two separate rows', () => {
@@ -171,7 +171,7 @@ describe('buildCombinedBomRows - multi-floor merge (plan decision d/f)', () => {
     const result = buildCombinedBomRows(project([f1, f2]))
     expect(result.fireAlarmWarnings.some((w) => w.code === 'no-controller-placed')).toBe(false)
     const smokeRow = result.fireAlarmRows.find((r) => r.model === 'DS-PDSMK-S-WE')
-    expect(smokeRow?.notes).toBe('Not listed for a placed panel/hub: F2-F1')
+    expect(smokeRow?.notes).toBe('Not listed for a placed panel/hub: F2_F1')
 
     const singleFloorView = buildCombinedBomRows(project([f1, f2]), { floorId: 'f2' })
     expect(singleFloorView.fireAlarmRows[0]?.notes).toBe('Not listed for a placed panel/hub: F1')

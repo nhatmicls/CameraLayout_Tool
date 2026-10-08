@@ -24,7 +24,7 @@ async function clickToSelect(page: Page, x: number, y: number): Promise<void> {
  *
  * Layout: F1/F2/F3, each 300x300, scale 10 px/m (ref line 100 px = 10 m).
  * `floorHeightM`: F1 3, F2 3.5, F3 unused (top floor). Shaft "Main shaft"
- * clicked at (50,50) on F1, range F1-F3 -> marker T1 on every floor, same
+ * clicked at (50,50) on F1, range F1_F3 -> marker T1 on every floor, same
  * image px (no clamping needed, all floors the same size).
  *
  * Exit F1: T1 -> H1 (150,50), trunk 100 px = 10 m; H1 mountHeightM 1.5 (the
@@ -115,7 +115,7 @@ test.describe('shaft-several-exits-smoke', () => {
       await waitForDecodedImageSize(page, 300, 300)
     })
 
-    await test.step('3. Shaft tool: click the plan, dialog (range F1-F3 default), confirm -> marker T1 on every floor', async () => {
+    await test.step('3. Shaft tool: click the plan, dialog (range F1_F3 default), confirm -> marker T1 on every floor', async () => {
       await page.locator('[data-testid="add-shaft-button"]').click()
       await clickImagePx(page, 50, 50)
 

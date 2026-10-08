@@ -20,7 +20,7 @@ import type { Project } from '../project-file/project-types'
 export interface ProjectCableEstimate {
   /** Every floor's own estimate (cross-floor contributions already resolved) - exactly `useCableLayoutEstimate()`'s shape, per floor. */
   byFloorId: ReadonlyMap<string, CableLayoutEstimate>
-  /** Summed across every floor, per type; whole metres rounded up ONCE on the sum (a per-floor strip can therefore read up to `floors.length - 1` m higher - noted in README). Labels floor-prefixed `F{position}-` only when the project has more than one floor. */
+  /** Summed across every floor, per type; whole metres rounded up ONCE on the sum (a per-floor strip can therefore read up to `floors.length - 1` m higher - noted in README). Labels floor-prefixed `F{position}_` only when the project has more than one floor. */
   totals: CableTypeTotal[]
   grandPurchase: MetersInterval | null
   grandTotalVnd: number

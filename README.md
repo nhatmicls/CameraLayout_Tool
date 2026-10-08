@@ -227,7 +227,7 @@ calls once the page has loaded.
   estimated grand total. One placed beam counts as one transmitter + receiver set. A cable row's
   quantity is whole metres to buy.
   With more than one floor the same model on several floors is one row, and every label carries
-  its floor: `F2-C1` is camera C1 on floor 2, `F2-C1-H1` its cable, `F2-F1` alarm device F1 on
+  its floor: `F2_C1` is camera C1 on floor 2, `F2_C1-H1` its cable, `F2_F1` alarm device F1 on
   floor 2 (the first `F2` is the floor). An "All floors" drop-down above the list can show one floor's rows
   without the prefix. A one-floor project has no prefix and no filter. Cable metres are summed
   over all floors and rounded up once per type; a single floor's view rounds that floor alone, so

@@ -20,7 +20,7 @@ describe('computeProjectCableEstimate', () => {
     const [total] = result.totals
     expect(total.type.id).toBe('cat6-utp')
     expect(total.cableCount).toBe(1)
-    expect(total.labels).toEqual(['F1-C1-R1']) // floor 1 (index 0) prefix + the cable's own label
+    expect(total.labels).toEqual(['F1_C1-R1']) // floor 1 (index 0) prefix + the cable's own label
     expect(total.run.nominal).toBeCloseTo(28.5, 6)
     expect(total.purchaseWholeM).toBe(Math.ceil(28.5 * 1.15))
   })

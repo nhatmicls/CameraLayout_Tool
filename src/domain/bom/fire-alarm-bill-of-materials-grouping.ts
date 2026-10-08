@@ -14,7 +14,7 @@ export const NO_CONTROLLER_PLACED_NOTE = 'No panel/hub placed'
 
 /**
  * Floor-prefixes the device labels inside a "not listed" note (`F3` ->
- * `F2-F3`); every other note shape (`''`, `NO_CONTROLLER_PLACED_NOTE`, or
+ * `F2_F3`); every other note shape (`''`, `NO_CONTROLLER_PLACED_NOTE`, or
  * already-undefined) carries no per-device label, so it is returned
  * unchanged. `prefix === ''` (a one-floor project) is always a no-op -
  * required for this plan's byte-identical one-floor regression.

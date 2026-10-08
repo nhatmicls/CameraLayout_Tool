@@ -9,7 +9,7 @@ import type { Floor } from '../floor/floor-types'
  * single-floor BOM view) -> bare "F3", searched only on that floor, matching
  * `buildCombinedBomRows(project, {floorId})`'s own unprefixed rows.
  * `floorId` omitted (the "All floors" merged view) -> floor-prefixed
- * "F2-F3" (project order), matching that view's merged row labels. `null`
+ * "F2_F3" (project order), matching that view's merged row labels. `null`
  * when the device is not on any floor in scope (deleted, or - with
  * `floorId` given - placed on a different floor).
  */

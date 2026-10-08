@@ -139,7 +139,7 @@ test.describe('project-bom-and-per-floor-export-smoke', () => {
 
     await test.step('BOM panel: "All floors" merges the camera row; the per-floor filter shows unprefixed rows', async () => {
       const cameraLabelsCell = page.locator('[data-testid^="bom-cameras-"]').first()
-      await expect(cameraLabelsCell).toHaveText('F1-C1, F2-C1')
+      await expect(cameraLabelsCell).toHaveText('F1_C1, F2_C1')
 
       const floors = await page.evaluate(() => window.__cameraLayoutToolTestHooks!.getFloors())
       await page.locator('[data-testid="bom-floor-filter"]').selectOption(floors[1].id) // F2 alone
@@ -158,7 +158,7 @@ test.describe('project-bom-and-per-floor-export-smoke', () => {
       const [headerLine] = withoutBom.split('\r\n')
       expect(headerLine.split(',')).toHaveLength(12)
 
-      expect(csvText).toContain('F1-C1, F2-C1') // camera row, merged + prefixed
+      expect(csvText).toContain('F1_C1, F2_C1') // camera row, merged + prefixed
       expect(csvText).not.toContain('No panel/hub placed') // controller on F1 covers the F2 smoke device
 
       const cableRowMatch = csvText.match(/Cable,,Cat6 UTP,,,,(\d+),m,/)

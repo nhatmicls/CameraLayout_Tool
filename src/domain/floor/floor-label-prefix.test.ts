@@ -10,9 +10,9 @@ describe('floorLabelPrefix', () => {
     expect(floorLabelPrefix(0, 0)).toBe('')
   })
 
-  it('is "F{position}-" (1-based) once the project has more than one floor', () => {
-    expect(floorLabelPrefix(0, 3)).toBe('F1-')
-    expect(floorLabelPrefix(1, 3)).toBe('F2-')
-    expect(floorLabelPrefix(2, 3)).toBe('F3-')
+  it('is "F{position}_" (1-based) once the project has more than one floor', () => {
+    expect(floorLabelPrefix(0, 3)).toBe('F1_')
+    expect(floorLabelPrefix(1, 3)).toBe('F2_')
+    expect(floorLabelPrefix(2, 3)).toBe('F3_')
   })
 })

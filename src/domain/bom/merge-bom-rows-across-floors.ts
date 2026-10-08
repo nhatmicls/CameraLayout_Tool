@@ -2,7 +2,7 @@ import type { BomRow } from './bill-of-materials-grouping'
 import { combineFireAlarmNotes, prefixFireAlarmNoteLabels } from './fire-alarm-bill-of-materials-grouping'
 
 export interface FloorBomRows {
-  /** `floorLabelPrefix(floorIndex, floorCount)` - `''` for a one-floor project, else e.g. `'F2-'`. */
+  /** `floorLabelPrefix(floorIndex, floorCount)` - `''` for a one-floor project, else e.g. `'F2_'`. */
   prefix: string
   rows: BomRow[]
 }
@@ -12,7 +12,7 @@ export type BomRowMergeKey = (row: BomRow) => string
 
 const defaultMergeKey: BomRowMergeKey = (row) => `${row.type}\u0000${row.brand}\u0000${row.model}\u0000${row.lens}`
 
-/** `'C1, C3'` -> `'F2-C1, F2-C3'`; unchanged when `prefix` is `''`. */
+/** `'C1, C3'` -> `'F2_C1, F2_C3'`; unchanged when `prefix` is `''`. */
 function prefixLabels(labels: string, prefix: string): string {
   if (!prefix) return labels
   return labels
