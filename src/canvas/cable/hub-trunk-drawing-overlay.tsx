@@ -40,7 +40,11 @@ type Cursor = { x: number; y: number; hubId: string | null }
  * The markers Layer does not listen in this mode, so every click reaches
  * the Stage; snapping is geometric and restricted to hubs
  * (`findNearestCableSnapTarget(..., accept: 'hub')`) - a device marker is
- * never a target, same as a click on empty plan: both just add a vertex.
+ * never a target, same as a click on empty plan: both just add a vertex. A
+ * SHAFT marker is excluded from the snap set entirely (decision D1, phase 6
+ * review: a trunk may never target a shaft - cables enter shafts, routes
+ * leave them), so clicking near one also just adds a vertex, same as a
+ * device; `setHubTrunk` refuses it too, defensively, if this ever changes.
  */
 export function HubTrunkDrawingOverlay({ stageRef, viewportScale, imageWidthPx, imageHeightPx }: HubTrunkDrawingOverlayProps) {
   const active = useEditorUiStore((s) => s.toolMode === 'trunk')
@@ -82,10 +86,13 @@ export function HubTrunkDrawingOverlay({ stageRef, viewportScale, imageWidthPx, 
       if (!raw) return null
       const { x, y } = clampPointToImageBounds(raw, imageWidthPx, imageHeightPx)
       const { cameras, sensors, hubs } = getActiveFloor(useProjectStore.getState())
+      // D1: a shaft marker can never be a trunk TARGET - excluded from the snap set entirely, so a
+      // click near one adds a vertex instead of "finishing" onto it (same as a click near a device).
+      const targetableHubs = hubs.filter((candidateHub) => candidateHub.kind !== 'shaft')
       const snapTarget = findNearestCableSnapTarget(
         x,
         y,
-        buildCableEndpointIndex(cameras, sensors, hubs),
+        buildCableEndpointIndex(cameras, sensors, targetableHubs),
         resolveCableSnapTolerancePx(viewportScaleRef.current, iconRadiusPx),
         'hub',
       )
@@ -113,7 +120,9 @@ export function HubTrunkDrawingOverlay({ stageRef, viewportScale, imageWidthPx, 
           // The hub's own link changed (or it was removed) while mid-draw - should not happen
           // through normal use, but the draw is lost either way, so say so rather than silently
           // discarding it.
-          useEditorUiStore.getState().pushNotification('error', 'Could not draw the route - this point is no longer linked.')
+          // Generic on purpose: a riser/drop owner refuses when no longer linked, a shaft owner
+          // refuses when the target became invalid (e.g. a shaft marker, D1) - either reads naturally.
+          useEditorUiStore.getState().pushNotification('error', 'Could not draw the route - this point or target is no longer valid.')
         }
         useEditorUiStore.getState().setToolMode('select')
       }

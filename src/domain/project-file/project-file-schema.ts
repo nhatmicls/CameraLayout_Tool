@@ -5,6 +5,8 @@ import type { Project } from './project-types'
 import { cableSettingsSchema, cableTypeSchema, normaliseLoadedCableTypes, shaftsArraySchema } from './project-file-cable-schema'
 import { fireAlarmSettingsSchema } from './project-file-fire-alarm-schema'
 import { pruneInvalidCrossFloorLinks } from '../cable/cross-floor-hub-link-integrity'
+import { clearStaleExitChoices } from '../cable/shaft-cable-exit-cascade'
+import { pruneShafts } from '../cable/shaft-integrity'
 import { MAX_PROJECT_TEXT_LENGTH_BYTES, floorsArraySchema, normaliseLoadedFloor, type FloorNormalisationLookups, type LoadedFloor } from './project-file-floor-schema'
 import { legacyFlatProjectFileSchema, wrapLegacyFlatProjectAsOneFloor } from './project-file-legacy-flat-migration'
 import type { SensorModelLookup } from './project-file-sensor-schema'
@@ -127,11 +129,17 @@ export function parseProjectFile(text: string, lookups: ProjectFileLookups): Par
     // own camera/wall/sensor/fire-alarm warnings just because types are computed first.
     const cableTypeWarnings: string[] = []
     const cableTypes = normaliseLoadedCableTypes({ cableTypes: cableTypesRaw }, cableTypeWarnings)
+    // Parsed once, before any floor - D3 (phase 6 review): a shaft-shape/identity check needs only
+    // this id set, never the other floors, so it can run PER FLOOR inside `normaliseLoadedFloorCabling`,
+    // before that floor's own cable-ref check (its cables are then reported by the ordinary
+    // "unknown hub" warning instead of silently dangling).
+    const shaftIds = new Set(shaftsRaw.map((shaft) => shaft.id))
     const floorLookups: FloorNormalisationLookups = {
       cameraModelIds: lookups.cameraModelIds,
       sensorModelLookup: lookups.sensorModelLookup,
       fireAlarmModelIds: lookups.fireAlarmModelIds,
       cableTypes,
+      shaftIds,
     }
     const multiFloor = floorsRaw.length > 1
     const warnings: string[] = []
@@ -147,16 +155,30 @@ export function parseProjectFile(text: string, lookups: ProjectFileLookups): Par
       return floor
     })
 
-    // Cross-floor link/trunk integrity needs every floor at once (an invalid or one-sided link/trunk
-    // is dropped with a warning here, never rejects the file) - run once all floors are normalised.
-    // Hub ids are unique project-wide in practice, so these warnings are not floor-prefixed.
+    // H3 fix (phase 6 review): shafts/markers are pruned FIRST (the per-floor pre-pass above
+    // already handled unknown shaftId/shape issues; this also drops a now-markerless `shafts[]`
+    // entry), THEN cross-floor link/trunk integrity, THEN stale exit choices. Reversing this order
+    // would let `pruneInvalidCrossFloorLinks` validate a trunk against a shaft marker that this
+    // pass is about to remove anyway - a hole closed independently by D1 (a trunk can never target
+    // a shaft marker at all), but kept in this order too as defence in depth. Hub ids are unique
+    // project-wide in practice, so none of these three passes' warnings are floor-prefixed.
+    const shaftWarnings: string[] = []
+    const { floors: shaftPrunedFloors, shafts: prunedShafts } = pruneShafts(floors, shaftsRaw, shaftWarnings)
+    warnings.push(...shaftWarnings)
+
     const linkWarnings: string[] = []
-    const prunedFloors = pruneInvalidCrossFloorLinks(floors, linkWarnings)
+    // M5 fix: the prune's own warning text labels a shaft marker "T{n}" - needs the PROJECT shaft
+    // order (`prunedShafts`, the authoritative post-prune list), not a per-floor count.
+    const linkedFloors = pruneInvalidCrossFloorLinks(shaftPrunedFloors, prunedShafts.map((shaft) => shaft.id), linkWarnings)
     warnings.push(...linkWarnings)
+
+    const exitWarnings: string[] = []
+    const prunedFloors = clearStaleExitChoices(linkedFloors, exitWarnings)
+    warnings.push(...exitWarnings)
 
     const project: Project = {
       floors: prunedFloors,
-      shafts: shaftsRaw,
+      shafts: prunedShafts,
       cableTypes,
       cableSettings: cableSettingsRaw ?? { ...DEFAULT_CABLE_SETTINGS },
       fireAlarmSettings: fireAlarmSettingsRaw ?? { ...DEFAULT_FIRE_ALARM_SETTINGS },

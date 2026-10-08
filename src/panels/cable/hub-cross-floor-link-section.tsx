@@ -132,10 +132,16 @@ export function HubCrossFloorLinkSection({ floors, floorIndex, hub, beyond }: Hu
               // this hub's own - a hub can own a trunk of its own (the buttons below) while this
               // sentence still reads "typed", which is correct, not contradictory (M1).
               `Cables arriving at this point continue from ${partnerLabel}: no route drawn from ${partnerLabel} yet - typed values in use above.`}
+            {/* D1 fix: every `reason` gets its OWN sentence - no vague catch-all. `shaft-exit-not-chosen`
+                can never actually reach a riser/drop's own chain (D1: a trunk can never target a
+                shaft, so this component's `beyond` never recurses into one) - kept here anyway so
+                TypeScript's exhaustiveness over `beyond.reason` catches a future new reason, rather
+                than silently folding it into the wrong sentence. */}
+            {beyond.source === 'unavailable' && beyond.reason === 'linked-floor-scale-not-set' && `${beyond.floorName} has no scale - no cable metres via this point.`}
+            {beyond.source === 'unavailable' && beyond.reason === 'link-cycle' && 'This crossing forms a cycle - no cable metres via this point.'}
             {beyond.source === 'unavailable' &&
-              (beyond.reason === 'linked-floor-scale-not-set'
-                ? `${beyond.floorName} has no scale - no cable metres via this point.`
-                : 'This crossing forms a cycle - no cable metres via this point.')}
+              beyond.reason === 'shaft-exit-not-chosen' &&
+              'No exit chosen for the shaft this route continues through - no cable metres via this point.'}
           </p>
 
           <p data-testid="properties-hub-trunk-caption" className="mt-2 text-[10px] leading-tight text-neutral-500">

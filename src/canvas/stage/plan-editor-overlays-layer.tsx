@@ -15,6 +15,9 @@ interface PlanEditorOverlaysLayerProps {
   imageHeightPx: number
   dialogOpen: boolean
   onLineDrawn: (line: RefLine) => void
+  /** True while the shaft floor-range dialog is open for a just-clicked point. */
+  shaftDialogOpen: boolean
+  onShaftPoint: (point: { x: number; y: number }) => void
 }
 
 /**
@@ -32,12 +35,20 @@ export function PlanEditorOverlaysLayer({
   imageHeightPx,
   dialogOpen,
   onLineDrawn,
+  shaftDialogOpen,
+  onShaftPoint,
 }: PlanEditorOverlaysLayerProps) {
   return (
     <Layer>
       <ScaleCalibrationOverlay stageRef={stageRef} viewportScale={viewportScale} dialogOpen={dialogOpen} onLineDrawn={onLineDrawn} />
       <WallDrawingOverlay stageRef={stageRef} viewportScale={viewportScale} imageWidthPx={imageWidthPx} imageHeightPx={imageHeightPx} />
-      <HubPlacementOverlay stageRef={stageRef} imageWidthPx={imageWidthPx} imageHeightPx={imageHeightPx} />
+      <HubPlacementOverlay
+        stageRef={stageRef}
+        imageWidthPx={imageWidthPx}
+        imageHeightPx={imageHeightPx}
+        shaftDialogOpen={shaftDialogOpen}
+        onShaftPoint={onShaftPoint}
+      />
       <CableDrawingOverlay stageRef={stageRef} viewportScale={viewportScale} imageWidthPx={imageWidthPx} imageHeightPx={imageHeightPx} />
       <HubTrunkDrawingOverlay stageRef={stageRef} viewportScale={viewportScale} imageWidthPx={imageWidthPx} imageHeightPx={imageHeightPx} />
     </Layer>

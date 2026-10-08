@@ -33,6 +33,8 @@ export interface ExportPlanPngOptions extends CableLayout {
   scale: ScaleCalibration | null
   /** This floor's own slice of the ONE project cable estimate (`useCableLayoutEstimate`/`computeProjectCableEstimate`), cross-floor contributions already resolved - the caller computes this, never `exportPlanPng` itself. Drives the BOM/legend numbers AND which cable lines draw over-length. */
   cableEstimate: CableLayoutEstimate
+  /** The project's `shafts[]` ids, in order - so a shaft marker's "T{n}" on the picture matches the screen (phase 6). Omitted on every pre-shaft caller/test. */
+  shaftIds?: readonly string[]
   /** What the plan DRAWING shows - the caller passes the tool-effective config, i.e. what is on screen. Legend lines and BOM rows never follow it. */
   viewConfig: ViewConfig
   /** Injectable for deterministic tests; defaults to "now". */
@@ -113,6 +115,7 @@ export async function exportPlanPng(options: ExportPlanPngOptions): Promise<void
         cableSettings: options.cableSettings,
         scale: options.scale,
         limitStatusById,
+        shaftIds: options.shaftIds,
       },
       viewConfig: options.viewConfig,
       pixelRatio: scale,

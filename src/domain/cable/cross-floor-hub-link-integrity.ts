@@ -68,13 +68,25 @@ export function crossFloorLinkProblem(floors: readonly Floor[], floorIndex: numb
   return null
 }
 
-/** Validates a hub's OWN stored `trunk`: only meaningful on a validly linked point, targeting a different hub that exists on the SAME floor. `null` = valid, or `hub.trunk` unset. */
+/**
+ * Validates a hub's OWN stored `trunk`, targeting a different hub that
+ * exists on the SAME floor. `null` = valid, or `hub.trunk` unset. A shaft
+ * marker's trunk needs no `link` at all (any marker of a shaft may be an
+ * exit - phase 6); a riser/drop's trunk is only meaningful on a validly
+ * linked point (phase 5, unchanged). A trunk may NEVER target a shaft
+ * marker (decision D1, phase 6 review): cables enter shafts, routes leave
+ * them - a shaft marker is never a valid trunk TARGET, whether the owner is
+ * a riser/drop or another shaft marker.
+ */
 export function crossFloorTrunkProblem(floors: readonly Floor[], floorIndex: number, hub: Hub): string | null {
   if (!hub.trunk) return null
-  if (crossFloorLinkProblem(floors, floorIndex, hub) !== null || !hub.link) return 'has a route but is not validly linked'
   if (hub.trunk.hubId === hub.id) return 'routes to itself'
+  if (hub.kind !== 'shaft' && (crossFloorLinkProblem(floors, floorIndex, hub) !== null || !hub.link)) {
+    return 'has a route but is not validly linked'
+  }
   const target = floors[floorIndex].hubs.find((candidate) => candidate.id === hub.trunk!.hubId)
   if (!target) return 'routes to a point that no longer exists'
+  if (target.kind === 'shaft') return 'routes to a shaft marker, which can never be a trunk target'
   return null
 }
 
@@ -109,14 +121,17 @@ export function listLinkCandidates(
  * detected from either side without needing the other side pruned first).
  * Returns the SAME `floors` reference when nothing needed pruning. Pushes
  * one warning per dropped link/trunk into `warnings` when given (the loader
- * wants them; the store's cascades do not).
+ * wants them; the store's cascades do not). `shaftIds` (the project's
+ * `shafts[]` ids, in order) is only for the warning text's own "T{n}" label -
+ * omitted callers fall back to a per-floor count, wrong only when 2+ shafts
+ * share one floor (review item M5).
  */
-export function pruneInvalidCrossFloorLinks(floors: readonly Floor[], warnings?: string[]): Floor[] {
+export function pruneInvalidCrossFloorLinks(floors: readonly Floor[], shaftIds?: readonly string[], warnings?: string[]): Floor[] {
   // Item 7 fix: name the floor + its R1/D1-style label, not the hub's raw (uuid) id - matches
   // `listLinkCandidates`'/the hub panel's own wording.
   const toClear: Array<{ ref: HubRef; trunkOnly: boolean; reason: string; label: string }> = []
   floors.forEach((floor, floorIndex) => {
-    const labels = hubLabels(floor.hubs)
+    const labels = hubLabels(floor.hubs, shaftIds)
     floor.hubs.forEach((hub, hubIndex) => {
       const label = `${floor.name} ${labels[hubIndex]}`
       const linkProblem = crossFloorLinkProblem(floors, floorIndex, hub)

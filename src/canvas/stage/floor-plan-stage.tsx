@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useRef } from 'react'
 import type Konva from 'konva'
 import type { KonvaEventObject } from 'konva/lib/Node'
 import { Stage } from 'react-konva'
@@ -9,6 +9,9 @@ import { useStagePanZoom } from './use-stage-pan-zoom'
 import { PlanEditorOverlaysLayer } from './plan-editor-overlays-layer'
 import { ScaleCalibrationLengthDialog } from '../../panels/app-shell/scale-calibration-length-dialog'
 import { PlanSceneLayers } from './plan-scene-layers'
+import { ShaftFloorRangeDialog } from '../../panels/cable/shaft-floor-range-dialog'
+import { useShaftFloorRangeDialog } from './use-shaft-floor-range-dialog'
+import { useScaleCalibrationDialog } from './use-scale-calibration-dialog'
 import { CameraDebugList } from '../camera/camera-debug-list'
 import { useHubAndCableSelectionKeyboardShortcuts } from '../cable/use-hub-and-cable-selection-keyboard-shortcuts'
 import { useStageCablingSceneProps } from '../cable/use-stage-cabling-scene-props'
@@ -20,7 +23,6 @@ import { useWallNodeMoveHandler } from '../wall/use-wall-node-move-handler'
 import { useStageContainerResizeAndInitialFit } from './use-stage-container-resize-and-initial-fit'
 import { useFireAlarmStageProps } from './use-fire-alarm-stage-props'
 import { useStageEffectiveViewConfig } from './use-stage-effective-view-config'
-import { computePlanPxPerMeter, type RefLine } from '../../domain/shared/scale-calibration-calculator'
 
 /**
  * The centre canvas: a Konva Stage sized to its container, with the plan
@@ -31,7 +33,6 @@ import { computePlanPxPerMeter, type RefLine } from '../../domain/shared/scale-c
 export function FloorPlanStage() {
   const image = useProjectStore(selectImage)
   const scale = useProjectStore(selectScale)
-  const setScale = useProjectStore((s) => s.setScale)
   const cameras = useProjectStore(selectCameras)
   const updateCamera = useProjectStore((s) => s.updateCamera)
   const walls = useProjectStore(selectWalls)
@@ -41,8 +42,6 @@ export function FloorPlanStage() {
     useFireAlarmStageProps()
   const decodedImage = useEditorUiStore((s) => s.decodedImage)
   const toolMode = useEditorUiStore((s) => s.toolMode)
-  const setToolMode = useEditorUiStore((s) => s.setToolMode)
-  const pushNotification = useEditorUiStore((s) => s.pushNotification)
   const setStageSize = useEditorUiStore((s) => s.setStageSize)
   const selectedCameraId = useEditorUiStore((s) => s.selectedCameraId)
   const setSelectedCameraId = useEditorUiStore((s) => s.setSelectedCameraId)
@@ -51,10 +50,11 @@ export function FloorPlanStage() {
   const selectedSensorId = useEditorUiStore((s) => s.selectedSensorId)
   const setSelectedSensorId = useEditorUiStore((s) => s.setSelectedSensorId)
   const clearSelection = useEditorUiStore((s) => s.clearSelection)
+  const { floors, defaultShaftName, pendingShaftPoint, handleShaftPoint, handleCancelShaft, handleConfirmShaft } = useShaftFloorRangeDialog()
+  const { pendingLine, handleLineDrawn, handleCancelLength, handleConfirmLength } = useScaleCalibrationDialog()
 
   const containerRef = useRef<HTMLDivElement>(null)
   const stageRef = useRef<Konva.Stage>(null)
-  const [pendingLine, setPendingLine] = useState<RefLine | null>(null)
 
   const { viewport, draggable, stageSize, handleWheel, handleDragEnd, fitToView } = useStagePanZoom()
   const { handleDragOver, handleDropOnStage } = useStageCatalogDropHandlers(stageRef)
@@ -67,20 +67,6 @@ export function FloorPlanStage() {
   const handleMoveWallNode = useWallNodeMoveHandler()
 
   useStageContainerResizeAndInitialFit(containerRef, image, stageSize, fitToView, setStageSize)
-
-  const handleLineDrawn = useCallback((line: RefLine) => setPendingLine(line), [])
-
-  const handleConfirmLength = useCallback(
-    (lengthM: number) => {
-      if (!pendingLine) return
-      const planPxPerMeter = computePlanPxPerMeter(pendingLine, lengthM)
-      setScale({ planPxPerMeter, refLine: pendingLine, refLengthM: lengthM })
-      setPendingLine(null)
-      setToolMode('select')
-      pushNotification('info', `Scale set: 1 m = ${planPxPerMeter.toFixed(1)} px.`)
-    },
-    [pendingLine, setScale, setToolMode, pushNotification],
-  )
 
   // Clicking empty canvas (the Stage itself, not a camera/wall/sensor/hub/cable) deselects
   // everything - EXCEPT in trunk-drawing mode, where every click (markers never listen while a
@@ -176,16 +162,16 @@ export function FloorPlanStage() {
             imageHeightPx={image.heightPx}
             dialogOpen={pendingLine !== null}
             onLineDrawn={handleLineDrawn}
+            shaftDialogOpen={pendingShaftPoint !== null}
+            onShaftPoint={handleShaftPoint}
           />
         </Stage>
       )}
 
-      {pendingLine && (
-        <ScaleCalibrationLengthDialog
-          line={pendingLine}
-          onCancel={() => setPendingLine(null)}
-          onConfirm={handleConfirmLength}
-        />
+      {pendingLine && <ScaleCalibrationLengthDialog line={pendingLine} onCancel={handleCancelLength} onConfirm={handleConfirmLength} />}
+
+      {pendingShaftPoint && (
+        <ShaftFloorRangeDialog floors={floors} defaultName={defaultShaftName} onCancel={handleCancelShaft} onConfirm={handleConfirmShaft} />
       )}
 
       <CameraDebugList cameras={cameras} />

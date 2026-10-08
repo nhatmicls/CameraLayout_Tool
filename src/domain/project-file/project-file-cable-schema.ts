@@ -15,6 +15,7 @@ import {
   type Hub,
 } from '../cable/cable-layout-types'
 import { cableRefProblem } from '../cable/cable-reference-integrity'
+import { normaliseShaftMarkerShapes, pruneUnknownOrDuplicateShaftMarkers } from '../cable/shaft-integrity'
 import type { PlacedSensor } from '../sensor/sensor-types'
 import type { PlacedCamera } from './project-types'
 
@@ -45,10 +46,21 @@ const hubTrunkSchema = z.strictObject({ hubId: id, points: z.array(z.strictObjec
  * point, needs the whole `floors[]` array and is checked once every floor
  * is assembled (`pruneInvalidCrossFloorLinks`, `project-file-schema.ts`) -
  * never rejects the file, drops with a warning instead.
+ *
+ * D3 (phase 6 review): the shaft-shape combinations (`kind: 'shaft'` without
+ * `shaftId`; a non-shaft hub carrying a stray `shaftId`; a shaft marker
+ * carrying `link`) are likewise never schema-level REJECTIONS - a hand-edited
+ * or future-version file with one of these shapes should still open, with
+ * the offending hub/key dropped and a warning, same as every other integrity
+ * violation in this file. That normalisation runs in
+ * `normaliseLoadedFloorCabling` below (`normaliseShaftMarkerShapes`), not
+ * here - this schema only constrains each field's own type/bounds.
  */
 export const hubSchema = z.strictObject({
   id,
-  kind: z.enum(['riser', 'drop']).optional(),
+  kind: z.enum(['riser', 'drop', 'shaft']).optional(),
+  /** Required, and only meaningful, when `kind === 'shaft'` - which project `shafts[]` entry this opening belongs to. A mismatch (missing when required, present when not) is dropped/cleared with a warning, never rejected - see `normaliseShaftMarkerShapes`. */
+  shaftId: id.optional(),
   x: coord,
   y: coord,
   mountHeightM: bounded(HUB_MOUNT_HEIGHT_BOUNDS),
@@ -68,6 +80,8 @@ export const cableSchema = z.strictObject({
   hubId: id,
   typeId: id,
   points: z.array(z.strictObject({ x: coord, y: coord })).max(MAX_CABLE_POINTS),
+  /** Shaft marker only (meaningless, and cleared with a warning, on anything else - `project-file-schema.ts`). */
+  exitFloorId: id.optional(),
 })
 
 export const cableTypeSchema = z.strictObject({
@@ -133,19 +147,28 @@ export function normaliseLoadedCableTypes(raw: { cableTypes?: CableType[] }, war
 
 /**
  * Per floor: drops, each with one warning, what the app never creates - a
- * repeated hub/cable id, or a cable whose device, hub or type does not
- * resolve. `cableTypes` is the project-wide deduped list
- * (`normaliseLoadedCableTypes`); `kept` is the cameras/sensors THIS FLOOR
- * kept after their own filtering, so a cable on a dropped camera goes with
- * it. Never rejects.
+ * repeated hub/cable id, a shaft-shape mismatch (D3: `normaliseShaftMarkerShapes`
+ * then `pruneUnknownOrDuplicateShaftMarkers`, BOTH before the cable-ref check
+ * below, so a cable on a hub either of them drops is reported by the
+ * ordinary "unknown hub" cable warning rather than left dangling), or a
+ * cable whose device, hub or type does not resolve. `cableTypes` is the
+ * project-wide deduped list (`normaliseLoadedCableTypes`); `shaftIds` is the
+ * project-wide `shafts[]` id set (parsed before any floor, so it is already
+ * final here); `kept` is the cameras/sensors THIS FLOOR kept after their own
+ * filtering, so a cable on a dropped camera goes with it. Every warning here
+ * is UNPREFIXED - the caller (`project-file-floor-schema.ts`) prefixes with
+ * the floor name only when the file has more than one floor. Never rejects.
  */
 export function normaliseLoadedFloorCabling(
   raw: { hubs?: Hub[]; cables?: Cable[] },
   cableTypes: readonly CableType[],
+  shaftIds: ReadonlySet<string>,
   kept: { cameras: readonly PlacedCamera[]; sensors: readonly PlacedSensor[] },
   warnings: string[],
 ): { hubs: Hub[]; cables: Cable[] } {
-  const hubs = dedupeById(raw.hubs ?? [], 'Hub', warnings)
+  const dedupedHubs = dedupeById(raw.hubs ?? [], 'Hub', warnings)
+  const shapedHubs = normaliseShaftMarkerShapes(dedupedHubs, warnings)
+  const hubs = pruneUnknownOrDuplicateShaftMarkers(shapedHubs, shaftIds, warnings)
 
   const ctx = {
     cameraIds: new Set(kept.cameras.map((camera) => camera.id)),

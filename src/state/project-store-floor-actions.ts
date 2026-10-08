@@ -1,4 +1,4 @@
-import { pruneInvalidCrossFloorLinks } from '../domain/cable/cross-floor-hub-link-integrity'
+import type { Shaft } from '../domain/cable/cable-layout-types'
 import {
   addFloorToList,
   defaultFloorName,
@@ -9,7 +9,7 @@ import {
 } from '../domain/floor/floor-list-editing'
 import { createEmptyFloor, type Floor } from '../domain/floor/floor-types'
 import type { PlanImage } from '../domain/project-file/project-types'
-import { patchActiveFloor } from './project-store-active-floor-update'
+import { patchActiveFloor, pruneCrossFloorAndShaftState } from './project-store-active-floor-update'
 
 /**
  * The floor-list slice of the project store: switching the active floor,
@@ -22,6 +22,7 @@ import { patchActiveFloor } from './project-store-active-floor-update'
 export interface FloorListState {
   floors: Floor[]
   activeFloorId: string
+  shafts: Shaft[]
 }
 
 export interface FloorListActions {
@@ -69,22 +70,26 @@ export function createFloorActions(
     },
 
     moveFloor: (id, toIndex) => {
-      const { floors } = get()
+      const { floors, shafts } = get()
       const moved = moveFloorInList(floors, id, toIndex)
       if (moved === floors) return
-      // Reordering can break a link's "ONE legal adjacent floor" rule even though no hub moved.
-      set({ floors: pruneInvalidCrossFloorLinks(moved) })
+      // Reordering can break a link's "ONE legal adjacent floor" rule even though no hub moved;
+      // it cannot affect a shaft (no stored range), but the pass is shared and cheap on a no-op.
+      const pruned = pruneCrossFloorAndShaftState(moved, shafts)
+      set({ floors: pruned.floors, shafts: pruned.shafts })
     },
 
     deleteFloor: (id) => {
-      const { floors, activeFloorId } = get()
+      const { floors, activeFloorId, shafts } = get()
       const deletedIndex = floors.findIndex((floor) => floor.id === id)
       const removed = removeFloorFromList(floors, id)
       if (removed === floors) return
       // H2: nearest neighbour by index when deleting the ACTIVE floor, not always `next[0]`.
       const nextActiveFloorId = activeFloorId === id ? removed[nearestFloorIndexAfterRemoval(deletedIndex, removed.length)].id : activeFloorId
-      // The deleted floor's hubs are gone too - any OTHER floor linked to one of them gets pruned here, same undo step.
-      set({ floors: pruneInvalidCrossFloorLinks(removed), activeFloorId: nextActiveFloorId })
+      // The deleted floor's hubs/markers are gone too - any OTHER floor linked to one of them, or a
+      // shaft left with no markers anywhere, gets pruned here, same undo step.
+      const pruned = pruneCrossFloorAndShaftState(removed, shafts)
+      set({ floors: pruned.floors, shafts: pruned.shafts, activeFloorId: nextActiveFloorId })
     },
 
     setFloorHeight: (id, floorHeightM) => {

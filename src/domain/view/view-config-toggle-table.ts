@@ -70,7 +70,7 @@ export const VIEW_TOGGLES: readonly ViewToggleDefinition[] = [
       noteLabel: SENSOR_KIND_NOTE_LABELS[sensorKind],
     }),
   ),
-  { id: 'hubs', group: 'cabling', key: { flag: 'hubs' }, panelLabel: 'Hubs, risers, drops', noteLabel: 'hubs' },
+  { id: 'hubs', group: 'cabling', key: { flag: 'hubs' }, panelLabel: 'Hubs, risers, drops, shafts', noteLabel: 'hubs' },
   { id: 'cables', group: 'cabling', key: { flag: 'cables' }, panelLabel: 'Cables', noteLabel: 'cables' },
   { id: 'walls', group: 'walls', key: { flag: 'walls' }, panelLabel: 'Walls', noteLabel: 'walls' },
 ]

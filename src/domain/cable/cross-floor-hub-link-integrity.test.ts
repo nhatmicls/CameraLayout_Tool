@@ -80,6 +80,19 @@ describe('crossFloorTrunkProblem', () => {
     const badTrunk = { ...floors[1].hubs[0], trunk: { hubId: 'gone', points: [] } }
     expect(crossFloorTrunkProblem(floors, 1, badTrunk)).toMatch(/no longer exists/)
   })
+
+  it('D1: rejects a trunk that targets a shaft marker, from a riser/drop owner', () => {
+    const shaftMarker: Hub = { id: 'shaft-m', kind: 'shaft', shaftId: 's1', x: 0, y: 0, mountHeightM: 0 }
+    const floors = floorsOf({ floor1: { hubs: [{ ...floorsOf()[1].hubs[0], trunk: { hubId: 'shaft-m', points: [] } }, shaftMarker] } })
+    expect(crossFloorTrunkProblem(floors, 1, floors[1].hubs[0])).toMatch(/shaft marker/)
+  })
+
+  it('D1: rejects a trunk that targets a shaft marker, from ANOTHER shaft marker owner (no chaining into a shaft)', () => {
+    const ownerMarker: Hub = { id: 'owner-m', kind: 'shaft', shaftId: 's2', x: 0, y: 0, mountHeightM: 0, trunk: { hubId: 'target-m', points: [] } }
+    const targetMarker: Hub = { id: 'target-m', kind: 'shaft', shaftId: 's1', x: 10, y: 10, mountHeightM: 0 }
+    const floors = floorsOf({ floor0: { hubs: [ownerMarker, targetMarker] } })
+    expect(crossFloorTrunkProblem(floors, 0, ownerMarker)).toMatch(/shaft marker/)
+  })
 })
 
 describe('listLinkCandidates', () => {
@@ -111,7 +124,7 @@ describe('pruneInvalidCrossFloorLinks', () => {
     // drop-1 carries its usual trunk but no link back - two independent problems, caught from each side.
     const floors = floorsOf({ floor1: { hubs: [{ id: 'drop-1', kind: 'drop', x: 700, y: 500, mountHeightM: 0, trunk: { hubId: 'plain-hub-2', points: [] } }, PLAIN_HUB] } })
     const warnings: string[] = []
-    const next = pruneInvalidCrossFloorLinks(floors, warnings)
+    const next = pruneInvalidCrossFloorLinks(floors, undefined, warnings)
     expect(next[0].hubs[0].link).toBeUndefined() // riser-1's link pruned (partner doesn't point back)
     const drop = next[1].hubs.find((h) => h.id === 'drop-1')!
     expect(drop.trunk).toBeUndefined() // drop-1's own orphaned trunk pruned (it was never actually linked)
@@ -125,10 +138,29 @@ describe('pruneInvalidCrossFloorLinks', () => {
     const floors = floorsOf()
     const hubDeleted: Floor[] = [floors[0], { ...floors[1], hubs: [floors[1].hubs[0]] }] // plain-hub-2 deleted; drop-1's trunk now dangles
     const warnings: string[] = []
-    const next = pruneInvalidCrossFloorLinks(hubDeleted, warnings)
+    const next = pruneInvalidCrossFloorLinks(hubDeleted, undefined, warnings)
     expect(next[1].hubs[0].trunk).toBeUndefined()
     expect(next[1].hubs[0].link).toEqual({ floorId: 'floor-0', hubId: 'riser-1' }) // link itself stays valid
     expect(next[0].hubs[0].link).toEqual({ floorId: 'floor-1', hubId: 'drop-1' })
     expect(warnings.some((w) => /route dropped/.test(w))).toBe(true)
+  })
+
+  it('M5: a dropped trunk\'s warning labels a shaft marker "T{n}" from the PROJECT order, not a per-floor count', () => {
+    // Two shafts share floor-1: "shaft-b" is listed first in the (fake) project order passed in,
+    // but its marker sits SECOND in the floor's own hubs array - a per-floor count would call it "T2".
+    const markerA: Hub = { id: 'marker-a', kind: 'shaft', shaftId: 'shaft-a', x: 0, y: 0, mountHeightM: 0 }
+    const markerB: Hub = {
+      id: 'marker-b',
+      kind: 'shaft',
+      shaftId: 'shaft-b',
+      x: 1,
+      y: 1,
+      mountHeightM: 0,
+      trunk: { hubId: 'gone', points: [] }, // dangling - triggers the warning this test reads
+    }
+    const floors = floorsOf({ floor1: { hubs: [markerA, markerB] } })
+    const warnings: string[] = []
+    pruneInvalidCrossFloorLinks(floors, ['shaft-b', 'shaft-a'], warnings)
+    expect(warnings.some((w) => w.includes('T1') && w.includes('no longer exists'))).toBe(true)
   })
 })

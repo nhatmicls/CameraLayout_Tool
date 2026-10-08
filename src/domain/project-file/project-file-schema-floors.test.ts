@@ -251,8 +251,11 @@ describe('shafts', () => {
     expectRejected(raw)
   })
 
-  it('round-trips a typed shaft list', () => {
-    const project = buildProject({}, { shafts: [{ id: 't1', name: 'Main shaft' }] })
+  it('round-trips a typed shaft list that has a marker (phase 6: a markerless shaft is pruned - see project-file-schema-shafts.test.ts)', () => {
+    const project = buildProject(
+      { hubs: [{ id: 'm1', kind: 'shaft', shaftId: 't1', x: 1, y: 1, mountHeightM: 0 }] },
+      { shafts: [{ id: 't1', name: 'Main shaft' }] },
+    )
     const result = expectOk(parseProjectFile(serializeProject(project), LOOKUPS))
     expect(result.project.shafts).toEqual([{ id: 't1', name: 'Main shaft' }])
   })

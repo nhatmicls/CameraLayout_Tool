@@ -40,6 +40,8 @@ export interface CableEstimateWarning {
     | 'cable-maybe-over-limit'
     | 'linked-floor-scale-not-set'
     | 'link-cycle'
+    | 'shaft-no-exit'
+    | 'shaft-exit-not-chosen'
   message: string
   cableId?: string
 }
@@ -66,6 +68,8 @@ export interface CableLayoutEstimateInput extends CableLayout {
   scale: ScaleCalibration | null
   /** This floor's cross-floor "beyond the hub" contribution per cable (`resolveCableBeyondLengths`). Absent = every cable stays in typed mode - today's behaviour, byte-identical (used by every pre-existing test). */
   beyondByCableId?: ReadonlyMap<string, HubBeyondLength>
+  /** The project's `shafts[]` ids, in order - so a shaft marker's label reads "T{n}" (project order), not a per-floor count. Absent on every pre-shaft test/caller - harmless unless this floor actually holds a shaft marker. */
+  shaftIds?: readonly string[]
 }
 
 export const SCALE_NOT_SET_CABLE_MESSAGE = 'Calibrate the scale to estimate cable lengths.'
@@ -107,10 +111,13 @@ function limitWarning(cable: CableLengthEstimate, type: CableType): CableEstimat
   return null
 }
 
-/** Human text for the two "could not estimate" reasons, named by the cable's own label. */
+/** Human text for the "could not estimate" reasons, named by the cable's own label. */
 function unavailableWarning(label: string, cableId: string, beyond: Extract<HubBeyondLength, { source: 'unavailable' }>): CableEstimateWarning {
   if (beyond.reason === 'link-cycle') {
     return { code: 'link-cycle', cableId, message: `${label}: its cross-floor route forms a cycle - excluded from the estimate.` }
+  }
+  if (beyond.reason === 'shaft-exit-not-chosen') {
+    return { code: 'shaft-exit-not-chosen', cableId, message: `${label}: no exit chosen for this shaft - excluded from the estimate.` }
   }
   return {
     code: 'linked-floor-scale-not-set',
@@ -136,7 +143,7 @@ export function computeCableLayoutEstimate(input: CableLayoutEstimateInput): Cab
   }
 
   const uncertainty = computeScaleUncertainty(scale, cableSettings.clickErrorPx)
-  const index = buildCableEndpointIndex(input.cameras, input.sensors, input.hubs)
+  const index = buildCableEndpointIndex(input.cameras, input.sensors, input.hubs, input.shaftIds)
   const typeById = new Map(cableTypes.map((type): [string, CableType] => [type.id, type]))
   const estimates: CableLengthEstimate[] = []
   const warnings: CableEstimateWarning[] = cables.length > 0 ? scaleWarnings(uncertainty) : []

@@ -9,6 +9,7 @@ import type { CrossFloorLinkActions } from './project-store-cross-floor-link-act
 import type { FireAlarmActions } from './project-store-fire-alarm-actions'
 import type { FloorListActions } from './project-store-floor-actions'
 import type { PlacedItemActions } from './project-store-placed-item-actions'
+import type { ShaftActions } from './project-store-shaft-actions'
 
 /**
  * `ProjectState`/`ProjectActions`/`ProjectStore` and the initial-state
@@ -47,7 +48,7 @@ export interface ProjectState {
   loadSeq: number
 }
 
-export interface ProjectActions extends FloorListActions, PlacedItemActions, CablingActions, FireAlarmActions, CrossFloorLinkActions {
+export interface ProjectActions extends FloorListActions, PlacedItemActions, CablingActions, FireAlarmActions, CrossFloorLinkActions, ShaftActions {
   /** Replaces the whole project (used when loading a project file). Sets the active floor to `project.floors[0]` (tab 1 = lowest floor) and clears undo history. */
   replaceProject: (project: Project) => void
   /** Clears back to the empty-project state: one empty floor, no shafts, default cable types/settings/fire-alarm settings. Clears undo history. */

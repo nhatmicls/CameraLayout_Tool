@@ -22,9 +22,18 @@ export interface TestHooks {
     image: { fileName: string } | null
     cameras: unknown[]
     sensors: unknown[]
-    hubs: Array<{ id: string; kind?: 'riser' | 'drop'; x: number; y: number; link?: { floorId: string; hubId: string }; trunk?: { hubId: string; points: unknown[] } }>
-    cables: Array<{ id: string }>
+    hubs: Array<{
+      id: string
+      kind?: 'riser' | 'drop' | 'shaft'
+      shaftId?: string
+      x: number
+      y: number
+      link?: { floorId: string; hubId: string }
+      trunk?: { hubId: string; points: unknown[] }
+    }>
+    cables: Array<{ id: string; hubId: string; exitFloorId?: string }>
   }>
+  getShafts: () => Array<{ id: string; name: string }>
   getActiveFloorId: () => string
   seedFloor: (name?: string) => string
   getDecodedImageInfo: () => { widthPx: number; heightPx: number } | null

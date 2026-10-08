@@ -1,6 +1,6 @@
 import { memo } from 'react'
 import type { KonvaEventObject } from 'konva/lib/Node'
-import { Group, Line, Rect, Text } from 'react-konva'
+import { Circle, Group, Line, Rect, Text } from 'react-konva'
 import type { Hub } from '../../domain/cable/cable-layout-types'
 import { clampPointToImageBounds } from '../../domain/shared/clamp'
 import { SELECTION_RING_PADDING_PX } from '../shared/brand-and-dori-color-palette'
@@ -73,9 +73,9 @@ export const HubMarkerNode = memo(function HubMarkerNode({
         stroke="#ffffff"
         strokeWidth={Math.max(1, iconRadiusPx * 0.1)}
       />
-      {hub.kind && (
+      {(hub.kind === 'riser' || hub.kind === 'drop') && (
         <Line
-          // Up arrow (shaft, then the two head strokes); flipped for a drop.
+          // Up arrow (the vertical stroke, then the two head strokes); flipped for a drop.
           points={[0, side * 0.3, 0, -side * 0.3, -side * 0.22, -side * 0.06, 0, -side * 0.3, side * 0.22, -side * 0.06]}
           scaleY={hub.kind === 'drop' ? -1 : 1}
           stroke="#ffffff"
@@ -84,6 +84,10 @@ export const HubMarkerNode = memo(function HubMarkerNode({
           lineJoin="round"
           listening={false}
         />
+      )}
+      {hub.kind === 'shaft' && (
+        // A ring, standing in for the tube's cross-section - distinct from the riser/drop arrows.
+        <Circle radius={side * 0.25} stroke="#ffffff" strokeWidth={Math.max(1.5, side * 0.12)} listening={false} />
       )}
 
       {selected && (

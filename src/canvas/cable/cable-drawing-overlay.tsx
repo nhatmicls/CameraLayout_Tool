@@ -8,9 +8,10 @@ import {
   removeLastCableDrawingPoint,
   type CableDrawingChain,
 } from '../../domain/cable/cable-drawing-chain'
-import { buildCableEndpointIndex } from '../../domain/cable/cable-endpoint-index'
+import { buildCableEndpointIndex, cableLabel } from '../../domain/cable/cable-endpoint-index'
 import { MAX_CABLES } from '../../domain/cable/cable-layout-types'
 import { findNearestCableSnapTarget, type CableSnapTarget } from '../../domain/cable/cable-snap-target-lookup'
+import { findShaftExits } from '../../domain/cable/shaft-integrity'
 import { clampPointToImageBounds } from '../../domain/shared/clamp'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
@@ -103,11 +104,28 @@ export function CableDrawingOverlay({ stageRef, viewportScale, imageWidthPx, ima
         moveChain(step.chain)
       } else if (step.kind === 'commit') {
         const store = useProjectStore.getState()
-        const { cables } = getActiveFloor(store)
-        const { cableTypes: types, addCable } = store
+        const { cables, hubs } = getActiveFloor(store)
+        const { cableTypes: types, addCable, shafts } = store
         const type = types.find((candidate) => candidate.id === typeId) ?? types[0]
-        if (cables.length >= MAX_CABLES) pushNotification('error', `A project can hold at most ${MAX_CABLES} cables.`)
-        else if (type) addCable({ id: crypto.randomUUID(), ...step.cable, typeId: type.id })
+        if (cables.length >= MAX_CABLES) {
+          pushNotification('error', `A project can hold at most ${MAX_CABLES} cables.`)
+        } else if (type) {
+          const newCableId = crypto.randomUUID()
+          addCable({ id: newCableId, ...step.cable, typeId: type.id })
+          // A cable freshly drawn onto a shaft with several exits gets NO default exit - select it
+          // and ask, rather than leaving it silently unestimated with no clue why.
+          const endHub = hubs.find((candidate) => candidate.id === step.cable.hubId)
+          const afterFloors = useProjectStore.getState().floors
+          if (endHub?.kind === 'shaft' && endHub.shaftId && findShaftExits(afterFloors, endHub.shaftId).length >= 2) {
+            const afterFloor = getActiveFloor(useProjectStore.getState())
+            const newCable = afterFloor.cables.find((candidate) => candidate.id === newCableId)
+            if (newCable) {
+              const newIndex = buildCableEndpointIndex(afterFloor.cameras, afterFloor.sensors, afterFloor.hubs, shafts.map((shaft) => shaft.id))
+              useEditorUiStore.getState().setSelectedCableId(newCableId)
+              pushNotification('info', `Choose the exit for ${cableLabel(newCable, newIndex)}.`)
+            }
+          }
+        }
         moveChain(null)
       } else if (step.reason === 'start-needs-target' && !startHintShown) {
         startHintShown = true

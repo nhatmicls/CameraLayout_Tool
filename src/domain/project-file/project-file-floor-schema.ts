@@ -122,6 +122,8 @@ export interface FloorNormalisationLookups {
   fireAlarmModelIds: ReadonlySet<string>
   /** The project-wide deduped cable types (`normaliseLoadedCableTypes`, called once for the whole file). */
   cableTypes: readonly CableType[]
+  /** The project-wide `shafts[]` id set, parsed once before any floor (D3, phase 6 review). */
+  shaftIds: ReadonlySet<string>
 }
 
 /**
@@ -153,7 +155,7 @@ export function normaliseLoadedFloor(
   const fireAlarmDevices = normaliseLoadedFireAlarmDevices(raw.fireAlarmDevices ?? [], lookups.fireAlarmModelIds, nonCablingWarnings)
 
   const cablingWarnings: string[] = []
-  const { hubs, cables } = normaliseLoadedFloorCabling(raw, lookups.cableTypes, { cameras, sensors }, cablingWarnings)
+  const { hubs, cables } = normaliseLoadedFloorCabling(raw, lookups.cableTypes, lookups.shaftIds, { cameras, sensors }, cablingWarnings)
 
   const floor: Floor = {
     id: raw.id,

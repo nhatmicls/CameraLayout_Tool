@@ -18,12 +18,15 @@ import { useProjectStore } from './project-store'
  *
  *  (i)   Exactly ONE floor's CONTENT changed (`findChangedFloorIds`): switch
  *        to it - the existing, well-tested auto-switch.
- *  (ii)  Exactly TWO floors' content changed (item 6: a riser/drop link,
+ *  (ii)  TWO OR MORE floors' content changed (item 6: a riser/drop link,
  *        trunk, or "Create paired point" edit always touches the hub's own
- *        floor AND its partner's): if the active floor is EITHER of the
- *        two, stay - the user is already looking at one side of the edit.
- *        Otherwise switch to the LOWER-index one of the two (an arbitrary
- *        but deterministic choice between two equally-relevant floors).
+ *        floor AND its partner's - exactly two; phase 6: creating or
+ *        deleting a shaft touches EVERY floor that gets/loses a marker,
+ *        which can be many more than two): if the active floor is ANY of
+ *        the changed ones, stay - the user is already looking at one side
+ *        of the edit. Otherwise switch to the LOWEST-index changed floor
+ *        (an arbitrary but deterministic choice among several equally
+ *        relevant floors).
  *  (iii) The floor list GREW during an UNDO specifically: that can only mean
  *        undoing a `deleteFloor` (redoing an `addFloor` also grows the list,
  *        but during a REDO - deliberately left alone below, since nothing
@@ -46,11 +49,11 @@ function autoSwitchAndClamp(before: Floor[], direction: 'undo' | 'redo'): void {
 
   if (changed?.length === 1) {
     useProjectStore.getState().setActiveFloor(changed[0])
-  } else if (changed?.length === 2) {
+  } else if (changed && changed.length >= 2) {
     const activeFloorId = useProjectStore.getState().activeFloorId
     if (!changed.includes(activeFloorId)) {
-      const lowerIndex = Math.min(...changed.map((id) => after.findIndex((floor) => floor.id === id)))
-      useProjectStore.getState().setActiveFloor(after[lowerIndex].id)
+      const lowestIndex = Math.min(...changed.map((id) => after.findIndex((floor) => floor.id === id)))
+      useProjectStore.getState().setActiveFloor(after[lowestIndex].id)
     }
   } else if (after.length > before.length && direction === 'undo') {
     const reappearedId = after.find((floor) => !before.some((b) => b.id === floor.id))?.id

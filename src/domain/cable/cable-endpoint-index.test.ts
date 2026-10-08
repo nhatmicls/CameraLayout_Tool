@@ -68,4 +68,22 @@ describe('resolveCablePathPx + cableLabel', () => {
     expect(cableLabel(noHub, index)).toBe('C1-?')
     expect(cableLabel(noDevice, index)).toBe('?-H1')
   })
+
+  it('appends the exit floor suffix only when the caller supplies one - "C1-H1" vs "C1-H1>F3"', () => {
+    expect(cableLabel(CABLE_A, index)).toBe('C1-H1')
+    expect(cableLabel(CABLE_A, index, 'F3')).toBe('C1-H1>F3')
+  })
+})
+
+describe('hubLabels - shaft markers', () => {
+  it('labels a shaft marker "T{n}" from its position in the project shafts[] list, not a local count', () => {
+    const hubs = [
+      HUB_H1,
+      { id: 'm-shaft-b', kind: 'shaft' as const, shaftId: 'shaft-b', x: 0, y: 0, mountHeightM: 0 },
+      { id: 'm-shaft-a', kind: 'shaft' as const, shaftId: 'shaft-a', x: 0, y: 0, mountHeightM: 0 },
+    ]
+    // shaft-a is listed FIRST in the project, even though its marker on THIS floor comes second.
+    const labels = buildCableEndpointIndex([], [], hubs, ['shaft-a', 'shaft-b']).hubs.map((hub) => hub.label)
+    expect(labels).toEqual(['H1', 'T2', 'T1'])
+  })
 })

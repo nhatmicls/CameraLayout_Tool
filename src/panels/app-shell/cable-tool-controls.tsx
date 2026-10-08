@@ -13,7 +13,8 @@ interface CableToolControlsProps {
 const ADD_HUB_HINT = 'Click the plan to place a hub. Esc to finish.'
 const ADD_RISER_HINT = 'Click where cables go up to the floor above. Esc to finish.'
 const ADD_DROP_HINT = 'Click where cables go down to the floor below. Esc to finish.'
-const DRAW_CABLE_HINT = 'Click a device, then route points, then a hub, riser or drop (or the reverse). Backspace undoes a point, Esc cancels.'
+const ADD_SHAFT_HINT = 'Click the plan for the vertical tube - a dialog picks which floors it opens onto.'
+const DRAW_CABLE_HINT = 'Click a device, then route points, then a hub, riser, drop or shaft (or the reverse). Backspace undoes a point, Esc cancels.'
 
 /**
  * Toolbar group for cabling: the "Add hub", "Add riser", "Add drop" and "Draw cable" mode toggles
@@ -30,11 +31,12 @@ export function CableToolControls({ hasImage, buttonClass }: CableToolControlsPr
   const cableTypes = useProjectStore((s) => s.cableTypes)
   const selectedHubId = useEditorUiStore((s) => s.selectedHubId)
   const hubs = useProjectStore(selectHubs)
+  const shafts = useProjectStore((s) => s.shafts)
 
-  // The trunk tool (`ToolMode 'trunk'`) is entered from the hub panel, not a toolbar toggle - this
-  // is a status readout + a way out, not a mode button like the others.
+  // The trunk tool (`ToolMode 'trunk'`) is entered from the hub/shaft panel, not a toolbar toggle -
+  // this is a status readout + a way out, not a mode button like the others.
   const startHubIndex = hubs.findIndex((hub) => hub.id === selectedHubId)
-  const startHubLabel = startHubIndex >= 0 ? hubLabels(hubs)[startHubIndex] : 'this point'
+  const startHubLabel = startHubIndex >= 0 ? hubLabels(hubs, shafts.map((shaft) => shaft.id))[startHubIndex] : 'this point'
 
   // The remembered id can be stale (type deleted, project replaced): fall back to the first type.
   const drawType = cableTypes.find((type) => type.id === cableDrawTypeId) ?? cableTypes[0]
@@ -68,6 +70,7 @@ export function CableToolControls({ hasImage, buttonClass }: CableToolControlsPr
       {modeButton('hub', 'Add hub', ADD_HUB_HINT, 'add-hub-button')}
       {modeButton('riser', 'Add riser', ADD_RISER_HINT, 'add-riser-button')}
       {modeButton('drop', 'Add drop', ADD_DROP_HINT, 'add-drop-button')}
+      {modeButton('shaft', 'Shaft', ADD_SHAFT_HINT, 'add-shaft-button')}
       {modeButton('cable', 'Draw cable', DRAW_CABLE_HINT, 'draw-cable-button')}
 
       {toolMode === 'cable' && drawType && (

@@ -23,6 +23,8 @@ const NO_LIMIT_STATUSES: ReadonlyMap<string, CableLimitStatus> = new Map()
 export interface PlanSceneCabling extends CableLayout {
   scale: ScaleCalibration | null
   limitStatusById?: ReadonlyMap<string, CableLimitStatus>
+  /** The project's `shafts[]` ids, in order - a shaft marker's on-screen "T{n}" label needs the WHOLE project, not just this floor's own hubs (phase 6). Omitted on every pre-shaft caller/test - harmless unless this floor actually holds a shaft marker. */
+  shaftIds?: readonly string[]
 }
 
 /** Editor-only wiring; omitted in the PNG export and the dev spike, where hubs and cables are a static render. */
@@ -78,7 +80,10 @@ export function usePlanSceneCabling({
   limitStatusById: ReadonlyMap<string, CableLimitStatus>
   cableLines: ReactNode
 } {
-  const index = useMemo(() => buildCableEndpointIndex(cameras, sensors, cabling.hubs), [cameras, sensors, cabling.hubs])
+  const index = useMemo(
+    () => buildCableEndpointIndex(cameras, sensors, cabling.hubs, cabling.shaftIds),
+    [cameras, sensors, cabling.hubs, cabling.shaftIds],
+  )
   const limitStatusById = cabling.limitStatusById ?? NO_LIMIT_STATUSES
 
   const hiddenCableId = interaction?.selectedCableId ?? null

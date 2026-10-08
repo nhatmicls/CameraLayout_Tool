@@ -18,6 +18,7 @@ export function useStageCablingSceneProps(): { cabling: PlanSceneCabling; cablin
   const cableTypes = useProjectStore((s) => s.cableTypes)
   const cableSettings = useProjectStore((s) => s.cableSettings)
   const scale = useProjectStore(selectScale)
+  const shafts = useProjectStore((s) => s.shafts)
   const updateHub = useProjectStore((s) => s.updateHub)
   const updateCable = useProjectStore((s) => s.updateCable)
   const setHubTrunk = useProjectStore((s) => s.setHubTrunk)
@@ -35,9 +36,10 @@ export function useStageCablingSceneProps(): { cabling: PlanSceneCabling; cablin
     return statuses
   }, [layoutEstimate])
 
+  const shaftIds = useMemo(() => shafts.map((shaft) => shaft.id), [shafts])
   const cabling = useMemo(
-    () => ({ hubs, cables, cableTypes, cableSettings, scale, limitStatusById }),
-    [hubs, cables, cableTypes, cableSettings, scale, limitStatusById],
+    () => ({ hubs, cables, cableTypes, cableSettings, scale, limitStatusById, shaftIds }),
+    [hubs, cables, cableTypes, cableSettings, scale, limitStatusById, shaftIds],
   )
 
   const onHubDragEnd = useCallback((id: string, x: number, y: number) => updateHub(id, { x, y }), [updateHub])

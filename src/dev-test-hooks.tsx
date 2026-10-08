@@ -62,6 +62,8 @@ declare global {
       getTrunkRouteLineHubIds: () => string[]
       /** Number of Konva Layers on the live interactive stage - confirms a tool mode never grows a sixth. */
       getLayerCount: () => number
+      /** Phase 6: the project's `shafts[]` (identity + name, project order - `T{n}` label order). */
+      getShafts: () => Array<{ id: string; name: string }>
     }
   }
 }
@@ -136,5 +138,6 @@ export function installDevTestHooks(): void {
         .map((name) => name.slice(prefix.length))
     },
     getLayerCount: () => findInteractiveStage()?.getLayers().length ?? 0,
+    getShafts: () => useProjectStore.getState().shafts,
   }
 }

@@ -61,6 +61,7 @@ export function usePlanExportActions() {
         fireAlarmSettings,
         scale,
         cableEstimate,
+        shaftIds: store.shafts.map((shaft) => shaft.id),
         viewConfig: resolveEffectiveViewConfig(viewConfig, toolMode),
         onDownscaled: (widthPx, heightPx, scaleFactor) =>
           pushNotification(

@@ -15,8 +15,10 @@
  */
 export interface Hub {
   id: string
-  /** Omitted = a plain hub. */
-  kind?: 'riser' | 'drop'
+  /** Omitted = a plain hub. `'shaft'` = one opening of a project-wide `Shaft` (see below) - requires `shaftId`, can never carry `link` (pair links are riser/drop only). */
+  kind?: 'riser' | 'drop' | 'shaft'
+  /** Required, and only meaningful, when `kind === 'shaft'`: which project `Shaft` this opening belongs to. At most one marker per shaft per floor. */
+  shaftId?: string
   /** Position in image pixels, x right, y down. */
   x: number
   y: number
@@ -24,10 +26,16 @@ export interface Hub {
    * Metres, never negative. Hub: its height above this floor. Riser: the
    * height above this floor the cable rises to. Drop: how far BELOW this
    * floor the cable goes down to (`hubEffectiveHeightM` turns that into a
-   * negative height).
+   * negative height). Shaft: unused (always 0) - a shaft's vertical metres
+   * come from `floorHeightM`, never a typed height on the marker itself.
    */
   mountHeightM: number
-  /** Riser / drop only: cable length on the other floor, beyond this point, metres. Omitted = 0. */
+  /**
+   * Riser / drop: cable length on the other floor, beyond this point,
+   * metres. Shaft marker with NO exit anywhere on the shaft: the typed
+   * "length beyond this opening" fallback (see `shaft-integrity.ts`).
+   * Omitted = 0.
+   */
   extraLengthM?: number
   /**
    * Riser / drop only: the matching point on the ONE legal adjacent floor
@@ -37,12 +45,14 @@ export interface Hub {
    */
   link?: { floorId: string; hubId: string }
   /**
-   * Riser / drop only, and only meaningful while `link` is set: the drawn
-   * route from THIS point to another hub on ITS OWN floor, continuing the
-   * crossing for cables arriving via the partner on the other floor (see
+   * The drawn route from THIS point to another hub on ITS OWN floor,
+   * continuing the crossing for cables arriving via this point (see
    * `cross-floor-exit-resolver.ts` / `cross-floor-hub-beyond-length-resolver.ts`).
    * `points` are the intermediate vertices, same convention as `Cable.points`.
-   * Drawn starting phase 5; stored and estimated from this phase on.
+   * Riser / drop: only meaningful while `link` is set (phase 5). Shaft:
+   * meaningful on ANY marker regardless of `link` (shafts never set it) -
+   * a marker that carries one is an EXIT of its shaft; several markers of
+   * the same shaft may each carry their own (phase 6, several exits).
    */
   trunk?: { hubId: string; points: CablePoint[] }
 }
@@ -79,6 +89,14 @@ export interface Cable {
   hubId: string
   typeId: string
   points: CablePoint[]
+  /**
+   * Meaningful only when this cable ends on a shaft marker with SEVERAL
+   * exits (`shaft-integrity.ts`): which exit (named by its floor id) this
+   * cable uses. Unset/stale (the named floor is no longer an exit of that
+   * shaft) resolves per the rules there - never guessed. Ignored when the
+   * cable does not end on a shaft marker, or that shaft has 0 or 1 exits.
+   */
+  exitFloorId?: string
 }
 
 export interface CableType {

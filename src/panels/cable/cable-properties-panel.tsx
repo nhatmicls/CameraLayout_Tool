@@ -2,11 +2,13 @@ import { useMemo } from 'react'
 import { buildCableEndpointIndex, cableLabel } from '../../domain/cable/cable-endpoint-index'
 import { SCALE_NOT_SET_CABLE_MESSAGE } from '../../domain/cable/cable-layout-estimate'
 import { formatMeters, formatMetersInterval } from '../../domain/cable/cable-length-format'
+import { findShaftExits, resolveShaftCableExit } from '../../domain/cable/shaft-integrity'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
 import { selectCables, selectCameras, selectHubs, selectSensors } from '../../state/project-store-floor-selectors'
 import { useCableLayoutEstimate } from '../../state/use-cable-layout-estimate'
 import { fieldLabelClass, inputClass } from '../camera/camera-properties-form-helpers'
+import { CableShaftExitSelect } from './cable-shaft-exit-select'
 import { cableLimitStatusText } from './cable-limit-status-text'
 
 const LIMIT_STATUS_CLASS = { ok: 'text-neutral-600', 'no-limit': 'text-neutral-400', 'maybe-over': 'text-amber-700', over: 'font-medium text-red-600' }
@@ -29,11 +31,23 @@ export function CablePropertiesPanel() {
   const selectedCableId = useEditorUiStore((s) => s.selectedCableId)
   const setSelectedCableId = useEditorUiStore((s) => s.setSelectedCableId)
   const layoutEstimate = useCableLayoutEstimate()
-  const index = useMemo(() => buildCableEndpointIndex(cameras, sensors, hubs), [cameras, sensors, hubs])
+  const floors = useProjectStore((s) => s.floors)
+  const shafts = useProjectStore((s) => s.shafts)
+  // Stable identity (LOW fix, phase 6 review): a fresh `.map()` every render would give `useMemo`
+  // below a NEW array on every call even when `shafts` itself hasn't changed, defeating the memo.
+  const shaftIds = useMemo(() => shafts.map((shaft) => shaft.id), [shafts])
+  const index = useMemo(() => buildCableEndpointIndex(cameras, sensors, hubs, shaftIds), [cameras, sensors, hubs, shaftIds])
 
   // Looked up rather than trusted: an undo can remove the cable while its id is still selected.
   const cable = cables.find((candidate) => candidate.id === selectedCableId)
   if (!cable) return null
+
+  const hub = hubs.find((candidate) => candidate.id === cable.hubId)
+  // The exit floor's "F{n}" suffix on the cable's own label (`C1-T1>F3`) - only when the shaft
+  // actually has SEVERAL exits (0 or 1 means nothing to show - implicit/typed, not a choice).
+  const shaftExits = hub?.kind === 'shaft' && hub.shaftId ? findShaftExits(floors, hub.shaftId) : []
+  const shaftExit = shaftExits.length >= 2 ? resolveShaftCableExit(floors, hub!.shaftId!, cable) : null
+  const exitFloorLabel = shaftExit && 'exit' in shaftExit ? `F${shaftExit.exit.floorIndex + 1}` : undefined
 
   const type = cableTypes.find((candidate) => candidate.id === cable.typeId)
   const estimate = layoutEstimate.byCableId.get(cable.id)
@@ -70,7 +84,7 @@ export function CablePropertiesPanel() {
     <div data-testid="properties-panel" className="text-sm">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-neutral-700">
-          Properties <span data-testid="properties-cable-label" className="text-neutral-400">({cableLabel(cable, index)})</span>
+          Properties <span data-testid="properties-cable-label" className="text-neutral-400">({cableLabel(cable, index, exitFloorLabel)})</span>
         </h2>
         <button
           type="button"
@@ -99,6 +113,8 @@ export function CablePropertiesPanel() {
           </option>
         ))}
       </select>
+
+      {hub?.kind === 'shaft' && <CableShaftExitSelect floors={floors} shaftIds={shaftIds} cable={cable} hub={hub} />}
 
       {estimate && type ? (
         <>

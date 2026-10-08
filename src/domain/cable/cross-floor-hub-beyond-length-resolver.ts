@@ -15,12 +15,14 @@ import { hubEffectiveHeightM, type Cable, type Hub, type HubRef } from './cable-
  * the trunk's own horizontal interval (that floor's scale), plus whatever
  * is beyond the trunk's target hub (recursive - a plain hub ends it, a
  * further linked point continues it). `unavailable` means the chain hit a
- * floor with no scale, or a cycle (crafted/corrupt file) - never silently 0.
+ * floor with no scale, a cycle (crafted/corrupt file), or - shaft only -
+ * several exits with none chosen - never silently 0.
  */
 export type HubBeyondLength =
   | { source: 'typed'; run: MetersInterval }
   | { source: 'route'; crossingVerticalM: number; run: MetersInterval; viaLabel: string }
   | { source: 'unavailable'; reason: 'linked-floor-scale-not-set' | 'link-cycle'; floorName: string }
+  | { source: 'unavailable'; reason: 'shaft-exit-not-chosen' }
 
 /** Sum of every floor's `floorHeightM` strictly between `fromIndex` and `toIndex` (order-independent). 0 when they are equal - adjacent floors therefore contribute exactly ONE floor height. */
 export function sumFloorHeightsBetween(floors: readonly Floor[], fromIndex: number, toIndex: number): number {
@@ -32,8 +34,22 @@ export function sumFloorHeightsBetween(floors: readonly Floor[], fromIndex: numb
   return sum
 }
 
-/** Today's formula, unchanged: `|routeHeightM - hubEffectiveHeightM(hub)| + extraLengthM`. Flat (min === max === nominal) - no scale uncertainty touches a typed value. */
+/**
+ * Riser/drop/plain hub: `|routeHeightM - hubEffectiveHeightM(hub)| + extraLengthM`
+ * (today's formula, unchanged). Flat (min === max === nominal) - no scale
+ * uncertainty touches a typed value.
+ *
+ * Shaft marker with NO exit anywhere (decision D2, phase 6 review): 0 m AT
+ * the marker + its own `extraLengthM` - no `routeHeightM` term at all (the
+ * phase file's own wording, "0 m at M"). A shaft marker's `mountHeightM` is
+ * always 0 and carries no floor-crossing meaning on its own, so reusing the
+ * riser/drop formula here would add a spurious `routeHeightM` term.
+ */
 function typedBeyond(routeHeightM: number, hub: Pick<Hub, 'kind' | 'mountHeightM' | 'extraLengthM'>): HubBeyondLength {
+  if (hub.kind === 'shaft') {
+    const flat = hub.extraLengthM ?? 0
+    return { source: 'typed', run: { nominal: flat, min: flat, max: flat } }
+  }
   const flat = Math.abs(routeHeightM - hubEffectiveHeightM(hub)) + (hub.extraLengthM ?? 0)
   return { source: 'typed', run: { nominal: flat, min: flat, max: flat } }
 }
@@ -64,21 +80,27 @@ function resolveBeyond(
   }
 
   const exit = resolveCrossFloorExit(project.floors, { floorId: floor.id, hubId: hub.id }, cable)
-  if (!exit) return typedBeyond(project.cableSettings.routeHeightM, hub)
+  if (exit.kind === 'none') return typedBeyond(project.cableSettings.routeHeightM, hub)
+  if (exit.kind === 'not-chosen') return { source: 'unavailable', reason: 'shaft-exit-not-chosen' }
 
   const qFloor = project.floors[exit.floorIndex]
   const partnerHub = exit.hub
-  // The lower floor of the pair is always the riser's own floor (a drop always links to the riser BELOW it).
-  const riserFloorIndex = hub.kind === 'riser' ? floorIndex : exit.floorIndex
-  const crossingVerticalM = sumFloorHeightsBetween(project.floors, riserFloorIndex, riserFloorIndex + 1)
+  // Order-independent (adjacent floors only have one term either way, same result as the old
+  // riser-floor-specific calc) - also correct for a shaft's entry/exit floors, which need not be
+  // adjacent at all.
+  const crossingVerticalM = sumFloorHeightsBetween(project.floors, floorIndex, exit.floorIndex)
 
   if (!qFloor.scale) return { source: 'unavailable', reason: 'linked-floor-scale-not-set', floorName: qFloor.name }
 
   const trunk = partnerHub.trunk
-  // Pruning keeps this resolvable; defensive fallback only (should not happen on a live project).
   const targetHub = trunk ? qFloor.hubs.find((candidate) => candidate.id === trunk.hubId) : undefined
   const trunkPath = trunk ? resolveHubTrunkPathPx(partnerHub, qFloor.hubs) : null
-  if (!trunk || !targetHub || !trunkPath) return typedBeyond(project.cableSettings.routeHeightM, hub)
+  // Pruning (D1: a trunk can never target a shaft marker; the loader/store cascades keep every
+  // trunk's target resolvable) keeps this branch unreachable on a live project - a DEFENSIVE
+  // fallback only. H3 fix: returning a plausible-looking TYPED number here would silently misstate
+  // a cable that should have been excluded - "unavailable" is the honest answer for a state that
+  // should never occur, never a number that looks complete.
+  if (!trunk || !targetHub || !trunkPath) return { source: 'unavailable', reason: 'link-cycle', floorName: qFloor.name }
 
   const horizPx = polylineLengthPx(trunkPath)
   const horizM = planPxToMeters(horizPx, qFloor.scale.planPxPerMeter)
@@ -91,20 +113,26 @@ function resolveBeyond(
 
   const nextVisited = new Set(visited)
   nextVisited.add(key)
-  const targetBeyond = resolveBeyond(project, exit.floorIndex, targetHub, cable, nextVisited, depth + 1, maxDepth)
+  // D1 fix: `cable`'s `exitFloorId` is only meaningful for the FIRST hop's own shaft (the cable
+  // never chooses an exit for anything beyond it - and since a trunk can never target a shaft
+  // marker, `targetHub` here is never a shaft anyway; not forwarding `cable` past this point keeps
+  // that true by construction, not by coincidence).
+  const targetBeyond = resolveBeyond(project, exit.floorIndex, targetHub, undefined, nextVisited, depth + 1, maxDepth)
   if (targetBeyond.source === 'unavailable') return targetBeyond
 
   const crossingInterval: MetersInterval = { nominal: crossingVerticalM, min: crossingVerticalM, max: crossingVerticalM }
   const run = sumMetersIntervals([crossingInterval, horizInterval, targetBeyond.run])
-  const partnerLabel = hubLabels(qFloor.hubs)[qFloor.hubs.findIndex((candidate) => candidate.id === partnerHub.id)]
+  const shaftIds = project.shafts.map((shaft) => shaft.id)
+  const partnerLabel = hubLabels(qFloor.hubs, shaftIds)[qFloor.hubs.findIndex((candidate) => candidate.id === partnerHub.id)]
   return { source: 'route', crossingVerticalM, run, viaLabel: `${qFloor.name} ${partnerLabel}` }
 }
 
 /**
- * The beyond-length contribution for ONE point, independent of any
- * particular cable (the hub panel's "what mode is this point in" query).
- * `cable` is forwarded to `resolveCrossFloorExit` (unused until phase 6's
- * shaft exit choice) - omit it when there is no specific cable in view.
+ * The beyond-length contribution for ONE point. `cable` is forwarded to
+ * `resolveCrossFloorExit` - needed to pick a shaft's exit when it has
+ * several (phase 6); omit it when there is no specific cable in view (the
+ * hub panel's own "what mode is this point in" query, riser/drop only -
+ * never shown for a shaft marker, which has its own panel section).
  */
 export function resolveHubBeyondLength(project: Project, ref: HubRef, cable?: Cable): HubBeyondLength {
   const floorIndex = project.floors.findIndex((floor) => floor.id === ref.floorId)
@@ -119,9 +147,10 @@ export function resolveHubBeyondLength(project: Project, ref: HubRef, cable?: Ca
 /**
  * Every floor's cables, each resolved to its `HubBeyondLength` - the input
  * `computeCableLayoutEstimate` needs per floor (`beyondByCableId`). Cached
- * per (floor, hub): every cable ending on the same hub shares one result in
- * this phase (the per-cable keying only starts to matter once a shaft lets
- * different cables choose different exits - phase 6).
+ * per (floor, hub) for a plain/riser/drop hub: every cable ending on it
+ * shares one result (its exit never depends on the cable). A SHAFT marker
+ * with several exits can send different cables to different exits (phase
+ * 6), so its cache key also includes the cable's own `exitFloorId`.
  */
 export function resolveCableBeyondLengths(project: Project): Map<string, Map<string, HubBeyondLength>> {
   const result = new Map<string, Map<string, HubBeyondLength>>()
@@ -131,10 +160,11 @@ export function resolveCableBeyondLengths(project: Project): Map<string, Map<str
     for (const cable of floor.cables) {
       const hub = floor.hubs.find((candidate) => candidate.id === cable.hubId)
       if (!hub) continue
-      let beyond = cache.get(hub.id)
+      const cacheKey = hub.kind === 'shaft' ? `${hub.id}\u0000${cable.exitFloorId ?? ''}` : hub.id
+      let beyond = cache.get(cacheKey)
       if (!beyond) {
         beyond = resolveHubBeyondLength(project, { floorId: floor.id, hubId: hub.id }, cable)
-        cache.set(hub.id, beyond)
+        cache.set(cacheKey, beyond)
       }
       cableMap.set(cable.id, beyond)
     }

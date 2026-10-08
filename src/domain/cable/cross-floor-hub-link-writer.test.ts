@@ -95,4 +95,16 @@ describe('setHubTrunk', () => {
     expect(setHubTrunk(floors, { floorId: 'floor-1', hubId: 'plain-hub-2' }, { hubId: 'drop-1', points: [] })).toBe(floors) // plain-hub-2 isn't linked
     expect(setHubTrunk(floors, { floorId: 'floor-1', hubId: 'drop-1' }, { hubId: 'drop-1', points: [] })).toBe(floors) // self
   })
+
+  it('D1: refuses a trunk that targets a shaft marker, even from a shaft marker owner (no chaining into a shaft)', () => {
+    const floors = floorsOf()
+    const shaftMarker = { id: 'shaft-m', kind: 'shaft' as const, shaftId: 's1', x: 0, y: 0, mountHeightM: 0 }
+    const withShaft = floors.map((f, i) => (i === 1 ? { ...f, hubs: [...f.hubs, shaftMarker] } : f))
+    // Owner is a validly-linked drop - would otherwise be allowed to set a trunk.
+    expect(setHubTrunk(withShaft, { floorId: 'floor-1', hubId: 'drop-1' }, { hubId: 'shaft-m', points: [] })).toBe(withShaft)
+    // Owner is the shaft marker itself, targeting another hub that happens to be a DIFFERENT shaft's marker.
+    const otherShaftMarker = { id: 'other-m', kind: 'shaft' as const, shaftId: 's2', x: 1, y: 1, mountHeightM: 0 }
+    const withTwoShafts = withShaft.map((f, i) => (i === 1 ? { ...f, hubs: [...f.hubs, otherShaftMarker] } : f))
+    expect(setHubTrunk(withTwoShafts, { floorId: 'floor-1', hubId: 'shaft-m' }, { hubId: 'other-m', points: [] })).toBe(withTwoShafts)
+  })
 })

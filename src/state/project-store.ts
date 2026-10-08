@@ -9,6 +9,7 @@ import { createFireAlarmActions } from './project-store-fire-alarm-actions'
 import { createFloorActions } from './project-store-floor-actions'
 import { selectActiveFloor } from './project-store-floor-selectors'
 import { createPlacedItemActions } from './project-store-placed-item-actions'
+import { createShaftActions } from './project-store-shaft-actions'
 import { createInitialProjectState, type ProjectState, type ProjectStore } from './project-store-state-and-action-types'
 
 export type { ProjectState, ProjectActions, ProjectStore } from './project-store-state-and-action-types'
@@ -24,7 +25,7 @@ export type { ProjectState, ProjectActions, ProjectStore } from './project-store
 
 /** Routes a cabling-slice partial (`hubs`/`cables` -> the active floor, `cableTypes`/`cableSettings` -> project level) into one `ProjectState` patch, so `createCablingActions`'s single `set()` call still produces one undo step. No call ever mixes the two groups (see `project-store-cabling-actions.ts`). */
 function routeCablingPartial(
-  state: Pick<ProjectState, 'floors' | 'activeFloorId'>,
+  state: Pick<ProjectState, 'floors' | 'activeFloorId' | 'shafts'>,
   partial: Partial<CableLayout>,
 ): Partial<ProjectState> {
   const floorPatch: Partial<FloorContent> = {}
@@ -38,7 +39,7 @@ function routeCablingPartial(
 
 /** Same routing for the fire-alarm slice: `fireAlarmDevices` -> the active floor, `fireAlarmSettings` -> project level. */
 function routeFireAlarmPartial(
-  state: Pick<ProjectState, 'floors' | 'activeFloorId'>,
+  state: Pick<ProjectState, 'floors' | 'activeFloorId' | 'shafts'>,
   partial: Partial<FireAlarmLayout>,
 ): Partial<ProjectState> {
   const patch: Partial<ProjectState> =
@@ -85,6 +86,10 @@ export const useProjectStore = create<ProjectStore>()(
       ...createCrossFloorLinkActions(
         (partial) => set(partial),
         () => ({ floors: get().floors, cableSettings: get().cableSettings }),
+      ),
+      ...createShaftActions(
+        (partial) => set(partial),
+        () => ({ floors: get().floors, shafts: get().shafts, activeFloorId: get().activeFloorId }),
       ),
 
       replaceProject: (project) => {

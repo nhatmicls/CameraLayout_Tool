@@ -30,7 +30,7 @@ export interface ViewConfig {
   sensorCoverage: boolean
   /** Per kind: off hides both the marker and the coverage of those sensors. */
   sensorKinds: Record<SensorKind, boolean>
-  /** Hubs, risers and drops. */
+  /** Hubs, risers, drops and shaft markers. */
   hubs: boolean
   cables: boolean
   /** Wall lines and node handles only - hidden walls still block cones, coverage and beams. */

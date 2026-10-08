@@ -7,6 +7,7 @@ import { useProjectStore } from '../../state/project-store'
 import { selectCables, selectHubs } from '../../state/project-store-floor-selectors'
 import { fieldLabelClass, inputClass } from '../camera/camera-properties-form-helpers'
 import { HubCrossFloorLinkSection } from './hub-cross-floor-link-section'
+import { ShaftPropertiesSection } from './shaft-properties-section'
 import { NullableNumberInput } from '../shared/nullable-number-input'
 
 /**
@@ -49,6 +50,20 @@ export function HubPropertiesPanel() {
 
   if (!hub) return null
 
+  if (hub.kind === 'shaft') {
+    return (
+      <div data-testid="properties-panel" className="text-sm">
+        <h2 className="text-sm font-semibold text-neutral-700">
+          Properties{' '}
+          <span data-testid="properties-hub-number" className="text-neutral-400">
+            ({hubLabels(hubs, shafts.map((shaft) => shaft.id))[index]})
+          </span>
+        </h2>
+        <ShaftPropertiesSection floors={floors} floorIndex={floorIndex} hub={hub} />
+      </div>
+    )
+  }
+
   const showCrossFloorSection = (hub.kind === 'riser' || hub.kind === 'drop') && floors.length > 1
   const beyond = showCrossFloorSection ? resolveHubBeyondLength(project, { floorId: activeFloorId, hubId: hub.id }) : null
   const isComputedMode = beyond?.source === 'route'
@@ -64,7 +79,10 @@ export function HubPropertiesPanel() {
     <div data-testid="properties-panel" className="text-sm">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-neutral-700">
-          Properties <span data-testid="properties-hub-number" className="text-neutral-400">({hubLabels(hubs)[index]})</span>
+          Properties{' '}
+          <span data-testid="properties-hub-number" className="text-neutral-400">
+            ({hubLabels(hubs, shafts.map((shaft) => shaft.id))[index]})
+          </span>
         </h2>
         <button
           type="button"

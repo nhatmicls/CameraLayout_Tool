@@ -2,6 +2,7 @@ import { computeCableLayoutEstimate, type CableEstimateWarning, type CableLayout
 import { sumMetersIntervals, type MetersInterval } from './cable-length-estimate-calculator'
 import { ceilMeters } from './cable-length-format'
 import { resolveCableBeyondLengths } from './cross-floor-hub-beyond-length-resolver'
+import { findShaftExits, findShaftMarkers } from './shaft-integrity'
 import type { Project } from '../project-file/project-types'
 
 /**
@@ -59,8 +60,21 @@ export function computeProjectCableEstimate(project: Project): ProjectCableEstim
   return result
 }
 
+/** One info warning per shaft that has at least one marker but NO exit anywhere - never per cable, never per floor (`shaft-no-exit`, confirmed behaviour). */
+function shaftNoExitWarnings(project: Project): CableEstimateWarning[] {
+  const warnings: CableEstimateWarning[] = []
+  for (const shaft of project.shafts) {
+    const markers = findShaftMarkers(project.floors, shaft.id)
+    if (markers.length === 0) continue
+    if (findShaftExits(project.floors, shaft.id).length > 0) continue
+    warnings.push({ code: 'shaft-no-exit', message: `${shaft.name} has no exit route yet - typed length in use.` })
+  }
+  return warnings
+}
+
 function computeProjectCableEstimateUncached(project: Project): ProjectCableEstimate {
   const beyondByFloorId = resolveCableBeyondLengths(project)
+  const shaftIds = project.shafts.map((shaft) => shaft.id)
   const byFloorId = new Map<string, CableLayoutEstimate>()
   for (const floor of project.floors) {
     byFloorId.set(
@@ -74,6 +88,7 @@ function computeProjectCableEstimateUncached(project: Project): ProjectCableEsti
         cableSettings: project.cableSettings,
         scale: floor.scale,
         beyondByCableId: beyondByFloorId.get(floor.id),
+        shaftIds,
       }),
     )
   }
@@ -108,6 +123,6 @@ function computeProjectCableEstimateUncached(project: Project): ProjectCableEsti
     grandTotalVnd: totals.reduce((sum, total) => sum + (total.lineTotalVnd ?? 0), 0),
     unpricedTypeCount: totals.filter((total) => total.lineTotalVnd === null).length,
     floorsWithoutScale: project.floors.filter((floor) => floor.scale === null).map((floor) => ({ id: floor.id, name: floor.name })),
-    warnings: project.floors.flatMap((floor) => byFloorId.get(floor.id)!.warnings),
+    warnings: [...project.floors.flatMap((floor) => byFloorId.get(floor.id)!.warnings), ...shaftNoExitWarnings(project)],
   }
 }
