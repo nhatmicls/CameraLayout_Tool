@@ -121,5 +121,57 @@
         "retrieved": "2026-10-07"
       }
     }
+  },
+  {
+    "id": "hikvision-ds-pd1-eb",
+    "kind": "manual-call-point",
+    "brand": "hikvision",
+    "model": "DS-PD1-EB",
+    "productLine": "ax-hybrid",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000004981/UD33426B_Baseline_DS-PD1-EB-Panic-Button_UM_V1.0_20230520.pdf",
+    "sourceRetrieved": "2026-10-08",
+    "priceVn": {
+      "amountVnd": 110000,
+      "sourceUrl": "https://nhaantoan.com/san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong/cam-bien-hikvision-thiet-bi-bao-dong/cam-bien-khong-day-hikvision/nut-bam-khan-cap-hikvision-ds-pd1-eb.html",
+      "retrieved": "2026-10-08"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "nhaantoan",
+        "url": "https://nhaantoan.com/san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong/cam-bien-hikvision-thiet-bi-bao-dong/cam-bien-khong-day-hikvision/nut-bam-khan-cap-hikvision-ds-pd1-eb.html",
+        "amountVnd": 110000,
+        "retrieved": "2026-10-08"
+      }
+    },
+    "notes": "Wired panic button (not a fire manual call point to EN 54-11). Source is the Hikvision 'Panic Button' user manual linked from the DS-PD1-EB product page on hikvision.com; no datasheet PDF is published."
+  },
+  {
+    "id": "hikvision-ds-pd1-eb-pf",
+    "kind": "manual-call-point",
+    "brand": "hikvision",
+    "model": "DS-PD1-EB-PF",
+    "productLine": "ax-hybrid",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000004982/UD33425B_Baseline_DS-PD1-EB-PF-Panic-Pedal-Switch_UM_V1.0_20230520.pdf",
+    "sourceRetrieved": "2026-10-08",
+    "priceVn": {
+      "amountVnd": 1050000,
+      "sourceUrl": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+      "retrieved": "2026-10-08"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "nhaantoan",
+        "url": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+        "amountVnd": 1050000,
+        "retrieved": "2026-10-08"
+      }
+    },
+    "notes": "Wired foot panic pedal switch (not a fire manual call point). Source is the Hikvision 'Panic Pedal Switch' user manual linked from the DS-PD1-EB-PF product page on hikvision.com; no datasheet PDF is published."
   }
 ]

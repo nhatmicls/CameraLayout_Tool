@@ -31,6 +31,7 @@ export const FIRE_ALARM_KIND_COLORS: Record<FireAlarmKind, string> = {
   // teal/indigo/fuchsia/rose palette and the DORI green->orange family.
   'magnetic-contact': '#1d4ed8', // blue-700
   'environment-detector': '#0ea5e9', // sky-500 (water/environment cue)
+  'intrusion-detector': '#3b82f6', // blue-500
 }
 
 /** Dash pattern (image px) for a TCVN-5738-derived (standard, not datasheet-printed) detector circle - see `fire-detector-coverage-shapes.tsx`. */

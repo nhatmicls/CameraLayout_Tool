@@ -1,16 +1,16 @@
 [
   {
-    "id": "hikvision-ds-pm1-i8o2-h",
-    "kind": "expander-module",
+    "id": "hikvision-ds-pd1-bg9",
+    "kind": "intrusion-detector",
     "brand": "hikvision",
-    "model": "DS-PM1-I8O2-H",
+    "model": "DS-PD1-BG9",
     "productLine": "ax-hybrid",
     "worksStandalone": false,
     "certificationsAsPrinted": [],
-    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000057668/DS-PM1-I8O2-H_Datasheet.pdf",
-    "sourceRetrieved": "2026-10-07",
+    "sourceUrl": null,
+    "sourceRetrieved": "2026-10-08",
     "priceVn": {
-      "amountVnd": 1670000,
+      "amountVnd": 970000,
       "sourceUrl": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
       "retrieved": "2026-10-08"
     },
@@ -19,23 +19,24 @@
       "secondary": {
         "shop": "nhaantoan",
         "url": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
-        "amountVnd": 1670000,
+        "amountVnd": 970000,
         "retrieved": "2026-10-08"
       }
-    }
+    },
+    "notes": "Wired glass-break detector. No official document or product page was found for this model (searched 2026-10-08), so there is no datasheet link and nothing but the model name is stored. Marker only: no detection range is drawn."
   },
   {
-    "id": "hikvision-ds-pm1-rt-hwb",
-    "kind": "expander-module",
+    "id": "hikvision-ds-pd2-t12ame-el",
+    "kind": "intrusion-detector",
     "brand": "hikvision",
-    "model": "DS-PM1-RT-HWB",
+    "model": "DS-PD2-T12AME-EL",
     "productLine": "ax-hybrid",
     "worksStandalone": false,
     "certificationsAsPrinted": [],
-    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000059783/DS-PM1-RT-HWB_Datasheet_20220616.pdf",
-    "sourceRetrieved": "2026-10-07",
+    "sourceUrl": null,
+    "sourceRetrieved": "2026-10-08",
     "priceVn": {
-      "amountVnd": 2360000,
+      "amountVnd": 3310000,
       "sourceUrl": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
       "retrieved": "2026-10-08"
     },
@@ -44,9 +45,10 @@
       "secondary": {
         "shop": "nhaantoan",
         "url": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
-        "amountVnd": 2360000,
+        "amountVnd": 3310000,
         "retrieved": "2026-10-08"
       }
-    }
+    },
+    "notes": "Wired outdoor tri-tech motion detector. No official document or product page was found for this model (searched 2026-10-08), so there is no datasheet link and nothing but the model name is stored. Marker only: no detection range is drawn."
   }
 ]

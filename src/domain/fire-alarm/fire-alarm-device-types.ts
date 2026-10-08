@@ -14,8 +14,9 @@
  */
 
 /**
- * The eighteen device kinds this catalog ships, exactly as printed on the
- * Hikvision datasheets. The nine marker-only kinds added alongside
+ * The nineteen device kinds this catalog ships. `intrusion-detector` is a motion /
+ * glass-break detector with no official datasheet (no printed range), so it is a
+ * marker here instead of a sensor-catalog record. The nine marker-only kinds added alongside
  * `FIRE_ALARM_KIND_CATALOG_TAB` (owner decision, AX Hybrid PRO compatibility
  * list expansion) carry no coverage shape - same as `expander-module` /
  * `keypad` / `sounder` already did - so adding them needed no change to
@@ -42,6 +43,7 @@ export type FireAlarmKind =
   | 'sounder'
   | 'magnetic-contact'
   | 'environment-detector'
+  | 'intrusion-detector'
 
 /** The three detector kinds a coverage circle can ever be drawn for. */
 export type FireDetectorKind = 'smoke-detector' | 'heat-detector' | 'co-detector'
@@ -72,9 +74,10 @@ export const FIRE_ALARM_KIND_LABELS: Record<FireAlarmKind, string> = {
   sounder: 'Sounder',
   'magnetic-contact': 'Magnetic contact',
   'environment-detector': 'Environment detector',
+  'intrusion-detector': 'Intrusion detector',
 }
 
-/** Fixed display order used everywhere a UI lists all eighteen kinds (catalog tab filters, BOM grouping) - grouped by `FIRE_ALARM_KIND_CATALOG_TAB` (control-panel kinds, then fire-alarm kinds, then sensors-tab kinds). */
+/** Fixed display order used everywhere a UI lists all nineteen kinds (catalog tab filters, BOM grouping) - grouped by `FIRE_ALARM_KIND_CATALOG_TAB` (control-panel kinds, then fire-alarm kinds, then sensors-tab kinds). */
 export const FIRE_ALARM_KIND_DISPLAY_ORDER: readonly FireAlarmKind[] = [
   'control-panel',
   'wireless-hub',
@@ -94,6 +97,7 @@ export const FIRE_ALARM_KIND_DISPLAY_ORDER: readonly FireAlarmKind[] = [
   'sounder',
   'magnetic-contact',
   'environment-detector',
+  'intrusion-detector',
 ]
 
 // The kind -> sidebar tab table lives in its own module (file-size rule); re-exported here so
@@ -135,10 +139,11 @@ interface FireAlarmModelSpecCommon {
   id: string
   brand: string
   model: string
-  productLine: 'ax-hybrid' | 'ax-pro' | 'standalone'
+  productLine: 'ax-hybrid' | 'ax-pro' | 'standalone' | 'conventional'
   worksStandalone: boolean
   certificationsAsPrinted: readonly string[]
-  sourceUrl: string
+  /** Official datasheet / manual / product page, or null when none exists for the model. */
+  sourceUrl: string | null
   sourceRetrieved: string
   /** Indicative Vietnam reseller price (VND), or null/omitted when no price is published - same shape as `SensorModelSpec.priceVn` (`sensor-types.ts`). */
   priceVn?: { amountVnd: number } | null

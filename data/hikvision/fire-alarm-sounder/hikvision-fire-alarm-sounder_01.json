@@ -82,5 +82,57 @@
         "retrieved": "2026-10-07"
       }
     }
+  },
+  {
+    "id": "hikvision-ds-pma-bell",
+    "kind": "sounder",
+    "brand": "hikvision",
+    "model": "DS-PMA-BELL",
+    "productLine": "ax-hybrid",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://www.hikvision.com/content/dam/hikvision/products/S000000001/S000000601/S000000937/S000000934/OFR000959/M000005033/Data_Sheet/SirenDS-PMA-BELL.pdf",
+    "sourceRetrieved": "2026-10-08",
+    "priceVn": {
+      "amountVnd": 630000,
+      "sourceUrl": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+      "retrieved": "2026-10-08"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "nhaantoan",
+        "url": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+        "amountVnd": 630000,
+        "retrieved": "2026-10-08"
+      }
+    },
+    "notes": "Wired siren, datasheet 'DS-PMA-BELL Siren'."
+  },
+  {
+    "id": "hikvision-ds-ps1-r",
+    "kind": "sounder",
+    "brand": "hikvision",
+    "model": "DS-PS1-R",
+    "productLine": "ax-hybrid",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000044522/UD21784B-C_Baseline_Wired-Sounder_-User-Manual_v1.0_20230310.pdf",
+    "sourceRetrieved": "2026-10-08",
+    "priceVn": {
+      "amountVnd": 880000,
+      "sourceUrl": "https://nhaantoan.com/san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong/cam-bien-hikvision-thiet-bi-bao-dong/coi-kiem-den-chop-hikvision-sh-ps661-r.html",
+      "retrieved": "2026-10-08"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "nhaantoan",
+        "url": "https://nhaantoan.com/san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong/cam-bien-hikvision-thiet-bi-bao-dong/coi-kiem-den-chop-hikvision-sh-ps661-r.html",
+        "amountVnd": 880000,
+        "retrieved": "2026-10-08"
+      }
+    },
+    "notes": "Wired sounder with strobe. Source is the Hikvision 'Wired Sounder' user manual linked from the DS-PS1-R product page on hikvision.com (the manual text does not print the model string); no datasheet PDF is published. Sold by nhaantoan as SH-PS661-R."
   }
 ]

@@ -351,16 +351,128 @@
     },
     "sourceUrl": "https://www.hikvision.com/content/dam/hikvision/products/S000000001/S000000601/S000000937/S000000934/OFR000956/M000050017/Data_Sheet/DS-PDD15AM-EG2_Datasheet_V1.0_202205.pdf",
     "sourceRetrieved": "2026-10-07",
-    "priceVn": null,
+    "priceVn": {
+      "amountVnd": 1480000,
+      "sourceUrl": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+      "retrieved": "2026-10-08"
+    },
     "purchaseLinks": {
       "primary": null,
       "secondary": {
-        "shop": "mastery",
-        "url": "https://mastery.vn/sanpham/cam-bien-chuyen-dong-hikvision-ds-pdd15am-eg2/",
-        "amountVnd": null,
-        "retrieved": "2026-10-07"
+        "shop": "nhaantoan",
+        "url": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+        "amountVnd": 1480000,
+        "retrieved": "2026-10-08"
       }
     },
-    "notes": "Wired dual-tech (PIR + microwave) AM detector. Spec table: 'Detection Range 15 m'; 'Detection Angle 85.9°'. mastery.vn lists it 'Lien he' (contact only) - priceVn null."
+    "notes": "Wired dual-tech (PIR + microwave) AM detector. Spec table: 'Detection Range 15 m'; 'Detection Angle 85.9°'."
+  },
+  {
+    "id": "hikvision-ds-pdp18-eg2",
+    "kind": "pir",
+    "brand": "hikvision",
+    "model": "DS-PDP18-EG2",
+    "coverage": {
+      "rangeM": 18,
+      "angleDeg": 85.9
+    },
+    "sourceUrl": "https://www.hikvision.com/content/dam/hikvision/products/S000000001/S000000601/S000000933/S000000934/OFR000955/M000011344/Quick_Start_Guide/102021815-UD13284B-B_Baseline_DS-PDP18-EG2_18m-Digital-PIR-Detector_User-Manual_V1.0_20200320.pdf",
+    "sourceRetrieved": "2026-10-08",
+    "priceVn": {
+      "amountVnd": 410000,
+      "sourceUrl": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+      "retrieved": "2026-10-08"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "nhaantoan",
+        "url": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+        "amountVnd": 410000,
+        "retrieved": "2026-10-08"
+      }
+    },
+    "notes": "Wired PIR detector. Hikvision user manual, specification table: 'Detection range 18m, 85.9°'. Sold by nhaantoan as SH-PDP618-EG2."
+  },
+  {
+    "id": "hikvision-ds-pdd12p-eg2",
+    "kind": "pir",
+    "brand": "hikvision",
+    "model": "DS-PDD12P-EG2",
+    "coverage": {
+      "rangeM": 12,
+      "angleDeg": 85.9
+    },
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000040442/DS-PDD12P-EG2_Datasheet_20250421.pdf",
+    "sourceRetrieved": "2026-10-08",
+    "priceVn": {
+      "amountVnd": 1110000,
+      "sourceUrl": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+      "retrieved": "2026-10-08"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "nhaantoan",
+        "url": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+        "amountVnd": 1110000,
+        "retrieved": "2026-10-08"
+      }
+    },
+    "notes": "Wired dual-tech (PIR + K-band microwave) detector. Spec table: 'Detection Range 12m'; 'Detection Angle 85.9°'."
+  },
+  {
+    "id": "hikvision-ds-pdcl12-eg2",
+    "kind": "pir",
+    "brand": "hikvision",
+    "model": "DS-PDCL12-EG2",
+    "coverage": {
+      "rangeM": 12,
+      "angleDeg": 360
+    },
+    "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/i-o-devices/ds-pdcl12-eg2/",
+    "sourceRetrieved": "2026-10-08",
+    "priceVn": {
+      "amountVnd": 890000,
+      "sourceUrl": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+      "retrieved": "2026-10-08"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "nhaantoan",
+        "url": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+        "amountVnd": 890000,
+        "retrieved": "2026-10-08"
+      }
+    },
+    "notes": "Wired PIR ceiling detector. Source is the specification table of the official hikvision.com product page ('Detection range 12m'; 'Detection angle 360°'); no datasheet PDF is published for the wired model."
+  },
+  {
+    "id": "hikvision-ds-pdtt15am-lm",
+    "kind": "pir",
+    "brand": "hikvision",
+    "model": "DS-PDTT15AM-LM",
+    "coverage": {
+      "rangeM": 15,
+      "angleDeg": 90
+    },
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000050027/DS-PDTT15AM-LM_Datasheet_20250421.pdf",
+    "sourceRetrieved": "2026-10-08",
+    "priceVn": {
+      "amountVnd": 5350000,
+      "sourceUrl": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+      "retrieved": "2026-10-08"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "nhaantoan",
+        "url": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+        "amountVnd": 5350000,
+        "retrieved": "2026-10-08"
+      }
+    },
+    "notes": "Wired outdoor tri-tech (2 PIR + microwave) AM detector. Spec table: 'Detection Range 15m'; 'Detection Angle 90° @ 180° adjustable' - 90° stored; 180° is the span it can be adjusted over, not an angle covered at once."
   }
 ]

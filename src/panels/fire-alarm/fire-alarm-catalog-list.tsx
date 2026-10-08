@@ -8,7 +8,7 @@ import {
   type FireAlarmKind,
 } from '../../domain/fire-alarm/fire-alarm-device-types'
 import { useCatalogSidebarFilterStore } from '../../state/catalog-sidebar-filter-store'
-import { capitalizeFirstLetter } from '../shared/capitalize-first-letter'
+import { brandDisplayLabel } from '../shared/brand-display-label'
 import { CatalogFilterSelect } from '../shared/catalog-filter-select'
 import { filterFireAlarmCatalogModels, groupControllerOptionsByPlacement } from './fire-alarm-catalog-list-filter'
 import { usePlacedFireAlarmModelIds } from './use-placed-fire-alarm-model-ids'
@@ -29,7 +29,7 @@ const TAB_MODELS = fireAlarmModels
 // Computed once from the static catalog: only brands and kinds that have a record in this tab are offered.
 const BRAND_OPTIONS = [...new Set(TAB_MODELS.map((model) => model.brand))]
   .sort()
-  .map((brand) => ({ value: brand, label: capitalizeFirstLetter(brand) }))
+  .map((brand) => ({ value: brand, label: brandDisplayLabel(brand) }))
 
 const KIND_OPTIONS = FIRE_ALARM_KIND_DISPLAY_ORDER.filter(
   (kind) => FIRE_ALARM_KIND_CATALOG_TAB[kind] === 'fire-alarm' && TAB_MODELS.some((model) => model.kind === kind),

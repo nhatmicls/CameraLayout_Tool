@@ -4,7 +4,7 @@
 // record fails schema validation, ids collide with each other, an id collides with a
 // camera or sensor catalog id, or a compatibleDevices reference does not resolve to a
 // non-controller record in this same catalog.
-import { FIRE_ALARM_BRAND, fireAlarmModelArraySchema, type FireAlarmModel } from "./fire-alarm-catalog-schema";
+import { FIRE_ALARM_BRANDS, fireAlarmModelArraySchema, type FireAlarmModel } from "./fire-alarm-catalog-schema";
 import { CONTROLLER_KINDS } from "./fire-alarm-catalog-kind-schemas";
 import { orderCatalogDataFiles } from "../shared/catalog-data-file-ordering";
 import { cameraModels } from "../camera/camera-catalog-loader";
@@ -17,7 +17,7 @@ export const fireAlarmCatalogDataFiles = orderCatalogDataFiles(
     import: "default",
     eager: true,
   }),
-  [FIRE_ALARM_BRAND],
+  FIRE_ALARM_BRANDS,
 );
 
 function parseBrandCatalog(raw: string, fileLabel: string): FireAlarmModel[] {

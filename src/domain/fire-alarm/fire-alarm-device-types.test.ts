@@ -30,6 +30,7 @@ const ALL_KINDS: readonly FireAlarmKind[] = [
   'sounder',
   'magnetic-contact',
   'environment-detector',
+  'intrusion-detector',
 ]
 
 describe('isFireAlarmControllerKind', () => {
@@ -93,9 +94,9 @@ describe('FIRE_ALARM_KIND_CATALOG_TAB', () => {
     )
   })
 
-  it('maps magnetic-contact and environment-detector to the sensors tab', () => {
+  it('maps magnetic-contact, environment-detector and intrusion-detector to the sensors tab', () => {
     const sensorsKinds = ALL_KINDS.filter((kind) => FIRE_ALARM_KIND_CATALOG_TAB[kind] === 'sensors')
-    expect(sensorsKinds.sort()).toEqual(['magnetic-contact', 'environment-detector'].sort())
+    expect(sensorsKinds.sort()).toEqual(['magnetic-contact', 'environment-detector', 'intrusion-detector'].sort())
   })
 })
 

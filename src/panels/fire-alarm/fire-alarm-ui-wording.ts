@@ -26,7 +26,11 @@ export const FIRE_ALARM_PRODUCT_LINE_NOTES: Record<FireAlarmProductLine, string>
   'ax-hybrid': 'Intrusion alarm system - not a certified fire alarm control panel.',
   'ax-pro': 'Intrusion alarm system that accepts smoke detectors - not a certified fire alarm control panel.',
   standalone: 'Works on its own - no panel or hub.',
+  conventional: 'Conventional wired device - not part of a Hikvision AX line; wired to a panel zone.',
 }
+
+/** Shown in place of the datasheet link when no official document exists for the model. */
+export const FIRE_ALARM_NO_DATASHEET = 'no datasheet'
 
 /** C1/C2: no shipped detector datasheet prints a protection radius or area. */
 export const FIRE_DETECTOR_PROTECTION_NOT_PRINTED = 'Protection area: not printed in the datasheet'

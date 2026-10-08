@@ -5,8 +5,20 @@
     "detection": "glass-break",
     "brand": "hikvision",
     "model": "DS-PDPG12P-EG2",
-    "radii": [{ "surface": null, "radiusM": 8 }],
-    "glassTypes": ["Float", "Plate", "Tampered", "Wired", "Laminated Leaded", "Double Glazing"],
+    "radii": [
+      {
+        "surface": null,
+        "radiusM": 8
+      }
+    ],
+    "glassTypes": [
+      "Float",
+      "Plate",
+      "Tampered",
+      "Wired",
+      "Laminated Leaded",
+      "Double Glazing"
+    ],
     "sourceUrl": "https://www.hikvision.com/content/dam/hikvision/products/S000000001/S000000601/S000000933/S000000934/OFR001801/M000050023/Data_Sheet/DS-PDPG12P-EG2_Datasheet_V1.0_202201.pdf",
     "sourceRetrieved": "2026-10-06",
     "priceVn": null,
@@ -19,16 +31,29 @@
     "detection": "shock",
     "brand": "hikvision",
     "model": "DS-PDSK-P",
-    "radii": [{ "surface": null, "radiusM": 2.5 }],
+    "radii": [
+      {
+        "surface": null,
+        "radiusM": 2.5
+      }
+    ],
     "glassTypes": [],
     "sourceUrl": "https://www.hikvision.com/content/dam/hikvision/products/S000000001/S000000601/S000000937/S000000934/OFR000941/M000043915/Data_Sheet/DS-PDSK-P_Datasheet_V1.0_202209.pdf",
     "sourceRetrieved": "2026-10-06",
     "priceVn": {
-      "amountVnd": 405000,
-      "sourceUrl": "https://vuhoangtelecom.vn/san-pham/cam-bien-rung-hikvision-ds-pdsk-p/",
-      "retrieved": "2026-10-06"
+      "amountVnd": 720000,
+      "sourceUrl": "https://nhaantoan.com/san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong/cam-bien-hikvision-thiet-bi-bao-dong/cam-bien-khong-day-hikvision/cam-bien-rung-hikvision-ds-pdsk-p.html",
+      "retrieved": "2026-10-08"
     },
-    "purchaseLinks": { "primary": null, "secondary": { "shop": "vuhoangtelecom", "url": "https://vuhoangtelecom.vn/san-pham/cam-bien-rung-hikvision-ds-pdsk-p/", "amountVnd": 405000, "retrieved": "2026-10-06" } },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "nhaantoan",
+        "url": "https://nhaantoan.com/san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong/cam-bien-hikvision-thiet-bi-bao-dong/cam-bien-khong-day-hikvision/cam-bien-rung-hikvision-ds-pdsk-p.html",
+        "amountVnd": 720000,
+        "retrieved": "2026-10-08"
+      }
+    },
     "notes": "Ordinary wired wall-mount shock sensor (perimeter protection on a door/window/safe, not the vault-specific ISC-SM-90). Datasheet p.1: 'Detection Range Up to 2.5m Radius'; no material/surface named, so surface is null (contrast bosch-isc-sm-90, which does name one). No glass-type field on this model (pure shock sensor, not combo glass-break) - glassTypes stays []."
   },
   {
@@ -37,8 +62,20 @@
     "detection": "glass-break",
     "brand": "hikvision",
     "model": "DS-PDBG8-EG2-WB",
-    "radii": [{ "surface": null, "radiusM": 8 }],
-    "glassTypes": ["Float", "Plate", "Tampered", "Wired", "Laminated Leaded", "Double Glazing"],
+    "radii": [
+      {
+        "surface": null,
+        "radiusM": 8
+      }
+    ],
+    "glassTypes": [
+      "Float",
+      "Plate",
+      "Tampered",
+      "Wired",
+      "Laminated Leaded",
+      "Double Glazing"
+    ],
     "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000039137/DS-PDBG8-EG2-WB_Datasheet_20251111.pdf",
     "sourceRetrieved": "2026-10-07",
     "priceVn": {
@@ -56,5 +93,43 @@
       }
     },
     "notes": "AX PRO wireless omni-directional acoustic glass-break detector (microphone sensor). Spec table: 'Detection Range 8m'. 'Detection Angle 120°' is also printed but not modelled (vibration schema has no angle field, same convention as hikvision-ds-pdpg12p-eg2-glass-break). Glass type 'Tampered' copied as printed (likely a manufacturer typo for 'Tempered', per no-correction-from-memory rule). vuhoangtelecom.vn 945,000 VND, retrieved 2026-10-07."
+  },
+  {
+    "id": "hikvision-ds-pdbg8-eg2",
+    "kind": "vibration",
+    "detection": "glass-break",
+    "brand": "hikvision",
+    "model": "DS-PDBG8-EG2",
+    "radii": [
+      {
+        "surface": null,
+        "radiusM": 8
+      }
+    ],
+    "glassTypes": [
+      "Float",
+      "Plate",
+      "Tampered",
+      "Wired",
+      "Laminated Leaded",
+      "Double Glazing"
+    ],
+    "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000044201/DS-PDBG8-EG2_Datasheet_20250421.pdf",
+    "sourceRetrieved": "2026-10-08",
+    "priceVn": {
+      "amountVnd": 750000,
+      "sourceUrl": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+      "retrieved": "2026-10-08"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "nhaantoan",
+        "url": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+        "amountVnd": 750000,
+        "retrieved": "2026-10-08"
+      }
+    },
+    "notes": "Wired acoustic glass-break detector. Spec table: 'Detection Range 8m'. 'Detection Angle 120°' is printed but not modelled (vibration schema has no angle field). Glass type 'Tampered' copied as printed."
   }
 ]

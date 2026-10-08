@@ -1,0 +1,210 @@
+[
+  {
+    "id": "hikvision-ds-pdb-in-ceilingbracket",
+    "kind": "accessory",
+    "brand": "hikvision",
+    "model": "DS-PDB-IN-Ceilingbracket",
+    "productLine": "ax-hybrid",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://www.hikvision.com/content/dam/hikvision/products/S000000001/S000000601/S000000933/S000000936/OFR001521/M000008882/Data_Sheet/DS-PDB-IN-Ceilingbracket_en-US_20200221.pdf",
+    "sourceRetrieved": "2026-10-08",
+    "priceVn": {
+      "amountVnd": 100000,
+      "sourceUrl": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+      "retrieved": "2026-10-08"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "nhaantoan",
+        "url": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+        "amountVnd": 100000,
+        "retrieved": "2026-10-08"
+      }
+    },
+    "notes": "Ceiling mounting bracket for indoor detectors. No wiring of its own."
+  },
+  {
+    "id": "hikvision-ds-pdb-in-wallbracket",
+    "kind": "accessory",
+    "brand": "hikvision",
+    "model": "DS-PDB-IN-Wallbracket",
+    "productLine": "ax-hybrid",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://www.hikvision.com/content/dam/hikvision/products/S000000001/S000000601/S000000933/S000000936/OFR001521/M000008881/Data_Sheet/DS-PDB-IN-Wallbracket_en-US_20200221.pdf",
+    "sourceRetrieved": "2026-10-08",
+    "priceVn": {
+      "amountVnd": 100000,
+      "sourceUrl": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+      "retrieved": "2026-10-08"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "nhaantoan",
+        "url": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+        "amountVnd": 100000,
+        "retrieved": "2026-10-08"
+      }
+    },
+    "notes": "Wall mounting bracket for indoor PIR / dual-tech detectors (datasheet 'Wall Mounting Bracket'). No wiring of its own."
+  },
+  {
+    "id": "hikvision-ds-pdb-in-universalbracket",
+    "kind": "accessory",
+    "brand": "hikvision",
+    "model": "DS-PDB-IN-Universalbracket",
+    "productLine": "ax-hybrid",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://www.hikvision.com/content/dam/hikvision/products/S000000001/S000000601/S000009359/S000000936/OFR001521/M000018312/Data_Sheet/Spec_DS-PDB-IN-Internal-universal-bracket.PDF",
+    "sourceRetrieved": "2026-10-08",
+    "priceVn": {
+      "amountVnd": 90000,
+      "sourceUrl": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+      "retrieved": "2026-10-08"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "nhaantoan",
+        "url": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+        "amountVnd": 90000,
+        "retrieved": "2026-10-08"
+      }
+    },
+    "notes": "Internal universal bracket for indoor detectors. No wiring of its own."
+  },
+  {
+    "id": "hikvision-ds-pdb-in-ubkt1",
+    "kind": "accessory",
+    "brand": "hikvision",
+    "model": "DS-PDB-IN-UBKT1",
+    "productLine": "ax-hybrid",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://www.hikvision.com/vn/products/Alarm-Products/intrusion-accessory/detector-accessory/ds-pdb-in-ubkt1/",
+    "sourceRetrieved": "2026-10-08",
+    "priceVn": {
+      "amountVnd": 90000,
+      "sourceUrl": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+      "retrieved": "2026-10-08"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "nhaantoan",
+        "url": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+        "amountVnd": 90000,
+        "retrieved": "2026-10-08"
+      }
+    },
+    "notes": "Internal universal bracket for indoor detectors. Source is the official hikvision.com/vn product page (the datasheet it links prints the model as DS-PDB-IN-Universalbracket). No wiring of its own."
+  },
+  {
+    "id": "hikvision-ds-pdb-ex-sbkt",
+    "kind": "accessory",
+    "brand": "hikvision",
+    "model": "DS-PDB-EX-SBKT",
+    "productLine": "ax-hybrid",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000070419/DS-PDB-EX-SBKT_Datasheet_V1.0_202211.pdf",
+    "sourceRetrieved": "2026-10-08",
+    "priceVn": {
+      "amountVnd": 220000,
+      "sourceUrl": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+      "retrieved": "2026-10-08"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "nhaantoan",
+        "url": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+        "amountVnd": 220000,
+        "retrieved": "2026-10-08"
+      }
+    },
+    "notes": "External swivel bracket for detectors. No wiring of its own."
+  },
+  {
+    "id": "hikvision-ds-pdb-ex-wallbracket",
+    "kind": "accessory",
+    "brand": "hikvision",
+    "model": "DS-PDB-EX-Wallbracket",
+    "productLine": "ax-hybrid",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://www.hikvision.com/vn/products/Alarm-Products/intrusion-accessory/detector-accessory/ds-pdb-ex-wallbracket/",
+    "sourceRetrieved": "2026-10-08",
+    "priceVn": {
+      "amountVnd": 630000,
+      "sourceUrl": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+      "retrieved": "2026-10-08"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "nhaantoan",
+        "url": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+        "amountVnd": 630000,
+        "retrieved": "2026-10-08"
+      }
+    },
+    "notes": "External wall bracket ('Used with outdoor detectors'). Source is the official hikvision.com/vn product page; no datasheet PDF is published. No wiring of its own."
+  },
+  {
+    "id": "hikvision-ds-pdb-ex-adapter",
+    "kind": "accessory",
+    "brand": "hikvision",
+    "model": "DS-PDB-EX-Adapter",
+    "productLine": "ax-hybrid",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": null,
+    "sourceRetrieved": "2026-10-08",
+    "priceVn": {
+      "amountVnd": 360000,
+      "sourceUrl": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+      "retrieved": "2026-10-08"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "nhaantoan",
+        "url": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+        "amountVnd": 360000,
+        "retrieved": "2026-10-08"
+      }
+    },
+    "notes": "Bracket adapter for outdoor detectors. No official document or product page was found for this model (searched 2026-10-08), so there is no datasheet link and nothing but the model name is stored. No wiring of its own."
+  },
+  {
+    "id": "hikvision-ds-pdb-ex-fixedbracket",
+    "kind": "accessory",
+    "brand": "hikvision",
+    "model": "DS-PDB-EX-Fixedbracket",
+    "productLine": "ax-hybrid",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": null,
+    "sourceRetrieved": "2026-10-08",
+    "priceVn": {
+      "amountVnd": 960000,
+      "sourceUrl": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+      "retrieved": "2026-10-08"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "nhaantoan",
+        "url": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+        "amountVnd": 960000,
+        "retrieved": "2026-10-08"
+      }
+    },
+    "notes": "Fixed bracket for outdoor detectors. No official document or product page was found for this model (searched 2026-10-08), so there is no datasheet link and nothing but the model name is stored. No wiring of its own."
+  }
+]

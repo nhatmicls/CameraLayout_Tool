@@ -7,7 +7,7 @@ import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
 import { selectFireAlarmDevices, selectScale } from '../../state/project-store-floor-selectors'
 import { CameraUnknownModelNotice } from '../camera/camera-unknown-model-notice'
-import { capitalizeFirstLetter } from '../shared/capitalize-first-letter'
+import { brandDisplayLabel } from '../shared/brand-display-label'
 import { fireAlarmCompatibilityIndex, fireAlarmModelSpecById } from '../../export/shared/fire-alarm-compatibility-index-singleton'
 import { FireAlarmCompatibilityList } from './fire-alarm-compatibility-list'
 import { FireDetectorCoverageReadout } from './fire-detector-coverage-readout'
@@ -140,7 +140,7 @@ export function FireAlarmDevicePropertiesPanel() {
         <div>
           <dt className="inline text-neutral-400">Brand </dt>
           <dd data-testid="properties-brand" className="inline font-medium text-neutral-900">
-            {capitalizeFirstLetter(model.brand)}
+            {brandDisplayLabel(model.brand)}
           </dd>
         </div>
         <div>

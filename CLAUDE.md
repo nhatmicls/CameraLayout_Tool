@@ -27,7 +27,7 @@ is `camera-<formFactor>` (bullet, dome, turret, ptz, fisheye), `sensor-<kind>` (
 vibration, thermal), or `fire-alarm-<kind>` (control-panel, wireless-hub, expander-module,
 keypad, keyfob, tag-reader, relay-module, repeater, communicator, power-supply, accessory,
 smoke-detector, heat-detector, co-detector, manual-call-point, sounder, magnetic-contact,
-environment-detector); e.g. `data/hikvision/camera-bullet/hikvision-camera-bullet_02.json`
+environment-detector, intrusion-detector); e.g. `data/hikvision/camera-bullet/hikvision-camera-bullet_02.json`
 or `data/hikvision/fire-alarm-smoke-detector/hikvision-fire-alarm-smoke-detector_01.json`. A
 record must sit in the folder of its own brand and form factor / kind (tested). Loaders glob
 `data/*/camera-*/*.json`, `data/*/sensor-*/*.json` and `data/*/fire-alarm-*/*.json`, so a new
@@ -56,8 +56,10 @@ Project rules:
   ships zero records - never a placeholder. `priceVn` as for cameras; a beam price only when
   the page shows the TX+RX set price. Record every source in
   `./docs/sensor-catalog-sources.md`.
-- Fire-alarm catalog (`data/hikvision/fire-alarm-<kind>/*.json`) is a third catalog; ids are
-  disjoint from cameras and sensors. Hikvision only (AX HYBRID PRO and AX PRO lines). Specs
+- Fire-alarm catalog (`data/<brand>/fire-alarm-<kind>/*.json`) is a third catalog; ids are
+  disjoint from cameras and sensors. Hikvision (AX HYBRID PRO and AX PRO lines) plus the
+  third-party wired devices the owner names (brand enum `FIRE_ALARM_BRANDS`, today `aolin`,
+  product line `conventional`, `sourceUrl: null` until an official host is known). Specs
   come only from official Hikvision datasheets (hosts `hikvision.com` + subdomains, or
   `hikvision.vn`) or the AX PRO user manual, copied as printed. A kind with no official PDF
   ships zero records - never a placeholder. `priceVn` as for cameras. Record every source in
@@ -68,11 +70,23 @@ Project rules:
   downloaded. In practice that is the 433 MHz `-WB` and wired models; the 868 MHz `-WE`
   variants were not found in Vietnamese shops. Motion / glass-break detectors from those
   lists go to the sensor catalog; everything else is a marker-only kind here.
+- Wired 4-wire devices (owner decision 2026-10-08): the devices of the owner's nhaantoan.com price
+  list are added on the owner's word that they are sold there. Prices come from that list (the
+  site cannot be read by script). Where Hikvision publishes no datasheet PDF, the source may be
+  the Hikvision user manual linked from the model's hikvision.com product page, or that official
+  product page itself. Each such device and its mounting bracket is listed on the three AX Hybrid
+  PRO panels with a `note` starting "Owner decision 2026-10-08" and the panel datasheet as the
+  link - never presented as a row of Hikvision's list. A device with no official Hikvision source
+  at all is added with `sourceUrl: null` and the card shows "no datasheet" - nothing but model,
+  kind and price is stored, never a spec from a reseller or a search snippet. A motion /
+  glass-break detector in that state is a marker-only `intrusion-detector` record of this
+  catalog (Sensors tab), not a sensor-catalog record, because it has no printed range.
+  Details: `./docs/fire-alarm-catalog-sources.md`.
 - Fire-alarm kinds: `FIRE_ALARM_KIND_CATALOG_TAB` (one table, one source of truth) maps each
-  of 18 kinds to a tab ('control-panel', 'fire-alarm', or 'sensors'). Control panel tab shows
+  of 19 kinds to a tab ('control-panel', 'fire-alarm', or 'sensors'). Control panel tab shows
   controllers and their modules (expander, keypad, keyfob, tag reader, relay, repeater,
   communicator, power supply, accessory). Fire alarm tab shows detectors + call points + sounders.
-  Sensors tab shows magnetic contact + environment detector (marker-only, placed like sensors).
+  Sensors tab shows magnetic contact + environment detector + intrusion detector (marker-only, placed like sensors).
   Detector coverage shapes (smoke/heat circles in TCVN 5738 mode only) are determined by kind,
   not stored in placement data.
 - Compatibility (fire alarm): stored only on controller records (`compatibleDevices[]`), each

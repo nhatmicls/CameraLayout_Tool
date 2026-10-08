@@ -2,6 +2,25 @@
 
 ## 2026-10-08
 
+**Wired 4-wire alarm devices (nhaantoan price list)**
+
+- **Fire-alarm catalog 42 -> 57 records** (62 with the no-datasheet devices below): 2 wired magnetic contacts, 2 wired sounders, 2 wired
+  panic buttons, 2 four-wire smoke detectors (DS-PDSMK-4, DS-PDSMK-4BAR), the Speed-X power relay
+  expander DS-PM1-O4H-H and 6 detector mounting brackets (first records of the accessory kind).
+- **Sensor catalog 26 -> 31 records**: wired DS-PDP18-EG2, DS-PDD12P-EG2, DS-PDCL12-EG2,
+  DS-PDTT15AM-LM (PIR) and DS-PDBG8-EG2 (glass-break).
+- **Prices** from the owner's nhaantoan.com price list for the 20 new records and 6 existing
+  ones (DS-PDSK-P changes from 405,000 to 720,000 VND).
+- **Compatibility**: the three AX Hybrid PRO panels now also list the wired 4-wire devices and
+  the brackets by owner decision (each entry says so; they are not rows of Hikvision's list),
+  so these devices are no longer flagged "not listed" next to an AX Hybrid PRO panel.
+- **Devices with no datasheet** (owner decision): DS-PD1-BG9, DS-PD2-T12AME-EL,
+  DS-PDB-EX-Adapter, DS-PDB-EX-Fixedbracket and AoLin SH-507H are in the catalog with "no
+  datasheet" on the card (fire-alarm catalog 62 records in total). The two detectors use the new
+  marker-only kind "Intrusion detector" (Sensors tab, no coverage shape). SH-507H is the first
+  record of a second brand, AoLin, so the Fire alarm tab's Brand filter now has two entries.
+  The alarm catalog's `sourceUrl` may be `null`.
+
 **Multi-floor projects**
 
 - **BREAKING: project file schema version 7.** A project is now a list of floors. Files from

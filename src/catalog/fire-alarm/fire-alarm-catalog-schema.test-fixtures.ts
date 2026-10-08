@@ -197,3 +197,15 @@ export const baseEnvironmentDetector = {
   sourceUrl: "https://www.hikvision.com/test-datasheet.pdf",
   sourceRetrieved: "2026-10-07",
 };
+
+// A detector with no official datasheet: marker-only kind, no source link.
+export const baseIntrusionDetector = {
+  id: "hikvision-test-intrusion-detector",
+  kind: "intrusion-detector",
+  brand: "hikvision",
+  model: "TEST-INTRUSION-DETECTOR",
+  productLine: "ax-hybrid",
+  worksStandalone: false,
+  sourceUrl: null,
+  sourceRetrieved: "2026-10-08",
+};

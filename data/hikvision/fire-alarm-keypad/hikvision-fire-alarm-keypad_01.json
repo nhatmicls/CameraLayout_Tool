@@ -55,14 +55,18 @@
     "certificationsAsPrinted": [],
     "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000053265/DS-PK1-LRT-HWEHWB_Datasheet.pdf",
     "sourceRetrieved": "2026-10-07",
-    "priceVn": null,
+    "priceVn": {
+      "amountVnd": 3530000,
+      "sourceUrl": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+      "retrieved": "2026-10-08"
+    },
     "purchaseLinks": {
       "primary": null,
       "secondary": {
-        "shop": "mastery",
-        "url": "https://mastery.vn/sanpham/ban-phim-lcd-co-day-hikvision-ds-pk1-lrt-hwb/",
-        "amountVnd": null,
-        "retrieved": "2026-10-07"
+        "shop": "nhaantoan",
+        "url": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+        "amountVnd": 3530000,
+        "retrieved": "2026-10-08"
       }
     }
   }

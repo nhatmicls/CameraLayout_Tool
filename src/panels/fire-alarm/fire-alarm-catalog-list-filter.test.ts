@@ -20,7 +20,9 @@ describe('filterFireAlarmCatalogModels (real catalog)', () => {
     const smokeIds = fireAlarmModels.filter((model) => model.kind === 'smoke-detector').map((model) => model.id)
     expect(smokeIds).toContain('hikvision-hf-s2')
     expect(ids({ kind: 'smoke-detector' }).sort()).toEqual([...smokeIds].sort())
-    expect(ids({ brand: 'hikvision' })).toHaveLength(fireAlarmModels.length)
+    const hikvisionIds = fireAlarmModels.filter((model) => model.brand === 'hikvision').map((model) => model.id)
+    expect(ids({ brand: 'hikvision' }).sort()).toEqual([...hikvisionIds].sort())
+    expect(ids({ brand: 'aolin' })).toEqual(['aolin-sh-507h'])
     expect(ids({ brand: 'no-such-brand' })).toEqual([])
   })
 

@@ -44,5 +44,31 @@
         "retrieved": "2026-10-07"
       }
     }
+  },
+  {
+    "id": "hikvision-ds-pm1-o4h-h",
+    "kind": "relay-module",
+    "brand": "hikvision",
+    "model": "DS-PM1-O4H-H",
+    "productLine": "ax-hybrid",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://www.hikvision.com/content/dam/hikvision/products/S000000001/S000000601/S000000937/S000000934/OFR001815/M000065235/Data_Sheet/DS-PM1-O4H-H_Datasheet_V1.0_202207.pdf",
+    "sourceRetrieved": "2026-10-08",
+    "priceVn": {
+      "amountVnd": 2360000,
+      "sourceUrl": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+      "retrieved": "2026-10-08"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "nhaantoan",
+        "url": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+        "amountVnd": 2360000,
+        "retrieved": "2026-10-08"
+      }
+    },
+    "notes": "Speed-X bus wired 4-way power relay expander ('closes/opens the circuit on command via Speed-X from the AX Hybrid Pro control panel')."
   }
 ]

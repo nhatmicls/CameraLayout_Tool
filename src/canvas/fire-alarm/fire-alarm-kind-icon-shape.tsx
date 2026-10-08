@@ -14,7 +14,7 @@ const ICON_STROKE_COLOR = '#1f2937' // neutral-800, reads on any fire-alarm tint
 /**
  * One simple, original geometric marker shape per fire-alarm kind (no
  * vendor artwork - same rule as `camera-form-factor-icon-shape.tsx` /
- * `sensor-kind-icon-shape.tsx`). Eighteen kinds, eighteen distinct
+ * `sensor-kind-icon-shape.tsx`). Nineteen kinds, nineteen distinct
  * silhouettes so a dense plan still reads at a glance even before the label
  * text: panel = square, hub = circle, expander = diamond, keypad = hexagon,
  * smoke = octagon, heat = star, CO = pentagon, call point = triangle (the
@@ -23,7 +23,8 @@ const ICON_STROKE_COLOR = '#1f2937' // neutral-800, reads on any fire-alarm tint
  * shapes below (keyfob = rounded bar, tag reader = ring, relay module =
  * cross, repeater = concentric circles, communicator = half-moon wedge,
  * power supply = a bolt, accessory = a four-point star, magnetic contact =
- * two parallel plates, environment detector = an inverted triangle).
+ * two parallel plates, environment detector = an inverted triangle); the
+ * datasheet-less intrusion detector = a quarter-circle fan.
  * Deliberately listening - see the equivalent note on
  * `CameraFormFactorIconShape` for why a non-listening icon would make the
  * whole marker unselectable.
@@ -107,6 +108,9 @@ export function FireAlarmKindIconShape({ kind, tint, radiusPx }: FireAlarmKindIc
 
     case 'environment-detector':
       return <RegularPolygon sides={3} radius={radiusPx} rotation={180} {...shared} />
+
+    case 'intrusion-detector':
+      return <Wedge y={radiusPx * 0.5} radius={radiusPx * 1.5} angle={90} rotation={-135} {...shared} />
 
     default: {
       // Exhaustiveness guard: FireAlarmKind in fire-alarm-device-types.ts is the source of truth.

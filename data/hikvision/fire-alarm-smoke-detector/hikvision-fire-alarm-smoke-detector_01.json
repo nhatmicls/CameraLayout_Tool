@@ -75,5 +75,57 @@
         "retrieved": "2026-10-07"
       }
     }
+  },
+  {
+    "id": "hikvision-ds-pdsmk-4",
+    "kind": "smoke-detector",
+    "brand": "hikvision",
+    "model": "DS-PDSMK-4",
+    "productLine": "ax-hybrid",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://www.hikvision.com/vn/products/Alarm-Products/wired-intrusion-alarm/i-o-devices/ds-pdsmk-4/",
+    "sourceRetrieved": "2026-10-08",
+    "priceVn": {
+      "amountVnd": 1030000,
+      "sourceUrl": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+      "retrieved": "2026-10-08"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "nhaantoan",
+        "url": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+        "amountVnd": 1030000,
+        "retrieved": "2026-10-08"
+      }
+    },
+    "notes": "4-wire photoelectric smoke detector ('4-Wired Smoke Detector', '4-wire models include a N/C or N/O alarm relay output'). Source is the official hikvision.com/vn product page; no datasheet PDF is published. No protection area is printed."
+  },
+  {
+    "id": "hikvision-ds-pdsmk-4bar",
+    "kind": "smoke-detector",
+    "brand": "hikvision",
+    "model": "DS-PDSMK-4BAR",
+    "productLine": "ax-hybrid",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://www.hikvision.com/vn/products/Alarm-Products/wired-intrusion-alarm/i-o-devices/ds-pdsmk-4bar/",
+    "sourceRetrieved": "2026-10-08",
+    "priceVn": {
+      "amountVnd": 1250000,
+      "sourceUrl": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+      "retrieved": "2026-10-08"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "nhaantoan",
+        "url": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+        "amountVnd": 1250000,
+        "retrieved": "2026-10-08"
+      }
+    },
+    "notes": "4-wire photoelectric smoke detector ('4-wire models available with auto-reset function', '4-wire models available with an internal sounder'). Source is the official hikvision.com/vn product page; no datasheet PDF is published. No protection area is printed."
   }
 ]

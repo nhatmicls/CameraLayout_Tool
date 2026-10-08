@@ -10,7 +10,7 @@ import {
 } from '../../domain/fire-alarm/fire-alarm-device-types'
 import { SENSOR_KIND_DISPLAY_ORDER, SENSOR_KIND_LABELS, type SensorKind } from '../../domain/sensor/sensor-types'
 import { useCatalogSidebarFilterStore } from '../../state/catalog-sidebar-filter-store'
-import { capitalizeFirstLetter } from '../shared/capitalize-first-letter'
+import { brandDisplayLabel } from '../shared/brand-display-label'
 import { CatalogFilterSelect } from '../shared/catalog-filter-select'
 import { FireAlarmCatalogModelCard } from '../fire-alarm/fire-alarm-catalog-model-card'
 import { groupControllerOptionsByPlacement, resolveControllerListedIds } from '../fire-alarm/fire-alarm-catalog-list-filter'
@@ -23,8 +23,9 @@ interface SensorCatalogListProps {
 }
 
 // Fire-alarm catalog records mapped to this tab (CLAUDE.md FIRE_ALARM_KIND_CATALOG_TAB:
-// magnetic-contact, environment-detector today - motion/glass-break detectors from the same
-// AX Hybrid PRO list go in the SENSOR catalog instead, as a plain `sensor` item below).
+// magnetic-contact, environment-detector and the datasheet-less intrusion-detector today -
+// motion/glass-break detectors WITH a datasheet go in the SENSOR catalog instead, as a plain
+// `sensor` item below).
 const SENSOR_TAB_FIRE_ALARM_MODELS = fireAlarmModels.filter((model) => FIRE_ALARM_KIND_CATALOG_TAB[model.kind] === 'sensors')
 
 const ALL_ITEMS: SensorTabItem[] = [
@@ -35,7 +36,7 @@ const ALL_ITEMS: SensorTabItem[] = [
 // Computed once from the two static catalogs: only brands and kinds that have a record in this tab are offered.
 const BRAND_OPTIONS = [...new Set(ALL_ITEMS.map((item) => item.model.brand))]
   .sort()
-  .map((brand) => ({ value: brand, label: capitalizeFirstLetter(brand) }))
+  .map((brand) => ({ value: brand, label: brandDisplayLabel(brand) }))
 
 const SENSOR_KIND_OPTIONS = SENSOR_KIND_DISPLAY_ORDER.filter((kind) => sensorModels.some((model) => model.kind === kind)).map(
   (kind) => ({ value: kind, label: SENSOR_KIND_LABELS[kind] }),

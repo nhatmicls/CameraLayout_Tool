@@ -393,3 +393,38 @@ datasheet whose text contains the exact model string.
 
 These wired detectors are on neither of Hikvision's compatibility lists, so no control panel
 lists them; with a panel chosen in the "Works with" filter they are hidden.
+
+## Hikvision wired detectors from the nhaantoan price list (third pass, 2026-10-08)
+
+Owner request (2026-10-08): add the wired detectors of the owner's nhaantoan.com price list.
+Prices are copied from the owner's screenshots of that list (nhaantoan.com cannot be read by
+script - see `fire-alarm-catalog-sources.md`, section of the same name); `priceVn` and
+`purchaseLinks.secondary` carry that price and a nhaantoan link.
+
+| Record id | Model | Kind | Printed values used | Source | SHA-256 | Price (nhaantoan) |
+|---|---|---|---|---|---|---|
+| `hikvision-ds-pdp18-eg2` | DS-PDP18-EG2 (sold as SH-PDP618-EG2) | pir | "Detection range 18m, 85.9°" | Hikvision user manual https://www.hikvision.com/content/dam/hikvision/products/S000000001/S000000601/S000000933/S000000934/OFR000955/M000011344/Quick_Start_Guide/102021815-UD13284B-B_Baseline_DS-PDP18-EG2_18m-Digital-PIR-Detector_User-Manual_V1.0_20200320.pdf | `fe4feef2460232d2e3fc547920180d2d65ff7e38de8bfa3ee3664d990edae86e` | 410.000đ |
+| `hikvision-ds-pdd12p-eg2` | DS-PDD12P-EG2 | pir | "Detection Range 12m"; "Detection Angle 85.9°" | datasheet https://assets.hikvision.com/prd/public/all/doc/m000040442/DS-PDD12P-EG2_Datasheet_20250421.pdf | `b3134a6da37fe099b77acfca4b0ba9c099b2ab97b05c76a687e17b848070011d` | 1.110.000đ |
+| `hikvision-ds-pdcl12-eg2` | DS-PDCL12-EG2 | pir | "Detection range 12m"; "Detection angle 360°" | official product page, specification table https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/i-o-devices/ds-pdcl12-eg2/ | - | 890.000đ |
+| `hikvision-ds-pdtt15am-lm` | DS-PDTT15AM-LM | pir | "Detection Range 15m"; "Detection Angle 90° @ 180° adjustable" (90° stored) | datasheet https://assets.hikvision.com/prd/normal/all/doc/m000050027/DS-PDTT15AM-LM_Datasheet_20250421.pdf | `81a45412b21a206e5d2d22e869068fa7bbfba4f596b7298b6c533b89d4029312` | 5.350.000đ |
+| `hikvision-ds-pdbg8-eg2` | DS-PDBG8-EG2 | vibration (glass-break) | "Detection Range 8m"; "Glass Type Float, Plate, Tampered, Wired, Laminated Leaded, Double Glazing" | datasheet https://assets.hikvision.com/prd/public/all/doc/m000044201/DS-PDBG8-EG2_Datasheet_20250421.pdf | `89db5aef03a6e4a5e61f5177ad759c4dbd9f19318664421e48e932222c181e6a` | 750.000đ |
+
+- **DS-PDCL12-EG2 is the one record not sourced from a PDF.** Hikvision publishes no datasheet
+  or manual for the wired model (only for the wireless -WE / -WB ones); its range and angle are
+  copied as printed from the specification table of the official hikvision.com product page.
+  Accepted on the owner's "add all" instruction of 2026-10-08.
+- DS-PDP18-EG2 is sourced from the plain model's user manual; the DS-PDP18-EG2(B) datasheet is a
+  different model and is not used.
+- Existing records repriced from the same list: DS-PDD15AM-EG2 1.480.000đ (was a mastery.vn
+  contact-for-price link) and DS-PDSK-P 720.000đ (replaces vuhoangtelecom.vn 405.000đ of
+  2026-10-06; owner instruction: prices from nhaantoan).
+- All seven wired detectors of this list in the catalog (the five above, DS-PDD15AM-EG2 and
+  DS-PDSK-P) are named in the three AX Hybrid PRO panels' compatibility entries by owner
+  decision - see `fire-alarm-catalog-sources.md`. This supersedes "with a panel chosen in the
+  Works with filter they are hidden" above for DS-PDD15AM-EG2.
+- DS-PD1-BG9 (glass-break) and DS-PD2-T12AME-EL (outdoor tri-tech) have no official source for
+  the exact model, so no range can be stored and they are NOT sensor-catalog records. By owner
+  decision they are marker-only `intrusion-detector` records of the fire-alarm catalog, shown
+  in the Sensors tab with "no datasheet" - see `fire-alarm-catalog-sources.md`.
+
+Record count after this pass: 31 (21 pir, 3 beam, 5 vibration, 2 thermal).

@@ -122,16 +122,72 @@
     "certificationsAsPrinted": [],
     "sourceUrl": "https://www.hikvision.com/content/dam/hikvision/products/S000000001/S000000601/S000000937/S000000934/OFR000943/M000004980/Data_Sheet/DS-PD1-MC-RS.pdf",
     "sourceRetrieved": "2026-10-07",
-    "priceVn": null,
+    "priceVn": {
+      "amountVnd": 440000,
+      "sourceUrl": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+      "retrieved": "2026-10-08"
+    },
     "purchaseLinks": {
       "primary": null,
       "secondary": {
-        "shop": "mastery",
-        "url": "https://mastery.vn/sanpham/cam-bien-tu-co-day-hikvision-ds-pd1-mc-rs/",
-        "amountVnd": null,
-        "retrieved": "2026-10-07"
+        "shop": "nhaantoan",
+        "url": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+        "amountVnd": 440000,
+        "retrieved": "2026-10-08"
       }
     },
-    "notes": "Wired magnetic contact for rolling doors ('Connection type: NC', 'Active gap: 65 mm'). Wired zone device: it is not on Hikvision's compatibility lists, so no panel lists it."
+    "notes": "Wired magnetic contact for rolling doors ('Connection type: NC', 'Active gap: 65 mm'). Sold by nhaantoan as SH-PD400-RS."
+  },
+  {
+    "id": "hikvision-ds-pd1-mc-ws",
+    "kind": "magnetic-contact",
+    "brand": "hikvision",
+    "model": "DS-PD1-MC-WS",
+    "productLine": "ax-hybrid",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://www.hikvision.com/content/dam/hikvision/products/S000000001/S000000601/S000000937/S000000934/OFR000943/M000015712/Data_Sheet/DS-PD1-MC-WS.pdf",
+    "sourceRetrieved": "2026-10-08",
+    "priceVn": {
+      "amountVnd": 140000,
+      "sourceUrl": "https://nhaantoan.com/san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong/cam-bien-hikvision-thiet-bi-bao-dong/cam-bien-co-day-hikvision/cam-bien-tu-co-day-hikvision-sh-pd200-ws.html",
+      "retrieved": "2026-10-08"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "nhaantoan",
+        "url": "https://nhaantoan.com/san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong/cam-bien-hikvision-thiet-bi-bao-dong/cam-bien-co-day-hikvision/cam-bien-tu-co-day-hikvision-sh-pd200-ws.html",
+        "amountVnd": 140000,
+        "retrieved": "2026-10-08"
+      }
+    },
+    "notes": "Wired magnetic contact, datasheet title 'Wired Magnetic Contact' ('Connection type: NC', surface mounting on wood door). Sold by nhaantoan as SH-PD200-WS."
+  },
+  {
+    "id": "hikvision-ds-pd1-mc-ms",
+    "kind": "magnetic-contact",
+    "brand": "hikvision",
+    "model": "DS-PD1-MC-MS",
+    "productLine": "ax-hybrid",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": "https://assets.hikvision.com/prd/normal/all/doc/m000004979/UD33433B_Baseline_DS-PD1-MC-MS-Magnetic-Door-Contact_UM_V1.0_20230520.pdf",
+    "sourceRetrieved": "2026-10-08",
+    "priceVn": {
+      "amountVnd": 270000,
+      "sourceUrl": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+      "retrieved": "2026-10-08"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "nhaantoan",
+        "url": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+        "amountVnd": 270000,
+        "retrieved": "2026-10-08"
+      }
+    },
+    "notes": "Wired magnetic contact (metal shell). Source is the Hikvision user manual linked from the DS-PD1-MC-MS product page on hikvision.com; no datasheet PDF is published. Sold by nhaantoan as SH-PD300-MS."
   }
 ]

@@ -39,6 +39,10 @@ export const ACCESSORY_KINDS = [
   "accessory",
   "magnetic-contact",
   "environment-detector",
+  // Motion / glass-break detector with NO official datasheet: no printed range, so it cannot
+  // be a sensor-catalog record (which needs a coverage shape). Marker only (owner decision
+  // 2026-10-08).
+  "intrusion-detector",
 ] as const;
 export type AccessoryKind = (typeof ACCESSORY_KINDS)[number];
 

@@ -35,7 +35,7 @@ export interface CatalogSidebarFilterState {
   catalogFeatureFilters: CatalogFeatureFilterKey[]
   /** Sensor catalog brand filter (a brand id present in the sensor catalog OR the sensors-tab fire-alarm kinds). 'all' means no filtering. */
   sensorCatalogBrandFilter: string
-  /** Sensor catalog kind filter - a `SensorKind` or a sensors-tab `FireAlarmKind` (magnetic-contact, environment-detector), merged into one drop-down. 'all' means no filtering. */
+  /** Sensor catalog kind filter - a `SensorKind` or a sensors-tab `FireAlarmKind` (magnetic-contact, environment-detector, intrusion-detector), merged into one drop-down. 'all' means no filtering. */
   sensorCatalogKindFilter: SensorKind | FireAlarmKind | 'all'
   /** Fire-alarm tab kind filter. 'all' means no filtering. */
   fireAlarmCatalogKindFilter: FireAlarmKind | 'all'

@@ -364,3 +364,103 @@ Sold in Vietnam but NOT added - owner decision 2026-10-07: treated as having no 
 (none could be downloaded for the exact model;
 DS-PDD12-EG2 was rejected because the only PDF found is the DS-PDD12P-EG2 datasheet):
 DS-PD1-BG9, DS-PD1-EB, DS-PD1-MC-MS, DS-PD1-SKM, DS-PDBG8-EG2, DS-PDCL12-EG2, DS-PDCL12DT-EG2, DS-PDD12-EG2, DS-PDP18-EG2, DS-PDSKM-VG3, DS-PDSMK-4, DS-PHA64-M, DS-PK-L, DS-PK-LRT, DS-PKG-H4L, DS-PKG-H8L, DS-PM-RSI8, DS-PM-RSO8, DS-PM-RSO8-H, DS-PMA-BELL, DS-PMA-G2, DS-PMA-P, DS-PMA-S1, DS-PS1-R, DS-19K00-Y.
+
+## Wired 4-wire devices from the nhaantoan price list (third pass, 2026-10-08)
+
+Owner request (2026-10-08): add every device of the owner's nhaantoan.com (Nhà An Toàn) price
+list screenshots - all in stock there, all wired (4-wire) devices used with AX Hybrid PRO. This
+pass changes three earlier rules, each by owner decision of that date:
+
+- **Sold in Vietnam** = the owner's nhaantoan price list. nhaantoan.com answers automated
+  requests with a Cloudflare challenge, so no product page was read or saved. Prices are copied
+  from the owner's screenshots. The price link is the model's nhaantoan product page where a
+  web search returned one (DS-PS1-R, DS-PD1-MC-WS, DS-PD1-EB, DS-PDSK-P), otherwise nhaantoan's
+  Hikvision alarm category page
+  (https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html).
+  Neither was machine-verified.
+- **Source document.** Where Hikvision publishes no datasheet PDF for the model, the record's
+  `sourceUrl` is the Hikvision user manual linked from the model's own hikvision.com product
+  page, or that official product page itself (the Vietnam site, hikvision.com/vn). These records
+  are marker-only: no value from the source is stored beyond the model name. The table says
+  which kind of source each record has.
+- **Compatibility by owner decision.** Conventional wired zone devices are not rows of the
+  AX HYBRID PRO Device Compatibility List. The owner states they are all 4-wire devices that
+  work with AX Hybrid PRO, so each gets an entry on the three AX Hybrid PRO panels whose
+  `note` starts "Owner decision 2026-10-08" and whose link is the panel's own datasheet (the
+  schema needs an official host; the datasheet prints the wired zones, it does not name the
+  device). The mounting brackets get the same kind of entry so they are not flagged. The AX PRO
+  hubs get none.
+
+| Record id | Model | Kind | Source (`sourceUrl`) | Source type | SHA-256 | Price (nhaantoan) |
+|---|---|---|---|---|---|---|
+| `hikvision-ds-pd1-mc-ws` | DS-PD1-MC-WS (sold as SH-PD200-WS) | magnetic-contact | https://www.hikvision.com/content/dam/hikvision/products/S000000001/S000000601/S000000937/S000000934/OFR000943/M000015712/Data_Sheet/DS-PD1-MC-WS.pdf | datasheet, model printed | `4f82c3b09a5037be0dab3f05a5ea1c6289c6c5f86f2b4095d01ecbb7a0236e5a` | 140.000đ |
+| `hikvision-ds-pd1-mc-ms` | DS-PD1-MC-MS (sold as SH-PD300-MS) | magnetic-contact | https://assets.hikvision.com/prd/normal/all/doc/m000004979/UD33433B_Baseline_DS-PD1-MC-MS-Magnetic-Door-Contact_UM_V1.0_20230520.pdf | user manual linked from the product page; model in the file name only | `f96707b7c94e03cf3c81a3cc1995328235818f02cb47d3581a75c70e32e8a908` | 270.000đ |
+| `hikvision-ds-pma-bell` | DS-PMA-BELL | sounder | https://www.hikvision.com/content/dam/hikvision/products/S000000001/S000000601/S000000937/S000000934/OFR000959/M000005033/Data_Sheet/SirenDS-PMA-BELL.pdf | datasheet, model printed | `8feda5bce0f55eeb00c7f0f40225ff15bb082f844775f42dc8d89083eb09542d` | 630.000đ |
+| `hikvision-ds-ps1-r` | DS-PS1-R (sold as SH-PS661-R) | sounder | https://assets.hikvision.com/prd/normal/all/doc/m000044522/UD21784B-C_Baseline_Wired-Sounder_-User-Manual_v1.0_20230310.pdf | "Wired Sounder" user manual linked from the product page; model not printed | `c91519d66171b1045742bcc7604428d412aa48bf63d9530aff924f48e1aff0c1` | 880.000đ |
+| `hikvision-ds-pd1-eb` | DS-PD1-EB | manual-call-point | https://assets.hikvision.com/prd/normal/all/doc/m000004981/UD33426B_Baseline_DS-PD1-EB-Panic-Button_UM_V1.0_20230520.pdf | user manual linked from the product page; model in the file name only | `3c28999ad89b33bbd996cea54327afa48865886d80be287d477c3616d8c69f73` | 110.000đ |
+| `hikvision-ds-pd1-eb-pf` | DS-PD1-EB-PF | manual-call-point | https://assets.hikvision.com/prd/normal/all/doc/m000004982/UD33425B_Baseline_DS-PD1-EB-PF-Panic-Pedal-Switch_UM_V1.0_20230520.pdf | user manual linked from the product page; model in the file name only | `b824b3b3c1a2040d2270330444a9d6e16979530ebc6f8ec826fc1dee0af07646` | 1.050.000đ |
+| `hikvision-ds-pdsmk-4` | DS-PDSMK-4 | smoke-detector | https://www.hikvision.com/vn/products/Alarm-Products/wired-intrusion-alarm/i-o-devices/ds-pdsmk-4/ | official product page (no PDF published) | - | 1.030.000đ |
+| `hikvision-ds-pdsmk-4bar` | DS-PDSMK-4BAR | smoke-detector | https://www.hikvision.com/vn/products/Alarm-Products/wired-intrusion-alarm/i-o-devices/ds-pdsmk-4bar/ | official product page (no PDF published) | - | 1.250.000đ |
+| `hikvision-ds-pm1-o4h-h` | DS-PM1-O4H-H | relay-module | https://www.hikvision.com/content/dam/hikvision/products/S000000001/S000000601/S000000937/S000000934/OFR001815/M000065235/Data_Sheet/DS-PM1-O4H-H_Datasheet_V1.0_202207.pdf | datasheet, model printed | `d3abcc05aa05967ccf49bc5fe7d6787add7c11fa907dd9376c74fc0b951fd12f` | 2.360.000đ |
+| `hikvision-ds-pdb-in-ceilingbracket` | DS-PDB-IN-Ceilingbracket | accessory | https://www.hikvision.com/content/dam/hikvision/products/S000000001/S000000601/S000000933/S000000936/OFR001521/M000008882/Data_Sheet/DS-PDB-IN-Ceilingbracket_en-US_20200221.pdf | datasheet, model printed | `2ecf6b78843653c69a1537191ad3aac2b1fb9685333548e6970f6a88d46962c3` | 100.000đ |
+| `hikvision-ds-pdb-in-wallbracket` | DS-PDB-IN-Wallbracket | accessory | https://www.hikvision.com/content/dam/hikvision/products/S000000001/S000000601/S000000933/S000000936/OFR001521/M000008881/Data_Sheet/DS-PDB-IN-Wallbracket_en-US_20200221.pdf | datasheet, model printed | `6eda91d26cc873705637608e58f00a2fb2bccf9a976a76bb923fd48bb4d2b876` | 100.000đ |
+| `hikvision-ds-pdb-in-universalbracket` | DS-PDB-IN-Universalbracket | accessory | https://www.hikvision.com/content/dam/hikvision/products/S000000001/S000000601/S000009359/S000000936/OFR001521/M000018312/Data_Sheet/Spec_DS-PDB-IN-Internal-universal-bracket.PDF | datasheet, model printed | `14c800ae1fe4bf3c495564764e47ead42ef7c6efed5d1523f94531d469a198bb` | 90.000đ |
+| `hikvision-ds-pdb-in-ubkt1` | DS-PDB-IN-UBKT1 | accessory | https://www.hikvision.com/vn/products/Alarm-Products/intrusion-accessory/detector-accessory/ds-pdb-in-ubkt1/ | official product page (the PDF it links prints DS-PDB-IN-Universalbracket) | - | 90.000đ |
+| `hikvision-ds-pdb-ex-sbkt` | DS-PDB-EX-SBKT | accessory | https://assets.hikvision.com/prd/normal/all/doc/m000070419/DS-PDB-EX-SBKT_Datasheet_V1.0_202211.pdf | datasheet, model printed | `7dff79a6b149631128d8a496ca071e21822af13f097a17514b55da5ff05c7281` | 220.000đ |
+| `hikvision-ds-pdb-ex-wallbracket` | DS-PDB-EX-Wallbracket | accessory | https://www.hikvision.com/vn/products/Alarm-Products/intrusion-accessory/detector-accessory/ds-pdb-ex-wallbracket/ | official product page (no PDF published) | - | 630.000đ |
+
+Notes:
+
+- `certificationsAsPrinted` is `[]` for all fifteen. The three user manuals print EMC
+  conformity lines ("EN 50130-4", "EN61000-6-3"); these are not product certifications and are
+  not stored.
+- The price list spells the ceiling bracket "Cellingbracket"; the record uses Hikvision's
+  spelling. DS-PD1-EB and DS-PD1-EB-PF are panic buttons, filed under `manual-call-point`
+  like the wireless emergency buttons. The brackets are the first records of the `accessory`
+  kind.
+- Existing records repriced from the same list (`priceVn` and `purchaseLinks.secondary`,
+  replacing a mastery.vn contact-for-price link): DS-PD1-MC-RS 440.000đ (sold as SH-PD400-RS),
+  DS-PM1-I8O2-H 1.670.000đ, DS-PM1-RT-HWB 2.360.000đ, DS-PK1-LRT-HWB 3.530.000đ.
+- DS-PD1-MC-MS, DS-PMA-BELL, DS-PS1-R, DS-PD1-EB and DS-PDSMK-4 were on the 2026-10-07 "sold
+  but not added" list; this pass supersedes that for these five.
+
+Compatibility entries added to DS-PHA48-EP, DS-PHA64-LP(B) and DS-PHA48-EP(B) (70 entries each
+afterwards):
+
+- **Official row**: DS-PM1-O4H-H - "Speed-X Bus Power Relay Expander" on the AX HYBRID PRO list,
+  "V1.0.2 build 220719 or later" (first panel column) / "V1.1.0 build 240409 or later" (second
+  column), read 2026-10-08.
+- **Owner decision, 16 wired devices**: DS-PD1-MC-WS, DS-PD1-MC-MS, DS-PD1-MC-RS, DS-PMA-BELL,
+  DS-PS1-R, DS-PD1-EB, DS-PD1-EB-PF, DS-PDSMK-4, DS-PDSMK-4BAR and the sensor-catalog records
+  DS-PDP18-EG2, DS-PDD12P-EG2, DS-PDD15AM-EG2, DS-PDCL12-EG2, DS-PDTT15AM-LM, DS-PDBG8-EG2,
+  DS-PDSK-P.
+- **Owner decision, 6 brackets**: the six `accessory` records above.
+
+### Records with no datasheet (owner decision 2026-10-08)
+
+For five devices of the price list no official document or product page was found for the exact
+model (hikvision.com product lists of twelve regional sites, hikvision.com-restricted searches
+and guessed datasheet paths, all 2026-10-08). Owner decision: add them anyway and show "no
+datasheet". The schema therefore allows `sourceUrl: null`; the card prints "no datasheet"
+instead of a link, and nothing but the model name, kind and nhaantoan price is stored.
+
+| Record id | Model | Brand | Kind | Price (nhaantoan) |
+|---|---|---|---|---|
+| `hikvision-ds-pd1-bg9` | DS-PD1-BG9 (wired glass-break detector) | hikvision | intrusion-detector | 970.000đ |
+| `hikvision-ds-pd2-t12ame-el` | DS-PD2-T12AME-EL (wired outdoor tri-tech detector) | hikvision | intrusion-detector | 3.310.000đ |
+| `hikvision-ds-pdb-ex-adapter` | DS-PDB-EX-Adapter | hikvision | accessory | 360.000đ |
+| `hikvision-ds-pdb-ex-fixedbracket` | DS-PDB-EX-Fixedbracket | hikvision | accessory | 960.000đ |
+| `aolin-sh-507h` | SH-507H (12 VDC rate-of-rise heat detector) | aolin | heat-detector | 570.000đ |
+
+- **`intrusion-detector` kind** (new, Sensors tab, marker only): a motion or glass-break detector
+  with no datasheet has no printed range, so it cannot be a sensor-catalog record (those need a
+  coverage shape). It is placed as a marker and numbered F1, F2... No range is drawn - search
+  snippets that quote a range for DS-PD1-BG9 are not an official source and were not used.
+- **SH-507H is not a Hikvision product.** Vietnamese shops (sieuthivienthong.com,
+  nhatthuc.com.vn, search results of 2026-10-08) sell it as "AoLin SH-507H"; that brand
+  attribution is the only thing taken from them. The catalog now has a second brand, `aolin`
+  (`data/aolin/fire-alarm-heat-detector/`), with product line `conventional`. No official AoLin
+  host is known, so an `aolin` record can only carry `sourceUrl: null`. In TCVN 5738 mode it
+  draws the heat-detector circle like any heat detector; no protection area of its own is stored.
+- All five are listed on the three AX Hybrid PRO panels by the same owner decision as above
+  (75 entries per panel afterwards).

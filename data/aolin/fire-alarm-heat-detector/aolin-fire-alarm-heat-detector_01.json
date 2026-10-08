@@ -1,0 +1,28 @@
+[
+  {
+    "id": "aolin-sh-507h",
+    "kind": "heat-detector",
+    "brand": "aolin",
+    "model": "SH-507H",
+    "productLine": "conventional",
+    "worksStandalone": false,
+    "certificationsAsPrinted": [],
+    "sourceUrl": null,
+    "sourceRetrieved": "2026-10-08",
+    "priceVn": {
+      "amountVnd": 570000,
+      "sourceUrl": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+      "retrieved": "2026-10-08"
+    },
+    "purchaseLinks": {
+      "primary": null,
+      "secondary": {
+        "shop": "nhaantoan",
+        "url": "https://nhaantoan.com/danh-muc-san-pham/thiet-bi-bao-dong/hikvision-thiet-bi-bao-dong.html",
+        "amountVnd": 570000,
+        "retrieved": "2026-10-08"
+      }
+    },
+    "notes": "12 VDC rate-of-rise heat detector, sold in Vietnam under the AoLin brand (price list: 'Đầu báo nhiệt gia tăng 12 VDC'). No manufacturer datasheet was found (searched 2026-10-08), so there is no datasheet link and no protection area is stored."
+  }
+]

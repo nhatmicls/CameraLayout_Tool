@@ -23,6 +23,7 @@ import {
   baseAccessory,
   baseMagneticContact,
   baseEnvironmentDetector,
+  baseIntrusionDetector,
 } from "./fire-alarm-catalog-schema.test-fixtures";
 
 describe("fireAlarmModelSchema: one minimal record per kind", () => {
@@ -45,6 +46,7 @@ describe("fireAlarmModelSchema: one minimal record per kind", () => {
     ["accessory", baseAccessory],
     ["magnetic-contact", baseMagneticContact],
     ["environment-detector", baseEnvironmentDetector],
+    ["intrusion-detector", baseIntrusionDetector],
   ])("parses a minimal %s record and applies defaults", (_kind, record) => {
     const result = fireAlarmModelSchema.safeParse(record);
     expect(result.success, JSON.stringify(result.success ? null : result.error.issues)).toBe(true);
@@ -82,6 +84,29 @@ describe("sourceUrl host check", () => {
     expect(
       fireAlarmModelSchema.safeParse({ ...baseControlPanel, sourceUrl: "http://www.hikvision.com/a.pdf" }).success,
     ).toBe(false);
+  });
+
+  it("accepts sourceUrl null (no datasheet) for any brand", () => {
+    expect(fireAlarmModelSchema.safeParse({ ...baseControlPanel, sourceUrl: null }).success).toBe(true);
+    expect(
+      fireAlarmModelSchema.safeParse({ ...baseHeatDetector, brand: "aolin", productLine: "conventional", sourceUrl: null })
+        .success,
+    ).toBe(true);
+  });
+
+  it("rejects any sourceUrl for a brand with no known official host", () => {
+    expect(
+      fireAlarmModelSchema.safeParse({
+        ...baseHeatDetector,
+        brand: "aolin",
+        productLine: "conventional",
+        sourceUrl: "https://www.hikvision.com/a.pdf",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects an unknown brand", () => {
+    expect(fireAlarmModelSchema.safeParse({ ...baseHeatDetector, brand: "acme" }).success).toBe(false);
   });
 });
 

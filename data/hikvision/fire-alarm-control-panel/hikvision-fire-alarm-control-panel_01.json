@@ -311,6 +311,174 @@
         "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
         "sourceRetrieved": "2026-10-07",
         "note": "Official compatibility list: listed with no minimum firmware printed (\"—\"), read as compatible with every firmware version."
+      },
+      {
+        "modelId": "hikvision-ds-pm1-o4h-h",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-08",
+        "note": "Official compatibility list: panel firmware V1.0.2 build 220719 or later."
+      },
+      {
+        "modelId": "hikvision-ds-pd1-mc-ws",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000054763/DS-PHA48-EP_Datasheet_20240118.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pd1-mc-ms",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000054763/DS-PHA48-EP_Datasheet_20240118.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pd1-mc-rs",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000054763/DS-PHA48-EP_Datasheet_20240118.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pma-bell",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000054763/DS-PHA48-EP_Datasheet_20240118.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-ps1-r",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000054763/DS-PHA48-EP_Datasheet_20240118.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pd1-eb",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000054763/DS-PHA48-EP_Datasheet_20240118.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pd1-eb-pf",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000054763/DS-PHA48-EP_Datasheet_20240118.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdsmk-4",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000054763/DS-PHA48-EP_Datasheet_20240118.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdsmk-4bar",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000054763/DS-PHA48-EP_Datasheet_20240118.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdp18-eg2",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000054763/DS-PHA48-EP_Datasheet_20240118.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdd12p-eg2",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000054763/DS-PHA48-EP_Datasheet_20240118.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdd15am-eg2",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000054763/DS-PHA48-EP_Datasheet_20240118.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdcl12-eg2",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000054763/DS-PHA48-EP_Datasheet_20240118.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdtt15am-lm",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000054763/DS-PHA48-EP_Datasheet_20240118.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdbg8-eg2",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000054763/DS-PHA48-EP_Datasheet_20240118.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdsk-p",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000054763/DS-PHA48-EP_Datasheet_20240118.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdb-in-ceilingbracket",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000054763/DS-PHA48-EP_Datasheet_20240118.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: mounting bracket for the wired detectors, no wiring of its own. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdb-in-wallbracket",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000054763/DS-PHA48-EP_Datasheet_20240118.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: mounting bracket for the wired detectors, no wiring of its own. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdb-in-universalbracket",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000054763/DS-PHA48-EP_Datasheet_20240118.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: mounting bracket for the wired detectors, no wiring of its own. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdb-in-ubkt1",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000054763/DS-PHA48-EP_Datasheet_20240118.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: mounting bracket for the wired detectors, no wiring of its own. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdb-ex-sbkt",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000054763/DS-PHA48-EP_Datasheet_20240118.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: mounting bracket for the wired detectors, no wiring of its own. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdb-ex-wallbracket",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000054763/DS-PHA48-EP_Datasheet_20240118.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: mounting bracket for the wired detectors, no wiring of its own. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pd1-bg9",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000054763/DS-PHA48-EP_Datasheet_20240118.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pd2-t12ame-el",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000054763/DS-PHA48-EP_Datasheet_20240118.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdb-ex-adapter",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000054763/DS-PHA48-EP_Datasheet_20240118.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: mounting bracket for the wired detectors, no wiring of its own. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdb-ex-fixedbracket",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000054763/DS-PHA48-EP_Datasheet_20240118.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: mounting bracket for the wired detectors, no wiring of its own. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "aolin-sh-507h",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000054763/DS-PHA48-EP_Datasheet_20240118.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
       }
     ],
     "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000054763/DS-PHA48-EP_Datasheet_20240118.pdf",
@@ -630,6 +798,174 @@
         "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
         "sourceRetrieved": "2026-10-07",
         "note": "Official compatibility list: listed with no minimum firmware printed (\"—\"), read as compatible with every firmware version."
+      },
+      {
+        "modelId": "hikvision-ds-pm1-o4h-h",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-08",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later."
+      },
+      {
+        "modelId": "hikvision-ds-pd1-mc-ws",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138169/DS-PHA64-LPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pd1-mc-ms",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138169/DS-PHA64-LPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pd1-mc-rs",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138169/DS-PHA64-LPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pma-bell",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138169/DS-PHA64-LPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-ps1-r",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138169/DS-PHA64-LPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pd1-eb",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138169/DS-PHA64-LPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pd1-eb-pf",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138169/DS-PHA64-LPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdsmk-4",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138169/DS-PHA64-LPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdsmk-4bar",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138169/DS-PHA64-LPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdp18-eg2",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138169/DS-PHA64-LPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdd12p-eg2",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138169/DS-PHA64-LPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdd15am-eg2",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138169/DS-PHA64-LPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdcl12-eg2",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138169/DS-PHA64-LPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdtt15am-lm",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138169/DS-PHA64-LPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdbg8-eg2",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138169/DS-PHA64-LPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdsk-p",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138169/DS-PHA64-LPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdb-in-ceilingbracket",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138169/DS-PHA64-LPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: mounting bracket for the wired detectors, no wiring of its own. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdb-in-wallbracket",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138169/DS-PHA64-LPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: mounting bracket for the wired detectors, no wiring of its own. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdb-in-universalbracket",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138169/DS-PHA64-LPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: mounting bracket for the wired detectors, no wiring of its own. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdb-in-ubkt1",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138169/DS-PHA64-LPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: mounting bracket for the wired detectors, no wiring of its own. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdb-ex-sbkt",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138169/DS-PHA64-LPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: mounting bracket for the wired detectors, no wiring of its own. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdb-ex-wallbracket",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138169/DS-PHA64-LPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: mounting bracket for the wired detectors, no wiring of its own. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pd1-bg9",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138169/DS-PHA64-LPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pd2-t12ame-el",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138169/DS-PHA64-LPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdb-ex-adapter",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138169/DS-PHA64-LPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: mounting bracket for the wired detectors, no wiring of its own. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdb-ex-fixedbracket",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138169/DS-PHA64-LPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: mounting bracket for the wired detectors, no wiring of its own. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "aolin-sh-507h",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138169/DS-PHA64-LPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
       }
     ],
     "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138169/DS-PHA64-LPB_Datasheet_20240401.pdf",
@@ -957,6 +1293,174 @@
         "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
         "sourceRetrieved": "2026-10-07",
         "note": "Official compatibility list: listed with no minimum firmware printed (\"—\"), read as compatible with every firmware version."
+      },
+      {
+        "modelId": "hikvision-ds-pm1-o4h-h",
+        "sourceUrl": "https://www.hikvision.com/en/products/Alarm-Products/wired-intrusion-alarm/ax-hybrid-pro/ax-hybrid-pro-device-compatibility-list/",
+        "sourceRetrieved": "2026-10-08",
+        "note": "Official compatibility list: panel firmware V1.1.0 build 240409 or later."
+      },
+      {
+        "modelId": "hikvision-ds-pd1-mc-ws",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138168/DS-PHA48-EPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pd1-mc-ms",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138168/DS-PHA48-EPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pd1-mc-rs",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138168/DS-PHA48-EPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pma-bell",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138168/DS-PHA48-EPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-ps1-r",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138168/DS-PHA48-EPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pd1-eb",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138168/DS-PHA48-EPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pd1-eb-pf",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138168/DS-PHA48-EPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdsmk-4",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138168/DS-PHA48-EPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdsmk-4bar",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138168/DS-PHA48-EPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdp18-eg2",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138168/DS-PHA48-EPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdd12p-eg2",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138168/DS-PHA48-EPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdd15am-eg2",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138168/DS-PHA48-EPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdcl12-eg2",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138168/DS-PHA48-EPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdtt15am-lm",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138168/DS-PHA48-EPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdbg8-eg2",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138168/DS-PHA48-EPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdsk-p",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138168/DS-PHA48-EPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdb-in-ceilingbracket",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138168/DS-PHA48-EPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: mounting bracket for the wired detectors, no wiring of its own. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdb-in-wallbracket",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138168/DS-PHA48-EPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: mounting bracket for the wired detectors, no wiring of its own. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdb-in-universalbracket",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138168/DS-PHA48-EPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: mounting bracket for the wired detectors, no wiring of its own. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdb-in-ubkt1",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138168/DS-PHA48-EPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: mounting bracket for the wired detectors, no wiring of its own. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdb-ex-sbkt",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138168/DS-PHA48-EPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: mounting bracket for the wired detectors, no wiring of its own. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdb-ex-wallbracket",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138168/DS-PHA48-EPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: mounting bracket for the wired detectors, no wiring of its own. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pd1-bg9",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138168/DS-PHA48-EPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pd2-t12ame-el",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138168/DS-PHA48-EPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdb-ex-adapter",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138168/DS-PHA48-EPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: mounting bracket for the wired detectors, no wiring of its own. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "hikvision-ds-pdb-ex-fixedbracket",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138168/DS-PHA48-EPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: mounting bracket for the wired detectors, no wiring of its own. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
+      },
+      {
+        "modelId": "aolin-sh-507h",
+        "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138168/DS-PHA48-EPB_Datasheet_20240401.pdf",
+        "sourceRetrieved": "2026-10-07",
+        "note": "Owner decision 2026-10-08: 4-wire device, wired to the panel's zone / output terminals or a DS-PM1-I8O2-H expander. Not a row of Hikvision's compatibility list - the link is the panel datasheet."
       }
     ],
     "sourceUrl": "https://assets.hikvision.com/prd/public/all/doc/m000138168/DS-PHA48-EPB_Datasheet_20240401.pdf",
