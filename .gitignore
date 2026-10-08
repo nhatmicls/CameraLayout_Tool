@@ -78,3 +78,11 @@ ck.md
 # Gemini CLI settings (symlink to .claude/.mcp.json)
 .gemini/settings.json
 .claude/settings.bak.json
+# ClaudeKit / OpenCode agent tooling (third-party kit, local only)
+.claude/
+.opencode/
+AGENTS.md
+release-manifest.json
+
+# throwaway verification scripts
+*.tmp.mjs
