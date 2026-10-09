@@ -2,14 +2,13 @@ import { useMemo } from 'react'
 import { buildCableEndpointIndex, cableLabel } from '../../domain/cable/cable-endpoint-index'
 import { SCALE_NOT_SET_CABLE_MESSAGE } from '../../domain/cable/cable-layout-estimate'
 import { formatMeters, formatMetersInterval } from '../../domain/cable/cable-length-format'
-import { findShaftExits, resolveShaftCableExit } from '../../domain/cable/shaft-integrity'
+import { resolveShaftLeg } from '../../domain/cable/shaft-cable-leg'
 import { fireAlarmModelSpecById } from '../../export/shared/fire-alarm-compatibility-index-singleton'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
 import { selectCables, selectCameras, selectFireAlarmDevices, selectHubs, selectSensors } from '../../state/project-store-floor-selectors'
 import { useCableLayoutEstimate } from '../../state/use-cable-layout-estimate'
 import { fieldLabelClass, inputClass } from '../camera/camera-properties-form-helpers'
-import { CableShaftExitSelect } from './cable-shaft-exit-select'
 import { cableLimitStatusText } from './cable-limit-status-text'
 
 const LIMIT_STATUS_CLASS = { ok: 'text-neutral-600', 'no-limit': 'text-neutral-400', 'maybe-over': 'text-amber-700', over: 'font-medium text-red-600' }
@@ -17,7 +16,8 @@ const LIMIT_STATUS_CLASS = { ok: 'text-neutral-600', 'no-limit': 'text-neutral-4
 /**
  * Right-panel editor for the selected cable: its type, the length breakdown
  * (horizontal route, vertical runs, slack, run, waste, purchase) and the
- * length-limit verdict. Pure presentation over `computeCableLayoutEstimate`;
+ * length-limit verdict; for a cable through a shaft, where it goes beyond it
+ * (routed from the shaft panel on the exit floor). Pure presentation over `computeCableLayoutEstimate`;
  * without a scale there are no metres, so the breakdown is replaced by a
  * prompt to calibrate.
  */
@@ -34,6 +34,7 @@ export function CablePropertiesPanel() {
   const setSelectedCableId = useEditorUiStore((s) => s.setSelectedCableId)
   const layoutEstimate = useCableLayoutEstimate()
   const floors = useProjectStore((s) => s.floors)
+  const activeFloorId = useProjectStore((s) => s.activeFloorId)
   const shafts = useProjectStore((s) => s.shafts)
   // Stable identity (LOW fix, phase 6 review): a fresh `.map()` every render would give `useMemo`
   // below a NEW array on every call even when `shafts` itself hasn't changed, defeating the memo.
@@ -48,11 +49,12 @@ export function CablePropertiesPanel() {
   if (!cable) return null
 
   const hub = hubs.find((candidate) => candidate.id === cable.hubId)
-  // The exit floor's "F{n}" suffix on the cable's own label (`C1-T1>F3`) - only when the shaft
-  // actually has SEVERAL exits (0 or 1 means nothing to show - implicit/typed, not a choice).
-  const shaftExits = hub?.kind === 'shaft' && hub.shaftId ? findShaftExits(floors, hub.shaftId) : []
-  const shaftExit = shaftExits.length >= 2 ? resolveShaftCableExit(floors, hub!.shaftId!, cable) : null
-  const exitFloorLabel = shaftExit && 'exit' in shaftExit ? `F${shaftExit.exit.floorIndex + 1}` : undefined
+  // A cable through a shaft is labelled by where its own route beyond the shaft ends ("C1-H1"),
+  // or "C1-?" while it has none - never by the shaft opening.
+  const shaftLeg =
+    hub?.kind === 'shaft'
+      ? resolveShaftLeg(floors, floors.findIndex((floor) => floor.id === activeFloorId), cable, { shaftIds, fireAlarmModelById: fireAlarmModelSpecById })
+      : null
 
   const type = cableTypes.find((candidate) => candidate.id === cable.typeId)
   const estimate = layoutEstimate.byCableId.get(cable.id)
@@ -89,7 +91,7 @@ export function CablePropertiesPanel() {
     <div data-testid="properties-panel" className="text-sm">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-neutral-700">
-          Properties <span data-testid="properties-cable-label" className="text-neutral-400">({cableLabel(cable, index, exitFloorLabel)})</span>
+          Properties <span data-testid="properties-cable-label" className="text-neutral-400">({cableLabel(cable, index, shaftLeg?.end.label)})</span>
         </h2>
         <button
           type="button"
@@ -119,7 +121,13 @@ export function CablePropertiesPanel() {
         ))}
       </select>
 
-      {hub?.kind === 'shaft' && <CableShaftExitSelect floors={floors} shaftIds={shaftIds} cable={cable} hub={hub} />}
+      {hub?.kind === 'shaft' && (
+        <p data-testid="properties-cable-shaft-route" className={`mt-2 text-xs ${shaftLeg ? 'text-neutral-600' : 'text-amber-700'}`}>
+          {shaftLeg
+            ? `Beyond the shaft: ${floors[shaftLeg.exitFloorIndex].name} -> ${shaftLeg.end.label}.`
+            : 'Not routed beyond the shaft yet - counted up to the shaft only. Open the floor it leaves on, select the shaft opening and route it there.'}
+        </p>
+      )}
 
       {estimate && type ? (
         <>

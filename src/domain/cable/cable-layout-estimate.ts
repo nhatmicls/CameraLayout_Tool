@@ -42,8 +42,7 @@ export interface CableEstimateWarning {
     | 'cable-maybe-over-limit'
     | 'linked-floor-scale-not-set'
     | 'link-cycle'
-    | 'shaft-no-exit'
-    | 'shaft-exit-not-chosen'
+    | 'shaft-cable-not-routed'
   message: string
   cableId?: string
 }
@@ -122,9 +121,6 @@ function unavailableWarning(label: string, cableId: string, beyond: Extract<HubB
   if (beyond.reason === 'link-cycle') {
     return { code: 'link-cycle', cableId, message: `${label}: its cross-floor route forms a cycle - excluded from the estimate.` }
   }
-  if (beyond.reason === 'shaft-exit-not-chosen') {
-    return { code: 'shaft-exit-not-chosen', cableId, message: `${label}: no exit chosen for this shaft - excluded from the estimate.` }
-  }
   return {
     code: 'linked-floor-scale-not-set',
     cableId,
@@ -167,12 +163,19 @@ export function computeCableLayoutEstimate(input: CableLayoutEstimateInput): Cab
     const beyond = beyondByCableId?.get(cable.id)
     if (beyond?.source === 'unavailable') {
       unestimatedCableCount += 1
-      warnings.push(unavailableWarning(cableLabel(cable, index), cable.id, beyond))
+      warnings.push(unavailableWarning(cableLabel(cable, index, beyond.endLabel), cable.id, beyond))
       continue
     }
     const estimate = estimateCableLength({ cable, index, type, settings: cableSettings, planPxPerMeter: scale.planPxPerMeter, uncertainty, beyond })
     if (!estimate) continue
     estimates.push(estimate)
+    if (beyond?.source === 'typed' && beyond.shaftNotRouted) {
+      warnings.push({
+        code: 'shaft-cable-not-routed',
+        cableId: cable.id,
+        message: `${estimate.label}: not routed beyond its shaft yet - counted up to the shaft only.`,
+      })
+    }
     const warning = limitWarning(estimate, type)
     if (warning) warnings.push(warning)
   }

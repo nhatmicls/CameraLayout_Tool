@@ -1,3 +1,4 @@
+import type { ResolvedShaftLeg } from '../../domain/cable/shaft-cable-leg'
 import { computeBomStripLayout, computeExportScale } from '../../domain/export/export-image-layout-calculator'
 import { resolveEffectiveHfovDeg } from '../../domain/camera/camera-coverage-resolver'
 import { isApproximateDoriModel } from '../../domain/camera/dori-zone-distance-calculator'
@@ -40,6 +41,8 @@ export interface ExportPlanPngOptions extends CableLayout {
   fireAlarmWarnings: CompatibilityWarning[]
   /** The project's `shafts[]` ids, in order - so a shaft marker's "T{n}" on the picture matches the screen (phase 6). Omitted on every pre-shaft caller/test. */
   shaftIds?: readonly string[]
+  /** Cable legs that run on this floor beyond a shaft (`findShaftLegsOnFloor`) - drawn like on screen. Omitted = none. */
+  shaftLegs?: readonly ResolvedShaftLeg[]
   /** The project's `shafts[]` (id + name) - lets the strip name the shafts that have a marker on THIS floor ("Shafts: T1 Main riser"). Omitted on every pre-phase-7 caller/test (no note). */
   shafts?: readonly Shaft[]
   /** This floor's position in the project, for the "F2 of 3 - Level 2" strip note - `undefined` or `count <= 1` draws no note (one-floor regression). */
@@ -125,6 +128,7 @@ export async function exportPlanPng(options: ExportPlanPngOptions): Promise<void
         scale: options.scale,
         limitStatusById,
         shaftIds: options.shaftIds,
+        shaftLegs: options.shaftLegs,
       },
       viewConfig: options.viewConfig,
       pixelRatio: scale,

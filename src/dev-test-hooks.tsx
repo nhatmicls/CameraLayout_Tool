@@ -64,6 +64,8 @@ declare global {
       dismissAllNotifications: () => void
       /** Ids of every hub whose own PLAIN trunk route line (`HubTrunkRouteLines`, not the editor's) is currently mounted on the live stage - lets an e2e spec confirm a route stays visible while its owner hub is selected in a tool other than trunk/select (H2), independent of pixel colours. */
       getTrunkRouteLineHubIds: () => string[]
+      /** Ids of every cable whose leg beyond a shaft (`ShaftLegRouteLines`) is currently mounted on the live stage - a leg is drawn on its exit floor, not on its cable's own floor. */
+      getShaftLegLineCableIds: () => string[]
       /** Number of Konva Layers on the live interactive stage - confirms a tool mode never grows a sixth. */
       getLayerCount: () => number
       /** Phase 6: the project's `shafts[]` (identity + name, project order - `T{n}` label order). */
@@ -88,6 +90,17 @@ function findInteractiveStage(): Konva.Stage | undefined {
   const container = document.querySelector('[data-testid="stage-container"]')
   if (!container) return undefined
   return Konva.stages.find((stage) => container.contains(stage.container()))
+}
+
+/** The part after `prefix` of the name of every Konva Line on the live stage whose name starts with it. */
+function findStageLineNameSuffixes(prefix: string): string[] {
+  const stage = findInteractiveStage()
+  if (!stage) return []
+  return stage
+    .find('Line')
+    .map((node) => node.name())
+    .filter((name) => name.startsWith(prefix))
+    .map((name) => name.slice(prefix.length))
 }
 
 /** Installs `window.__cameraLayoutToolTestHooks` in dev builds only. Call once from `main.tsx`/`app.tsx`. */
@@ -142,16 +155,8 @@ export function installDevTestHooks(): void {
       const { notifications, dismissNotification } = useEditorUiStore.getState()
       notifications.forEach((n) => dismissNotification(n.id))
     },
-    getTrunkRouteLineHubIds: () => {
-      const stage = findInteractiveStage()
-      if (!stage) return []
-      const prefix = 'trunk-route-'
-      return stage
-        .find('Line')
-        .map((node) => node.name())
-        .filter((name) => name.startsWith(prefix))
-        .map((name) => name.slice(prefix.length))
-    },
+    getTrunkRouteLineHubIds: () => findStageLineNameSuffixes('trunk-route-'),
+    getShaftLegLineCableIds: () => findStageLineNameSuffixes('shaft-leg-'),
     getLayerCount: () => findInteractiveStage()?.getLayers().length ?? 0,
     getShafts: () => useProjectStore.getState().shafts,
     getFloorCompatibilityWarningText: (floorId) => {

@@ -1,6 +1,6 @@
 import { planPxToMeters } from '../shared/scale-calibration-calculator'
 import type { ScaleUncertainty } from './cable-scale-uncertainty'
-import { cableEndRefKey, cableLabel, resolveCablePathPx, type CableEndpointIndex } from './cable-endpoint-index'
+import { cableEndRefKey, cableLabel, resolveCableEnd, resolveCablePathPx, type CableEndpointIndex } from './cable-endpoint-index'
 import type { HubBeyondLength } from './cross-floor-hub-beyond-length-resolver'
 import type { Cable, CablePoint, CableSettings, CableType } from './cable-layout-types'
 
@@ -14,6 +14,8 @@ export { computeScaleUncertainty, SCALE_UNRELIABLE_RELATIVE_ERROR } from './cabl
  * - Vertical runs (route height vs device / hub height), the length beyond
  *   a riser / drop and end slack are typed in metres, so the scale error
  *   never touches them.
+ * - A cable may end on a device instead of a hub: the end then rises to that
+ *   device's height and takes the device-end slack, like the start.
  * - The scale error range comes from `cable-scale-uncertainty.ts`
  *   (`computeScaleUncertainty`, re-exported here for every existing
  *   importer): one systematic factor shared by every cable, so per-cable
@@ -36,7 +38,7 @@ export interface CableLengthEstimate {
   horizPx: number
   horizM: number
   deviceRiseM: number
-  /** Typed mode: `|routeHeightM - hub height|`. Computed (route) mode: just the floor-height crossing - see `hubExtraM`/`beyondVia`. */
+  /** Typed mode: `|routeHeightM - hub height|` (or the end device's height, for a cable ending on a device). Computed (route) mode: just the floor-height crossing - see `hubExtraM`/`beyondVia`. */
   hubDropM: number
   /** Typed mode: the hub's typed "length on the other floor"; 0 for a plain hub. Computed (route) mode: the trunk's own route metres plus whatever is beyond its target hub. */
   hubExtraM: number
@@ -86,19 +88,17 @@ function limitStatusOf(run: MetersInterval, limitM: number | null): CableLimitSt
 }
 
 /**
- * null = the cable is dangling (its device or hub no longer exists).
+ * null = the cable is dangling (its start device or its end no longer exists).
  * `planPxPerMeter` must be the calibrated scale - never a fallback.
  *
- * `beyond` is this cable's resolved `HubBeyondLength` (`resolveCableBeyondLengths`).
- * Omitted = typed mode using the hub endpoint's own fields, EXACTLY today's
- * formula (every pre-existing test omits it and stays byte-identical).
- * `source: 'typed'` is the same formula, reached explicitly (an unlinked
- * point, or a linked one whose partner has no trunk yet). `source: 'route'`
- * is the pair's computed mode: `hubDropM` becomes just the floor-height
- * crossing, `hubExtraM` becomes the trunk route + whatever is beyond its
- * target, and `beyondVia` names where that leads. The caller never passes
- * `source: 'unavailable'` here - it is filtered out one layer up
- * (`computeCableLayoutEstimate`), which counts and warns about it instead.
+ * `beyond` is this cable's resolved `HubBeyondLength` (`resolveCableBeyondLengths`),
+ * for a cable ending on a hub. Omitted = typed mode using the hub endpoint's
+ * own fields. `source: 'typed'` is the same formula, reached explicitly.
+ * `source: 'route'` is the computed mode: `hubDropM` becomes just the
+ * floor-height crossing, `hubExtraM` the route on the other floor + whatever
+ * is beyond where it ends, and `beyondVia` names where that leads. The
+ * caller never passes `source: 'unavailable'` here - it is filtered out one
+ * layer up (`computeCableLayoutEstimate`), which counts and warns instead.
  */
 export function estimateCableLength(input: {
   cable: Cable
@@ -112,14 +112,17 @@ export function estimateCableLength(input: {
   const { cable, index, type, settings, planPxPerMeter, uncertainty, beyond } = input
   const path = resolveCablePathPx(cable, index)
   const device = index.deviceByKey.get(cableEndRefKey(cable.device))
-  const hub = index.hubById.get(cable.hubId)
-  if (!path || !device || !hub) return null
+  const end = resolveCableEnd(cable, index)
+  if (!path || !device || !end) return null
 
   const horizPx = polylineLengthPx(path)
   const horizM = planPxToMeters(horizPx, planPxPerMeter)
   const deviceHeightM = device.mountHeightM ?? settings.defaultDeviceHeightM
   const deviceRiseM = Math.abs(settings.routeHeightM - deviceHeightM)
-  const slackM = settings.deviceEndSlackM + settings.hubEndSlackM
+  // The far end takes the device-end slack when the cable finally lands on a device - directly,
+  // or at the end of its own leg beyond a shaft.
+  const landsOnDevice = end.kind === 'device' || (beyond?.source === 'route' && beyond.endsOnDevice === true)
+  const slackM = settings.deviceEndSlackM + (landsOnDevice ? settings.deviceEndSlackM : settings.hubEndSlackM)
 
   const { minFactor, maxFactor } = uncertainty
   let hubDropM: number
@@ -128,27 +131,14 @@ export function estimateCableLength(input: {
   let fixedM: number
   let run: MetersInterval
 
-  if (beyond?.source === 'route') {
-    hubDropM = beyond.crossingVerticalM
-    hubExtraM = beyond.run.nominal - beyond.crossingVerticalM
-    beyondVia = beyond.viaLabel
-    fixedM = deviceRiseM + slackM + beyond.run.nominal
-    run = {
-      nominal: horizM + fixedM,
-      min: minFactor === null || beyond.run.min === null ? null : horizM * minFactor + deviceRiseM + slackM + beyond.run.min,
-      max: maxFactor === null || beyond.run.max === null ? null : horizM * maxFactor + deviceRiseM + slackM + beyond.run.max,
-    }
-  } else if (beyond?.source === 'typed' && beyond.shaftNoExit) {
-    // A shaft marker with NO exit anywhere (decision D2): 0 m AT the marker + its own typed
-    // `extraLengthM`, no `routeHeightM` term - `beyond.run` already holds exactly that
-    // (`typedBeyond` in `cross-floor-hub-beyond-length-resolver.ts`, which sets `shaftNoExit`
-    // since this function only sees a `CableHubEndpoint`, not the raw `Hub`, and so cannot check
-    // `hub.kind` itself). A shaft marker's `mountHeightM` is always 0 and carries no
-    // floor-crossing meaning, so the riser/drop/plain hub formula below must NOT be reused here
-    // (that was the bug: it silently added a spurious `routeHeightM` term via
-    // `|routeHeightM - 0|`).
-    hubDropM = 0
-    hubExtraM = beyond.run.nominal
+  if (end.kind === 'hub' && (beyond?.source === 'route' || (beyond?.source === 'typed' && beyond.shaftNotRouted))) {
+    // Route: floor crossing + the route on the other floor + whatever is past it. Shaft opening
+    // not routed yet: 0 m AT the opening + its typed `extraLengthM`, no `routeHeightM` term -
+    // `beyond.run` already holds exactly that (`typedBeyond`), and an opening's `mountHeightM`
+    // (always 0) must NOT go through the riser / drop / plain hub formula below.
+    hubDropM = beyond.source === 'route' ? beyond.crossingVerticalM : 0
+    hubExtraM = beyond.run.nominal - hubDropM
+    if (beyond.source === 'route') beyondVia = beyond.viaLabel
     fixedM = deviceRiseM + slackM + beyond.run.nominal
     run = {
       nominal: horizM + fixedM,
@@ -156,13 +146,17 @@ export function estimateCableLength(input: {
       max: maxFactor === null || beyond.run.max === null ? null : horizM * maxFactor + deviceRiseM + slackM + beyond.run.max,
     }
   } else {
-    // Undefined or `source: 'typed'` on a riser/drop/plain hub - the hub endpoint's own typed
-    // fields, EXACTLY today's formula and addition order (item 7 nit fix: a
-    // reordered-but-mathematically-equal expression could differ at the float ULP level - this
-    // stays bit-identical to pre-phase-4 behaviour, verified by
-    // `cable-length-estimate-calculator.test.ts`'s literal HEAD values).
-    hubDropM = Math.abs(settings.routeHeightM - hub.mountHeightM)
-    hubExtraM = hub.extraLengthM
+    // A device end, or a riser / drop / plain hub in typed mode (`beyond` undefined or
+    // `source: 'typed'`) - the end's own typed fields. The hub formula and its addition order are
+    // kept EXACTLY (a reordered-but-equal expression could differ at the float ULP level; verified
+    // by `cable-length-estimate-calculator.test.ts`'s literal values).
+    if (end.kind === 'device') {
+      hubDropM = Math.abs(settings.routeHeightM - (end.device.mountHeightM ?? settings.defaultDeviceHeightM))
+      hubExtraM = 0
+    } else {
+      hubDropM = Math.abs(settings.routeHeightM - end.hub.mountHeightM)
+      hubExtraM = end.hub.extraLengthM
+    }
     fixedM = deviceRiseM + hubDropM + hubExtraM + slackM
     run = {
       nominal: horizM + fixedM,
@@ -175,7 +169,7 @@ export function estimateCableLength(input: {
   return {
     cableId: cable.id,
     typeId: cable.typeId,
-    label: cableLabel(cable, index),
+    label: cableLabel(cable, index, beyond?.source === 'route' ? beyond.endLabel : undefined),
     horizPx,
     horizM,
     deviceRiseM,

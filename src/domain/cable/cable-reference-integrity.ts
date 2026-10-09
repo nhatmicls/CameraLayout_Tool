@@ -1,4 +1,5 @@
-import type { Cable, CableDeviceKind } from './cable-layout-types'
+import { cableEndRefKey } from './cable-endpoint-index'
+import type { Cable, CableDeviceKind, CableEndRef } from './cable-layout-types'
 
 /**
  * Keeps cable references coherent: shared by the project-file loader (drop a
@@ -7,11 +8,12 @@ import type { Cable, CableDeviceKind } from './cable-layout-types'
  * project without cables keeps its array identity through a delete.
  */
 
+/** True when the device is the cable's start OR its end. */
 export function cableRefersToDevice(cable: Cable, kind: CableDeviceKind, id: string): boolean {
-  return cable.device.kind === kind && cable.device.id === id
+  return (cable.device.kind === kind && cable.device.id === id) || (cable.endDevice?.kind === kind && cable.endDevice.id === id)
 }
 
-/** Removes every cable of the device, including both the tx and rx cables of a beam. */
+/** Removes every cable that starts or ends on the device, including both the tx and rx cables of a beam. */
 export function removeCablesOfDevice(cables: Cable[], kind: CableDeviceKind, id: string): Cable[] {
   if (!cables.some((cable) => cableRefersToDevice(cable, kind, id))) return cables
   return cables.filter((cable) => !cableRefersToDevice(cable, kind, id))
@@ -40,12 +42,8 @@ export interface CableRefContext {
   typeIds: ReadonlySet<string>
 }
 
-/** null = every reference resolves; otherwise a human-readable reason. A beam ref needs `end`; any other sensor must not carry one. */
-export function cableRefProblem(cable: Cable, ctx: CableRefContext): string | null {
-  if (!ctx.hubIds.has(cable.hubId)) return `references unknown hub "${cable.hubId}"`
-  if (!ctx.typeIds.has(cable.typeId)) return `references unknown cable type "${cable.typeId}"`
-
-  const { device } = cable
+/** null = the device ref resolves. A beam ref needs `end`; any other sensor must not carry one. */
+function deviceRefProblem(device: CableEndRef, ctx: CableRefContext): string | null {
   if (device.kind === 'camera') {
     return ctx.cameraIds.has(device.id) ? null : `references unknown camera "${device.id}"`
   }
@@ -58,4 +56,21 @@ export function cableRefProblem(cable: Cable, ctx: CableRefContext): string | nu
   if (shape === 'beam' && device.end === undefined) return `connects to beam sensor "${device.id}" without naming an end`
   if (shape !== 'beam' && device.end !== undefined) return `names a beam end on sensor "${device.id}", which is not a beam`
   return null
+}
+
+/**
+ * null = every reference resolves; otherwise a human-readable reason. A
+ * cable ends on exactly one of a hub (`hubId`) and a device (`endDevice`),
+ * never on its own start. `beyondShaft` is NOT checked here - it points at
+ * another floor (`pruneInvalidShaftLegs`).
+ */
+export function cableRefProblem(cable: Cable, ctx: CableRefContext): string | null {
+  if ((cable.hubId === undefined) === (cable.endDevice === undefined)) return 'must end on exactly one hub or device'
+  if (cable.hubId !== undefined && !ctx.hubIds.has(cable.hubId)) return `references unknown hub "${cable.hubId}"`
+  if (!ctx.typeIds.has(cable.typeId)) return `references unknown cable type "${cable.typeId}"`
+
+  const startProblem = deviceRefProblem(cable.device, ctx)
+  if (startProblem || !cable.endDevice) return startProblem
+  if (cableEndRefKey(cable.endDevice) === cableEndRefKey(cable.device)) return 'ends on its own start device'
+  return deviceRefProblem(cable.endDevice, ctx)
 }

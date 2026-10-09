@@ -1,3 +1,4 @@
+import { findShaftLegsOnFloor } from '../../domain/cable/shaft-cable-leg'
 import { decodeEmbeddedImage } from '../../file-io/browser/decode-image-data-url'
 import type { Project } from '../../domain/project-file/project-types'
 import type { ViewConfig } from '../../domain/view/view-config-types'
@@ -97,6 +98,7 @@ export async function exportAllFloorPlansPng(options: ExportAllFloorPlansPngOpti
         rows: allRows,
         fireAlarmWarnings,
         shaftIds: project.shafts.map((shaft) => shaft.id),
+        shaftLegs: findShaftLegsOnFloor(project.floors, floor.id),
         shafts: project.shafts,
         floorPosition: { index: floorIndex, count: floorCount, name: floor.name },
         fileName: buildFloorExportFileName(floorIndex, floorCount, floor.name, floor.image.fileName),

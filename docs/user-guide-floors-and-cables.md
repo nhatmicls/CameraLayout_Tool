@@ -28,15 +28,17 @@ types, cable allowances, the fire-detector coverage mode and shafts belong to th
 - Shafts: a vertical tube through several floors. Click "Shaft", click the plan, name it and
   choose the floor range: an opening (T1, T2... - the same label on every floor) is placed on
   each of those floors that has a plan, at the same position; drag each one to where the tube
-  really is. Cables end on an opening like on a hub. An opening with a route to a hub is an
-  exit, and a shaft can have several. With one exit every cable uses it; with several, each
-  cable must be told which (the "Exit" select in the cable's properties, or "assign" in the
-  shaft panel) and its label shows it, e.g. `C1-T1>F3`. A cable with no exit chosen has no
-  length and is left out of the totals - the shaft panel shows cables in, out per exit and not
-  chosen, and the BOM, the CSV message and the PNG say how many are missing. The vertical run is
-  the sum of the floor heights between the cable's floor and the exit floor. A shaft with no
-  exit route yet uses the typed "Length beyond this opening" and adds no vertical run. A route
-  cannot end on a shaft opening.
+  really is. A cable ending on an opening is labelled `C1-?` (not routed) until you specify
+  where it exits. On the floor where it should leave, select that floor's shaft opening, open
+  its panel list of incoming cables ("From Floor 2 C1"), click "Route on <floor>" and draw the
+  route points, finishing on a hub or a device of that floor (never on the opening itself). The
+  cable is then labelled by what it reaches (`C1-H1`, `C2-P1`; the shaft never appears in a
+  label). Length is measured as: route on the entry floor + sum of floor-to-floor heights +
+  route on the exit floor (that floor's scale) + the end + slack. Remove or redraw a route from
+  the same panel list. If the exit floor, the hub or device a route ends on, or the shaft
+  opening is deleted, the route clears in the same undo step. A route that is not drawn yet is
+  counted up to the opening only: the opening's typed "Length beyond this opening" (no vertical)
+  and a notice.
 - A cable that crosses floors is counted on the floor of its camera, sensor or fire-alarm
   device. Each floor is measured with its own scale; if a floor on the way has no scale the cable has no length and
   is reported, never guessed.
@@ -64,10 +66,13 @@ A provisional cable-length estimate from routes you draw by hand.
 - While "Draw cable" is on, camera cones and sensor coverage are hidden so the route is
   drawn on a clear plan; they come back when you leave the tool.
 - Drawing: click "Draw cable", click a camera, a sensor (either end of an IR beam), a
-  fire-alarm device or a hub
-  to start, click to add route points, then click the other kind of end - a hub, riser
-  or drop after a device, a device after one of those - to finish. Backspace removes the last point, Esc cancels
-  the cable, a second Esc leaves the tool. The cable takes the type chosen in the toolbar.
+  fire-alarm device or a hub to start, click to add route points, then click any other device
+  or hub to finish (but not the device you started on; no hub-to-hub cables). Backspace removes
+  the last point, Esc cancels the cable, a second Esc leaves the tool. The cable takes the type
+  chosen in the toolbar. A cable that starts on a device may end on another device, a hub, a
+  riser, a drop or a shaft opening; a cable that starts on one of those must end on a device.
+  An end on a device rises to that device's height and takes the device-end slack. A cable
+  ending on a shaft opening has its own route beyond the shaft (see Shafts above).
 - Editing: click a cable to select it, drag a point to move it, double-click the line to
   add a point, double-click a point to remove it. Deleting a camera, sensor, fire-alarm
   device or hub also removes its cables, in the same undo step.

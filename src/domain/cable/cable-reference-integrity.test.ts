@@ -22,6 +22,12 @@ describe('removeCablesOfDevice', () => {
     expect(removeCablesOfDevice([...all, fireAlarmCable], 'camera', 'a')).toContain(fireAlarmCable)
   })
 
+  it('also removes a cable that ENDS on the device', () => {
+    const endsOnCamera: Cable = { id: 'k6', device: { kind: 'sensor', id: 'a' }, endDevice: { kind: 'camera', id: 'a' }, typeId: 't1', points: [] }
+    expect(removeCablesOfDevice([...all, endsOnCamera], 'camera', 'a')).toEqual([sensorCable, beamTx, beamRx])
+    expect(removeCablesOfDevice([...all, endsOnCamera], 'fire-alarm', 'a')).toContain(endsOnCamera)
+  })
+
   it('removes the camera cable but not a sensor with the same id string', () => {
     expect(removeCablesOfDevice(all, 'camera', 'a')).toEqual([sensorCable, beamTx, beamRx])
   })
@@ -89,6 +95,23 @@ describe('cableRefProblem', () => {
     expect(cableRefProblem({ ...cameraCable, typeId: 'x' }, ctx)).toContain('unknown cable type')
     expect(cableRefProblem({ ...cameraCable, device: { kind: 'camera', id: 'x' } }, ctx)).toContain('unknown camera')
     expect(cableRefProblem({ ...sensorCable, device: { kind: 'sensor', id: 'x' } }, ctx)).toContain('unknown sensor')
+  })
+
+  it('a cable ends on exactly one of a hub and a device', () => {
+    expect(cableRefProblem({ ...cameraCable, hubId: undefined }, ctx)).toBe('must end on exactly one hub or device')
+    expect(cableRefProblem({ ...cameraCable, endDevice: { kind: 'sensor', id: 'a' } }, ctx)).toBe('must end on exactly one hub or device')
+  })
+
+  it('validates a device end like a start: known, beam end named, never the start device itself', () => {
+    const base: Cable = { ...cameraCable, hubId: undefined }
+    expect(cableRefProblem({ ...base, endDevice: { kind: 'sensor', id: 'a' } }, ctx)).toBeNull()
+    expect(cableRefProblem({ ...base, endDevice: { kind: 'sensor', id: 'b', end: 'rx' } }, ctx)).toBeNull()
+    expect(cableRefProblem({ ...base, endDevice: { kind: 'fire-alarm', id: 'a' } }, ctx)).toBeNull()
+    expect(cableRefProblem({ ...base, endDevice: { kind: 'camera', id: 'x' } }, ctx)).toContain('unknown camera')
+    expect(cableRefProblem({ ...base, endDevice: { kind: 'sensor', id: 'b' } }, ctx)).toContain('without naming an end')
+    expect(cableRefProblem({ ...base, endDevice: { kind: 'camera', id: 'a' } }, ctx)).toBe('ends on its own start device')
+    // The two ends of one beam are different ends: tx -> rx is allowed.
+    expect(cableRefProblem({ ...beamTx, hubId: undefined, endDevice: { kind: 'sensor', id: 'b', end: 'rx' } }, ctx)).toBeNull()
   })
 
   it('requires an end on a beam and forbids one elsewhere', () => {

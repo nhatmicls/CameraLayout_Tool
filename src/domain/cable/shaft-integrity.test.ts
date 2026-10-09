@@ -1,18 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import { hubLabels } from './cable-endpoint-index'
 import type { Hub, Shaft } from './cable-layout-types'
-import { findShaftExits, findShaftMarkers, pruneShafts, resolveShaftCableExit } from './shaft-integrity'
-import { HUB_H2, SHAFT_ID, SHAFT_MARKER_F1, SHAFT_MARKER_F3, shaftCable, shaftFourFloorProject } from './shaft-worked-example.test-fixtures'
+import { findShaftMarkers, pruneShafts } from './shaft-integrity'
+import { SHAFT_ID, SHAFT_MARKER_F1, shaftCable, shaftFourFloorProject } from './shaft-worked-example.test-fixtures'
 
-describe('findShaftMarkers / findShaftExits', () => {
-  it('finds all four markers in floor order, and only the two with a trunk as exits', () => {
+describe('findShaftMarkers', () => {
+  it('finds all four markers in floor order', () => {
     const { floors } = shaftFourFloorProject()
     const markers = findShaftMarkers(floors, SHAFT_ID)
     expect(markers.map((m) => m.hub.id)).toEqual(['sm1', 'sm2', 'sm3', 'sm4'])
     expect(markers.map((m) => m.floorIndex)).toEqual([0, 1, 2, 3])
-
-    const exits = findShaftExits(floors, SHAFT_ID)
-    expect(exits.map((e) => e.hub.id)).toEqual(['sm1', 'sm3'])
   })
 
   it('labels every marker "T1" (project order) on every floor it opens onto', () => {
@@ -37,33 +34,6 @@ describe('findShaftMarkers / findShaftExits', () => {
   it('returns empty for a shaft with no markers', () => {
     const { floors } = shaftFourFloorProject()
     expect(findShaftMarkers(floors, 'unknown-shaft')).toEqual([])
-    expect(findShaftExits(floors, 'unknown-shaft')).toEqual([])
-  })
-})
-
-describe('resolveShaftCableExit', () => {
-  it('"no-exit" when the shaft has no trunk anywhere', () => {
-    const { floors } = shaftFourFloorProject([{ hubs: [{ ...SHAFT_MARKER_F1, trunk: undefined }] }, {}, { hubs: [{ ...SHAFT_MARKER_F3, trunk: undefined }], }])
-    expect(resolveShaftCableExit(floors, SHAFT_ID, undefined)).toEqual({ problem: 'no-exit' })
-  })
-
-  it('implicit with exactly one exit, regardless of the cable', () => {
-    const { floors } = shaftFourFloorProject([{}, {}, { hubs: [{ ...SHAFT_MARKER_F3, trunk: undefined }, HUB_H2] }])
-    const result = resolveShaftCableExit(floors, SHAFT_ID, undefined)
-    expect('exit' in result && result.exit.hub.id).toBe('sm1')
-  })
-
-  it('"not-chosen" with several exits and no/stale choice', () => {
-    const { floors } = shaftFourFloorProject()
-    expect(resolveShaftCableExit(floors, SHAFT_ID, shaftCable('c1', 'sm2'))).toEqual({ problem: 'not-chosen' })
-    expect(resolveShaftCableExit(floors, SHAFT_ID, shaftCable('c1', 'sm2', 'does-not-exist'))).toEqual({ problem: 'not-chosen' })
-  })
-
-  it('resolves the chosen exit among several', () => {
-    const { floors } = shaftFourFloorProject()
-    const result = resolveShaftCableExit(floors, SHAFT_ID, shaftCable('c1', 'sm2', 'sf2'))
-    expect('exit' in result && result.exit.hub.id).toBe('sm3')
-    expect('exit' in result && result.exit.floorIndex).toBe(2)
   })
 })
 

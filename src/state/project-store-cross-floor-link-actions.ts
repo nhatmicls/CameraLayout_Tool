@@ -6,8 +6,6 @@ import {
   unlinkHub as domainUnlinkHub,
 } from '../domain/cable/cross-floor-hub-link-writer'
 import { createPairedHub as domainCreatePairedHub } from '../domain/cable/cross-floor-paired-hub-creator'
-import { clearStaleExitChoices, stampImplicitExitChoices } from '../domain/cable/shaft-cable-exit-cascade'
-import { findShaftExits } from '../domain/cable/shaft-integrity'
 import type { Floor } from '../domain/floor/floor-types'
 
 /**
@@ -34,7 +32,7 @@ export interface CrossFloorLinkActions {
   relinkHub: (ref: HubRef, newPartner: HubRef | null) => void
   /** One click: creates the opposite-kind point on the one legal adjacent floor and links both. */
   createPairedHub: (ref: HubRef, newHubId: string) => { ok: true } | { ok: false; problem: string }
-  /** Sets (or, with `trunk: null`, clears) `ref`'s own route to another hub on its own floor. No-op (returns `false`) if `ref` isn't linked, the target is itself/unknown, or `ref` itself doesn't resolve - the caller (the drawing overlay) uses this to warn instead of silently discarding a just-drawn route. */
+  /** Sets (or, with `trunk: null`, clears) a linked riser / drop's own route to another hub on its own floor. No-op (returns `false`) if `ref` isn't linked, is a shaft opening, the target is itself/unknown/a shaft opening, or `ref` itself doesn't resolve - the caller (the drawing overlay) uses this to warn instead of silently discarding a just-drawn route. */
   setHubTrunk: (ref: HubRef, trunk: { hubId: string; points: CablePoint[] } | null) => boolean
 }
 
@@ -71,27 +69,9 @@ export function createCrossFloorLinkActions(
 
     setHubTrunk: (ref, trunk) => {
       const { floors } = get()
-      const beforeHub = floors.find((floor) => floor.id === ref.floorId)?.hubs.find((hub) => hub.id === ref.hubId)
       const next = domainSetHubTrunk(floors, ref, trunk)
       if (next === floors) return false
-
-      let final = next
-      // Phase 6: setting/clearing a SHAFT marker's own trunk changes how many exits its shaft has.
-      // Gaining a second exit stamps every choiceless cable of that shaft with the one it was
-      // implicitly using (behaviour preserved, never a guess, same `set()`); losing one (or going
-      // to zero) just re-resolves stale choices fresh - no restamping on the way down.
-      if (beforeHub?.kind === 'shaft' && beforeHub.shaftId) {
-        if (trunk !== null) {
-          const exitsBefore = findShaftExits(floors, beforeHub.shaftId)
-          const wasAlreadyAnExit = exitsBefore.some((exit) => exit.hub.id === ref.hubId)
-          if (!wasAlreadyAnExit && exitsBefore.length === 1) {
-            final = stampImplicitExitChoices(final, beforeHub.shaftId, exitsBefore[0].floorId)
-          }
-        } else {
-          final = clearStaleExitChoices(final)
-        }
-      }
-      set({ floors: final })
+      set({ floors: next })
       return true
     },
   }

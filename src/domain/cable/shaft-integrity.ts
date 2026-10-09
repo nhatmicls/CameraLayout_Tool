@@ -1,20 +1,17 @@
 import type { Floor } from '../floor/floor-types'
-import type { Cable, Hub, Shaft } from './cable-layout-types'
+import type { Hub, Shaft } from './cable-layout-types'
 
 /**
- * Keeps a project's shafts (the vertical tube crossing model, several
- * exits) coherent: one rule set, reused by the loader, the store's
- * create/delete/cascade actions, the exit resolver (phase 4's
- * `cross-floor-exit-resolver.ts`) and the shaft/cable panels.
+ * Keeps a project's shafts (the vertical tube crossing model) coherent: one
+ * rule set, reused by the loader, the store's create/delete/cascade actions
+ * and the shaft panel.
  *
- * A shaft has NO stored floor range and NO stored exit list - both are
- * derived from the per-floor `Hub.kind === 'shaft'` markers (`shaftId`
- * groups them) so a floor delete/reorder needs no shaft-specific fix-up at
- * all (see the phase's own "Key Insights"). The only stored per-cable
- * choice is `Cable.exitFloorId`. Marker creation/deletion lives in
- * `shaft-marker-lifecycle.ts`; the exit-choice cascades (stamping on a
- * second exit, clearing a stale one) in `shaft-cable-exit-cascade.ts` -
- * split out to keep this file under 200 lines.
+ * A shaft has NO stored floor range - it is derived from the per-floor
+ * `Hub.kind === 'shaft'` markers (`shaftId` groups them), so a floor
+ * delete/reorder needs no shaft-specific fix-up. A shaft carries no route of
+ * its own: each cable entering it owns its route beyond it
+ * (`Cable.beyondShaft`, `shaft-cable-leg.ts`). Marker creation/deletion lives
+ * in `shaft-marker-lifecycle.ts`.
  */
 
 export interface ShaftMarkerRef {
@@ -31,11 +28,6 @@ export function findShaftMarkers(floors: readonly Floor[], shaftId: string): Sha
     if (hub) result.push({ floorIndex, floorId: floor.id, hub })
   })
   return result
-}
-
-/** The markers of `shaftId` that carry a drawn `trunk` - i.e. the shaft's exits, in floor order. */
-export function findShaftExits(floors: readonly Floor[], shaftId: string): ShaftMarkerRef[] {
-  return findShaftMarkers(floors, shaftId).filter((marker) => marker.hub.trunk !== undefined)
 }
 
 /**
@@ -114,25 +106,6 @@ export function pruneUnknownOrDuplicateShaftMarkers(hubs: readonly Hub[], shaftI
 }
 
 /**
- * Which exit (if any) a cable ending on a shaft marker uses - the
- * per-cable rule `resolveCrossFloorExit` (phase 4) dispatches to. Never
- * guesses: 0 exits is `'no-exit'` (typed fallback upstream), several exits
- * with no/stale `cable.exitFloorId` is `'not-chosen'` (excluded from the
- * estimate upstream, never a silent 0).
- */
-export function resolveShaftCableExit(
-  floors: readonly Floor[],
-  shaftId: string,
-  cable: Cable | undefined,
-): { exit: ShaftMarkerRef } | { problem: 'no-exit' | 'not-chosen' } {
-  const exits = findShaftExits(floors, shaftId)
-  if (exits.length === 0) return { problem: 'no-exit' }
-  if (exits.length === 1) return { exit: exits[0] }
-  const chosen = cable?.exitFloorId ? exits.find((exit) => exit.floorId === cable.exitFloorId) : undefined
-  return chosen ? { exit: chosen } : { problem: 'not-chosen' }
-}
-
-/**
  * Store-cascade pass (also safe to re-run from the loader - idempotent):
  * drops a shaft marker whose `shaftId` is unknown or already has a marker
  * on that floor (`pruneUnknownOrDuplicateShaftMarkers`, same rule as the
@@ -152,7 +125,7 @@ export function pruneShafts(floors: readonly Floor[], shafts: readonly Shaft[], 
     const keptIds = new Set(hubs.map((hub) => hub.id))
     const droppedIds = floor.hubs.filter((hub) => !keptIds.has(hub.id)).map((hub) => hub.id)
     const droppedIdSet = new Set(droppedIds)
-    return { ...floor, hubs, cables: floor.cables.filter((cable) => !droppedIdSet.has(cable.hubId)) }
+    return { ...floor, hubs, cables: floor.cables.filter((cable) => cable.hubId === undefined || !droppedIdSet.has(cable.hubId)) }
   })
 
   const usedShaftIds = new Set<string>()

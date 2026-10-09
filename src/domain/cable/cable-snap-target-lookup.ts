@@ -1,4 +1,4 @@
-import type { CableEndpointIndex } from './cable-endpoint-index'
+import { cableEndRefKey, type CableEndpointIndex } from './cable-endpoint-index'
 import type { CableEndRef } from './cable-layout-types'
 
 /** Something a cable can start or end on: a device end (camera, sensor, beam tx / rx, fire-alarm device) or a hub. */
@@ -12,7 +12,8 @@ export type CableSnapTarget =
  * (strict `<` after the first hit, as in `wall-endpoint-snap-lookup.ts`).
  *
  * Tolerance is IMAGE px. Callers convert from screen px; this module never
- * sees the viewport.
+ * sees the viewport. `excludeDevice` is never returned (a cable cannot end
+ * on its own start device).
  */
 export function findNearestCableSnapTarget(
   x: number,
@@ -20,6 +21,7 @@ export function findNearestCableSnapTarget(
   index: CableEndpointIndex,
   tolerancePx: number,
   accept: 'any' | 'device' | 'hub',
+  excludeDevice?: CableEndRef,
 ): CableSnapTarget | null {
   if (!Number.isFinite(tolerancePx) || tolerancePx <= 0) return null
 
@@ -34,7 +36,11 @@ export function findNearestCableSnapTarget(
   }
 
   if (accept !== 'hub') {
-    for (const device of index.devices) consider({ kind: 'device', ref: device.ref, x: device.x, y: device.y, label: device.label })
+    const excludedKey = excludeDevice ? cableEndRefKey(excludeDevice) : null
+    for (const device of index.devices) {
+      if (excludedKey !== null && cableEndRefKey(device.ref) === excludedKey) continue
+      consider({ kind: 'device', ref: device.ref, x: device.x, y: device.y, label: device.label })
+    }
   }
   if (accept !== 'device') {
     for (const hub of index.hubs) consider({ kind: 'hub', hubId: hub.hubId, x: hub.x, y: hub.y, label: hub.label })

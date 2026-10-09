@@ -31,6 +31,13 @@ export interface EditorUiState {
   selectedHubId: string | null
   selectedCableId: string | null
   selectedFireAlarmDeviceId: string | null
+  /**
+   * Set (by the shaft panel) just before entering `toolMode: 'trunk'` to make that tool draw ONE
+   * cable's own route beyond its shaft - the cable `cableId` of floor `floorId` - from the selected
+   * shaft opening on the active floor. null = the trunk tool draws a riser / drop's route as
+   * usual. Cleared whenever the tool mode leaves `'trunk'`.
+   */
+  shaftLegDrawCable: { floorId: string; cableId: string } | null
   /** Cable type given to the cable drawn next. May go stale (type deleted, project replaced): consumers resolve `cableTypes.find(id) ?? cableTypes[0]`. */
   cableDrawTypeId: string | null
   /** Kind given to walls drawn next. */
@@ -72,6 +79,7 @@ export interface EditorUiActions {
   setSelectedCableId: (id: string | null) => void
   setSelectedFireAlarmDeviceId: (id: string | null) => void
   setCableDrawTypeId: (id: string | null) => void
+  setShaftLegDrawCable: (target: { floorId: string; cableId: string } | null) => void
   /** Sets all six `selected*Id` fields to null in one update. */
   clearSelection: () => void
   setWallDrawKind: (kind: WallKind) => void
@@ -110,6 +118,7 @@ export const useEditorUiStore = create<EditorUiStore>((set) => ({
   viewport: DEFAULT_VIEWPORT,
   ...NO_SELECTION,
   cableDrawTypeId: null,
+  shaftLegDrawCable: null,
   wallDrawKind: 'opaque',
   decodedImage: null,
   showCalibrationLine: true,
@@ -119,7 +128,7 @@ export const useEditorUiStore = create<EditorUiStore>((set) => ({
   hasUnsavedChanges: false,
   projectLoadEpoch: 0,
 
-  setToolMode: (toolMode) => set({ toolMode }),
+  setToolMode: (toolMode) => set(toolMode === 'trunk' ? { toolMode } : { toolMode, shaftLegDrawCable: null }),
 
   setViewport: (viewport) => set({ viewport }),
 
@@ -130,6 +139,7 @@ export const useEditorUiStore = create<EditorUiStore>((set) => ({
   setSelectedCableId: (id) => set(selectOnly('selectedCableId', id)),
   setSelectedFireAlarmDeviceId: (id) => set(selectOnly('selectedFireAlarmDeviceId', id)),
   setCableDrawTypeId: (cableDrawTypeId) => set({ cableDrawTypeId }),
+  setShaftLegDrawCable: (shaftLegDrawCable) => set({ shaftLegDrawCable }),
 
   clearSelection: () => set(NO_SELECTION),
 

@@ -1,16 +1,14 @@
 import { pruneCrossFloorAndShaftState } from './project-store-active-floor-update'
-import { findShaftExits } from '../domain/cable/shaft-integrity'
+import { resolveShaftLeg } from '../domain/cable/shaft-cable-leg'
 import { createShaftMarkers, removeShaft } from '../domain/cable/shaft-marker-lifecycle'
-import { MAX_SHAFTS, SHAFT_NAME_MAX_LENGTH, type CablePoint, type Shaft } from '../domain/cable/cable-layout-types'
+import { MAX_SHAFTS, SHAFT_NAME_MAX_LENGTH, type CablePoint, type CableShaftLeg, type Shaft } from '../domain/cable/cable-layout-types'
 import type { Floor } from '../domain/floor/floor-types'
 
 /**
  * The shaft slice of the project store: create / add an opening / rename /
- * delete a shaft, the shaft panel's bulk "assign the cables on this floor
- * without an exit" action, and the cable panel's own exit choice
- * (`setCableExitFloorId` - lives here, not the cabling slice, because
- * validating it needs the WHOLE `floors[]`, not just the active floor's own
- * slice - M7, phase 6 review). Like `project-store-cross-floor-link-actions.ts`,
+ * delete a shaft, and a cable's own route beyond its shaft
+ * (`setCableShaftLeg` - lives here, not the cabling slice, because the cable
+ * and its leg are on two floors). Like `project-store-cross-floor-link-actions.ts`,
  * every write here can touch several floors at once, so it sets `floors`
  * (and `shafts`) directly rather than going through `patchActiveFloor`.
  */
@@ -30,24 +28,17 @@ export interface ShaftActions {
   addShaftOpening: (shaftId: string, floorIndex: number, pointPx: CablePoint) => AddShaftOpeningResult
   /** Trims `name`. No-op if the id is unknown or the trimmed name is empty/unchanged. */
   renameShaft: (shaftId: string, name: string) => void
-  /** Removes every marker of the shaft, their cables, any trunk targeting one of them, and the shaft itself, THEN runs the same stale-exit-choice cascade every other cross-floor cascade does (M1) - one undo step. No-op if the id is unknown. */
+  /** Removes every marker of the shaft, their cables, any trunk targeting one of them, and the shaft itself, THEN runs the same cross-floor prune every other cross-floor cascade does - one undo step. No-op if the id is unknown. */
   deleteShaft: (shaftId: string) => void
   /**
-   * The shaft panel's bulk action: every cable on `floorId` ending on
-   * `hubId` (that marker's own shaft) WITHOUT a currently-valid exit choice
-   * gets `exitFloorId`. Refused (state untouched) when `exitFloorId` does
-   * not name one of that shaft's current exits - never assigns to a
-   * non-exit.
+   * Sets (or, with `leg: null`, removes) the route beyond its shaft of the
+   * cable `cableId` on floor `floorId`. Refused (returns `false`, state
+   * untouched) when the cable is unknown, does not end on a shaft opening,
+   * or the leg does not resolve (`resolveShaftLeg`: the exit floor has no
+   * opening of that shaft, the end is missing / a shaft opening / the
+   * cable's own start). One undo step.
    */
-  assignShaftCableExits: (floorId: string, hubId: string, exitFloorId: string) => void
-  /**
-   * The cable panel's "Exit" select, for the cable with `cableId` ON THE
-   * ACTIVE FLOOR: sets `exitFloorId`, or (`null`) clears it. No-op (M7) when
-   * the cable is unknown, its hub is not a shaft marker, or (when setting,
-   * not clearing) `exitFloorId` does not name one of that shaft's current
-   * exits - never assigns to a non-exit, never touches a non-shaft cable.
-   */
-  setCableExitFloorId: (cableId: string, exitFloorId: string | null) => void
+  setCableShaftLeg: (floorId: string, cableId: string, leg: CableShaftLeg | null) => boolean
 }
 
 export function createShaftActions(
@@ -99,52 +90,31 @@ export function createShaftActions(
       const { floors, shafts } = get()
       if (!shafts.some((shaft) => shaft.id === shaftId)) return
       const removed = removeShaft(floors, shafts, shaftId)
-      // M1 fix: route through the SAME stale-exit-choice cascade every other cross-floor-touching
+      // Route through the SAME cross-floor prune every other cross-floor-touching
       // cascade runs (deleteHub, moveFloor/deleteFloor, setHubTrunk) - defence in depth, even though
       // `removeShaft` already removes every cable that could be directly affected.
       const pruned = pruneCrossFloorAndShaftState(removed.floors, removed.shafts)
       set({ floors: pruned.floors, shafts: pruned.shafts })
     },
 
-    assignShaftCableExits: (floorId, hubId, exitFloorId) => {
+    setCableShaftLeg: (floorId, cableId, leg) => {
       const { floors } = get()
       const floorIndex = floors.findIndex((floor) => floor.id === floorId)
-      if (floorIndex === -1) return
-      const floor = floors[floorIndex]
-      const hub = floor.hubs.find((candidate) => candidate.id === hubId)
-      if (!hub || hub.kind !== 'shaft' || !hub.shaftId) return
-      const exitFloorIds = new Set(findShaftExits(floors, hub.shaftId).map((exit) => exit.floorId))
-      if (!exitFloorIds.has(exitFloorId)) return // refuses a floor that is not an exit
+      const cable = floorIndex === -1 ? undefined : floors[floorIndex].cables.find((candidate) => candidate.id === cableId)
+      if (!cable) return false
 
-      let changed = false
-      const cables = floor.cables.map((cable) => {
-        if (cable.hubId !== hubId) return cable
-        const hasValidChoice = cable.exitFloorId !== undefined && exitFloorIds.has(cable.exitFloorId)
-        if (hasValidChoice) return cable
-        changed = true
-        return { ...cable, exitFloorId }
-      })
-      if (!changed) return
-      set({ floors: floors.map((f, i) => (i === floorIndex ? { ...f, cables } : f)) })
-    },
-
-    setCableExitFloorId: (cableId, exitFloorId) => {
-      const { floors, activeFloorId } = get()
-      const floorIndex = floors.findIndex((floor) => floor.id === activeFloorId)
-      if (floorIndex === -1) return
-      const floor = floors[floorIndex]
-      const cable = floor.cables.find((candidate) => candidate.id === cableId)
-      if (!cable) return
-      const hub = floor.hubs.find((candidate) => candidate.id === cable.hubId)
-      if (!hub || hub.kind !== 'shaft' || !hub.shaftId) return // M7: only meaningful for a shaft-ending cable
-      if (exitFloorId !== null) {
-        const exitFloorIds = new Set(findShaftExits(floors, hub.shaftId).map((exit) => exit.floorId))
-        if (!exitFloorIds.has(exitFloorId)) return // M7: never assigns to a non-exit
+      let updated: typeof cable
+      if (leg === null) {
+        if (!cable.beyondShaft) return false
+        updated = { ...cable }
+        delete updated.beyondShaft
+      } else {
+        updated = { ...cable, beyondShaft: leg }
+        if (!resolveShaftLeg(floors, floorIndex, updated)) return false
       }
-      const next = exitFloorId ?? undefined
-      if (cable.exitFloorId === next) return
-      const cables = floor.cables.map((candidate) => (candidate.id === cableId ? { ...candidate, exitFloorId: next } : candidate))
-      set({ floors: floors.map((f, i) => (i === floorIndex ? { ...f, cables } : f)) })
+      const cables = floors[floorIndex].cables.map((candidate) => (candidate.id === cableId ? updated : candidate))
+      set({ floors: floors.map((floor, i) => (i === floorIndex ? { ...floor, cables } : floor)) })
+      return true
     },
   }
 }

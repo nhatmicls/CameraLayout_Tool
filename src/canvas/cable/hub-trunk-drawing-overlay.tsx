@@ -3,6 +3,7 @@ import type Konva from 'konva'
 import type { KonvaEventObject } from 'konva/lib/Node'
 import { Circle, Group, Line } from 'react-konva'
 import { buildCableEndpointIndex } from '../../domain/cable/cable-endpoint-index'
+import type { CableEndRef } from '../../domain/cable/cable-layout-types'
 import {
   advanceHubTrunkDrawingChain,
   removeLastHubTrunkDrawingPoint,
@@ -10,6 +11,7 @@ import {
 } from '../../domain/cable/hub-trunk-drawing-chain'
 import { findNearestCableSnapTarget } from '../../domain/cable/cable-snap-target-lookup'
 import { clampPointToImageBounds } from '../../domain/shared/clamp'
+import { fireAlarmModelSpecById } from '../../export/shared/fire-alarm-compatibility-index-singleton'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
 import { getActiveFloor, selectHubs, selectImage } from '../../state/project-store-floor-selectors'
@@ -24,7 +26,8 @@ interface HubTrunkDrawingOverlayProps {
   imageHeightPx: number
 }
 
-type Cursor = { x: number; y: number; hubId: string | null }
+/** `snap` = where the click would land (a hub, or - shaft leg only - a device); null = a free vertex. */
+type Cursor = { x: number; y: number; hubId: string | null; device?: CableEndRef; snap: { x: number; y: number } | null }
 
 /**
  * Editor-only group for the "Draw route to hub" tool (`ToolMode 'trunk'`),
@@ -45,6 +48,12 @@ type Cursor = { x: number; y: number; hubId: string | null }
  * review: a trunk may never target a shaft - cables enter shafts, routes
  * leave them), so clicking near one also just adds a vertex, same as a
  * device; `setHubTrunk` refuses it too, defensively, if this ever changes.
+ *
+ * SHAFT LEG: when the shaft panel set `shaftLegDrawCable` before entering
+ * the mode, the same tool draws that ONE cable's own route beyond its shaft
+ * instead - from the selected shaft opening to a hub (not a shaft opening)
+ * or ANY device on this floor except the cable's own start - committed via
+ * `setCableShaftLeg`.
  */
 export function HubTrunkDrawingOverlay({ stageRef, viewportScale, imageWidthPx, imageHeightPx }: HubTrunkDrawingOverlayProps) {
   const active = useEditorUiStore((s) => s.toolMode === 'trunk')
@@ -74,6 +83,8 @@ export function HubTrunkDrawingOverlay({ stageRef, viewportScale, imageWidthPx, 
       return
     }
 
+    // Read once at mode entry, like the start hub: which cable's leg this draw is for, if any.
+    const legCable = useEditorUiStore.getState().shaftLegDrawCable
     const iconRadiusPx = computeIconRadiusPx(Math.max(imageWidthPx, imageHeightPx))
     const moveChain = (next: HubTrunkDrawingChain | null) => {
       chainRef.current = next
@@ -85,18 +96,31 @@ export function HubTrunkDrawingOverlay({ stageRef, viewportScale, imageWidthPx, 
       const raw = stage.getRelativePointerPosition()
       if (!raw) return null
       const { x, y } = clampPointToImageBounds(raw, imageWidthPx, imageHeightPx)
-      const { cameras, sensors, hubs } = getActiveFloor(useProjectStore.getState())
-      // D1: a shaft marker can never be a trunk TARGET - excluded from the snap set entirely, so a
-      // click near one adds a vertex instead of "finishing" onto it (same as a click near a device).
+      const state = useProjectStore.getState()
+      const { cameras, sensors, hubs, fireAlarmDevices } = getActiveFloor(state)
+      // D1: a shaft marker can never be a route TARGET - excluded from the snap set entirely, so a
+      // click near one adds a vertex instead of "finishing" onto it.
       const targetableHubs = hubs.filter((candidateHub) => candidateHub.kind !== 'shaft')
+      // A leg drawn on the cable's own floor may not end on the cable's own start device.
+      const legOwnStart =
+        legCable && legCable.floorId === state.activeFloorId
+          ? state.floors.find((floor) => floor.id === legCable.floorId)?.cables.find((cable) => cable.id === legCable.cableId)?.device
+          : undefined
       const snapTarget = findNearestCableSnapTarget(
         x,
         y,
-        buildCableEndpointIndex(cameras, sensors, targetableHubs),
+        buildCableEndpointIndex(cameras, sensors, targetableHubs, undefined, { devices: fireAlarmDevices, modelById: fireAlarmModelSpecById }),
         resolveCableSnapTolerancePx(viewportScaleRef.current, iconRadiusPx),
-        'hub',
+        legCable ? 'any' : 'hub',
+        legOwnStart,
       )
-      return { x, y, hubId: snapTarget?.kind === 'hub' ? snapTarget.hubId : null }
+      return {
+        x,
+        y,
+        hubId: snapTarget?.kind === 'hub' ? snapTarget.hubId : null,
+        device: snapTarget?.kind === 'device' ? snapTarget.ref : undefined,
+        snap: snapTarget ? { x: snapTarget.x, y: snapTarget.y } : null,
+      }
     }
 
     // A hub deleted, or the image replaced, while mid-draw: the chain's start may be gone - cancel.
@@ -113,15 +137,16 @@ export function HubTrunkDrawingOverlay({ stageRef, viewportScale, imageWidthPx, 
       const step = advanceHubTrunkDrawingChain(chainRef.current, point)
       if (step.kind === 'continue') {
         moveChain(step.chain)
-      } else if (step.kind === 'commit') {
-        const { activeFloorId, setHubTrunk } = useProjectStore.getState()
-        const applied = setHubTrunk({ floorId: activeFloorId, hubId: startHubId }, { hubId: step.hubId, points: step.points })
+      } else if (step.kind === 'commit' || step.kind === 'commit-device') {
+        const { activeFloorId, setHubTrunk, setCableShaftLeg } = useProjectStore.getState()
+        const end = step.kind === 'commit' ? { hubId: step.hubId } : { endDevice: step.device }
+        const applied = legCable
+          ? setCableShaftLeg(legCable.floorId, legCable.cableId, { floorId: activeFloorId, points: step.points, ...end })
+          : step.kind === 'commit' && setHubTrunk({ floorId: activeFloorId, hubId: startHubId }, { hubId: step.hubId, points: step.points })
         if (!applied) {
-          // The hub's own link changed (or it was removed) while mid-draw - should not happen
-          // through normal use, but the draw is lost either way, so say so rather than silently
-          // discarding it.
-          // Generic on purpose: a riser/drop owner refuses when no longer linked, a shaft owner
-          // refuses when the target became invalid (e.g. a shaft marker, D1) - either reads naturally.
+          // The point, the cable or the target changed (or was removed) while mid-draw - should
+          // not happen through normal use, but the draw is lost either way, so say so rather than
+          // silently discarding it.
           useEditorUiStore.getState().pushNotification('error', 'Could not draw the route - this point or target is no longer valid.')
         }
         useEditorUiStore.getState().setToolMode('select')
@@ -159,7 +184,7 @@ export function HubTrunkDrawingOverlay({ stageRef, viewportScale, imageWidthPx, 
   const startHub = hubs.find((hub) => hub.id === chain.startHubId)
   if (!startHub) return null
 
-  const end = cursor?.hubId ? hubs.find((hub) => hub.id === cursor.hubId) : cursor
+  const end = cursor ? (cursor.snap ?? cursor) : null
   const previewPoints = [{ x: startHub.x, y: startHub.y }, ...chain.points, ...(end ? [{ x: end.x, y: end.y }] : [])].flatMap((point) => [
     point.x,
     point.y,
@@ -174,7 +199,7 @@ export function HubTrunkDrawingOverlay({ stageRef, viewportScale, imageWidthPx, 
         <Circle key={i} x={point.x} y={point.y} radius={3 / viewportScale} fill={TRUNK_LINE_COLOR} />
       ))}
       <Circle x={startHub.x} y={startHub.y} radius={4 / viewportScale} fill={WALL_SELECTED_COLOR} />
-      {cursor?.hubId && end && (
+      {cursor?.snap && end && (
         <Circle x={end.x} y={end.y} radius={9 / viewportScale} stroke={WALL_SELECTED_COLOR} strokeWidth={2 / viewportScale} />
       )}
     </Group>

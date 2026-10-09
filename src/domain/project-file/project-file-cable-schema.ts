@@ -76,13 +76,23 @@ const cableEndRefSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('fire-alarm'), id }),
 ])
 
+const cablePointsSchema = z.array(z.strictObject({ x: coord, y: coord })).max(MAX_CABLE_POINTS)
+
+/**
+ * A cable ends on exactly one of `hubId` / `endDevice`, and a leg on exactly
+ * one of its own - both are checked after parsing (`cableRefProblem`,
+ * `pruneInvalidShaftLegs`) and dropped with a warning, never a rejection.
+ * `exitFloorId` is the pre-v9 shared-exit choice: still accepted on read,
+ * converted and removed by `migrateSharedShaftExitsToCableLegs`, never written.
+ */
 export const cableSchema = z.strictObject({
   id,
   device: cableEndRefSchema,
-  hubId: id,
+  hubId: id.optional(),
+  endDevice: cableEndRefSchema.optional(),
   typeId: id,
-  points: z.array(z.strictObject({ x: coord, y: coord })).max(MAX_CABLE_POINTS),
-  /** Shaft marker only (meaningless, and cleared with a warning, on anything else - `project-file-schema.ts`). */
+  points: cablePointsSchema,
+  beyondShaft: z.strictObject({ floorId: id, points: cablePointsSchema, hubId: id.optional(), endDevice: cableEndRefSchema.optional() }).optional(),
   exitFloorId: id.optional(),
 })
 
@@ -154,7 +164,7 @@ export function normaliseLoadedCableTypes(raw: { cableTypes?: CableType[] }, war
  * then `pruneUnknownOrDuplicateShaftMarkers`, BOTH before the cable-ref check
  * below, so a cable on a hub either of them drops is reported by the
  * ordinary "unknown hub" cable warning rather than left dangling), or a
- * cable whose device, hub or type does not resolve. `cableTypes` is the
+ * cable whose start device, end (hub or device) or type does not resolve. `cableTypes` is the
  * project-wide deduped list (`normaliseLoadedCableTypes`); `shaftIds` is the
  * project-wide `shafts[]` id set (parsed before any floor, so it is already
  * final here); `kept` is the cameras/sensors/fire-alarm devices THIS FLOOR kept after their own

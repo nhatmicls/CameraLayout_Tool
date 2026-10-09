@@ -6,13 +6,13 @@ import { buildFloor, buildProjectWithFloors } from './project-file-test-fixtures
 const LOOKUPS: ProjectFileLookups = { cameraModelIds: new Set(['m']), sensorModelLookup: new Map(), fireAlarmModelIds: new Set() }
 
 const SHAFT: Shaft = { id: 'shaft-1', name: 'Main shaft' }
-const MARKER_F1: Hub = { id: 'm1', kind: 'shaft', shaftId: 'shaft-1', x: 10, y: 10, mountHeightM: 0, trunk: { hubId: 'h1', points: [] } }
+const MARKER_F1: Hub = { id: 'm1', kind: 'shaft', shaftId: 'shaft-1', x: 10, y: 10, mountHeightM: 0 }
 const HUB_H1: Hub = { id: 'h1', x: 50, y: 50, mountHeightM: 1.5 }
-const MARKER_F2: Hub = { id: 'm2', kind: 'shaft', shaftId: 'shaft-1', x: 20, y: 20, mountHeightM: 0, trunk: { hubId: 'h2', points: [] } }
+const MARKER_F2: Hub = { id: 'm2', kind: 'shaft', shaftId: 'shaft-1', x: 20, y: 20, mountHeightM: 0 }
 const HUB_H2: Hub = { id: 'h2', x: 60, y: 60, mountHeightM: 1.5 }
-const MARKER_F3: Hub = { id: 'm3', kind: 'shaft', shaftId: 'shaft-1', x: 30, y: 30, mountHeightM: 0 } // no trunk
+const MARKER_F3: Hub = { id: 'm3', kind: 'shaft', shaftId: 'shaft-1', x: 30, y: 30, mountHeightM: 0 }
 
-function twoExitProject(cables: { floor1?: Cable[]; floor2?: Cable[]; floor3?: Cable[] } = {}) {
+function threeFloorShaftProject(cables: { floor1?: Cable[]; floor2?: Cable[]; floor3?: Cable[] } = {}) {
   return buildProjectWithFloors(
     [
       buildFloor({ id: 'floor-1', name: 'Floor 1', hubs: [MARKER_F1, HUB_H1], cables: cables.floor1 ?? [] }),
@@ -32,20 +32,84 @@ function expectOk(result: ReturnType<typeof parseProjectFile>) {
   return result
 }
 
-describe('project file shafts - round trip', () => {
-  it('round-trips two exits, the shafts[] list, and a cable with exitFloorId', () => {
-    const cable: Cable = { id: 'c1', device: { kind: 'camera', id: 'cam-1' }, hubId: 'm3', typeId: 'cat6-utp', points: [], exitFloorId: 'floor-1' }
-    const project = twoExitProject({ floor3: [cable] })
-    project.floors[2].cameras = [{ id: 'cam-1', modelId: 'm', x: 1, y: 1, rotationDeg: 0, rangeM: 5 }]
+const CAMERA = { id: 'cam-1', modelId: 'm', x: 1, y: 1, rotationDeg: 0, rangeM: 5 }
+const cableOnF3 = (extra: Partial<Cable> & { exitFloorId?: string } = {}): Cable => ({ id: 'c1', device: { kind: 'camera', id: 'cam-1' }, hubId: 'm3', typeId: 'cat6-utp', points: [], ...extra })
+
+describe('project file shafts - a cable\'s own route beyond a shaft', () => {
+  it('round-trips the shafts[] list, the openings and a cable routed to a hub and to a device on other floors', () => {
+    const toHub = cableOnF3({ beyondShaft: { floorId: 'floor-1', points: [{ x: 12, y: 40 }], hubId: 'h1' } })
+    const toDevice = cableOnF3({ id: 'c2', beyondShaft: { floorId: 'floor-2', points: [], endDevice: { kind: 'camera', id: 'cam-2' } } })
+    const project = threeFloorShaftProject({ floor3: [toHub, toDevice] })
+    project.floors[2].cameras = [CAMERA]
+    project.floors[1].cameras = [{ ...CAMERA, id: 'cam-2' }]
 
     const result = expectOk(parseRaw(JSON.parse(serializeProject(project))))
-    expect(result.project.shafts).toEqual([SHAFT])
-    expect(result.project.floors[0].hubs).toEqual([MARKER_F1, HUB_H1])
-    expect(result.project.floors[1].hubs).toEqual([MARKER_F2, HUB_H2])
-    expect(result.project.floors[2].cables[0].exitFloorId).toBe('floor-1')
+    expect(result.project).toEqual(project)
     expect(result.warnings).toEqual([])
   })
 
+  it.each<[string, Cable['beyondShaft']]>([
+    ['its end hub is gone', { floorId: 'floor-1', points: [], hubId: 'gone' }],
+    ['its exit floor is gone', { floorId: 'floor-9', points: [], hubId: 'h1' }],
+    ['it ends on a shaft opening', { floorId: 'floor-1', points: [], hubId: 'm1' }],
+    ['it names no end', { floorId: 'floor-1', points: [] }],
+  ])('a route is cleared with a warning when %s; the cable itself is kept', (_reason, beyondShaft) => {
+    const project = threeFloorShaftProject({ floor3: [cableOnF3({ beyondShaft })] })
+    project.floors[2].cameras = [CAMERA]
+    const result = expectOk(parseRaw(JSON.parse(serializeProject(project))))
+    expect(result.project.floors[2].cables).toEqual([cableOnF3()])
+    expect(result.warnings).toEqual(['Cable "c1"\'s route beyond its shaft is no longer valid; cleared.'])
+  })
+
+  it('a route on a cable that does not end on a shaft opening is cleared with a warning', () => {
+    const project = threeFloorShaftProject({ floor1: [{ ...cableOnF3({ beyondShaft: { floorId: 'floor-2', points: [], hubId: 'h2' } }), hubId: 'h1' }] })
+    project.floors[0].cameras = [CAMERA]
+    const result = expectOk(parseRaw(JSON.parse(serializeProject(project))))
+    expect(result.project.floors[0].cables[0]).not.toHaveProperty('beyondShaft')
+    expect(result.warnings).toHaveLength(1)
+  })
+})
+
+describe('project file shafts - pre-v9 shared exits are converted to one route per cable', () => {
+  /** A v8 file as an older build wrote it: exits are a `trunk` on a shaft opening, a cable names one with `exitFloorId`. */
+  function legacyRaw(cables: Array<Cable & { exitFloorId?: string }>, exitTrunks: { f1?: boolean; f2?: boolean }) {
+    const project = threeFloorShaftProject({ floor3: cables })
+    project.floors[2].cameras = [CAMERA]
+    const raw = JSON.parse(serializeProject(project))
+    raw.schemaVersion = 8
+    if (exitTrunks.f1) raw.floors[0].hubs[0].trunk = { hubId: 'h1', points: [{ x: 12, y: 40 }] }
+    if (exitTrunks.f2) raw.floors[1].hubs[0].trunk = { hubId: 'h2', points: [] }
+    return raw
+  }
+
+  it('one exit: the cable used it implicitly and now owns a copy of that route; no warning; the opening carries no route', () => {
+    const result = expectOk(parseRaw(legacyRaw([cableOnF3()], { f1: true })))
+    expect(result.project.floors[2].cables[0].beyondShaft).toEqual({ floorId: 'floor-1', points: [{ x: 12, y: 40 }], hubId: 'h1' })
+    expect(result.project.floors[0].hubs[0]).toEqual(MARKER_F1)
+    expect(result.warnings).toEqual([])
+  })
+
+  it('several exits: the chosen one is copied and the choice key is gone; an unchosen cable is left not routed', () => {
+    const result = expectOk(parseRaw(legacyRaw([cableOnF3({ exitFloorId: 'floor-2' }), cableOnF3({ id: 'c2' })], { f1: true, f2: true })))
+    const [chosen, unchosen] = result.project.floors[2].cables
+    expect(chosen).toEqual(cableOnF3({ beyondShaft: { floorId: 'floor-2', points: [], hubId: 'h2' } }))
+    expect(unchosen).toEqual(cableOnF3({ id: 'c2' }))
+    expect(result.project.floors.flatMap((floor) => floor.hubs).some((hub) => hub.trunk)).toBe(false)
+    // It used to be left out of the totals; it now counts up to the shaft - said once, on load.
+    expect(result.warnings).toEqual(['1 cable had no shaft exit chosen and opens as not routed: counted up to the shaft until routed from the shaft panel.'])
+  })
+
+  it('saving the converted project writes version 9 with no trunk on an opening and no exitFloorId', () => {
+    const converted = expectOk(parseRaw(legacyRaw([cableOnF3({ exitFloorId: 'floor-1' })], { f1: true, f2: true }))).project
+    const text = serializeProject(converted)
+    expect(JSON.parse(text).schemaVersion).toBe(9)
+    expect(text).not.toContain('exitFloorId')
+    expect(text).not.toContain('trunk')
+    expect(expectOk(parseProjectFile(text, LOOKUPS)).project).toEqual(converted)
+  })
+})
+
+describe('project file shafts - round trip', () => {
   it('D3: a marker with an unknown shaftId is dropped BEFORE the cable-ref check, so its cable gets the ordinary "unknown hub" warning too', () => {
     const rogueMarker: Hub = { id: 'rogue', kind: 'shaft', shaftId: 'ghost', x: 1, y: 1, mountHeightM: 0 }
     const rogueCable: Cable = { id: 'rogue-cable', device: { kind: 'camera', id: 'cam-x' }, hubId: 'rogue', typeId: 'cat6-utp', points: [] }
@@ -86,46 +150,12 @@ describe('project file shafts - round trip', () => {
     expect(result.warnings.some((w) => w.includes('no markers'))).toBe(true)
   })
 
-  it('a stale exitFloorId (naming a floor that is not this shaft\'s exit) is cleared with a warning; the cable stays', () => {
-    const cable: Cable = {
-      id: 'c1',
-      device: { kind: 'camera', id: 'cam-1' },
-      hubId: 'm3',
-      typeId: 'cat6-utp',
-      points: [],
-      exitFloorId: 'floor-3', // not an exit at all (m3 has no trunk)
-    }
-    const project = twoExitProject({ floor3: [cable] })
-    project.floors[2].cameras = [{ id: 'cam-1', modelId: 'm', x: 1, y: 1, rotationDeg: 0, rangeM: 5 }]
-    const result = expectOk(parseRaw(JSON.parse(serializeProject(project))))
-    expect(result.project.floors[2].cables).toHaveLength(1) // the cable itself is kept
-    expect(result.project.floors[2].cables[0].exitFloorId).toBeUndefined() // just the stale choice cleared
-    expect(result.warnings.some((w) => w.includes('exit no longer exists'))).toBe(true)
-  })
-
-  it('exitFloorId on a cable that does not end on a shaft marker at all is cleared with a warning', () => {
-    const plainHub: Hub = { id: 'plain', x: 5, y: 5, mountHeightM: 1.5 }
-    const cable: Cable = { id: 'c1', device: { kind: 'camera', id: 'cam-1' }, hubId: 'plain', typeId: 'cat6-utp', points: [], exitFloorId: 'floor-1' }
-    const project = buildProjectWithFloors([
-      buildFloor({
-        id: 'floor-1',
-        name: 'Floor 1',
-        hubs: [plainHub],
-        cables: [cable],
-        cameras: [{ id: 'cam-1', modelId: 'm', x: 1, y: 1, rotationDeg: 0, rangeM: 5 }],
-      }),
-    ])
-    const result = expectOk(parseRaw(JSON.parse(serializeProject(project))))
-    expect(result.project.floors[0].cables[0].exitFloorId).toBeUndefined()
-    expect(result.warnings.some((w) => w.includes('exit no longer exists'))).toBe(true)
-  })
-
   it('D3: a shaft marker carrying link opens anyway - link is dropped with a warning, never a file rejection', () => {
     const invalid = { ...MARKER_F1, link: { floorId: 'floor-1', hubId: 'h1' } }
     const project = buildProjectWithFloors([buildFloor({ id: 'floor-1', name: 'Floor 1', hubs: [invalid, HUB_H1] })], { shafts: [SHAFT] })
     const result = expectOk(parseRaw(JSON.parse(serializeProject(project))))
     expect(result.project.floors[0].hubs[0].link).toBeUndefined()
-    expect(result.project.floors[0].hubs[0].trunk).toEqual(MARKER_F1.trunk) // only `link` was touched
+    expect(result.project.floors[0].hubs[0]).toEqual(MARKER_F1) // only `link` was touched
     expect(result.warnings).toEqual(['a shaft marker cannot be linked; link cleared.'])
   })
 
@@ -151,18 +181,19 @@ describe('project file shafts - round trip', () => {
 
   it('H3: the loader is idempotent - parse(serialize(parse(x))) emits NO new warnings for a crafted file', () => {
     // A deliberately messy file: an unknown-shaftId marker (with a cable on it), a duplicate
-    // marker, a stale exitFloorId, and a shaft marker carrying `link` - every D3/loader rule at once.
+    // marker, a route beyond a shaft whose end is gone, and a shaft marker carrying `link` - every loader rule at once.
     const rogue: Hub = { id: 'rogue', kind: 'shaft', shaftId: 'ghost', x: 1, y: 1, mountHeightM: 0 }
     const dup: Hub = { id: 'dup', kind: 'shaft', shaftId: 'shaft-1', x: 2, y: 2, mountHeightM: 0 }
     const linked = { ...MARKER_F1, link: { floorId: 'floor-1', hubId: 'h1' } }
     const staleCable: Cable = { id: 'stale', device: { kind: 'camera', id: 'cam-1' }, hubId: 'rogue', typeId: 'cat6-utp', points: [] }
+    const deadLeg: Cable = { id: 'dead-leg', device: { kind: 'camera', id: 'cam-1' }, hubId: 'm1', typeId: 'cat6-utp', points: [], beyondShaft: { floorId: 'floor-1', points: [], hubId: 'gone' } }
     const project = buildProjectWithFloors(
       [
         buildFloor({
           id: 'floor-1',
           name: 'Floor 1',
           hubs: [linked, HUB_H1, dup, rogue],
-          cables: [staleCable],
+          cables: [staleCable, deadLeg],
           cameras: [{ id: 'cam-1', modelId: 'm', x: 1, y: 1, rotationDeg: 0, rangeM: 5 }],
         }),
       ],

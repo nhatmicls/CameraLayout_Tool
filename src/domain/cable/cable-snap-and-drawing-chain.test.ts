@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { acceptedSnapKind, advanceCableDrawingChain, removeLastCableDrawingPoint, type CableDrawingChain } from './cable-drawing-chain'
+import { acceptedSnapKind, advanceCableDrawingChain, excludedSnapDevice, removeLastCableDrawingPoint, type CableDrawingChain } from './cable-drawing-chain'
 import { buildCableEndpointIndex } from './cable-endpoint-index'
 import { MAX_CABLE_POINTS } from './cable-layout-types'
 import { findNearestCableSnapTarget, type CableSnapTarget } from './cable-snap-target-lookup'
@@ -11,6 +11,11 @@ describe('findNearestCableSnapTarget', () => {
   it('finds a target inside the tolerance and nothing outside it', () => {
     expect(findNearestCableSnapTarget(105, 100, index, 10, 'any')).toMatchObject({ kind: 'device', label: 'C1' })
     expect(findNearestCableSnapTarget(111, 100, index, 10, 'any')).toBeNull()
+  })
+
+  it('never returns the excluded device, even when it is the nearest', () => {
+    expect(findNearestCableSnapTarget(100, 110, index, 500, 'any', { kind: 'camera', id: 'cam-1' })).toMatchObject({ label: 'C2' })
+    expect(findNearestCableSnapTarget(100, 100, index, 10, 'any', { kind: 'camera', id: 'cam-1' })).toBeNull()
   })
 
   it('picks the nearer of two targets', () => {
@@ -57,10 +62,13 @@ describe('advanceCableDrawingChain', () => {
     expect(advanceCableDrawingChain(null, { x: 5, y: 5, snapTarget: null })).toEqual({ kind: 'ignored', chain: null, reason: 'start-needs-target' })
   })
 
-  it('accepts anything to start, then only the opposite kind', () => {
+  it('accepts anything to start; after a device, a hub or any other device; after a hub, a device', () => {
     expect(acceptedSnapKind(null)).toBe('any')
-    expect(acceptedSnapKind({ start: camera, points: [] })).toBe('hub')
+    expect(acceptedSnapKind({ start: camera, points: [] })).toBe('any')
     expect(acceptedSnapKind({ start: hub, points: [] })).toBe('device')
+    expect(excludedSnapDevice(null)).toBeUndefined()
+    expect(excludedSnapDevice({ start: camera, points: [] })).toEqual({ kind: 'camera', id: 'cam-1' })
+    expect(excludedSnapDevice({ start: hub, points: [] })).toBeUndefined()
   })
 
   it('commits device -> 2 vertices -> hub in click order', () => {
@@ -88,9 +96,19 @@ describe('advanceCableDrawingChain', () => {
     expect(advanceCableDrawingChain(chain, { x: 700, y: 500, snapTarget: hub })).toMatchObject({ kind: 'commit', cable: { points: [] } })
   })
 
-  it('treats a same-kind target as a plain vertex while the chain is open', () => {
-    const chain = continued(continued(null, 100, 100, camera), 100, 300, otherCamera)
-    expect(chain.points).toEqual([{ x: 100, y: 300 }])
+  it('commits device -> another device as a device-end cable, in click order', () => {
+    const chain = continued(continued(null, 100, 100, camera), 50, 200)
+    expect(advanceCableDrawingChain(chain, { x: 100, y: 300, snapTarget: otherCamera })).toEqual({
+      kind: 'commit',
+      cable: { device: { kind: 'camera', id: 'cam-1' }, endDevice: { kind: 'camera', id: 'cam-2' }, points: [{ x: 50, y: 200 }] },
+    })
+  })
+
+  it('never ends a cable on its own start device, and never joins two hubs: both are plain vertices', () => {
+    const onItself = advanceCableDrawingChain(continued(null, 100, 100, camera), { x: 101, y: 103, snapTarget: camera })
+    expect(onItself.kind).toBe('continue')
+    const hubToHub = advanceCableDrawingChain(continued(null, 700, 500, hub), { x: 10, y: 10, snapTarget: { ...hub, hubId: 'hub-2' } as typeof hub })
+    expect(hubToHub.kind).toBe('continue')
   })
 
   it('ignores a point repeated within 1 px (of the start or of the previous vertex)', () => {

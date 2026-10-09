@@ -1,3 +1,4 @@
+import { findShaftLegsOnFloor } from '../../domain/cable/shaft-cable-leg'
 import { useCallback, useState } from 'react'
 import { describeUnestimatedCables } from '../../domain/cable/unestimated-cables-summary'
 import { describeFloorsWithoutCableScale } from '../../domain/floor/floors-without-cable-scale-note'
@@ -72,6 +73,7 @@ export function usePlanExportActions() {
         rows: allRows,
         fireAlarmWarnings,
         shaftIds: project.shafts.map((shaft) => shaft.id),
+        shaftLegs: findShaftLegsOnFloor(project.floors, activeFloor.id),
         shafts: project.shafts,
         floorPosition: { index: floorIndex, count: project.floors.length, name: activeFloor.name },
         fileName: buildFloorExportFileName(floorIndex, project.floors.length, activeFloor.name, image.fileName),

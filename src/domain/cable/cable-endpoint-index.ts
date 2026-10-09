@@ -41,7 +41,14 @@ export interface CableHubEndpoint {
   mountHeightM: number
   /** Cable length beyond a riser / drop, on the other floor; 0 for a plain hub. */
   extraLengthM: number
+  /** A shaft opening: a cable ending here is labelled by where it goes beyond the shaft, not by this marker. */
+  isShaft: boolean
 }
+
+/** Where a cable (or a leg beyond a shaft) ends: a hub or a device, resolved to its live position and label. */
+export type CableEndPoint =
+  | { kind: 'hub'; x: number; y: number; label: string; hub: CableHubEndpoint }
+  | { kind: 'device'; x: number; y: number; label: string; device: CableDeviceEndpoint }
 
 export interface CableEndpointIndex {
   /** Cameras in array order, then sensors in array order (a beam yields its tx then its rx end), then fire-alarm devices in array order. */
@@ -137,6 +144,7 @@ export function buildCableEndpointIndex(
     label: labels[i],
     mountHeightM: hubEffectiveHeightM(hub),
     extraLengthM: hub.extraLengthM ?? 0,
+    isShaft: hub.kind === 'shaft',
   }))
 
   return {
@@ -147,24 +155,35 @@ export function buildCableEndpointIndex(
   }
 }
 
-/** Full route in image px: [device, ...intermediate points, hub]. null = the device or the hub no longer exists. */
+/** The end stored as `{ hubId }` or `{ endDevice }`, or null when it no longer exists (or names neither). A device end wins when both are set - the loader and the store never produce that. */
+export function resolveCableEnd(end: { hubId?: string; endDevice?: CableEndRef }, index: CableEndpointIndex): CableEndPoint | null {
+  if (end.endDevice) {
+    const device = index.deviceByKey.get(cableEndRefKey(end.endDevice))
+    return device ? { kind: 'device', x: device.x, y: device.y, label: device.label, device } : null
+  }
+  const hub = end.hubId === undefined ? undefined : index.hubById.get(end.hubId)
+  return hub ? { kind: 'hub', x: hub.x, y: hub.y, label: hub.label, hub } : null
+}
+
+/** Full route in image px: [start device, ...intermediate points, end]. null = the start device or the end no longer exists. */
 export function resolveCablePathPx(cable: Cable, index: CableEndpointIndex): CablePoint[] | null {
   const device = index.deviceByKey.get(cableEndRefKey(cable.device))
-  const hub = index.hubById.get(cable.hubId)
-  if (!device || !hub) return null
-  return [{ x: device.x, y: device.y }, ...cable.points, { x: hub.x, y: hub.y }]
+  const end = resolveCableEnd(cable, index)
+  if (!device || !end) return null
+  return [{ x: device.x, y: device.y }, ...cable.points, { x: end.x, y: end.y }]
 }
 
 /**
- * "C3-H1", "S2-H1", "S4tx-H1", "P1-H1"; "?" stands in for an end that no longer
- * exists. `exitFloorLabel` (e.g. "F3") appends the shaft exit a cable is
- * using - "C1-T1>F3" - shown only by callers that know the cable ends on a
- * shaft with several exits (the floor-position label needs the whole
- * project, not just this one floor's `index`, so the caller resolves it).
+ * "C3-H1", "S2-H1", "S4tx-H1", "P1-H1", "S1-P1" (device to device); "?"
+ * stands in for an end that no longer exists. A cable ending on a shaft
+ * opening is labelled by where it goes BEYOND the shaft: `shaftEndLabel`
+ * (the end of its own leg, resolved by the caller - it lives on another
+ * floor, see `resolveShaftCableEndLabel`) gives "C1-H1"; without it the
+ * cable is not routed yet and reads "C1-?". The shaft itself never appears.
  */
-export function cableLabel(cable: Cable, index: CableEndpointIndex, exitFloorLabel?: string): string {
+export function cableLabel(cable: Cable, index: CableEndpointIndex, shaftEndLabel?: string): string {
   const device = index.deviceByKey.get(cableEndRefKey(cable.device))
-  const hub = index.hubById.get(cable.hubId)
-  const base = `${device?.label ?? '?'}-${hub?.label ?? '?'}`
-  return exitFloorLabel ? `${base}>${exitFloorLabel}` : base
+  const end = resolveCableEnd(cable, index)
+  const endLabel = end?.kind === 'hub' && end.hub.isShaft ? shaftEndLabel : end?.label
+  return `${device?.label ?? '?'}-${endLabel ?? '?'}`
 }

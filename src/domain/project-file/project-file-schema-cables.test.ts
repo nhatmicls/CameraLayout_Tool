@@ -96,8 +96,8 @@ describe('project file cables - round trip and back-compat', () => {
     expect(result.warnings).toEqual([])
   })
 
-  it('rejects schemaVersion 9', () => {
-    expect(parseRaw((raw) => void (raw.schemaVersion = 9)).ok).toBe(false)
+  it('rejects schemaVersion 10', () => {
+    expect(parseRaw((raw) => void (raw.schemaVersion = 10)).ok).toBe(false)
   })
 
   it('reseeds the default types when the file carries an empty list', () => {
@@ -172,6 +172,30 @@ describe('project file cables - dropped with a warning, the rest kept', () => {
     const dropped = expectOk(parseProjectFile(serializeProject(withDevice), LOOKUPS))
     expect(onlyFloor(dropped).cables).toEqual([])
     expect(dropped.warnings).toHaveLength(2)
+  })
+
+  it('a cable with neither a hub nor a device end, or with both', () => {
+    expectOnlyBeamCableKept((raw) => void delete (raw.floors[0].cables[0] as { hubId?: string }).hubId)
+    expectOnlyBeamCableKept((raw) => void (raw.floors[0].cables[0].endDevice = { kind: 'sensor', id: 'pir-s1' }))
+  })
+
+  it('a cable that ends on its own start device, or on an unknown device', () => {
+    const toDevice = (endDevice: Cable['endDevice']) => (raw: Raw) => {
+      delete (raw.floors[0].cables[0] as { hubId?: string }).hubId
+      raw.floors[0].cables[0].endDevice = endDevice
+    }
+    expectOnlyBeamCableKept(toDevice({ kind: 'camera', id: 'cam-1' }))
+    expectOnlyBeamCableKept(toDevice({ kind: 'sensor', id: 'nope' }))
+  })
+
+  it('round-trips a cable that ends on a device (no hubId key at all)', () => {
+    const toPir: Cable = { id: 'cable-9', device: { kind: 'camera', id: 'cam-1' }, endDevice: { kind: 'sensor', id: 'pir-s1' }, typeId: 'cat6-utp', points: [{ x: 3, y: 4 }] }
+    const withDeviceEnd = buildProject({ cameras: project.floors[0].cameras, sensors: [pir, beam], hubs: [hub], cables: [toPir] })
+    const text = serializeProject(withDeviceEnd)
+    expect(JSON.parse(text).floors[0].cables[0]).not.toHaveProperty('hubId')
+    const result = expectOk(parseProjectFile(text, LOOKUPS))
+    expect(result.project).toEqual(withDeviceEnd)
+    expect(result.warnings).toEqual([])
   })
 
   it('unknown typeId', () => {

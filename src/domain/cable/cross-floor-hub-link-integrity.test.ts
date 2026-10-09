@@ -87,11 +87,11 @@ describe('crossFloorTrunkProblem', () => {
     expect(crossFloorTrunkProblem(floors, 1, floors[1].hubs[0])).toMatch(/shaft marker/)
   })
 
-  it('D1: rejects a trunk that targets a shaft marker, from ANOTHER shaft marker owner (no chaining into a shaft)', () => {
-    const ownerMarker: Hub = { id: 'owner-m', kind: 'shaft', shaftId: 's2', x: 0, y: 0, mountHeightM: 0, trunk: { hubId: 'target-m', points: [] } }
-    const targetMarker: Hub = { id: 'target-m', kind: 'shaft', shaftId: 's1', x: 10, y: 10, mountHeightM: 0 }
-    const floors = floorsOf({ floor0: { hubs: [ownerMarker, targetMarker] } })
-    expect(crossFloorTrunkProblem(floors, 0, ownerMarker)).toMatch(/shaft marker/)
+  it('rejects ANY trunk on a shaft opening - each cable owns its route beyond a shaft', () => {
+    const ownerMarker: Hub = { id: 'owner-m', kind: 'shaft', shaftId: 's2', x: 0, y: 0, mountHeightM: 0, trunk: { hubId: 'plain', points: [] } }
+    const plain: Hub = { id: 'plain', x: 10, y: 10, mountHeightM: 1.5 }
+    const floors = floorsOf({ floor0: { hubs: [ownerMarker, plain] } })
+    expect(crossFloorTrunkProblem(floors, 0, ownerMarker)).toMatch(/shaft opening/)
   })
 })
 
@@ -156,11 +156,11 @@ describe('pruneInvalidCrossFloorLinks', () => {
       x: 1,
       y: 1,
       mountHeightM: 0,
-      trunk: { hubId: 'gone', points: [] }, // dangling - triggers the warning this test reads
+      trunk: { hubId: 'gone', points: [] }, // a shaft opening never carries a route - triggers the warning this test reads
     }
     const floors = floorsOf({ floor1: { hubs: [markerA, markerB] } })
     const warnings: string[] = []
     pruneInvalidCrossFloorLinks(floors, ['shaft-b', 'shaft-a'], warnings)
-    expect(warnings.some((w) => w.includes('T1') && w.includes('no longer exists'))).toBe(true)
+    expect(warnings.some((w) => w.includes('T1') && w.includes('shaft opening'))).toBe(true)
   })
 })

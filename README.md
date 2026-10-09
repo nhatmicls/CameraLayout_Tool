@@ -31,7 +31,7 @@ Needs Node 20.19.x (or >=22.12) and npm 10.x. Scripts, Windows notes and the fol
 | Fire alarm | 25 detectors, call points and sounders (Hikvision, 1 AoLin); datasheet or TCVN 5738 coverage circles | [sensors and alarm devices](./docs/user-guide-sensors-and-alarm-devices.md) |
 | Control panels | AX Hybrid PRO panels, AX PRO hubs and their modules; "works with" filter and "not listed" warnings from Hikvision's official compatibility lists (plus owner-declared 4-wire devices) | [sensors and alarm devices](./docs/user-guide-sensors-and-alarm-devices.md) |
 | Floors | 1 to 20 floors as tabs, each with its own plan, scale and devices | [floors and cables](./docs/user-guide-floors-and-cables.md) |
-| Cables | Hubs, hand-drawn routes, risers / drops and shafts across floors; length estimate with a range and length-limit warnings | [floors and cables](./docs/user-guide-floors-and-cables.md) |
+| Cables | Device-to-device and device-to-hub routes; risers / drops and shafts with per-cable shaft routes; length estimate with a range and length-limit warnings | [floors and cables](./docs/user-guide-floors-and-cables.md) |
 | Bill of materials | One priced list for the whole project, or one floor | [BOM, export, prices](./docs/user-guide-bom-export-and-prices.md) |
 | Export | PNG per floor (plan + legend + BOM strip), CSV for the whole project, project JSON | [BOM, export, prices](./docs/user-guide-bom-export-and-prices.md) |
 | Prices | Indicative Vietnam street prices in VND with a source link per record; cable prices are typed by you | [BOM, export, prices](./docs/user-guide-bom-export-and-prices.md) |
@@ -58,7 +58,7 @@ your supplier before ordering.
 
 v1 in progress; every feature in the table above works and is verified in Chromium.
 
-- Project files are saved as schema version 8. Version 7 files open unchanged and files
+- Project files are saved as schema version 9. Version 8 and 7 files open unchanged and files
   from versions 1-6 still open as a one-floor project, but a file saved by this version needs this version or newer.
 - Known limit: on a very dense plan (about 100 sensors and 300 walls) moving a wall or a
   sensor can take a few tenths of a second to redraw.

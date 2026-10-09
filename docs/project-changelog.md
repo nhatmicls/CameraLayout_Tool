@@ -2,6 +2,27 @@
 
 ## 2026-10-09
 
+- **Per-cable shaft routes**: each cable that ends on a shaft opening now has its own route
+  beyond the shaft (replacing shared exits). A cable ending on an opening is labelled `C1-?`
+  (not routed) until the route is drawn on the exit floor. The shaft panel on the exit floor
+  lists incoming cables ("From Floor 2 C1"); select one and click "Route on <floor>" to draw
+  a route from that floor's opening to a hub or device on that floor. The cable is then labelled
+  by what it reaches (`C1-H1`, `S1-P1`; the shaft never appears in a label). Length includes
+  the route on the entry floor + floor-to-floor heights + route on the exit floor (that floor's
+  scale) + end + slack. Unrouted cables are counted up to the opening with the typed "Length
+  beyond this opening" and a notice. Routes can be redrawn or removed from the same panel list.
+- **Cable ends on any device**: a cable may now end on any device (camera, sensor, fire-alarm
+  device) as well as a hub, riser, drop or shaft opening - not on its own start device. Start
+  on a device, then click a hub (any kind) or another device to finish; start on a hub, then
+  click a device. There are still no hub-to-hub cables. The label shows the start and the end,
+  e.g. `S1-P1`, `C1-C2`. A device end uses that device's height (the default device height if it
+  has none) and the device-end slack (0.5 m by default) instead of the hub-end slack (3 m).
+  Deleting a device also removes the cables that end on it, in the same undo step.
+- **Project file schema version 9**: adds the per-cable `beyondShaft` leg for shaft routes and
+  refactors cable ends to support any device. Files from versions 1-8 still open: v7-8 files
+  migrate unchanged, v1-6 files open as one floor. On load, files using the old shared shaft
+  exits convert each cable's route to an owned copy, preserving the length; cables with no exit
+  chosen open as "not routed". Builds older than this version refuse v9 files by version number.
 - **Cables from fire-alarm devices**: the "Draw cable" tool now snaps to placed fire-alarm
   devices (panel, detectors, modules, contacts... every kind) as well as cameras and sensors. A
   cable's device end may be `{ kind: 'fire-alarm', id }`; its label uses the device's designator

@@ -6,7 +6,7 @@
  * undo/redo auto-switch, both rely on that).
  */
 import { pruneInvalidCrossFloorLinks } from '../domain/cable/cross-floor-hub-link-integrity'
-import { clearStaleExitChoices } from '../domain/cable/shaft-cable-exit-cascade'
+import { pruneInvalidShaftLegs } from '../domain/cable/shaft-cable-leg'
 import { pruneShafts } from '../domain/cable/shaft-integrity'
 import type { Shaft } from '../domain/cable/cable-layout-types'
 import type { Floor } from '../domain/floor/floor-types'
@@ -18,28 +18,36 @@ export type FloorContent = Omit<Floor, 'id' | 'name'>
 /**
  * A patch touching `hubs` (hub add/update/delete) or `image` (`setImage`,
  * which also clears `hubs`) can invalidate a link/trunk on ANY floor - the
- * partner side of a deleted hub lives elsewhere - or leave a shaft with no
- * markers anywhere, or a cable's `exitFloorId` stale (its exit just
- * vanished). Run the one prune/cascade rule set after every such patch, in
- * the SAME `set()` as the cause (one undo step). A patch touching neither
- * key cannot affect any of this, so every other write (camera drag, wall
- * edit, ...) skips the extra pass entirely. Exported so
+ * partner side of a deleted hub lives elsewhere - leave a shaft with no
+ * markers anywhere, or leave a cable's leg beyond a shaft without its
+ * opening or its end. Run the one prune/cascade rule set after every such
+ * patch, in the SAME `set()` as the cause (one undo step). Exported so
  * `project-store-floor-actions.ts`'s `moveFloor`/`deleteFloor` (which don't
  * go through `patchActiveFloor`/`patchFloorById`) can run the SAME pass.
  *
- * H3 fix (phase 6 review): shafts/markers are pruned FIRST, THEN cross-floor
- * link/trunk integrity, THEN stale exit choices - same order, and the same
- * reasoning, as the loader's own three-pass pipeline (`project-file-schema.ts`).
+ * Shafts/markers are pruned FIRST, THEN cross-floor link/trunk integrity,
+ * THEN the legs beyond a shaft - same order, and the same reasoning, as the
+ * loader's own three-pass pipeline (`project-file-schema.ts`).
  */
 export function pruneCrossFloorAndShaftState(floors: Floor[], shafts: Shaft[]): { floors: Floor[]; shafts: Shaft[] } {
   const { floors: shaftPrunedFloors, shafts: prunedShafts } = pruneShafts(floors, shafts)
   const linked = pruneInvalidCrossFloorLinks(shaftPrunedFloors, prunedShafts.map((shaft) => shaft.id))
-  return { floors: clearStaleExitChoices(linked), shafts: prunedShafts }
+  return { floors: pruneInvalidShaftLegs(linked), shafts: prunedShafts }
 }
 
+/**
+ * A leg beyond a shaft may END on a device of another floor, so a patch that
+ * replaces a floor's `cameras` / `sensors` / `fireAlarmDevices` (a delete)
+ * or its `cables` only needs the leg pass - which returns at once for a
+ * project without legs, so an ordinary camera drag stays free. Every other
+ * write (walls, scale, ...) skips both.
+ */
 function pruneIfCablingTouched(patch: Partial<FloorContent>, floors: Floor[], shafts: Shaft[]): { floors: Floor[]; shafts: Shaft[] } {
-  if (patch.hubs === undefined && patch.image === undefined) return { floors, shafts }
-  return pruneCrossFloorAndShaftState(floors, shafts)
+  if (patch.hubs !== undefined || patch.image !== undefined) return pruneCrossFloorAndShaftState(floors, shafts)
+  if (patch.cameras !== undefined || patch.sensors !== undefined || patch.fireAlarmDevices !== undefined || patch.cables !== undefined) {
+    return { floors: pruneInvalidShaftLegs(floors), shafts }
+  }
+  return { floors, shafts }
 }
 
 /**

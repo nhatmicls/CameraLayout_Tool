@@ -25,7 +25,6 @@ type UnavailableReason = Extract<HubBeyondLength, { source: 'unavailable' }>['re
 const REASON_LABELS: Record<UnavailableReason, string> = {
   'linked-floor-scale-not-set': 'a linked floor has no scale set',
   'link-cycle': 'its cross-floor route forms a cycle',
-  'shaft-exit-not-chosen': 'no exit chosen for its shaft',
 }
 
 function isUnavailableReasonCode(code: CableEstimateWarning['code']): code is UnavailableReason {

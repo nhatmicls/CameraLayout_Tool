@@ -5,7 +5,8 @@ import type { Project } from './project-types'
 import { cableSettingsSchema, cableTypeSchema, normaliseLoadedCableTypes, shaftsArraySchema } from './project-file-cable-schema'
 import { fireAlarmSettingsSchema } from './project-file-fire-alarm-schema'
 import { pruneInvalidCrossFloorLinks } from '../cable/cross-floor-hub-link-integrity'
-import { clearStaleExitChoices } from '../cable/shaft-cable-exit-cascade'
+import { pruneInvalidShaftLegs } from '../cable/shaft-cable-leg'
+import { migrateSharedShaftExitsToCableLegs } from '../cable/shaft-shared-exit-migration'
 import { pruneShafts } from '../cable/shaft-integrity'
 import { MAX_PROJECT_TEXT_LENGTH_BYTES, floorsArraySchema, normaliseLoadedFloor, type FloorNormalisationLookups, type LoadedFloor } from './project-file-floor-schema'
 import { legacyFlatProjectFileSchema, wrapLegacyFlatProjectAsOneFloor } from './project-file-legacy-flat-migration'
@@ -26,13 +27,21 @@ export type { SensorModelLookup, SensorModelLookupEntry } from './project-file-s
  *
  * Schema v8 keeps the v7 shape and adds one thing: a cable's `device` may be
  * `{ kind: 'fire-alarm', id }`. The bump exists only so a build from before
- * that change refuses the file by its version number. The reader accepts 7
- * and 8 through the same schema; the writer always emits 8, even for a
- * single-floor project (one writer path).
+ * that change refuses the file by its version number.
+ *
+ * Schema v9: a cable may end on a device (`endDevice`) instead of a hub
+ * (`hubId` became optional - exactly one of the two), and a cable through a
+ * shaft owns its route beyond it (`beyondShaft`). The pre-v9 shared shaft
+ * exits (a `trunk` on a shaft opening + a cable's `exitFloorId`) are still
+ * read and converted to one leg per cable
+ * (`migrateSharedShaftExitsToCableLegs`), never written.
+ *
+ * The reader accepts 7, 8 and 9 through the same schema; the writer always
+ * emits 9, even for a single-floor project (one writer path).
  */
-export const PROJECT_SCHEMA_VERSION = 8 as const
+export const PROJECT_SCHEMA_VERSION = 9 as const
 /** Versions that share the `floors[]` shape (see above); everything lower is the legacy flat shape. */
-const FLOORS_SHAPE_SCHEMA_VERSIONS: readonly unknown[] = [7, PROJECT_SCHEMA_VERSION]
+const FLOORS_SHAPE_SCHEMA_VERSIONS: readonly unknown[] = [7, 8, PROJECT_SCHEMA_VERSION]
 
 /** What the file parser needs to know per model family, so callers (file I/O, tests) pass one object instead of a positional tail that grows with every new device family. */
 export interface ProjectFileLookups {
@@ -43,7 +52,7 @@ export interface ProjectFileLookups {
 
 const projectFileFloorsShapeSchema = z.strictObject({
   app: z.literal('camera-layout-tool'),
-  schemaVersion: z.union([z.literal(7), z.literal(PROJECT_SCHEMA_VERSION)]),
+  schemaVersion: z.union([z.literal(7), z.literal(8), z.literal(PROJECT_SCHEMA_VERSION)]),
   floors: floorsArraySchema,
   shafts: shaftsArraySchema.optional(),
   cableTypes: z.array(cableTypeSchema).max(MAX_CABLE_TYPES).optional(),
@@ -51,7 +60,7 @@ const projectFileFloorsShapeSchema = z.strictObject({
   fireAlarmSettings: fireAlarmSettingsSchema.optional(),
 })
 
-/** Serialises a project to the on-disk v8 JSON shape (adds the `app`/`schemaVersion` envelope). */
+/** Serialises a project to the on-disk v9 JSON shape (adds the `app`/`schemaVersion` envelope). */
 export function serializeProject(project: Project): string {
   return JSON.stringify({
     app: 'camera-layout-tool',
@@ -74,7 +83,7 @@ export type ParseProjectResult =
   | { ok: true; project: Project; warnings: string[] }
   | { ok: false; error: string }
 
-/** `raw.schemaVersion` 7 or 8 picks the `floors[]` schema; anything else (including non-numbers/missing) falls through to the legacy schema, so an unknown version fails there exactly as it always has. */
+/** `raw.schemaVersion` 7, 8 or 9 picks the `floors[]` schema; anything else (including non-numbers/missing) falls through to the legacy schema, so an unknown version fails there exactly as it always has. */
 function isFloorsShapeEnvelope(raw: unknown): boolean {
   return (
     typeof raw === 'object' &&
@@ -86,7 +95,7 @@ function isFloorsShapeEnvelope(raw: unknown): boolean {
 
 /**
  * Parses untrusted project-file text. Single trust boundary for loaded JSON:
- * size cap, strict schema (the v7 / v8 `floors[]` shape, or the legacy 1-6 flat
+ * size cap, strict schema (the v7 - v9 `floors[]` shape, or the legacy 1-6 flat
  * shape wrapped into one floor), image restricted to inline PNG/JPEG data
  * URLs, cameras/sensors/fire-alarm devices cross-checked and normalised
  * against `lookups` PER FLOOR, cable types normalised ONCE project-wide
@@ -155,7 +164,16 @@ export function parseProjectFile(text: string, lookups: ProjectFileLookups): Par
     }
     const multiFloor = floorsRaw.length > 1
     const warnings: string[] = []
-    const floors = floorsRaw.map((floorRaw, index) => {
+    // Pre-v9 shared shaft exits -> one leg per cable, on the raw floors (a copied leg that turns
+    // out invalid is cleared by `pruneInvalidShaftLegs` below). A no-op for a file without them.
+    const migrated = migrateSharedShaftExitsToCableLegs(floorsRaw)
+    if (migrated.unchosenCableCount > 0) {
+      const n = migrated.unchosenCableCount
+      warnings.push(
+        `${n} cable${n === 1 ? '' : 's'} had no shaft exit chosen and ${n === 1 ? 'opens' : 'open'} as not routed: counted up to the shaft until routed from the shaft panel.`,
+      )
+    }
+    const floors = migrated.floors.map((floorRaw, index) => {
       const { floor, nonCablingWarnings, cablingWarnings } = normaliseLoadedFloor(floorRaw, floorLookups)
       const prefix = (list: string[]) => (multiFloor ? list.map((w) => `${floor.name}: ${w}`) : list)
       warnings.push(...prefix(nonCablingWarnings))
@@ -167,13 +185,11 @@ export function parseProjectFile(text: string, lookups: ProjectFileLookups): Par
       return floor
     })
 
-    // H3 fix (phase 6 review): shafts/markers are pruned FIRST (the per-floor pre-pass above
-    // already handled unknown shaftId/shape issues; this also drops a now-markerless `shafts[]`
-    // entry), THEN cross-floor link/trunk integrity, THEN stale exit choices. Reversing this order
-    // would let `pruneInvalidCrossFloorLinks` validate a trunk against a shaft marker that this
-    // pass is about to remove anyway - a hole closed independently by D1 (a trunk can never target
-    // a shaft marker at all), but kept in this order too as defence in depth. Hub ids are unique
-    // project-wide in practice, so none of these three passes' warnings are floor-prefixed.
+    // Shafts/markers are pruned FIRST (the per-floor pre-pass above already handled unknown
+    // shaftId/shape issues; this also drops a now-markerless `shafts[]` entry), THEN cross-floor
+    // link/trunk integrity, THEN each cable's own leg beyond a shaft (its opening or end may have
+    // just gone). Hub ids are unique project-wide in practice, so none of these three passes'
+    // warnings are floor-prefixed.
     const shaftWarnings: string[] = []
     const { floors: shaftPrunedFloors, shafts: prunedShafts } = pruneShafts(floors, shaftsRaw, shaftWarnings)
     warnings.push(...shaftWarnings)
@@ -184,9 +200,9 @@ export function parseProjectFile(text: string, lookups: ProjectFileLookups): Par
     const linkedFloors = pruneInvalidCrossFloorLinks(shaftPrunedFloors, prunedShafts.map((shaft) => shaft.id), linkWarnings)
     warnings.push(...linkWarnings)
 
-    const exitWarnings: string[] = []
-    const prunedFloors = clearStaleExitChoices(linkedFloors, exitWarnings)
-    warnings.push(...exitWarnings)
+    const legWarnings: string[] = []
+    const prunedFloors = pruneInvalidShaftLegs(linkedFloors, legWarnings)
+    warnings.push(...legWarnings)
 
     const project: Project = {
       floors: prunedFloors,

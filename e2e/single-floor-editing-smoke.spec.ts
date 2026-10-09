@@ -25,7 +25,7 @@ import {
  *  2. load the SAME file again (same data URL, new `PlanImage` object) -> canvas still there
  *  3. scale + camera + sensor + hub + cable + fire-alarm device via hooks; undo all; redo all
  *  4. replace with a DIFFERENT PNG -> items cleared; one undo -> old image + items back, canvas renders
- *  5. save (capture the download), reload, open it -> same counts; schemaVersion 8, floors.length 1
+ *  5. save (capture the download), reload, open it -> same counts; schemaVersion 9, floors.length 1
  *  6. open a legacy flat v6 JSON derived from the saved one -> loads as one floor, canvas renders
  */
 
@@ -160,7 +160,7 @@ test.describe('single-floor-editing-smoke', () => {
     })
 
     let savedProjectJson: SavedProject | null = null
-    await test.step('5. save (capture the download), reload, open it -> same counts; schemaVersion 8, floors.length 1', async () => {
+    await test.step('5. save (capture the download), reload, open it -> same counts; schemaVersion 9, floors.length 1', async () => {
       const downloadPromise = page.waitForEvent('download')
       await page.locator('[data-testid="save-project-button"]').click()
       const download = await downloadPromise
@@ -171,7 +171,7 @@ test.describe('single-floor-editing-smoke', () => {
       savedProjectJson = JSON.parse(savedText)
 
       expect(savedProjectJson!.app).toBe('camera-layout-tool')
-      expect(savedProjectJson!.schemaVersion).toBe(8)
+      expect(savedProjectJson!.schemaVersion).toBe(9)
       expect(Array.isArray(savedProjectJson!.floors)).toBe(true)
       expect(savedProjectJson!.floors).toHaveLength(1)
       const savedFloor = savedProjectJson!.floors[0]

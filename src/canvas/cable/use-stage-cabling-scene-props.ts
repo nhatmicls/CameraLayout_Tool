@@ -1,11 +1,14 @@
 import { useCallback, useMemo } from 'react'
 import type { CableLimitStatus } from '../../domain/cable/cable-length-estimate-calculator'
 import type { CablePoint } from '../../domain/cable/cable-layout-types'
+import { findShaftLegsOnFloor, type ResolvedShaftLeg } from '../../domain/cable/shaft-cable-leg'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useCableLayoutEstimate } from '../../state/use-cable-layout-estimate'
 import { useProjectStore } from '../../state/project-store'
 import { selectCables, selectHubs, selectScale } from '../../state/project-store-floor-selectors'
 import type { PlanSceneCabling, PlanSceneCablingInteraction } from './use-plan-scene-cabling'
+
+const NO_SHAFT_LEGS: readonly ResolvedShaftLeg[] = []
 
 /**
  * The `cabling` + `cablingInteraction` props `floor-plan-stage.tsx` passes
@@ -37,9 +40,17 @@ export function useStageCablingSceneProps(): { cabling: PlanSceneCabling; cablin
   }, [layoutEstimate])
 
   const shaftIds = useMemo(() => shafts.map((shaft) => shaft.id), [shafts])
+  // Cables of ANY floor whose own route beyond a shaft runs on the active floor.
+  const floors = useProjectStore((s) => s.floors)
+  const shaftLegs = useMemo(() => {
+    const legs = findShaftLegsOnFloor(floors, activeFloorId, { indexCache: new Map() })
+    // One shared empty list: `floors` changes on every edit, and a fresh `[]` each time would
+    // needlessly invalidate `cabling` (and the cable lines) on a floor with no leg at all.
+    return legs.length > 0 ? legs : NO_SHAFT_LEGS
+  }, [floors, activeFloorId])
   const cabling = useMemo(
-    () => ({ hubs, cables, cableTypes, cableSettings, scale, limitStatusById, shaftIds }),
-    [hubs, cables, cableTypes, cableSettings, scale, limitStatusById, shaftIds],
+    () => ({ hubs, cables, cableTypes, cableSettings, scale, limitStatusById, shaftIds, shaftLegs }),
+    [hubs, cables, cableTypes, cableSettings, scale, limitStatusById, shaftIds, shaftLegs],
   )
 
   const onHubDragEnd = useCallback((id: string, x: number, y: number) => updateHub(id, { x, y }), [updateHub])

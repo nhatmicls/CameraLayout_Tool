@@ -1,3 +1,4 @@
+import { cableEndRefKey } from '../domain/cable/cable-endpoint-index'
 import {
   MAX_CABLES,
   MAX_CABLE_TYPES,
@@ -83,7 +84,12 @@ export function createCablingActions(set: (partial: Partial<CablingState>) => vo
     addCable: (cable) => {
       const { cables, hubs, cableTypes } = get()
       if (cables.length >= MAX_CABLES) return
-      if (!hubs.some((hub) => hub.id === cable.hubId) || !cableTypes.some((type) => type.id === cable.typeId)) return
+      // Exactly one end: a hub of this floor, or a device (snapped by the drawing tool; a leg or
+      // a cable whose end later disappears is handled by the delete cascades).
+      if ((cable.hubId === undefined) === (cable.endDevice === undefined)) return
+      if (cable.endDevice && cableEndRefKey(cable.endDevice) === cableEndRefKey(cable.device)) return
+      if (cable.hubId !== undefined && !hubs.some((hub) => hub.id === cable.hubId)) return
+      if (!cableTypes.some((type) => type.id === cable.typeId)) return
       set({ cables: [...cables, cable] })
     },
 

@@ -148,21 +148,30 @@ Project rules:
   (only `replaceProject` / `resetProject` do). An image load is pinned to the floor (and project
   load) it was started for (`floor-image-load-target-resolver.ts`); the image budget
   (`floor-image-budget.ts`) and the 80 MB save guard keep the saved file loadable.
-- Project files: `PROJECT_SCHEMA_VERSION` is 8 (`floors[]` shape; 8 = 7 + a cable end may be a
-  fire-alarm device, same schema reads both); the reader accepts 1 to 8 - flat v1-6 files are
-  parsed by the legacy schema and wrapped into one floor - the writer always emits 8. The loader never rejects a file for bad cross-floor data: invalid links, trunks, shaft
-  markers and exit choices are dropped with a warning.
-- Cables: a cable is `{ device, hubId, typeId, points, exitFloorId? }` - `device` is a
-  `{ kind, id, end? }` ref (`kind` = `camera` / `sensor` / `fire-alarm`; `end` = `tx` / `rx`, for
-  a beam only; a fire-alarm end is labelled by its designator and has no mounting height), `points` are the INTERMEDIATE
-  vertices in image px, device -> hub; both ends derive from the live device / hub position
-  (`src/domain/cable/cable-endpoint-index.ts`). A cable and its hub are on the same floor. Metres
-  are never persisted. Deleting a camera, sensor, fire-alarm device or hub removes its cables in the same `set()`
-  (one undo step); a cable type in use on ANY floor, or the last one, cannot be deleted (>= 1
-  type always). A `Hub` is `{ id, x, y, mountHeightM, kind?, extraLengthM?, link?, trunk?,
-  shaftId? }`; no `kind` = plain hub. Labels `H{n}` / `R{n}` / `D{n}` (per floor) and `T{n}`
-  (shaft, from `shafts[]` order, same on every floor) come from `hubLabels`. Cones + sensor
-  coverage are hidden in cable and trunk mode (`coverageVisible`).
+- Project files: `PROJECT_SCHEMA_VERSION` is 9 (`floors[]` shape; 8 = 7 + a cable may start on a
+  fire-alarm device; 9 = a cable may end on a device and owns its route beyond a shaft - one
+  schema reads 7, 8 and 9); the reader accepts 1 to 9 - flat v1-6 files are parsed by the legacy
+  schema and wrapped into one floor - the writer always emits 9. Pre-v9 SHARED shaft exits (a
+  `trunk` on a shaft opening + a cable's `exitFloorId`) are converted on load to one route per
+  cable (`shaft-shared-exit-migration.ts`) and never written. The loader never rejects a file
+  for bad cross-floor data: invalid links, trunks, shaft markers and routes beyond a shaft are
+  dropped with a warning.
+- Cables: a cable is `{ device, hubId? | endDevice?, typeId, points, beyondShaft? }` - `device`
+  (the start) and `endDevice` are `{ kind, id, end? }` refs (`kind` = `camera` / `sensor` /
+  `fire-alarm`; `end` = `tx` / `rx`, for a beam only; a fire-alarm end is labelled by its
+  designator and has no mounting height). A cable ends on EXACTLY ONE of a hub (`hubId`) and a
+  device (`endDevice`), never on its own start; a device end rises to that device's height and
+  takes the device-end slack. `points` are the INTERMEDIATE vertices in image px, start -> end;
+  both ends derive from the live device / hub position (`src/domain/cable/cable-endpoint-index.ts`,
+  `resolveCableEnd`). A cable and its end are on the same floor. Metres are never persisted.
+  Deleting a camera, sensor, fire-alarm device or hub removes the cables that start OR end on it
+  in the same `set()` (one undo step); a cable type in use on ANY floor, or the last one, cannot
+  be deleted (>= 1 type always). The draw tool: start on a device -> end on a hub or any other
+  device; start on a hub -> end on a device (no hub-to-hub cables). A `Hub` is
+  `{ id, x, y, mountHeightM, kind?, extraLengthM?, link?, trunk?, shaftId? }`; no `kind` = plain
+  hub. Labels `H{n}` / `R{n}` / `D{n}` (per floor) and `T{n}` (shaft, from `shafts[]` order, same
+  on every floor) come from `hubLabels`. Cones + sensor coverage are hidden in cable and trunk
+  mode (`coverageVisible`).
 - Riser / drop (`kind: 'riser' | 'drop'`): cables leave for the floor above / below. Typed mode
   (no partner route): `mountHeightM` (never negative) is the height it rises to / the depth below
   this floor (`hubEffectiveHeightM` negates a drop's) + optional `extraLengthM` = cable on the
@@ -173,14 +182,22 @@ Project rules:
   `floorHeightM` (both `mountHeightM` ignored) + trunk at the partner floor's scale + the end at
   its target (chains continue; cycles = no metres).
 - Shaft: project `shafts[] { id, name }` (max 20) + hub markers `kind: 'shaft'` with `shaftId`,
-  at most one per shaft per floor; never linked. Every marker with a `trunk` is an exit (several
-  allowed). A cable ending on a marker: no exit at all = 0 m at the marker + the marker's typed
-  `extraLengthM` (no vertical); one exit = used implicitly; several = the cable's `exitFloorId`,
-  never guessed - none chosen = NO metres, counted and named (`shaft-exit-not-chosen`). Vertical
-  = sum of `floorHeightM` between entry and exit floor. Exit choices are stamped when a second
-  exit appears and cleared when their exit goes; a shaft with no marker left is removed - each in
-  the SAME `set()` as its cause. `cross-floor-exit-resolver.ts` is the only place that knows
-  where a crossing point leads.
+  at most one per shaft per floor; never linked, never carrying a `trunk`. A shaft has NO shared
+  route: each cable that ends on a shaft opening owns its route beyond it,
+  `Cable.beyondShaft { floorId, points, hubId? | endDevice? }` - on the exit floor `floorId`, from
+  THAT floor's opening of the same shaft to a hub (never a shaft opening) or a device there
+  (owner decision 2026-10-09). `src/domain/cable/shaft-cable-leg.ts` is the only place that
+  resolves, validates and lists these legs. Not routed = label `C1-?`, counted up to the shaft: 0 m
+  at the opening + the opening's typed `extraLengthM` (no vertical), with a named
+  `shaft-cable-not-routed` notice. Routed = labelled by the end it reaches (`C1-H1`, `S1-P1`; the
+  shaft never appears in a label); vertical = sum of `floorHeightM` between the cable's floor and
+  the exit floor, the leg measured at the exit floor's scale (no scale there = NO metres, counted
+  and named), then the end (a hub continues like any hub, incl. a riser / drop chain). The cable
+  stays on, and is counted on, the floor of its start device. A leg whose opening, end or floor
+  goes is cleared (the cable stays) and a shaft with no marker left is removed - each in the SAME
+  `set()` as its cause. Legs are drawn / redrawn / removed from the shaft panel's cable list (the
+  trunk tool with `shaftLegDrawCable` set) and drawn on the exit floor (`ShaftLegRouteLines`).
+  `cross-floor-exit-resolver.ts` knows where a riser / drop pair leads.
 - Cable maths lives in `src/domain/cable/cable-length-estimate-calculator.ts`,
   `cable-layout-estimate.ts` (per-floor) and `project-cable-layout-estimate.ts`
   (`computeProjectCableEstimate` is the one entry point for panels, canvas, BOM and exports;
@@ -188,7 +205,7 @@ Project rules:
   per type) - keep it out of components. The scale-error range applies to horizontal metres only
   (vertical runs and slack are typed in metres); the length limit checks the run without waste.
   No scale on any floor = no cable metres for that crossing: never use the `planPxPerMeter ?? 1`
-  fallback for cables. Unestimated cables (missing a chosen exit, or crossing a scale-less floor)
+  fallback for cables. Unestimated cables (a route crossing a scale-less floor, or a cycle)
   are counted and named, never guessed.
 - Cable lines and trunk lines render in the walls Layer's children slot (after wall lines, before
   wall node handles); hubs and the selected cable/trunk vertex editor are in the markers Layer;

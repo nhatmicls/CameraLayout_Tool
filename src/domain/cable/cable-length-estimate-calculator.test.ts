@@ -252,6 +252,56 @@ describe('estimateCableLength - beyond (cross-floor), the two-floor worked examp
   })
 })
 
+describe('estimateCableLength - a cable that ends on a device', () => {
+  const toDevice = (from: string, to: string): Cable => ({ id: 'k', device: { kind: 'camera', id: from }, endDevice: { kind: 'camera', id: to }, typeId: 'cat6-utp', points: [] })
+
+  it('C1 (2.5 m) -> C2 (default 3 m): rises at each end to that device, device slack at BOTH ends, nothing beyond', () => {
+    // 200 px = 2 m; start rise |3 - 2.5| = 0.5; end rise |3 - 3| = 0; slack 0.5 + 0.5 = 1. run = 3.5 m.
+    const result = estimate(toDevice('cam-1', 'cam-2'))
+    expect(result).toMatchObject({ label: 'C1-C2', horizM: 2, deviceRiseM: 0.5, hubDropM: 0, hubExtraM: 0, slackM: 1, fixedM: 1.5 })
+    expect(result.run.nominal).toBeCloseTo(3.5, 9)
+  })
+
+  it('the reverse direction swaps the two rises and gives the same run', () => {
+    const result = estimate(toDevice('cam-2', 'cam-1'))
+    expect(result).toMatchObject({ label: 'C2-C1', deviceRiseM: 0, hubDropM: 0.5, slackM: 1 })
+    expect(result.run.nominal).toBeCloseTo(3.5, 9)
+  })
+
+  it('returns null when the end device no longer exists', () => {
+    expect(
+      estimateCableLength({ cable: toDevice('cam-1', 'gone'), index, type: CAT6, settings: DEFAULT_CABLE_SETTINGS, planPxPerMeter: 100, uncertainty }),
+    ).toBeNull()
+  })
+})
+
+describe('estimateCableLength - a cable through a shaft', () => {
+  const shaftIndex = buildCableEndpointIndex([CAMERA_C1], [], [{ id: 'sm', kind: 'shaft', shaftId: 's1', x: 100, y: 400, mountHeightM: 0 }], ['s1'])
+  const cable: Cable = { id: 'k', device: { kind: 'camera', id: 'cam-1' }, hubId: 'sm', typeId: 'cat6-utp', points: [] }
+  const flat = (m: number) => ({ nominal: m, min: m, max: m })
+  const run = (beyond: Parameters<typeof estimateCableLength>[0]['beyond']) =>
+    estimateCableLength({ cable, index: shaftIndex, type: CAT6, settings: DEFAULT_CABLE_SETTINGS, planPxPerMeter: 100, uncertainty, beyond })!
+
+  it('not routed: label "C1-?", 0 m at the opening + the typed length, hub slack - no routeHeightM term', () => {
+    // 300 px = 3 m; start rise 0.5; slack 0.5 + 3 = 3.5; beyond 4. run = 3 + 0.5 + 3.5 + 4 = 11.
+    const result = run({ source: 'typed', run: flat(4), shaftNotRouted: true })
+    expect(result).toMatchObject({ label: 'C1-?', hubDropM: 0, hubExtraM: 4, slackM: 3.5 })
+    expect(result.run.nominal).toBeCloseTo(11, 9)
+  })
+
+  it('routed to a hub: labelled by that hub, crossing + the rest beyond, hub slack', () => {
+    const result = run({ source: 'route', crossingVerticalM: 3, run: flat(10), viaLabel: 'F1 H2', endLabel: 'H2', endsOnDevice: false })
+    expect(result).toMatchObject({ label: 'C1-H2', hubDropM: 3, hubExtraM: 7, beyondVia: 'F1 H2', slackM: 3.5 })
+    expect(result.run.nominal).toBeCloseTo(3 + 0.5 + 3.5 + 10, 9)
+  })
+
+  it('routed to a device: labelled by that device and the far end takes the DEVICE slack', () => {
+    const result = run({ source: 'route', crossingVerticalM: 3, run: flat(10), viaLabel: 'F1 P1', endLabel: 'P1', endsOnDevice: true })
+    expect(result).toMatchObject({ label: 'C1-P1', slackM: 1 })
+    expect(result.run.nominal).toBeCloseTo(3 + 0.5 + 1 + 10, 9)
+  })
+})
+
 describe('polylineLengthPx', () => {
   it('sums segment lengths and is 0 for fewer than two points', () => {
     expect(polylineLengthPx([{ x: 0, y: 0 }, { x: 3, y: 4 }, { x: 3, y: 10 }])).toBe(11)

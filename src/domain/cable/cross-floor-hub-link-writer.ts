@@ -86,13 +86,12 @@ export function relinkHub(floors: readonly Floor[], ref: HubRef, newPartner: Hub
 }
 
 /**
- * Sets (or, with `trunk: null`, clears) `ref`'s own route to another hub on
- * its own floor. No-op when `ref` doesn't resolve, the target is itself /
- * unknown, the target is a SHAFT marker (decision D1, phase 6 review - a
- * trunk may never target a shaft: cables enter shafts, routes leave them),
- * or - for a riser/drop (unchanged, phase 5) - it isn't currently linked. A
- * SHAFT marker OWNER needs no `link` at all: any marker may own a route,
- * each one an exit of its shaft (phase 6).
+ * Sets (or, with `trunk: null`, clears) a linked riser / drop's own route to
+ * another hub on its own floor. No-op when `ref` doesn't resolve, isn't
+ * currently linked, is a SHAFT opening (a shaft carries no route of its own
+ * - each cable owns its route beyond it, `Cable.beyondShaft`), or the target
+ * is itself / unknown / a shaft opening (cables enter shafts, routes leave
+ * them).
  */
 export function setHubTrunk(
   floors: readonly Floor[],
@@ -101,7 +100,7 @@ export function setHubTrunk(
 ): Floor[] {
   const resolved = resolveHubRef(floors, ref)
   if (!resolved) return floors as Floor[]
-  if (resolved.hub.kind !== 'shaft' && !resolved.hub.link) return floors as Floor[]
+  if (resolved.hub.kind === 'shaft' || !resolved.hub.link) return floors as Floor[]
   if (trunk === null) return updateHubInFloors(floors, ref, (hub) => clearTrunk(hub))
   if (trunk.hubId === ref.hubId) return floors as Floor[]
   const target = floors[resolved.floorIndex].hubs.find((candidate) => candidate.id === trunk.hubId)

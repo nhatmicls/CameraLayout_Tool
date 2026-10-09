@@ -9,7 +9,7 @@ interface BillOfMaterialsCablesSectionProps {
   cableRows: BomRow[]
   /** "No cable metres for F2 Level 2: scale not set." (project-wide view only); null otherwise. */
   floorsWithoutScaleNote: string | null
-  /** "N cable(s) not estimated: ..." (a linked floor's scale missing, no exit chosen, a cycle); null when nothing is excluded. */
+  /** "N cable(s) not estimated: ..." (a floor on the route has no scale, a cycle); null when nothing is excluded. */
   unestimatedNote: string | null
 }
 

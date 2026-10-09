@@ -31,7 +31,12 @@ export interface TestHooks {
       link?: { floorId: string; hubId: string }
       trunk?: { hubId: string; points: unknown[] }
     }>
-    cables: Array<{ id: string; hubId: string; exitFloorId?: string }>
+    cables: Array<{
+      id: string
+      hubId?: string
+      endDevice?: { kind: string; id: string }
+      beyondShaft?: { floorId: string; points: unknown[]; hubId?: string; endDevice?: { kind: string; id: string } }
+    }>
   }>
   getShafts: () => Array<{ id: string; name: string }>
   getActiveFloorId: () => string
@@ -49,6 +54,7 @@ export interface TestHooks {
   imagePxToClient: (x: number, y: number) => { x: number; y: number } | null
   dismissAllNotifications: () => void
   getTrunkRouteLineHubIds: () => string[]
+  getShaftLegLineCableIds: () => string[]
   getLayerCount: () => number
   /** Phase 7 test gap: the compatibility-warning text that floor's own PNG strip would show - lets a spec confirm it never names another floor's device. */
   getFloorCompatibilityWarningText: (floorId: string) => string | null

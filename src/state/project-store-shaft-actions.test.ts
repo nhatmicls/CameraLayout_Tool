@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { MAX_SHAFTS } from '../domain/cable/cable-layout-types'
-import { computeProjectCableEstimate } from '../domain/cable/project-cable-layout-estimate'
 import type { PlanImage } from '../domain/project-file/project-types'
 import { useEditorUiStore } from './editor-ui-store'
 import { redoProject, undoProject, useProjectStore } from './project-store'
@@ -9,12 +8,6 @@ import { getActiveFloor } from './project-store-floor-selectors'
 const store = () => useProjectStore.getState()
 const history = () => useProjectStore.temporal.getState()
 const steps = () => history().pastStates.length
-/** A fresh `computeProjectCableEstimate` read of the LIVE store, bypassing its single-slot memo's reference-equality cache (irrelevant here - each call sees a genuinely new `floors` after every store write anyway). */
-const currentProjectEstimate = () => {
-  const { floors, shafts, cableTypes, cableSettings, fireAlarmSettings } = store()
-  return computeProjectCableEstimate({ floors, shafts, cableTypes, cableSettings, fireAlarmSettings })
-}
-
 const IMAGE_A: PlanImage = { dataUrl: 'data:image/png;base64,AAAA', widthPx: 1000, heightPx: 800, fileName: 'a.png' }
 const IMAGE_B: PlanImage = { dataUrl: 'data:image/png;base64,BBBB', widthPx: 500, heightPx: 400, fileName: 'b.png' }
 const IMAGE_C: PlanImage = { dataUrl: 'data:image/png;base64,CCCC', widthPx: 600, heightPx: 600, fileName: 'c.png' }
@@ -174,209 +167,6 @@ describe('deleteHub cascades on a shaft marker', () => {
     expect(steps()).toBe(1)
   })
 
-  it('deleting an exit marker clears cable choices naming it elsewhere, same undo step', () => {
-    const [f1, f2] = seedThreeFloorsWithImages()
-    const result = store().createShaft('Main shaft', 0, 1, { x: 10, y: 10 })
-    if (!result.ok) throw new Error('unreachable')
-    const f1Marker = store().floors.find((f) => f.id === f1)!.hubs.find((h) => h.kind === 'shaft')!
-    const f2Marker = store().floors.find((f) => f.id === f2)!.hubs.find((h) => h.kind === 'shaft')!
-    // Give F1's marker a trunk (needs another hub on F1) - makes it the shaft's only exit.
-    store().setActiveFloor(f1)
-    store().addHub({ id: 'h1', x: 900, y: 900, mountHeightM: 1.5 })
-    store().setHubTrunk({ floorId: f1, hubId: f1Marker.id }, { hubId: 'h1', points: [] })
-    // A cable on F2's marker, explicitly choosing F1's exit (only one exists, but set explicitly for this test).
-    store().setActiveFloor(f2)
-    store().addCamera({ id: 'cam-1', modelId: 'm', x: 1, y: 1, rotationDeg: 0, rangeM: 5 })
-    store().addCable({ id: 'cable-1', device: { kind: 'camera', id: 'cam-1' }, hubId: f2Marker.id, typeId: store().cableTypes[0].id, points: [] })
-    store().setCableExitFloorId('cable-1', f1)
-    expect(store().floors.find((f) => f.id === f2)!.cables[0].exitFloorId).toBe(f1)
-
-    history().clear()
-    store().setActiveFloor(f1) // cabling actions (deleteHub included) always act on the ACTIVE floor
-    store().deleteHub(f1Marker.id) // the exit marker itself
-    const f2Cable = store().floors.find((f) => f.id === f2)!.cables[0]
-    expect(f2Cable.exitFloorId).toBeUndefined() // cleared - the exit is gone
-    expect(steps()).toBe(1)
-  })
-})
-
-describe('setHubTrunk - shaft exit stamping / clearing', () => {
-  it('gaining a SECOND exit stamps every choiceless cable with the floor of the one it was implicitly using', () => {
-    const [f1, f2, f3] = seedThreeFloorsWithImages()
-    const result = store().createShaft('Main shaft', 0, 2, { x: 10, y: 10 })
-    if (!result.ok) throw new Error('unreachable')
-    const markerByFloor = new Map(store().floors.map((f) => [f.id, f.hubs.find((h) => h.kind === 'shaft')!]))
-
-    store().setActiveFloor(f1)
-    store().addHub({ id: 'h1', x: 900, y: 900, mountHeightM: 1.5 })
-    store().setHubTrunk({ floorId: f1, hubId: markerByFloor.get(f1)!.id }, { hubId: 'h1', points: [] }) // F1 becomes the first (implicit) exit
-
-    store().setActiveFloor(f2)
-    store().addCamera({ id: 'cam-2', modelId: 'm', x: 1, y: 1, rotationDeg: 0, rangeM: 5 })
-    store().addCable({
-      id: 'cable-2',
-      device: { kind: 'camera', id: 'cam-2' },
-      hubId: markerByFloor.get(f2)!.id,
-      typeId: store().cableTypes[0].id,
-      points: [],
-    })
-    expect(store().floors.find((f) => f.id === f2)!.cables[0].exitFloorId).toBeUndefined() // implicit so far, no choice needed
-
-    store().setActiveFloor(f3)
-    store().addHub({ id: 'h2', x: 900, y: 900, mountHeightM: 1.5 })
-    history().clear()
-    store().setHubTrunk({ floorId: f3, hubId: markerByFloor.get(f3)!.id }, { hubId: 'h2', points: [] }) // F3 becomes the SECOND exit
-
-    expect(store().floors.find((f) => f.id === f2)!.cables[0].exitFloorId).toBe(f1) // stamped to the pre-existing (F1) exit
-    expect(steps()).toBe(1) // stamping happened in the SAME set() as the trunk write
-  })
-
-  it('removing the only-remaining exit clears choices back to the typed fallback (no restamping)', () => {
-    const [f1] = seedThreeFloorsWithImages()
-    const result = store().createShaft('Main shaft', 0, 0, { x: 10, y: 10 })
-    if (!result.ok) throw new Error('unreachable')
-    const marker = getActiveFloor(store()).hubs.find((h) => h.kind === 'shaft')!
-    store().addHub({ id: 'h1', x: 900, y: 900, mountHeightM: 1.5 })
-    store().setHubTrunk({ floorId: f1, hubId: marker.id }, { hubId: 'h1', points: [] })
-    store().addCamera({ id: 'cam-1', modelId: 'm', x: 1, y: 1, rotationDeg: 0, rangeM: 5 })
-    store().addCable({ id: 'cable-1', device: { kind: 'camera', id: 'cam-1' }, hubId: marker.id, typeId: store().cableTypes[0].id, points: [] })
-    // The cable is given an EXPLICIT choice first - without this, `exitFloorId` was already
-    // `undefined` before the removal too, making the final assertion vacuously true.
-    store().setCableExitFloorId('cable-1', f1)
-    expect(store().floors[0].cables[0].exitFloorId).toBe(f1)
-
-    store().setHubTrunk({ floorId: f1, hubId: marker.id }, null) // remove the shaft's only exit
-    expect(store().floors[0].hubs.find((h) => h.kind === 'shaft')!.trunk).toBeUndefined()
-    expect(store().floors[0].cables[0].exitFloorId).toBeUndefined() // really cleared, not vacuous
-  })
-
-  it('lengths are IDENTICAL immediately before and after 1 -> 2 stamping (behaviour preserved, not changed)', () => {
-    const [f1, f2, f3] = seedThreeFloorsWithImages()
-    const result = store().createShaft('Main shaft', 0, 2, { x: 10, y: 10 })
-    if (!result.ok) throw new Error('unreachable')
-    const markerByFloor = new Map(store().floors.map((f) => [f.id, f.hubs.find((h) => h.kind === 'shaft')!]))
-
-    store().setActiveFloor(f1)
-    store().addHub({ id: 'h1', x: 900, y: 900, mountHeightM: 1.5 })
-    store().setScale({ planPxPerMeter: 10, refLine: { x1: 0, y1: 0, x2: 100, y2: 0 }, refLengthM: 10 })
-    store().setHubTrunk({ floorId: f1, hubId: markerByFloor.get(f1)!.id }, { hubId: 'h1', points: [] })
-
-    store().setActiveFloor(f2)
-    store().setScale({ planPxPerMeter: 10, refLine: { x1: 0, y1: 0, x2: 100, y2: 0 }, refLengthM: 10 })
-    store().addCamera({ id: 'cam-2', modelId: 'm', x: 1, y: 1, rotationDeg: 0, rangeM: 5 })
-    store().addCable({
-      id: 'cable-2',
-      device: { kind: 'camera', id: 'cam-2' },
-      hubId: markerByFloor.get(f2)!.id,
-      typeId: store().cableTypes[0].id,
-      points: [],
-    })
-    const lengthBefore = currentProjectEstimate().byFloorId.get(f2)!.byCableId.get('cable-2')!.run.nominal
-
-    store().setActiveFloor(f3)
-    store().addHub({ id: 'h2', x: 900, y: 900, mountHeightM: 1.5 })
-    store().setHubTrunk({ floorId: f3, hubId: markerByFloor.get(f3)!.id }, { hubId: 'h2', points: [] }) // the SECOND exit - stamps cable-2 to F1
-
-    expect(store().floors.find((f) => f.id === f2)!.cables[0].exitFloorId).toBe(f1)
-    const lengthAfter = currentProjectEstimate().byFloorId.get(f2)!.byCableId.get('cable-2')!.run.nominal
-    expect(lengthAfter).toBeCloseTo(lengthBefore, 6)
-  })
-
-  it('undo of the 1 -> 2 stamping restores the choiceless (implicit) state, in the SAME step as the trunk removal', () => {
-    const [f1, f2, f3] = seedThreeFloorsWithImages()
-    const result = store().createShaft('Main shaft', 0, 2, { x: 10, y: 10 })
-    if (!result.ok) throw new Error('unreachable')
-    const markerByFloor = new Map(store().floors.map((f) => [f.id, f.hubs.find((h) => h.kind === 'shaft')!]))
-
-    store().setActiveFloor(f1)
-    store().addHub({ id: 'h1', x: 900, y: 900, mountHeightM: 1.5 })
-    store().setHubTrunk({ floorId: f1, hubId: markerByFloor.get(f1)!.id }, { hubId: 'h1', points: [] })
-    store().setActiveFloor(f2)
-    store().addCamera({ id: 'cam-2', modelId: 'm', x: 1, y: 1, rotationDeg: 0, rangeM: 5 })
-    store().addCable({
-      id: 'cable-2',
-      device: { kind: 'camera', id: 'cam-2' },
-      hubId: markerByFloor.get(f2)!.id,
-      typeId: store().cableTypes[0].id,
-      points: [],
-    })
-    store().setActiveFloor(f3)
-    store().addHub({ id: 'h2', x: 900, y: 900, mountHeightM: 1.5 })
-    history().clear()
-    store().setHubTrunk({ floorId: f3, hubId: markerByFloor.get(f3)!.id }, { hubId: 'h2', points: [] }) // stamps cable-2 to F1
-    expect(store().floors.find((f) => f.id === f2)!.cables[0].exitFloorId).toBe(f1)
-
-    undoProject()
-    expect(store().floors.find((f) => f.id === f3)!.hubs.find((h) => h.kind === 'shaft')!.trunk).toBeUndefined()
-    expect(store().floors.find((f) => f.id === f2)!.cables[0].exitFloorId).toBeUndefined() // the stamp undoes WITH the trunk, one step
-  })
-
-  it('2 -> 1 -> 2: removing one exit then drawing a new second one re-stamps to whichever is sole at the time', () => {
-    const [f1, f2, f3] = seedThreeFloorsWithImages()
-    const result = store().createShaft('Main shaft', 0, 2, { x: 10, y: 10 })
-    if (!result.ok) throw new Error('unreachable')
-    const markerByFloor = new Map(store().floors.map((f) => [f.id, f.hubs.find((h) => h.kind === 'shaft')!]))
-
-    store().setActiveFloor(f1)
-    store().addHub({ id: 'h1', x: 900, y: 900, mountHeightM: 1.5 })
-    store().setHubTrunk({ floorId: f1, hubId: markerByFloor.get(f1)!.id }, { hubId: 'h1', points: [] })
-    store().setActiveFloor(f3)
-    store().addHub({ id: 'h2', x: 900, y: 900, mountHeightM: 1.5 })
-    store().setHubTrunk({ floorId: f3, hubId: markerByFloor.get(f3)!.id }, { hubId: 'h2', points: [] }) // 2 exits: F1, F3
-
-    store().setActiveFloor(f2)
-    store().addCamera({ id: 'cam-2', modelId: 'm', x: 1, y: 1, rotationDeg: 0, rangeM: 5 })
-    store().addCable({
-      id: 'cable-2',
-      device: { kind: 'camera', id: 'cam-2' },
-      hubId: markerByFloor.get(f2)!.id,
-      typeId: store().cableTypes[0].id,
-      points: [],
-    }) // no choice - "not chosen" with 2 exits
-
-    // Remove F3's exit: back to 1 exit (F1) - implicit again, no stamp needed (cable-2 still has none).
-    store().setActiveFloor(f3)
-    store().setHubTrunk({ floorId: f3, hubId: markerByFloor.get(f3)!.id }, null)
-    expect(store().floors.find((f) => f.id === f2)!.cables[0].exitFloorId).toBeUndefined()
-
-    // Draw a NEW second exit on a 4th opening... reuse F3 again: this is the shaft's SECOND exit
-    // again (F1 is the sole exit right now) - cable-2, still choiceless, gets stamped to F1.
-    store().setHubTrunk({ floorId: f3, hubId: markerByFloor.get(f3)!.id }, { hubId: 'h2', points: [] })
-    expect(store().floors.find((f) => f.id === f2)!.cables[0].exitFloorId).toBe(f1)
-  })
-})
-
-describe('assignShaftCableExits', () => {
-  it('bulk-assigns every choiceless cable on one floor, one undo step; refuses a non-exit floor', () => {
-    const [f1, f2, f3] = seedThreeFloorsWithImages()
-    const result = store().createShaft('Main shaft', 0, 2, { x: 10, y: 10 })
-    if (!result.ok) throw new Error('unreachable')
-    const markerByFloor = new Map(store().floors.map((f) => [f.id, f.hubs.find((h) => h.kind === 'shaft')!]))
-
-    store().setActiveFloor(f1)
-    store().addHub({ id: 'h1', x: 900, y: 900, mountHeightM: 1.5 })
-    store().setHubTrunk({ floorId: f1, hubId: markerByFloor.get(f1)!.id }, { hubId: 'h1', points: [] })
-    store().setActiveFloor(f3)
-    store().addHub({ id: 'h2', x: 900, y: 900, mountHeightM: 1.5 })
-    store().setHubTrunk({ floorId: f3, hubId: markerByFloor.get(f3)!.id }, { hubId: 'h2', points: [] })
-
-    store().setActiveFloor(f2)
-    store().addCamera({ id: 'cam-a', modelId: 'm', x: 1, y: 1, rotationDeg: 0, rangeM: 5 })
-    store().addCamera({ id: 'cam-b', modelId: 'm', x: 2, y: 2, rotationDeg: 0, rangeM: 5 })
-    const typeId = store().cableTypes[0].id
-    store().addCable({ id: 'cable-a', device: { kind: 'camera', id: 'cam-a' }, hubId: markerByFloor.get(f2)!.id, typeId, points: [] })
-    store().addCable({ id: 'cable-b', device: { kind: 'camera', id: 'cam-b' }, hubId: markerByFloor.get(f2)!.id, typeId, points: [] })
-
-    // Refuses a floor that is not one of the shaft's exits.
-    history().clear()
-    store().assignShaftCableExits(f2, markerByFloor.get(f2)!.id, f2)
-    expect(steps()).toBe(0)
-    expect(store().floors.find((f) => f.id === f2)!.cables.every((c) => c.exitFloorId === undefined)).toBe(true)
-
-    store().assignShaftCableExits(f2, markerByFloor.get(f2)!.id, f3)
-    expect(steps()).toBe(1)
-    expect(store().floors.find((f) => f.id === f2)!.cables.every((c) => c.exitFloorId === f3)).toBe(true)
-  })
 })
 
 describe('undo/redo auto-switch when MANY floors changed (shaft create/delete)', () => {
@@ -408,53 +198,139 @@ describe('undo/redo auto-switch when MANY floors changed (shaft create/delete)',
   })
 })
 
-describe('setCableExitFloorId (M7 validation)', () => {
-  it('no-ops on an unknown cable id', () => {
-    seedThreeFloorsWithImages()
-    const floorsBefore = store().floors
-    store().setCableExitFloorId('does-not-exist', 'whatever')
-    expect(store().floors).toBe(floorsBefore)
-  })
-
-  it('no-ops when the cable does not end on a shaft marker at all', () => {
-    const [f1] = seedThreeFloorsWithImages()
-    store().addHub({ id: 'plain-1', x: 1, y: 1, mountHeightM: 1.5 })
-    store().addCamera({ id: 'cam-1', modelId: 'm', x: 1, y: 1, rotationDeg: 0, rangeM: 5 })
-    store().addCable({ id: 'cable-1', device: { kind: 'camera', id: 'cam-1' }, hubId: 'plain-1', typeId: store().cableTypes[0].id, points: [] })
-    history().clear()
-    store().setCableExitFloorId('cable-1', f1)
-    expect(steps()).toBe(0)
-    expect(store().floors[0].cables[0].exitFloorId).toBeUndefined()
-  })
-
-  it('no-ops when exitFloorId does not name a current exit of the cable\'s shaft', () => {
-    const [f1, f2] = seedThreeFloorsWithImages()
+describe('setCableShaftLeg - a cable\'s own route beyond its shaft', () => {
+  /** A shaft through F1 + F2, a hub and a camera on F1, and one camera cable on F2 ending on F2's opening. Returns the ids the tests need. */
+  function seedShaftCable() {
+    const [f1, f2, f3] = seedThreeFloorsWithImages()
     const result = store().createShaft('Main shaft', 0, 1, { x: 10, y: 10 })
     if (!result.ok) throw new Error('unreachable')
-    const markerF2 = store().floors.find((f) => f.id === f2)!.hubs.find((h) => h.kind === 'shaft')!
+    const f1Marker = store().floors.find((f) => f.id === f1)!.hubs.find((h) => h.kind === 'shaft')!
+    const f2Marker = store().floors.find((f) => f.id === f2)!.hubs.find((h) => h.kind === 'shaft')!
+    store().setActiveFloor(f1)
+    store().addHub({ id: 'h1', x: 900, y: 700, mountHeightM: 1.5 })
+    store().addCamera({ id: 'cam-end', modelId: 'm', x: 500, y: 500, rotationDeg: 0, rangeM: 5 })
     store().setActiveFloor(f2)
     store().addCamera({ id: 'cam-1', modelId: 'm', x: 1, y: 1, rotationDeg: 0, rangeM: 5 })
-    store().addCable({ id: 'cable-1', device: { kind: 'camera', id: 'cam-1' }, hubId: markerF2.id, typeId: store().cableTypes[0].id, points: [] })
+    store().addCable({ id: 'cable-1', device: { kind: 'camera', id: 'cam-1' }, hubId: f2Marker.id, typeId: store().cableTypes[0].id, points: [] })
     history().clear()
-    // F1 is a real floor and a real marker of this shaft, but NOT an exit (no trunk drawn yet).
-    store().setCableExitFloorId('cable-1', f1)
-    expect(steps()).toBe(0)
-    expect(store().floors.find((f) => f.id === f2)!.cables[0].exitFloorId).toBeUndefined()
+    return { f1, f2, f3, f1Marker, f2Marker }
+  }
+  const cableOn = (floorId: string) => store().floors.find((f) => f.id === floorId)!.cables[0]
+
+  it('sets a route to a hub on another floor from a DIFFERENT active floor, one undo step; removes it again', () => {
+    const { f1, f2 } = seedShaftCable()
+    store().setActiveFloor(f1) // the route is drawn while viewing the exit floor; the cable lives on F2
+    const leg = { floorId: f1, points: [{ x: 50, y: 60 }], hubId: 'h1' }
+    expect(store().setCableShaftLeg(f2, 'cable-1', leg)).toBe(true)
+    expect(cableOn(f2).beyondShaft).toEqual(leg)
+    expect(steps()).toBe(1)
+
+    expect(store().setCableShaftLeg(f2, 'cable-1', null)).toBe(true)
+    expect(cableOn(f2)).not.toHaveProperty('beyondShaft')
+    expect(steps()).toBe(2)
+    undoProject()
+    expect(cableOn(f2).beyondShaft).toEqual(leg)
   })
 
-  it('clears with null, only on the active floor\'s own cable', () => {
-    const [f1] = seedThreeFloorsWithImages()
-    const result = store().createShaft('Main shaft', 0, 0, { x: 10, y: 10 })
-    if (!result.ok) throw new Error('unreachable')
-    const marker = getActiveFloor(store()).hubs.find((h) => h.kind === 'shaft')!
-    store().addHub({ id: 'h1', x: 900, y: 900, mountHeightM: 1.5 })
-    store().setHubTrunk({ floorId: f1, hubId: marker.id }, { hubId: 'h1', points: [] })
-    store().addCamera({ id: 'cam-1', modelId: 'm', x: 1, y: 1, rotationDeg: 0, rangeM: 5 })
-    store().addCable({ id: 'cable-1', device: { kind: 'camera', id: 'cam-1' }, hubId: marker.id, typeId: store().cableTypes[0].id, points: [] })
-    store().setCableExitFloorId('cable-1', f1)
-    expect(store().floors[0].cables[0].exitFloorId).toBe(f1)
+  it('undo / redo of a route drawn while viewing the exit floor STAYS there (the line is on that floor), but switches from any other floor', () => {
+    const { f1, f2, f3 } = seedShaftCable()
+    store().setActiveFloor(f1)
+    store().setCableShaftLeg(f2, 'cable-1', { floorId: f1, points: [], hubId: 'h1' })
+    undoProject()
+    expect(store().activeFloorId).toBe(f1)
+    redoProject()
+    expect(store().activeFloorId).toBe(f1)
 
-    store().setCableExitFloorId('cable-1', null)
-    expect(store().floors[0].cables[0].exitFloorId).toBeUndefined()
+    store().setActiveFloor(f3) // neither the exit floor nor the cable's own floor
+    undoProject()
+    expect(store().activeFloorId).toBe(f2) // the ordinary rule: the one floor whose content changed
+  })
+
+  it('sets a route that ends on a device of the exit floor', () => {
+    const { f1, f2 } = seedShaftCable()
+    expect(store().setCableShaftLeg(f2, 'cable-1', { floorId: f1, points: [], endDevice: { kind: 'camera', id: 'cam-end' } })).toBe(true)
+    expect(cableOn(f2).beyondShaft?.endDevice).toEqual({ kind: 'camera', id: 'cam-end' })
+  })
+
+  it('refuses, with no undo step: an unknown cable, a floor with no opening of that shaft, a shaft opening as the end, removing nothing', () => {
+    const { f1, f2, f3, f1Marker } = seedShaftCable()
+    expect(store().setCableShaftLeg(f2, 'nope', { floorId: f1, points: [], hubId: 'h1' })).toBe(false)
+    expect(store().setCableShaftLeg(f2, 'cable-1', { floorId: f3, points: [], hubId: 'h1' })).toBe(false) // F3 has no opening
+    expect(store().setCableShaftLeg(f2, 'cable-1', { floorId: f1, points: [], hubId: f1Marker.id })).toBe(false)
+    expect(store().setCableShaftLeg(f2, 'cable-1', { floorId: f1, points: [], hubId: 'gone' })).toBe(false)
+    expect(store().setCableShaftLeg(f2, 'cable-1', null)).toBe(false) // nothing to remove
+    expect(steps()).toBe(0)
+    expect(cableOn(f2)).not.toHaveProperty('beyondShaft')
+  })
+
+  it.each<[string, (ids: ReturnType<typeof seedShaftCable>) => void]>([
+    ['its end hub is deleted', () => store().deleteHub('h1')],
+    ['the exit floor\'s opening is deleted', ({ f1Marker }) => store().deleteHub(f1Marker.id)],
+    ['the exit floor\'s plan image is replaced', () => store().setImage(IMAGE_C)],
+    ['the exit floor is deleted', ({ f1 }) => store().deleteFloor(f1)],
+  ])('the route is cleared in the SAME undo step when %s - the cable stays, not routed', (_reason, act) => {
+    const ids = seedShaftCable()
+    store().setCableShaftLeg(ids.f2, 'cable-1', { floorId: ids.f1, points: [], hubId: 'h1' })
+    store().setActiveFloor(ids.f1) // deletes act on the active floor
+    history().clear()
+
+    act(ids)
+    expect(cableOn(ids.f2)).toMatchObject({ id: 'cable-1' })
+    expect(cableOn(ids.f2)).not.toHaveProperty('beyondShaft')
+    expect(steps()).toBe(1)
+    undoProject()
+    expect(cableOn(ids.f2).beyondShaft).toEqual({ floorId: ids.f1, points: [], hubId: 'h1' })
+  })
+
+  it('a route ending on a device is cleared when that device is deleted on the exit floor, same undo step', () => {
+    const { f1, f2 } = seedShaftCable()
+    store().setCableShaftLeg(f2, 'cable-1', { floorId: f1, points: [], endDevice: { kind: 'camera', id: 'cam-end' } })
+    store().setActiveFloor(f1)
+    history().clear()
+    store().deleteCamera('cam-end')
+    expect(cableOn(f2)).not.toHaveProperty('beyondShaft')
+    expect(steps()).toBe(1)
+  })
+
+  it('deleting the opening the cable ENTERS still deletes the cable itself', () => {
+    const { f1, f2, f2Marker } = seedShaftCable()
+    store().setCableShaftLeg(f2, 'cable-1', { floorId: f1, points: [], hubId: 'h1' })
+    store().setActiveFloor(f2)
+    store().deleteHub(f2Marker.id)
+    expect(store().floors.find((f) => f.id === f2)!.cables).toEqual([])
+  })
+
+  it('a shaft opening can no longer carry a shared route: setHubTrunk refuses it', () => {
+    const { f1, f1Marker } = seedShaftCable()
+    expect(store().setHubTrunk({ floorId: f1, hubId: f1Marker.id }, { hubId: 'h1', points: [] })).toBe(false)
+    expect(steps()).toBe(0)
+  })
+})
+
+describe('a cable that ends on a device', () => {
+  it('is added without a hub, and deleting EITHER device removes it in the same undo step', () => {
+    store().setImage(IMAGE_A)
+    store().addCamera({ id: 'cam-1', modelId: 'm', x: 1, y: 1, rotationDeg: 0, rangeM: 5 })
+    store().addCamera({ id: 'cam-2', modelId: 'm', x: 9, y: 9, rotationDeg: 0, rangeM: 5 })
+    const typeId = store().cableTypes[0].id
+    store().addCable({ id: 'k', device: { kind: 'camera', id: 'cam-1' }, endDevice: { kind: 'camera', id: 'cam-2' }, typeId, points: [] })
+    expect(getActiveFloor(store()).cables).toHaveLength(1)
+
+    history().clear()
+    store().deleteCamera('cam-2') // the END device
+    expect(getActiveFloor(store()).cables).toEqual([])
+    expect(steps()).toBe(1)
+    undoProject()
+    expect(getActiveFloor(store()).cables).toHaveLength(1)
+  })
+
+  it('addCable refuses a cable with no end, with both a hub and a device end, or ending on its own start', () => {
+    store().setImage(IMAGE_A)
+    store().addHub({ id: 'h1', x: 5, y: 5, mountHeightM: 1.5 })
+    const typeId = store().cableTypes[0].id
+    store().addCable({ id: 'none', device: { kind: 'camera', id: 'cam-1' }, typeId, points: [] })
+    store().addCable({ id: 'both', device: { kind: 'camera', id: 'cam-1' }, hubId: 'h1', endDevice: { kind: 'camera', id: 'cam-2' }, typeId, points: [] })
+    store().addCable({ id: 'itself', device: { kind: 'camera', id: 'cam-1' }, endDevice: { kind: 'camera', id: 'cam-1' }, typeId, points: [] })
+    expect(getActiveFloor(store()).cables).toEqual([])
   })
 })

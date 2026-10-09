@@ -32,8 +32,8 @@ export interface Hub {
   mountHeightM: number
   /**
    * Riser / drop: cable length on the other floor, beyond this point,
-   * metres. Shaft marker with NO exit anywhere on the shaft: the typed
-   * "length beyond this opening" fallback (see `shaft-integrity.ts`).
+   * metres. Shaft opening: the typed "length beyond this opening" counted
+   * for every cable entering here that is not routed beyond the shaft yet.
    * Omitted = 0.
    */
   extraLengthM?: number
@@ -49,10 +49,9 @@ export interface Hub {
    * continuing the crossing for cables arriving via this point (see
    * `cross-floor-exit-resolver.ts` / `cross-floor-hub-beyond-length-resolver.ts`).
    * `points` are the intermediate vertices, same convention as `Cable.points`.
-   * Riser / drop: only meaningful while `link` is set (phase 5). Shaft:
-   * meaningful on ANY marker regardless of `link` (shafts never set it) -
-   * a marker that carries one is an EXIT of its shaft; several markers of
-   * the same shaft may each carry their own (phase 6, several exits).
+   * Riser / drop only, and only meaningful while `link` is set. A shaft
+   * opening never carries one: each cable owns its route beyond a shaft
+   * (`Cable.beyondShaft`).
    */
   trunk?: { hubId: string; points: CablePoint[] }
 }
@@ -86,21 +85,39 @@ export interface CablePoint {
   y: number
 }
 
-/** `points` = INTERMEDIATE vertices only, ordered device -> hub. Both ends derive from the live device / hub positions. */
+/**
+ * A cable's own route beyond the shaft opening it ends on: on the floor
+ * `floorId`, from THAT floor's opening of the same shaft to a hub
+ * (`hubId`, never a shaft opening) or a device (`endDevice`) there - exactly
+ * one of the two. `points` are the intermediate vertices, opening -> end, in
+ * that floor's image px. See `shaft-cable-leg.ts`.
+ */
+export interface CableShaftLeg {
+  floorId: string
+  points: CablePoint[]
+  hubId?: string
+  endDevice?: CableEndRef
+}
+
+/**
+ * A route from a start device to an end on the same floor: a hub (`hubId`)
+ * or another device (`endDevice`) - exactly one of the two, never the start
+ * device itself. `points` = INTERMEDIATE vertices only, ordered start -> end.
+ * Both ends derive from the live device / hub positions.
+ */
 export interface Cable {
   id: string
   device: CableEndRef
-  hubId: string
+  hubId?: string
+  endDevice?: CableEndRef
   typeId: string
   points: CablePoint[]
   /**
-   * Meaningful only when this cable ends on a shaft marker with SEVERAL
-   * exits (`shaft-integrity.ts`): which exit (named by its floor id) this
-   * cable uses. Unset/stale (the named floor is no longer an exit of that
-   * shaft) resolves per the rules there - never guessed. Ignored when the
-   * cable does not end on a shaft marker, or that shaft has 0 or 1 exits.
+   * Only when the cable ends on a shaft opening: its own route on the exit
+   * floor. Unset = not routed beyond the shaft yet (label "C1-?", counted up
+   * to the shaft only).
    */
-  exitFloorId?: string
+  beyondShaft?: CableShaftLeg
 }
 
 export interface CableType {

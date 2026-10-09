@@ -2,6 +2,7 @@ import { createElement, Fragment, useMemo, type ReactNode } from 'react'
 import { buildCableEndpointIndex, type CableEndpointIndex } from '../../domain/cable/cable-endpoint-index'
 import type { CableLayout, CablePoint } from '../../domain/cable/cable-layout-types'
 import type { CableLimitStatus } from '../../domain/cable/cable-length-estimate-calculator'
+import type { ResolvedShaftLeg } from '../../domain/cable/shaft-cable-leg'
 import type { PlacedFireAlarmDevice } from '../../domain/fire-alarm/fire-alarm-device-types'
 import type { PlacedCamera, ScaleCalibration } from '../../domain/project-file/project-types'
 import type { PlacedSensor } from '../../domain/sensor/sensor-types'
@@ -9,6 +10,7 @@ import { fireAlarmModelSpecById } from '../../export/shared/fire-alarm-compatibi
 import { CableRouteLines } from './cable-route-lines'
 import { computeCableStrokeWidthPx } from './cable-type-color-palette'
 import { HubTrunkRouteLines } from './hub-trunk-route-lines'
+import { ShaftLegRouteLines } from './shaft-leg-route-lines'
 
 const NO_LIMIT_STATUSES: ReadonlyMap<string, CableLimitStatus> = new Map()
 
@@ -27,6 +29,8 @@ export interface PlanSceneCabling extends CableLayout {
   limitStatusById?: ReadonlyMap<string, CableLimitStatus>
   /** The project's `shafts[]` ids, in order - a shaft marker's on-screen "T{n}" label needs the WHOLE project, not just this floor's own hubs (phase 6). Omitted on every pre-shaft caller/test - harmless unless this floor actually holds a shaft marker. */
   shaftIds?: readonly string[]
+  /** Cable legs that run on THIS floor beyond a shaft (`findShaftLegsOnFloor`) - their cables may belong to other floors, so the caller resolves them from the whole project. Omitted = none drawn. */
+  shaftLegs?: readonly ResolvedShaftLeg[]
 }
 
 /** Editor-only wiring; omitted in the PNG export and the dev spike, where hubs and cables are a static render. */
@@ -65,8 +69,9 @@ interface PlanSceneCablingInput {
  *
  * `cableLines` goes into `WallSegmentsLayer`'s children slot: every hub's
  * trunk line (`HubTrunkRouteLines`, dotted, drawn first so a cable line
- * paints over it where the two cross) then every cable line
- * (`CableRouteLines`). Memoised, and null without cables or trunks, so that
+ * paints over it where the two cross), every cable leg that continues on
+ * this floor beyond a shaft (`ShaftLegRouteLines`), then every cable line
+ * (`CableRouteLines`). Memoised, and null without cables, trunks or legs, so that
  * layer's memo still holds for a plain plan; with either, a camera drop
  * re-reconciles the wall lines (an end moved).
  */
@@ -99,14 +104,17 @@ export function usePlanSceneCabling({
   const onSelectCable = interaction?.onSelectCable
   const strokeWidthPx = computeCableStrokeWidthPx(iconRadiusPx)
   const hasTrunks = cabling.hubs.some((hub) => hub.trunk)
+  const shaftLegs = cabling.shaftLegs
+  const hasShaftLegs = shaftLegs !== undefined && shaftLegs.length > 0
   const cableLines = useMemo(
     () =>
-      cabling.cables.length === 0 && !hasTrunks
+      cabling.cables.length === 0 && !hasTrunks && !hasShaftLegs
         ? null
         : createElement(
             Fragment,
             null,
             createElement(HubTrunkRouteLines, { hubs: cabling.hubs, hiddenHubId, strokeWidthPx }),
+            hasShaftLegs ? createElement(ShaftLegRouteLines, { legs: shaftLegs, cableTypes: cabling.cableTypes, strokeWidthPx }) : null,
             cabling.cables.length === 0
               ? null
               : createElement(CableRouteLines, {
@@ -120,7 +128,7 @@ export function usePlanSceneCabling({
                   onSelectCable,
                 }),
           ),
-    [cabling.cables, cabling.cableTypes, cabling.hubs, hasTrunks, index, limitStatusById, hiddenCableId, hiddenHubId, strokeWidthPx, viewportScale, onSelectCable],
+    [cabling.cables, cabling.cableTypes, cabling.hubs, hasTrunks, hasShaftLegs, shaftLegs, index, limitStatusById, hiddenCableId, hiddenHubId, strokeWidthPx, viewportScale, onSelectCable],
   )
 
   return { index, limitStatusById, cableLines }

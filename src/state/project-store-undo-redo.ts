@@ -1,3 +1,4 @@
+import { isOnlyShaftLegChangeOnFloor } from '../domain/cable/shaft-cable-leg'
 import { findChangedFloorIds, nearestFloorIndexAfterRemoval } from '../domain/floor/floor-list-editing'
 import type { Floor } from '../domain/floor/floor-types'
 import { useProjectStore } from './project-store'
@@ -48,7 +49,13 @@ function autoSwitchAndClamp(before: Floor[], direction: 'undo' | 'redo'): void {
   const changed = findChangedFloorIds(before, after) // null when lengths differ or it was a pure reorder
 
   if (changed?.length === 1) {
-    useProjectStore.getState().setActiveFloor(changed[0])
+    // A cable's route beyond a shaft is stored on the cable's OWN floor but drawn (and edited) on
+    // the exit floor: when that is all that changed and the user is on that exit floor, stay.
+    const activeFloorId = useProjectStore.getState().activeFloorId
+    const was = before.find((floor) => floor.id === changed[0])
+    const now = after.find((floor) => floor.id === changed[0])
+    const isLegEditSeenFromHere = was !== undefined && now !== undefined && isOnlyShaftLegChangeOnFloor(was, now, activeFloorId)
+    if (!isLegEditSeenFromHere) useProjectStore.getState().setActiveFloor(changed[0])
   } else if (changed && changed.length >= 2) {
     const activeFloorId = useProjectStore.getState().activeFloorId
     if (!changed.includes(activeFloorId)) {

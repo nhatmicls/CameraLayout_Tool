@@ -13,8 +13,8 @@ floor 2 (the first `F2` is the floor). An "All floors" drop-down above the list 
 without the prefix. A one-floor project has no prefix and no filter. Cable metres are summed
 over all floors and rounded up once per type; a single floor's view rounds that floor alone, so
 per-floor figures can add up to a few metres more than the project total (at most one metre
-per extra floor and type). Cables that could not be measured (no exit chosen in a shaft, or a
-floor on the way without a scale) are left out of the metres and the list says how many.
+per extra floor and type). Cables that could not be measured (a route through a shaft crossing
+a scale-less floor, or a cycle in the path) are left out of the metres and the list says how many.
 The PNG table has 11 columns: `Type, Brand, Model, Form Factor, Resolution, Lens,
 Quantity, Unit, Labels, Unit Price (VND), Total (VND)`. The CSV has the same 11 columns
 plus a 12th trailing column `Notes` (breaking change for strict CSV parsers), filled only on

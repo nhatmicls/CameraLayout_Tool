@@ -70,7 +70,7 @@ export function removeShaft(floors: readonly Floor[], shafts: readonly Shaft[], 
       delete cleared.trunk
       return cleared
     })
-    const cables = floor.cables.filter((cable) => !markerHubIds.has(cable.hubId))
+    const cables = floor.cables.filter((cable) => cable.hubId === undefined || !markerHubIds.has(cable.hubId))
     if (hubs.length === floor.hubs.length && cables.length === floor.cables.length) return floor
     return { ...floor, hubs, cables }
   })

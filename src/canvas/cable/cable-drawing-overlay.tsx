@@ -5,13 +5,13 @@ import { Circle, Group, Line } from 'react-konva'
 import {
   acceptedSnapKind,
   advanceCableDrawingChain,
+  excludedSnapDevice,
   removeLastCableDrawingPoint,
   type CableDrawingChain,
 } from '../../domain/cable/cable-drawing-chain'
 import { buildCableEndpointIndex, cableLabel } from '../../domain/cable/cable-endpoint-index'
 import { MAX_CABLES } from '../../domain/cable/cable-layout-types'
 import { findNearestCableSnapTarget, type CableSnapTarget } from '../../domain/cable/cable-snap-target-lookup'
-import { findShaftExits } from '../../domain/cable/shaft-integrity'
 import { clampPointToImageBounds } from '../../domain/shared/clamp'
 import { fireAlarmModelSpecById } from '../../export/shared/fire-alarm-compatibility-index-singleton'
 import { useEditorUiStore } from '../../state/editor-ui-store'
@@ -36,7 +36,8 @@ const START_HINT = 'Start on a camera, a sensor, a fire-alarm device or a hub.'
  * Editor-only group for the "Draw cable" tool, mounted in the stage's one
  * editor-overlay Layer (never part of the PNG export). The first click must
  * land on a device or a hub; further clicks add route vertices; a click on
- * the opposite kind (hub after device, device after hub) commits ONE cable.
+ * the other end commits ONE cable - after a device start, a hub or any OTHER
+ * device; after a hub start, a device.
  * Backspace removes the last vertex; Esc cancels the cable, a second Esc
  * leaves the mode. The chain also resets when cameras, sensors, fire-alarm
  * devices, hubs or the image change from outside this tool (undo / redo, a project opened), so a
@@ -83,6 +84,7 @@ export function CableDrawingOverlay({ stageRef, viewportScale, imageWidthPx, ima
         buildCableEndpointIndex(cameras, sensors, hubs, undefined, { devices: fireAlarmDevices, modelById: fireAlarmModelSpecById }),
         resolveCableSnapTolerancePx(viewportScaleRef.current, iconRadiusPx),
         acceptedSnapKind(chainRef.current),
+        excludedSnapDevice(chainRef.current),
       )
       return { x, y, snapTarget }
     }
@@ -114,24 +116,28 @@ export function CableDrawingOverlay({ stageRef, viewportScale, imageWidthPx, ima
         } else if (type) {
           const newCableId = crypto.randomUUID()
           addCable({ id: newCableId, ...step.cable, typeId: type.id })
-          // A cable freshly drawn onto a shaft with several exits gets NO default exit - select it
-          // and ask, rather than leaving it silently unestimated with no clue why.
+          // A cable drawn onto a shaft opening is not routed beyond it yet ("C1-?"): say where to
+          // finish it, rather than leaving the "?" unexplained.
           const endHub = hubs.find((candidate) => candidate.id === step.cable.hubId)
-          const afterFloors = useProjectStore.getState().floors
-          if (endHub?.kind === 'shaft' && endHub.shaftId && findShaftExits(afterFloors, endHub.shaftId).length >= 2) {
-            const afterFloor = getActiveFloor(useProjectStore.getState())
-            const newCable = afterFloor.cables.find((candidate) => candidate.id === newCableId)
-            if (newCable) {
-              const newIndex = buildCableEndpointIndex(
-                afterFloor.cameras,
-                afterFloor.sensors,
-                afterFloor.hubs,
-                shafts.map((shaft) => shaft.id),
-                { devices: afterFloor.fireAlarmDevices, modelById: fireAlarmModelSpecById },
-              )
-              useEditorUiStore.getState().setSelectedCableId(newCableId)
-              pushNotification('info', `Choose the exit for ${cableLabel(newCable, newIndex)}.`)
-            }
+          const afterFloor = getActiveFloor(useProjectStore.getState())
+          const newCable = afterFloor.cables.find((candidate) => candidate.id === newCableId)
+          if (newCable && (endHub?.kind === 'shaft' || newCable.endDevice)) {
+            const newIndex = buildCableEndpointIndex(
+              afterFloor.cameras,
+              afterFloor.sensors,
+              afterFloor.hubs,
+              shafts.map((shaft) => shaft.id),
+              { devices: afterFloor.fireAlarmDevices, modelById: fireAlarmModelSpecById },
+            )
+            const label = cableLabel(newCable, newIndex)
+            // A click near another device now ENDS the cable on it - name what was drawn, so a
+            // cable that was only meant to pass by is noticed and undone at once.
+            pushNotification(
+              'info',
+              newCable.endDevice
+                ? `${label} drawn to a device. Undo (Ctrl+Z) if the route was only meant to pass it.`
+                : `${label} enters the shaft. Open the floor it leaves on, select the shaft opening and route it from there.`,
+            )
           }
         }
         moveChain(null)

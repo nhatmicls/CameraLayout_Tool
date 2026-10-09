@@ -1,3 +1,4 @@
+import { findShaftLegsOnFloor } from '../../domain/cable/shaft-cable-leg'
 import { useMemo } from 'react'
 import { hubLabels } from '../../domain/cable/cable-endpoint-index'
 import { HUB_EXTRA_LENGTH_BOUNDS, HUB_MOUNT_HEIGHT_BOUNDS } from '../../domain/cable/cable-layout-types'
@@ -68,7 +69,10 @@ export function HubPropertiesPanel() {
   const beyond = showCrossFloorSection ? resolveHubBeyondLength(project, { floorId: activeFloorId, hubId: hub.id }) : null
   const isComputedMode = beyond?.source === 'route'
 
-  const cableCount = cables.filter((cable) => cable.hubId === hub.id).length
+  // Cables that end here, plus cables of other floors whose own route beyond a shaft ends here
+  // (deleting the hub removes the former and puts the latter back to "not routed").
+  const routeCount = findShaftLegsOnFloor(floors, activeFloorId).filter((leg) => leg.end.kind === 'hub' && leg.end.hub.hubId === hub.id).length
+  const cableCount = cables.filter((cable) => cable.hubId === hub.id).length + routeCount
   const { noun, heightLabel, help } = WORDING[hub.kind ?? 'hub']
   const handleDelete = () => {
     deleteHub(hub.id)

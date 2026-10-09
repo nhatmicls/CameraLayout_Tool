@@ -79,20 +79,16 @@ export function crossFloorLinkProblem(floors: readonly Floor[], floorIndex: numb
 
 /**
  * Validates a hub's OWN stored `trunk`, targeting a different hub that
- * exists on the SAME floor. `null` = valid, or `hub.trunk` unset. A shaft
- * marker's trunk needs no `link` at all (any marker of a shaft may be an
- * exit - phase 6); a riser/drop's trunk is only meaningful on a validly
- * linked point (phase 5, unchanged). A trunk may NEVER target a shaft
- * marker (decision D1, phase 6 review): cables enter shafts, routes leave
- * them - a shaft marker is never a valid trunk TARGET, whether the owner is
- * a riser/drop or another shaft marker.
+ * exists on the SAME floor. `null` = valid, or `hub.trunk` unset. Only a
+ * validly linked riser / drop may carry one. A shaft opening never does -
+ * each cable owns its route beyond a shaft (`Cable.beyondShaft`) - and is
+ * never a valid trunk TARGET either: cables enter shafts, routes leave them.
  */
 export function crossFloorTrunkProblem(floors: readonly Floor[], floorIndex: number, hub: Hub): string | null {
   if (!hub.trunk) return null
   if (hub.trunk.hubId === hub.id) return 'routes to itself'
-  if (hub.kind !== 'shaft' && (crossFloorLinkProblem(floors, floorIndex, hub) !== null || !hub.link)) {
-    return 'has a route but is not validly linked'
-  }
+  if (hub.kind === 'shaft') return 'is a shaft opening, which carries no route of its own'
+  if (crossFloorLinkProblem(floors, floorIndex, hub) !== null || !hub.link) return 'has a route but is not validly linked'
   const target = floors[floorIndex].hubs.find((candidate) => candidate.id === hub.trunk!.hubId)
   if (!target) return 'routes to a point that no longer exists'
   if (target.kind === 'shaft') return 'routes to a shaft marker, which can never be a trunk target'

@@ -238,7 +238,7 @@ test.describe('multi-floor-tabs-smoke', () => {
       const savedText = Buffer.concat(chunks).toString('utf-8')
       savedProjectJson = JSON.parse(savedText)
 
-      expect(savedProjectJson!.schemaVersion).toBe(8)
+      expect(savedProjectJson!.schemaVersion).toBe(9)
       expect(savedProjectJson!.floors).toHaveLength(2)
       const [floor2, groundFloor] = savedProjectJson!.floors
       expect(floor2.name).toBe('Floor 2')
