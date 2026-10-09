@@ -155,7 +155,7 @@ export function normaliseLoadedFloor(
   const fireAlarmDevices = normaliseLoadedFireAlarmDevices(raw.fireAlarmDevices ?? [], lookups.fireAlarmModelIds, nonCablingWarnings)
 
   const cablingWarnings: string[] = []
-  const { hubs, cables } = normaliseLoadedFloorCabling(raw, lookups.cableTypes, lookups.shaftIds, { cameras, sensors }, cablingWarnings)
+  const { hubs, cables } = normaliseLoadedFloorCabling(raw, lookups.cableTypes, lookups.shaftIds, { cameras, sensors, fireAlarmDevices }, cablingWarnings)
 
   const floor: Floor = {
     id: raw.id,

@@ -2,8 +2,10 @@ import { createElement, Fragment, useMemo, type ReactNode } from 'react'
 import { buildCableEndpointIndex, type CableEndpointIndex } from '../../domain/cable/cable-endpoint-index'
 import type { CableLayout, CablePoint } from '../../domain/cable/cable-layout-types'
 import type { CableLimitStatus } from '../../domain/cable/cable-length-estimate-calculator'
+import type { PlacedFireAlarmDevice } from '../../domain/fire-alarm/fire-alarm-device-types'
 import type { PlacedCamera, ScaleCalibration } from '../../domain/project-file/project-types'
 import type { PlacedSensor } from '../../domain/sensor/sensor-types'
+import { fireAlarmModelSpecById } from '../../export/shared/fire-alarm-compatibility-index-singleton'
 import { CableRouteLines } from './cable-route-lines'
 import { computeCableStrokeWidthPx } from './cable-type-color-palette'
 import { HubTrunkRouteLines } from './hub-trunk-route-lines'
@@ -42,6 +44,7 @@ export interface PlanSceneCablingInteraction {
 interface PlanSceneCablingInput {
   cameras: PlacedCamera[]
   sensors: PlacedSensor[]
+  fireAlarmDevices: PlacedFireAlarmDevice[]
   cabling: PlanSceneCabling
   interaction: PlanSceneCablingInteraction | undefined
   iconRadiusPx: number
@@ -70,6 +73,7 @@ interface PlanSceneCablingInput {
 export function usePlanSceneCabling({
   cameras,
   sensors,
+  fireAlarmDevices,
   cabling,
   interaction,
   iconRadiusPx,
@@ -81,8 +85,8 @@ export function usePlanSceneCabling({
   cableLines: ReactNode
 } {
   const index = useMemo(
-    () => buildCableEndpointIndex(cameras, sensors, cabling.hubs, cabling.shaftIds),
-    [cameras, sensors, cabling.hubs, cabling.shaftIds],
+    () => buildCableEndpointIndex(cameras, sensors, cabling.hubs, cabling.shaftIds, { devices: fireAlarmDevices, modelById: fireAlarmModelSpecById }),
+    [cameras, sensors, fireAlarmDevices, cabling.hubs, cabling.shaftIds],
   )
   const limitStatusById = cabling.limitStatusById ?? NO_LIMIT_STATUSES
 

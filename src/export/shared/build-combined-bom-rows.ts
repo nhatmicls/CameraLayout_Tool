@@ -93,9 +93,9 @@ export function buildCombinedBomRows(project: Project, options?: { floorId?: str
   let cableEstimate: CableLayoutEstimate
   let floorsWithoutScale: FloorWithoutCableScale[] = []
   if (options?.floorId) {
-    cableEstimate = computeProjectCableEstimate(project).byFloorId.get(options.floorId) ?? EMPTY_CABLE_LAYOUT_ESTIMATE
+    cableEstimate = computeProjectCableEstimate(project, fireAlarmModelSpecById).byFloorId.get(options.floorId) ?? EMPTY_CABLE_LAYOUT_ESTIMATE
   } else {
-    const projectEstimate = computeProjectCableEstimate(project)
+    const projectEstimate = computeProjectCableEstimate(project, fireAlarmModelSpecById)
     cableEstimate = projectCableEstimateAsLayoutEstimate(projectEstimate)
     // H1 fix: gated on > 1 floor - a one-floor project's own `scale-not-set` cable warning
     // already covers it (via `cableEstimate.warnings`), so this note must never ALSO fire for it.

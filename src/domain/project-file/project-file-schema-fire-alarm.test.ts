@@ -61,8 +61,8 @@ describe('project file fire-alarm devices - round trip', () => {
     expect(result.project.fireAlarmSettings).toEqual({ coverageMode: 'tcvn-5738', ceilingHeightM: 3.5 })
   })
 
-  it('writes schemaVersion 7', () => {
-    expect(JSON.parse(serializeProject(projectWith([panel]))).schemaVersion).toBe(7)
+  it('writes schemaVersion 8', () => {
+    expect(JSON.parse(serializeProject(projectWith([panel]))).schemaVersion).toBe(8)
   })
 })
 
@@ -100,7 +100,7 @@ describe('project file fire-alarm devices - rejected input', () => {
     expect(parseRaw((raw) => void (raw.fireAlarmSettings = { coverageMode: 'tcvn-5738', ceilingHeightM: 12.1 })).ok).toBe(false)
   })
 
-  it('rejects schemaVersion 8', () => {
-    expect(parseRaw((raw) => void (raw.schemaVersion = 8)).ok).toBe(false)
+  it('rejects schemaVersion 9', () => {
+    expect(parseRaw((raw) => void (raw.schemaVersion = 9)).ok).toBe(false)
   })
 })

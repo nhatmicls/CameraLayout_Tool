@@ -1,11 +1,10 @@
 import { create } from 'zustand'
 import { temporal } from 'zundo'
 import type { CableLayout } from '../domain/cable/cable-layout-types'
-import type { FireAlarmLayout } from '../domain/project-file/project-types'
 import { patchActiveFloor, type FloorContent } from './project-store-active-floor-update'
 import { createCablingActions } from './project-store-cabling-actions'
 import { createCrossFloorLinkActions } from './project-store-cross-floor-link-actions'
-import { createFireAlarmActions } from './project-store-fire-alarm-actions'
+import { createFireAlarmActions, type FireAlarmState } from './project-store-fire-alarm-actions'
 import { createFloorActions } from './project-store-floor-actions'
 import { selectActiveFloor } from './project-store-floor-selectors'
 import { createPlacedItemActions } from './project-store-placed-item-actions'
@@ -37,13 +36,15 @@ function routeCablingPartial(
   return patch
 }
 
-/** Same routing for the fire-alarm slice: `fireAlarmDevices` -> the active floor, `fireAlarmSettings` -> project level. */
+/** Same routing for the fire-alarm slice: `fireAlarmDevices` (+ `cables`, pruned by a device delete) -> the active floor, `fireAlarmSettings` -> project level. */
 function routeFireAlarmPartial(
   state: Pick<ProjectState, 'floors' | 'activeFloorId' | 'shafts'>,
-  partial: Partial<FireAlarmLayout>,
+  partial: Partial<FireAlarmState>,
 ): Partial<ProjectState> {
-  const patch: Partial<ProjectState> =
-    partial.fireAlarmDevices !== undefined ? patchActiveFloor(state, { fireAlarmDevices: partial.fireAlarmDevices }) : {}
+  const floorPatch: Partial<FloorContent> = {}
+  if (partial.fireAlarmDevices !== undefined) floorPatch.fireAlarmDevices = partial.fireAlarmDevices
+  if (partial.cables !== undefined) floorPatch.cables = partial.cables
+  const patch: Partial<ProjectState> = Object.keys(floorPatch).length > 0 ? patchActiveFloor(state, floorPatch) : {}
   if (partial.fireAlarmSettings !== undefined) patch.fireAlarmSettings = partial.fireAlarmSettings
   return patch
 }
@@ -88,7 +89,10 @@ export const useProjectStore = create<ProjectStore>()(
       ),
       ...createFireAlarmActions(
         (partial) => set(routeFireAlarmPartial(get(), partial)),
-        () => ({ fireAlarmDevices: selectActiveFloor(get()).fireAlarmDevices, fireAlarmSettings: get().fireAlarmSettings }),
+        () => {
+          const floor = selectActiveFloor(get())
+          return { fireAlarmDevices: floor.fireAlarmDevices, cables: floor.cables, fireAlarmSettings: get().fireAlarmSettings }
+        },
       ),
       // A link/trunk can touch two floors at once, so this slice sets `floors` directly
       // instead of going through `patchActiveFloor` (which only ever patches one).

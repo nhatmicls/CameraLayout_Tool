@@ -3,9 +3,10 @@ import { buildCableEndpointIndex, cableLabel } from '../../domain/cable/cable-en
 import { SCALE_NOT_SET_CABLE_MESSAGE } from '../../domain/cable/cable-layout-estimate'
 import { formatMeters, formatMetersInterval } from '../../domain/cable/cable-length-format'
 import { findShaftExits, resolveShaftCableExit } from '../../domain/cable/shaft-integrity'
+import { fireAlarmModelSpecById } from '../../export/shared/fire-alarm-compatibility-index-singleton'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
-import { selectCables, selectCameras, selectHubs, selectSensors } from '../../state/project-store-floor-selectors'
+import { selectCables, selectCameras, selectFireAlarmDevices, selectHubs, selectSensors } from '../../state/project-store-floor-selectors'
 import { useCableLayoutEstimate } from '../../state/use-cable-layout-estimate'
 import { fieldLabelClass, inputClass } from '../camera/camera-properties-form-helpers'
 import { CableShaftExitSelect } from './cable-shaft-exit-select'
@@ -23,6 +24,7 @@ const LIMIT_STATUS_CLASS = { ok: 'text-neutral-600', 'no-limit': 'text-neutral-4
 export function CablePropertiesPanel() {
   const cameras = useProjectStore(selectCameras)
   const sensors = useProjectStore(selectSensors)
+  const fireAlarmDevices = useProjectStore(selectFireAlarmDevices)
   const hubs = useProjectStore(selectHubs)
   const cables = useProjectStore(selectCables)
   const cableTypes = useProjectStore((s) => s.cableTypes)
@@ -36,7 +38,10 @@ export function CablePropertiesPanel() {
   // Stable identity (LOW fix, phase 6 review): a fresh `.map()` every render would give `useMemo`
   // below a NEW array on every call even when `shafts` itself hasn't changed, defeating the memo.
   const shaftIds = useMemo(() => shafts.map((shaft) => shaft.id), [shafts])
-  const index = useMemo(() => buildCableEndpointIndex(cameras, sensors, hubs, shaftIds), [cameras, sensors, hubs, shaftIds])
+  const index = useMemo(
+    () => buildCableEndpointIndex(cameras, sensors, hubs, shaftIds, { devices: fireAlarmDevices, modelById: fireAlarmModelSpecById }),
+    [cameras, sensors, fireAlarmDevices, hubs, shaftIds],
+  )
 
   // Looked up rather than trusted: an undo can remove the cable while its id is still selected.
   const cable = cables.find((candidate) => candidate.id === selectedCableId)

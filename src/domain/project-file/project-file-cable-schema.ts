@@ -16,6 +16,7 @@ import {
 } from '../cable/cable-layout-types'
 import { cableRefProblem } from '../cable/cable-reference-integrity'
 import { normaliseShaftMarkerShapes, pruneUnknownOrDuplicateShaftMarkers } from '../cable/shaft-integrity'
+import type { PlacedFireAlarmDevice } from '../fire-alarm/fire-alarm-device-types'
 import type { PlacedSensor } from '../sensor/sensor-types'
 import type { PlacedCamera } from './project-types'
 
@@ -72,6 +73,7 @@ export const hubSchema = z.strictObject({
 const cableEndRefSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('camera'), id }),
   z.strictObject({ kind: z.literal('sensor'), id, end: z.enum(['tx', 'rx']).optional() }),
+  z.strictObject({ kind: z.literal('fire-alarm'), id }),
 ])
 
 export const cableSchema = z.strictObject({
@@ -155,7 +157,7 @@ export function normaliseLoadedCableTypes(raw: { cableTypes?: CableType[] }, war
  * cable whose device, hub or type does not resolve. `cableTypes` is the
  * project-wide deduped list (`normaliseLoadedCableTypes`); `shaftIds` is the
  * project-wide `shafts[]` id set (parsed before any floor, so it is already
- * final here); `kept` is the cameras/sensors THIS FLOOR kept after their own
+ * final here); `kept` is the cameras/sensors/fire-alarm devices THIS FLOOR kept after their own
  * filtering, so a cable on a dropped camera goes with it. Every warning here
  * is UNPREFIXED - the caller (`project-file-floor-schema.ts`) prefixes with
  * the floor name only when the file has more than one floor. Never rejects.
@@ -164,7 +166,7 @@ export function normaliseLoadedFloorCabling(
   raw: { hubs?: Hub[]; cables?: Cable[] },
   cableTypes: readonly CableType[],
   shaftIds: ReadonlySet<string>,
-  kept: { cameras: readonly PlacedCamera[]; sensors: readonly PlacedSensor[] },
+  kept: { cameras: readonly PlacedCamera[]; sensors: readonly PlacedSensor[]; fireAlarmDevices: readonly PlacedFireAlarmDevice[] },
   warnings: string[],
 ): { hubs: Hub[]; cables: Cable[] } {
   const dedupedHubs = dedupeById(raw.hubs ?? [], 'Hub', warnings)
@@ -174,6 +176,7 @@ export function normaliseLoadedFloorCabling(
   const ctx = {
     cameraIds: new Set(kept.cameras.map((camera) => camera.id)),
     sensorShapeById: new Map(kept.sensors.map((sensor): [string, string] => [sensor.id, sensor.shape])),
+    fireAlarmDeviceIds: new Set(kept.fireAlarmDevices.map((device) => device.id)),
     hubIds: new Set(hubs.map((hub) => hub.id)),
     typeIds: new Set(cableTypes.map((type) => type.id)),
   }

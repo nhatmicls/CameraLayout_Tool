@@ -30,6 +30,9 @@ export const FIRE_ALARM_KIND_DESIGNATOR_PREFIX: Record<FireAlarmKind, string> = 
   'intrusion-detector': 'ID',
 }
 
+/** Catalog lookup the labels need: model id -> its kind. Passed in, because `src/domain` never imports `src/catalog`. */
+export type FireAlarmKindByModelId = Readonly<Record<string, { kind: FireAlarmKind } | undefined>>
+
 /** Prefix of a device whose catalog model is unknown (removed since save). */
 const UNKNOWN_MODEL_FIRE_ALARM_DESIGNATOR_PREFIX = 'F'
 
@@ -41,7 +44,7 @@ const UNKNOWN_MODEL_FIRE_ALARM_DESIGNATOR_PREFIX = 'F'
  */
 export function buildFireAlarmDeviceLabels(
   devices: readonly PlacedFireAlarmDevice[],
-  modelById: Readonly<Record<string, { kind: FireAlarmKind } | undefined>>,
+  modelById: FireAlarmKindByModelId,
 ): string[] {
   const countByPrefix = new Map<string, number>()
   return devices.map((device) => {

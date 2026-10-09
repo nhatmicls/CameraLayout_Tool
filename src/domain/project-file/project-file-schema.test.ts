@@ -39,8 +39,8 @@ describe('serializeProject + parseProjectFile round trip', () => {
 })
 
 describe('schema version', () => {
-  it('writes schemaVersion 7', () => {
-    expect(JSON.parse(serializeProject(baseProject)).schemaVersion).toBe(7)
+  it('writes schemaVersion 8', () => {
+    expect(JSON.parse(serializeProject(baseProject)).schemaVersion).toBe(8)
   })
 
   it('still reads a version 1 flat file, deep-equalling the one-floor project, with cameras left without mounting keys', () => {
@@ -127,15 +127,24 @@ describe('parseProjectFile rejection cases', () => {
 
   it('rejects an unknown/future schemaVersion on a v7-shaped file', () => {
     const raw = JSON.parse(serializeProject(baseProject))
-    raw.schemaVersion = 8
+    raw.schemaVersion = 9
     const result = parseProjectFile(JSON.stringify(raw), LOOKUPS)
     expect(result.ok).toBe(false)
   })
 
-  // A FLAT-shaped file (no `floors` key) must also be rejected at these versions: 7 routes to the
-  // v7 schema by version number alone but then fails for lacking `floors`; 8 and 0 are not in the
-  // legacy schema's 1-6 union either.
-  it.each([7, 8, 0])('rejects a flat-shaped file with schemaVersion %i', (version) => {
+  it('still opens a file saved as schemaVersion 7 (same floors[] shape), with no warnings', () => {
+    const raw = JSON.parse(serializeProject(baseProject))
+    raw.schemaVersion = 7
+    const result = parseProjectFile(JSON.stringify(raw), LOOKUPS)
+    if (!result.ok) throw new Error(result.error)
+    expect(result.project).toEqual(baseProject)
+    expect(result.warnings).toEqual([])
+  })
+
+  // A FLAT-shaped file (no `floors` key) must also be rejected at these versions: 7 and 8 route to
+  // the floors[] schema by version number alone but then fail for lacking `floors`; 9 and 0 are
+  // not in the legacy schema's 1-6 union either.
+  it.each([7, 8, 9, 0])('rejects a flat-shaped file with schemaVersion %i', (version) => {
     const raw = buildLegacyFlatRaw(version)
     expect(parseProjectFile(JSON.stringify(raw), LOOKUPS).ok).toBe(false)
   })

@@ -14,8 +14,14 @@ const sensorCable: Cable = { id: 'k2', device: { kind: 'sensor', id: 'a' }, hubI
 const beamTx: Cable = { id: 'k3', device: { kind: 'sensor', id: 'b', end: 'tx' }, hubId: 'h2', typeId: 't2', points: [] }
 const beamRx: Cable = { id: 'k4', device: { kind: 'sensor', id: 'b', end: 'rx' }, hubId: 'h2', typeId: 't2', points: [] }
 const all = [cameraCable, sensorCable, beamTx, beamRx]
+const fireAlarmCable: Cable = { id: 'k5', device: { kind: 'fire-alarm', id: 'a' }, hubId: 'h1', typeId: 't1', points: [] }
 
 describe('removeCablesOfDevice', () => {
+  it('removes a fire-alarm device cable but not a camera or sensor with the same id string', () => {
+    expect(removeCablesOfDevice([...all, fireAlarmCable], 'fire-alarm', 'a')).toEqual(all)
+    expect(removeCablesOfDevice([...all, fireAlarmCable], 'camera', 'a')).toContain(fireAlarmCable)
+  })
+
   it('removes the camera cable but not a sensor with the same id string', () => {
     expect(removeCablesOfDevice(all, 'camera', 'a')).toEqual([sensorCable, beamTx, beamRx])
   })
@@ -64,9 +70,15 @@ describe('cableRefProblem', () => {
       ['a', 'sector'],
       ['b', 'beam'],
     ]),
+    fireAlarmDeviceIds: new Set(['a']),
     hubIds: new Set(['h1', 'h2']),
     typeIds: new Set(['t1', 't2']),
   }
+
+  it('accepts a known fire-alarm device and reports an unknown one', () => {
+    expect(cableRefProblem(fireAlarmCable, ctx)).toBeNull()
+    expect(cableRefProblem({ ...fireAlarmCable, device: { kind: 'fire-alarm', id: 'x' } }, ctx)).toContain('unknown fire-alarm device')
+  })
 
   it('accepts resolvable refs', () => {
     for (const cable of all) expect(cableRefProblem(cable, ctx)).toBeNull()

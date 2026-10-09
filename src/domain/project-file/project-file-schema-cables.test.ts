@@ -62,7 +62,7 @@ function expectOk(result: ReturnType<typeof parseProjectFile>) {
 }
 
 describe('project file cables - round trip and back-compat', () => {
-  it('round-trips a v7 project deep-equal with no warnings', () => {
+  it('round-trips a project deep-equal with no warnings', () => {
     const result = expectOk(parseRaw(() => {}))
     expect(result.project).toEqual(project)
     expect(result.warnings).toEqual([])
@@ -96,8 +96,8 @@ describe('project file cables - round trip and back-compat', () => {
     expect(result.warnings).toEqual([])
   })
 
-  it('rejects schemaVersion 8', () => {
-    expect(parseRaw((raw) => void (raw.schemaVersion = 8)).ok).toBe(false)
+  it('rejects schemaVersion 9', () => {
+    expect(parseRaw((raw) => void (raw.schemaVersion = 9)).ok).toBe(false)
   })
 
   it('reseeds the default types when the file carries an empty list', () => {
@@ -150,6 +150,28 @@ describe('project file cables - dropped with a warning, the rest kept', () => {
 
   it('unknown camera id', () => {
     expectOnlyBeamCableKept((raw) => void (raw.floors[0].cables[0].device = { kind: 'camera', id: 'nope' }))
+  })
+
+  it('unknown fire-alarm device id', () => {
+    expectOnlyBeamCableKept((raw) => void (raw.floors[0].cables[0].device = { kind: 'fire-alarm', id: 'nope' }))
+  })
+
+  it('keeps a cable on a placed fire-alarm device, and round-trips it', () => {
+    const fireAlarmCable: Cable = { ...cameraCable, device: { kind: 'fire-alarm', id: 'fa-1' } }
+    const withDevice = buildProject({
+      cameras: project.floors[0].cameras,
+      sensors: [pir, beam],
+      hubs: [hub],
+      cables: [fireAlarmCable],
+      fireAlarmDevices: [{ id: 'fa-1', modelId: 'smoke-1', x: 300, y: 300 }],
+    })
+    const result = expectOk(parseProjectFile(serializeProject(withDevice), { ...LOOKUPS, fireAlarmModelIds: new Set(['smoke-1']) }))
+    expect(onlyFloor(result).cables).toEqual([fireAlarmCable])
+    expect(result.warnings).toEqual([])
+    // The same file, read where the device's model is unknown: the device goes, and its cable with it.
+    const dropped = expectOk(parseProjectFile(serializeProject(withDevice), LOOKUPS))
+    expect(onlyFloor(dropped).cables).toEqual([])
+    expect(dropped.warnings).toHaveLength(2)
   })
 
   it('unknown typeId', () => {

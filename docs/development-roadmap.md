@@ -25,7 +25,6 @@
 - **Six datasheet-less AX HYBRID PRO models**: DS-PDPG12P-EG2, DS-PDSK-P, and four others sold in Vietnam but with no downloadable official datasheet - add when/if datasheets are published.
 - **868 MHz variants (`-WE`) sold in Vietnam**: currently the `-WE` AX PRO peripherals (868 MHz) are not sold in Vietnam - if/when they become available, add them.
 - **View toggles for fire-alarm devices**: add toggles to hide / show fire-alarm device markers and coverage circles (currently always visible).
-- **Cabling fire-alarm devices**: extend cable routes to include fire-alarm devices as endpoints (currently camera/sensor only).
 - **Dedicated fire-alarm panels**: Hikvision HF-C series (HF-C108, etc.) once official datasheets are available; wireless and wired detectors for them.
 - **More AX PRO peripherals**: additional detector models (DS-PDSMK-E-WE, DS-PS1-I-WE, DS-PS1-EV-WE) once datasheets obtained.
 - **Fire-alarm prices**: Vietnamese shop prices for remaining records as they become available.

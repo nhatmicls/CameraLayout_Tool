@@ -81,6 +81,7 @@ export function PlanSceneLayers({
   } = usePlanSceneCabling({
     cameras,
     sensors,
+    fireAlarmDevices,
     cabling,
     interaction: cablingInteractionIfInteractive,
     iconRadiusPx,

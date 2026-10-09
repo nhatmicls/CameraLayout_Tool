@@ -2,6 +2,8 @@ import {
   applyPlacedFireAlarmDevicePatch,
   type PlacedFireAlarmDevicePatch,
 } from '../domain/fire-alarm/placed-fire-alarm-device-builder-and-patch'
+import type { Cable } from '../domain/cable/cable-layout-types'
+import { removeCablesOfDevice } from '../domain/cable/cable-reference-integrity'
 import type { FireAlarmSettings, PlacedFireAlarmDevice } from '../domain/fire-alarm/fire-alarm-device-types'
 import type { FireAlarmLayout } from '../domain/project-file/project-types'
 
@@ -12,17 +14,20 @@ import type { FireAlarmLayout } from '../domain/project-file/project-types'
  *
  * zundo records an undo step for EVERY `set()`, so each action checks ids
  * and no-op patches before calling it: a refused edit leaves the history
- * alone. Fire-alarm devices are never cable endpoints (CLAUDE.md), so unlike
- * `deleteCamera`/`deleteSensor` this slice's delete never touches `cables`.
+ * alone. A fire-alarm device can be a cable end, so - like `deleteCamera` /
+ * `deleteSensor` - its delete prunes its cables in the same `set()` (one
+ * undo step).
  */
-/** Same two fields as the persisted `FireAlarmLayout` (`project-types.ts`) - an alias, not a re-declared duplicate, mirroring `CablingState = CableLayout` in `project-store-cabling-actions.ts`. */
-export type FireAlarmState = FireAlarmLayout
+/** The persisted `FireAlarmLayout` (`project-types.ts`) plus the active floor's `cables`, which this slice only touches in `deleteFireAlarmDevice`. */
+export interface FireAlarmState extends FireAlarmLayout {
+  cables: Cable[]
+}
 
 export interface FireAlarmActions {
   addFireAlarmDevice: (device: PlacedFireAlarmDevice) => void
   /** Merges `patch` into the device matching `id` via `applyPlacedFireAlarmDevicePatch`. An unknown id leaves the state (and so the undo history) untouched. */
   updateFireAlarmDevice: (id: string, patch: PlacedFireAlarmDevicePatch) => void
-  /** An unknown id leaves the state (and so the undo history) untouched - the selected id can be stale after an undo. */
+  /** Also removes the device's cables, in the same undo step. An unknown id leaves the state (and so the undo history) untouched - the selected id can be stale after an undo. */
   deleteFireAlarmDevice: (id: string) => void
   /** Shallow-equal patch (nothing actually changes) is a no-op. */
   setFireAlarmSettings: (patch: Partial<FireAlarmSettings>) => void
@@ -66,9 +71,12 @@ export function createFireAlarmActions(
     },
 
     deleteFireAlarmDevice: (id) => {
-      const { fireAlarmDevices } = get()
+      const { fireAlarmDevices, cables } = get()
       if (!fireAlarmDevices.some((device) => device.id === id)) return
-      set({ fireAlarmDevices: fireAlarmDevices.filter((device) => device.id !== id) })
+      set({
+        fireAlarmDevices: fireAlarmDevices.filter((device) => device.id !== id),
+        cables: removeCablesOfDevice(cables, 'fire-alarm', id),
+      })
     },
 
     setFireAlarmSettings: (patch) => {

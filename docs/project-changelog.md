@@ -2,6 +2,19 @@
 
 ## 2026-10-09
 
+- **Cables from fire-alarm devices**: the "Draw cable" tool now snaps to placed fire-alarm
+  devices (panel, detectors, modules, contacts... every kind) as well as cameras and sensors. A
+  cable's device end may be `{ kind: 'fire-alarm', id }`; its label uses the device's designator
+  (`S1-H1`, `P1-H1`). Deleting the device removes its cables in the same undo step; a file whose
+  cable points at a missing fire-alarm device loads with that cable dropped and a warning. A
+  fire-alarm device has no mounting height, so the estimate uses the default device height.
+- **Clicking a device under a selected cable selects the device** (fix): a click inside a
+  camera, sensor or fire-alarm marker's hitbox now selects that device even when the selected
+  cable ends on it. Before, the click stayed on the cable and Delete removed the cable instead of
+  the device. Hub markers already behaved this way.
+- **Project file schema version 8.** Same shape as 7 plus the fire-alarm cable end above. Files
+  are saved as 8; version 7 and 1-6 files still open. A build from before this change refuses a
+  version 8 file by its version number.
 - **Fire-alarm designators**: placed devices are labelled by kind instead of the generic `F{n}` -
   control panel `P`, wireless hub `PW`, expander `E`, keypad `KP`, keyfob `KF`, tag reader `TR`,
   relay `R`, repeater `REP`, communicator `COM`, power supply `PS`, accessory `ACE`, smoke `S`,

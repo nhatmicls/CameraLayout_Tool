@@ -91,8 +91,8 @@ describe('project file sensors - v7 round trip per shape', () => {
     expect(result.project).toEqual(project)
   })
 
-  it('writes schemaVersion 7', () => {
-    expect(JSON.parse(serializeProject(projectWithSensors([sector]))).schemaVersion).toBe(7)
+  it('writes schemaVersion 8', () => {
+    expect(JSON.parse(serializeProject(projectWithSensors([sector]))).schemaVersion).toBe(8)
   })
 })
 
@@ -150,7 +150,7 @@ describe('project file sensors - rejected input', () => {
 
   it('rejects an unknown/future schemaVersion', () => {
     const raw = JSON.parse(serializeProject(projectWithSensors([]))) as Record<string, unknown>
-    raw.schemaVersion = 8
+    raw.schemaVersion = 9
     expect(parseProjectFile(JSON.stringify(raw), LOOKUPS).ok).toBe(false)
   })
 })

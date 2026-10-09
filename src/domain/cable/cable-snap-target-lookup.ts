@@ -1,7 +1,7 @@
 import type { CableEndpointIndex } from './cable-endpoint-index'
 import type { CableEndRef } from './cable-layout-types'
 
-/** Something a cable can start or end on: a device end (camera, sensor, beam tx / rx) or a hub. */
+/** Something a cable can start or end on: a device end (camera, sensor, beam tx / rx, fire-alarm device) or a hub. */
 export type CableSnapTarget =
   | { kind: 'device'; ref: CableEndRef; x: number; y: number; label: string }
   | { kind: 'hub'; hubId: string; x: number; y: number; label: string }

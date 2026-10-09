@@ -11,6 +11,28 @@ describe('buildCableEndpointIndex', () => {
     expect(index.hubs.map((hub) => hub.label)).toEqual(['H1'])
   })
 
+  it('adds fire-alarm devices after the sensors, labelled with their per-kind designator', () => {
+    const withFireAlarm = buildCableEndpointIndex([CAMERA_C1], [PIR_S1], [HUB_H1], undefined, {
+      devices: [
+        { id: 'fa-1', modelId: 'smoke', x: 11, y: 12 },
+        { id: 'fa-2', modelId: 'panel', x: 21, y: 22 },
+        { id: 'fa-3', modelId: 'smoke', x: 31, y: 32 },
+      ],
+      modelById: { smoke: { kind: 'smoke-detector' }, panel: { kind: 'control-panel' } },
+    })
+    expect(withFireAlarm.devices.map((device) => device.label)).toEqual(['C1', 'S1', 'S1', 'P1', 'S2'])
+    expect(withFireAlarm.deviceByKey.get(cableEndRefKey({ kind: 'fire-alarm', id: 'fa-2' }))).toMatchObject({ x: 21, y: 22, mountHeightM: null })
+    const cable: Cable = { id: 'k', device: { kind: 'fire-alarm', id: 'fa-2' }, hubId: HUB_H1.id, typeId: 't', points: [] }
+    expect(cableLabel(cable, withFireAlarm)).toBe('P1-H1')
+    expect(resolveCablePathPx(cable, withFireAlarm)).toEqual([{ x: 21, y: 22 }, { x: HUB_H1.x, y: HUB_H1.y }])
+  })
+
+  it('does not resolve a fire-alarm ref when no fire-alarm devices are passed, and falls back to "F{n}" without a catalog lookup', () => {
+    expect(index.deviceByKey.get(cableEndRefKey({ kind: 'fire-alarm', id: 'fa-1' }))).toBeUndefined()
+    const noCatalog = buildCableEndpointIndex([], [], [], undefined, { devices: [{ id: 'fa-1', modelId: 'smoke', x: 0, y: 0 }] })
+    expect(noCatalog.devices.map((device) => device.label)).toEqual(['F1'])
+  })
+
   it('yields two ends for a beam, at its transmitter and receiver', () => {
     expect(index.deviceByKey.get(cableEndRefKey({ kind: 'sensor', id: 'beam-1', end: 'tx' }))).toMatchObject({ x: 200, y: 600 })
     expect(index.deviceByKey.get(cableEndRefKey({ kind: 'sensor', id: 'beam-1', end: 'rx' }))).toMatchObject({ x: 500, y: 600 })

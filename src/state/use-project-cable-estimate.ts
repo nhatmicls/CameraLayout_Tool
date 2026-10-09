@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { computeProjectCableEstimate, type ProjectCableEstimate } from '../domain/cable/project-cable-layout-estimate'
+import { fireAlarmModelSpecById } from '../export/shared/fire-alarm-compatibility-index-singleton'
 import { useProjectStore } from './project-store'
 import { selectProject } from './project-store-floor-selectors'
 
@@ -18,7 +19,7 @@ export function useProjectCableEstimate(): ProjectCableEstimate {
   const fireAlarmSettings = useProjectStore((s) => s.fireAlarmSettings)
 
   return useMemo(
-    () => computeProjectCableEstimate(selectProject({ floors, shafts, cableTypes, cableSettings, fireAlarmSettings })),
+    () => computeProjectCableEstimate(selectProject({ floors, shafts, cableTypes, cableSettings, fireAlarmSettings }), fireAlarmModelSpecById),
     [floors, shafts, cableTypes, cableSettings, fireAlarmSettings],
   )
 }

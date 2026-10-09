@@ -43,6 +43,24 @@ describe('project store fire-alarm devices', () => {
     expect(floor().fireAlarmDevices).toEqual([])
   })
 
+  it('deleting a device removes its cables in the same undo step, and leaves other cables alone', () => {
+    store().addFireAlarmDevice(device)
+    store().addCamera({ id: 'f1', modelId: 'm', x: 0, y: 0, rotationDeg: 0, rangeM: 10 })
+    store().addHub({ id: 'h1', x: 5, y: 5, mountHeightM: 1.5 })
+    const typeId = store().cableTypes[0].id
+    store().addCable({ id: 'k-fa', device: { kind: 'fire-alarm', id: 'f1' }, hubId: 'h1', typeId, points: [] })
+    store().addCable({ id: 'k-cam', device: { kind: 'camera', id: 'f1' }, hubId: 'h1', typeId, points: [] })
+    const before = steps()
+
+    store().deleteFireAlarmDevice('f1')
+    expect(floor().cables.map((cable) => cable.id)).toEqual(['k-cam'])
+    expect(steps()).toBe(before + 1)
+
+    history().undo()
+    expect(floor().fireAlarmDevices).toEqual([device])
+    expect(floor().cables.map((cable) => cable.id)).toEqual(['k-fa', 'k-cam'])
+  })
+
   it('ignores an unknown id on updateFireAlarmDevice/deleteFireAlarmDevice and adds no history step', () => {
     store().addFireAlarmDevice(device)
     const before = steps()

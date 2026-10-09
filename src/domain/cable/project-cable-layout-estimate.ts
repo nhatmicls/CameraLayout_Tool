@@ -5,6 +5,7 @@ import { ceilMeters } from './cable-length-format'
 import { resolveCableBeyondLengths } from './cross-floor-hub-beyond-length-resolver'
 import { resolveCrossFloorExit } from './cross-floor-exit-resolver'
 import { findShaftExits, findShaftMarkers } from './shaft-integrity'
+import type { FireAlarmKindByModelId } from '../fire-alarm/fire-alarm-device-designator'
 import { floorLabelPrefix } from '../floor/floor-label-prefix'
 import type { Floor } from '../floor/floor-types'
 import type { Project } from '../project-file/project-types'
@@ -42,17 +43,21 @@ export interface ProjectCableEstimate {
  * times per render for identical inputs (React memoises per call site, not
  * per argument). `fireAlarmSettings` is deliberately NOT part of the key -
  * the cable estimate never reads it, so toggling the TCVN coverage mode
- * must not invalidate this cache. Safe indefinitely: every real edit (the
+ * must not invalidate this cache. `fireAlarmModelById` (the catalog lookup
+ * behind a fire-alarm cable end's label) IS part of the key, by reference -
+ * the app passes one module-level constant, so it never misses in practice. Safe indefinitely: every real edit (the
  * store's immutable updates) produces a NEW `floors` array, so a stale
  * cache can never be read back - no explicit reset needed (confirmed by
  * `resetProject`/`replaceProject` always producing fresh floor objects too).
  */
-let cachedKey: Pick<Project, 'floors' | 'shafts' | 'cableTypes' | 'cableSettings'> | null = null
+let cachedKey: (Pick<Project, 'floors' | 'shafts' | 'cableTypes' | 'cableSettings'> & { fireAlarmModelById: FireAlarmKindByModelId | undefined }) | null = null
 let cachedResult: ProjectCableEstimate | null = null
 
-export function computeProjectCableEstimate(project: Project): ProjectCableEstimate {
+/** `fireAlarmModelById` only feeds the labels of cables that start on a fire-alarm device; omitted = those read "F{n}". Metres never depend on it. */
+export function computeProjectCableEstimate(project: Project, fireAlarmModelById?: FireAlarmKindByModelId): ProjectCableEstimate {
   if (
     cachedKey &&
+    cachedKey.fireAlarmModelById === fireAlarmModelById &&
     cachedKey.floors === project.floors &&
     cachedKey.shafts === project.shafts &&
     cachedKey.cableTypes === project.cableTypes &&
@@ -60,8 +65,8 @@ export function computeProjectCableEstimate(project: Project): ProjectCableEstim
   ) {
     return cachedResult!
   }
-  const result = computeProjectCableEstimateUncached(project)
-  cachedKey = { floors: project.floors, shafts: project.shafts, cableTypes: project.cableTypes, cableSettings: project.cableSettings }
+  const result = computeProjectCableEstimateUncached(project, fireAlarmModelById)
+  cachedKey = { floors: project.floors, shafts: project.shafts, cableTypes: project.cableTypes, cableSettings: project.cableSettings, fireAlarmModelById }
   cachedResult = result
   return result
 }
@@ -94,7 +99,7 @@ function shaftNoExitWarnings(project: Project): CableEstimateWarning[] {
   return warnings
 }
 
-function computeProjectCableEstimateUncached(project: Project): ProjectCableEstimate {
+function computeProjectCableEstimateUncached(project: Project, fireAlarmModelById: FireAlarmKindByModelId | undefined): ProjectCableEstimate {
   const beyondByFloorId = resolveCableBeyondLengths(project)
   const shaftIds = project.shafts.map((shaft) => shaft.id)
   const byFloorId = new Map<string, CableLayoutEstimate>()
@@ -111,6 +116,8 @@ function computeProjectCableEstimateUncached(project: Project): ProjectCableEsti
         scale: floor.scale,
         beyondByCableId: beyondByFloorId.get(floor.id),
         shaftIds,
+        fireAlarmDevices: floor.fireAlarmDevices,
+        fireAlarmModelById,
       }),
     )
   }

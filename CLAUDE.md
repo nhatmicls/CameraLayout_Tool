@@ -148,15 +148,16 @@ Project rules:
   (only `replaceProject` / `resetProject` do). An image load is pinned to the floor (and project
   load) it was started for (`floor-image-load-target-resolver.ts`); the image budget
   (`floor-image-budget.ts`) and the 80 MB save guard keep the saved file loadable.
-- Project files: `PROJECT_SCHEMA_VERSION` is 7 (`floors[]` shape); the reader accepts 1 to 7 -
-  flat v1-6 files are parsed by the legacy schema and wrapped into one floor - the writer always
-  emits 7. The loader never rejects a file for bad cross-floor data: invalid links, trunks, shaft
+- Project files: `PROJECT_SCHEMA_VERSION` is 8 (`floors[]` shape; 8 = 7 + a cable end may be a
+  fire-alarm device, same schema reads both); the reader accepts 1 to 8 - flat v1-6 files are
+  parsed by the legacy schema and wrapped into one floor - the writer always emits 8. The loader never rejects a file for bad cross-floor data: invalid links, trunks, shaft
   markers and exit choices are dropped with a warning.
 - Cables: a cable is `{ device, hubId, typeId, points, exitFloorId? }` - `device` is a
-  `{ kind, id, end? }` ref (`end` = `tx` / `rx`, for a beam only), `points` are the INTERMEDIATE
+  `{ kind, id, end? }` ref (`kind` = `camera` / `sensor` / `fire-alarm`; `end` = `tx` / `rx`, for
+  a beam only; a fire-alarm end is labelled by its designator and has no mounting height), `points` are the INTERMEDIATE
   vertices in image px, device -> hub; both ends derive from the live device / hub position
   (`src/domain/cable/cable-endpoint-index.ts`). A cable and its hub are on the same floor. Metres
-  are never persisted. Deleting a camera, sensor or hub removes its cables in the same `set()`
+  are never persisted. Deleting a camera, sensor, fire-alarm device or hub removes its cables in the same `set()`
   (one undo step); a cable type in use on ANY floor, or the last one, cannot be deleted (>= 1
   type always). A `Hub` is `{ id, x, y, mountHeightM, kind?, extraLengthM?, link?, trunk?,
   shaftId? }`; no `kind` = plain hub. Labels `H{n}` / `R{n}` / `D{n}` (per floor) and `T{n}`

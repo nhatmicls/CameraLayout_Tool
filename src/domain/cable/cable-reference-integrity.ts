@@ -1,4 +1,4 @@
-import type { Cable } from './cable-layout-types'
+import type { Cable, CableDeviceKind } from './cable-layout-types'
 
 /**
  * Keeps cable references coherent: shared by the project-file loader (drop a
@@ -7,12 +7,12 @@ import type { Cable } from './cable-layout-types'
  * project without cables keeps its array identity through a delete.
  */
 
-export function cableRefersToDevice(cable: Cable, kind: 'camera' | 'sensor', id: string): boolean {
+export function cableRefersToDevice(cable: Cable, kind: CableDeviceKind, id: string): boolean {
   return cable.device.kind === kind && cable.device.id === id
 }
 
 /** Removes every cable of the device, including both the tx and rx cables of a beam. */
-export function removeCablesOfDevice(cables: Cable[], kind: 'camera' | 'sensor', id: string): Cable[] {
+export function removeCablesOfDevice(cables: Cable[], kind: CableDeviceKind, id: string): Cable[] {
   if (!cables.some((cable) => cableRefersToDevice(cable, kind, id))) return cables
   return cables.filter((cable) => !cableRefersToDevice(cable, kind, id))
 }
@@ -35,6 +35,7 @@ export interface CableRefContext {
   cameraIds: ReadonlySet<string>
   /** Placed shape (`sector` / `circle` / `beam`) of every placed sensor, by sensor id. */
   sensorShapeById: ReadonlyMap<string, string>
+  fireAlarmDeviceIds: ReadonlySet<string>
   hubIds: ReadonlySet<string>
   typeIds: ReadonlySet<string>
 }
@@ -47,6 +48,9 @@ export function cableRefProblem(cable: Cable, ctx: CableRefContext): string | nu
   const { device } = cable
   if (device.kind === 'camera') {
     return ctx.cameraIds.has(device.id) ? null : `references unknown camera "${device.id}"`
+  }
+  if (device.kind === 'fire-alarm') {
+    return ctx.fireAlarmDeviceIds.has(device.id) ? null : `references unknown fire-alarm device "${device.id}"`
   }
 
   const shape = ctx.sensorShapeById.get(device.id)

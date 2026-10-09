@@ -58,10 +58,10 @@ your supplier before ordering.
 
 v1 in progress; every feature in the table above works and is verified in Chromium.
 
-- Project files are saved as schema version 7. Files from versions 1-6 still open as a
-  one-floor project, but a file saved by this version needs this version or newer.
+- Project files are saved as schema version 8. Version 7 files open unchanged and files
+  from versions 1-6 still open as a one-floor project, but a file saved by this version needs this version or newer.
 - Known limit: on a very dense plan (about 100 sensors and 300 walls) moving a wall or a
   sensor can take a few tenths of a second to redraw.
 - End-to-end tests are smoke tests in Chromium against the dev server.
-- Not done yet: cabling fire devices, end-to-end tests against the production build,
+- Not done yet: end-to-end tests against the production build,
   Firefox/Safari export checks.

@@ -13,9 +13,10 @@ import { MAX_CABLES } from '../../domain/cable/cable-layout-types'
 import { findNearestCableSnapTarget, type CableSnapTarget } from '../../domain/cable/cable-snap-target-lookup'
 import { findShaftExits } from '../../domain/cable/shaft-integrity'
 import { clampPointToImageBounds } from '../../domain/shared/clamp'
+import { fireAlarmModelSpecById } from '../../export/shared/fire-alarm-compatibility-index-singleton'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
-import { getActiveFloor, selectCameras, selectHubs, selectImage, selectSensors } from '../../state/project-store-floor-selectors'
+import { getActiveFloor, selectCameras, selectFireAlarmDevices, selectHubs, selectImage, selectSensors } from '../../state/project-store-floor-selectors'
 import { WALL_SELECTED_COLOR, computeIconRadiusPx } from '../shared/brand-and-dori-color-palette'
 import { cableTypeColor, resolveCableSnapTolerancePx } from './cable-type-color-palette'
 
@@ -29,7 +30,7 @@ interface CableDrawingOverlayProps {
 
 type Cursor = { x: number; y: number; snapTarget: CableSnapTarget | null }
 
-const START_HINT = 'Start on a camera, a sensor or a hub.'
+const START_HINT = 'Start on a camera, a sensor, a fire-alarm device or a hub.'
 
 /**
  * Editor-only group for the "Draw cable" tool, mounted in the stage's one
@@ -37,8 +38,8 @@ const START_HINT = 'Start on a camera, a sensor or a hub.'
  * land on a device or a hub; further clicks add route vertices; a click on
  * the opposite kind (hub after device, device after hub) commits ONE cable.
  * Backspace removes the last vertex; Esc cancels the cable, a second Esc
- * leaves the mode. The chain also resets when cameras, sensors, hubs or the
- * image change from outside this tool (undo / redo, a project opened), so a
+ * leaves the mode. The chain also resets when cameras, sensors, fire-alarm
+ * devices, hubs or the image change from outside this tool (undo / redo, a project opened), so a
  * cable can never start on something that is gone.
  *
  * The markers Layer does not listen in this mode, so every click reaches
@@ -75,11 +76,11 @@ export function CableDrawingOverlay({ stageRef, viewportScale, imageWidthPx, ima
       if (!raw) return null
       const { x, y } = clampPointToImageBounds(raw, imageWidthPx, imageHeightPx)
       const activeFloor = getActiveFloor(useProjectStore.getState())
-      const { cameras, sensors, hubs } = activeFloor
+      const { cameras, sensors, hubs, fireAlarmDevices } = activeFloor
       const snapTarget = findNearestCableSnapTarget(
         x,
         y,
-        buildCableEndpointIndex(cameras, sensors, hubs),
+        buildCableEndpointIndex(cameras, sensors, hubs, undefined, { devices: fireAlarmDevices, modelById: fireAlarmModelSpecById }),
         resolveCableSnapTolerancePx(viewportScaleRef.current, iconRadiusPx),
         acceptedSnapKind(chainRef.current),
       )
@@ -90,6 +91,7 @@ export function CableDrawingOverlay({ stageRef, viewportScale, imageWidthPx, ima
       const endsChanged =
         selectCameras(state) !== selectCameras(previous) ||
         selectSensors(state) !== selectSensors(previous) ||
+        selectFireAlarmDevices(state) !== selectFireAlarmDevices(previous) ||
         selectHubs(state) !== selectHubs(previous)
       if (endsChanged || selectImage(state) !== selectImage(previous)) moveChain(null)
     })
@@ -120,7 +122,13 @@ export function CableDrawingOverlay({ stageRef, viewportScale, imageWidthPx, ima
             const afterFloor = getActiveFloor(useProjectStore.getState())
             const newCable = afterFloor.cables.find((candidate) => candidate.id === newCableId)
             if (newCable) {
-              const newIndex = buildCableEndpointIndex(afterFloor.cameras, afterFloor.sensors, afterFloor.hubs, shafts.map((shaft) => shaft.id))
+              const newIndex = buildCableEndpointIndex(
+                afterFloor.cameras,
+                afterFloor.sensors,
+                afterFloor.hubs,
+                shafts.map((shaft) => shaft.id),
+                { devices: afterFloor.fireAlarmDevices, modelById: fireAlarmModelSpecById },
+              )
               useEditorUiStore.getState().setSelectedCableId(newCableId)
               pushNotification('info', `Choose the exit for ${cableLabel(newCable, newIndex)}.`)
             }

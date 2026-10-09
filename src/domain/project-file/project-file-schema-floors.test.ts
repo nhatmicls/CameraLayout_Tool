@@ -123,9 +123,9 @@ describe('v7 rejections', () => {
     expectRejected(raw)
   })
 
-  it('rejects schemaVersion 8 (future)', () => {
+  it('rejects schemaVersion 9 (future)', () => {
     const raw = JSON.parse(serializeProject(buildProject()))
-    raw.schemaVersion = 8
+    raw.schemaVersion = 9
     expectRejected(raw)
   })
 

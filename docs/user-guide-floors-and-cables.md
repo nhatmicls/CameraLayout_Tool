@@ -37,8 +37,8 @@ types, cable allowances, the fire-detector coverage mode and shafts belong to th
   the sum of the floor heights between the cable's floor and the exit floor. A shaft with no
   exit route yet uses the typed "Length beyond this opening" and adds no vertical run. A route
   cannot end on a shaft opening.
-- A cable that crosses floors is counted on the floor of its camera or sensor. Each floor is
-  measured with its own scale; if a floor on the way has no scale the cable has no length and
+- A cable that crosses floors is counted on the floor of its camera, sensor or fire-alarm
+  device. Each floor is measured with its own scale; if a floor on the way has no scale the cable has no length and
   is reported, never guessed.
 - Limits: plans of different floors are not aligned to each other; one route per riser / drop;
   floor heights are typed, not measured. Plan images are stored in the project file, which is
@@ -63,13 +63,14 @@ A provisional cable-length estimate from routes you draw by hand.
   several floors - see Floors.
 - While "Draw cable" is on, camera cones and sensor coverage are hidden so the route is
   drawn on a clear plan; they come back when you leave the tool.
-- Drawing: click "Draw cable", click a camera, a sensor (either end of an IR beam) or a hub
+- Drawing: click "Draw cable", click a camera, a sensor (either end of an IR beam), a
+  fire-alarm device or a hub
   to start, click to add route points, then click the other kind of end - a hub, riser
   or drop after a device, a device after one of those - to finish. Backspace removes the last point, Esc cancels
   the cable, a second Esc leaves the tool. The cable takes the type chosen in the toolbar.
 - Editing: click a cable to select it, drag a point to move it, double-click the line to
-  add a point, double-click a point to remove it. Deleting a camera, sensor or hub also
-  removes its cables, in the same undo step.
+  add a point, double-click a point to remove it. Deleting a camera, sensor, fire-alarm
+  device or hub also removes its cables, in the same undo step.
 - Cable types: name, optional length limit (m) and optional price (VND/m) - a new project
   starts with Cat6 UTP (90 m limit), Power 2-core and Alarm signal, all without a price.
   A type in use on any floor, or the last remaining type, cannot be deleted.
@@ -88,9 +89,10 @@ A provisional cable-length estimate from routes you draw by hand.
   dashed and listed as "may exceed".
 - Limits: the route is 2D with straight segments - no conduit bends, no obstacles. The
   range does not cover image distortion, a perspective photo, or a wrongly typed reference
-  length. This is not a voltage-drop or PoE-budget calculation. Sensors have no mounting
-  height, so they use the default device height. A cable end follows its camera, sensor or
-  hub when the drag is dropped, not while dragging. There are no hub-to-hub links. A cable
-  type's colour is its position in the type list. Measure on site before ordering.
+  length. This is not a voltage-drop or PoE-budget calculation. Sensors and fire-alarm
+  devices have no mounting height, so they use the default device height. A cable end
+  follows its camera, sensor, fire-alarm device or hub when the drag is dropped, not while
+  dragging. There are no hub-to-hub links. A cable type's colour is its position in the
+  type list. Measure on site before ordering.
 
 Back to the [README](../README.md).

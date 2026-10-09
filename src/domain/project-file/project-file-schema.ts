@@ -21,11 +21,18 @@ export type { SensorModelLookup, SensorModelLookupEntry } from './project-file-s
  * `cableSettings`/`fireAlarmSettings`, replacing the flat top-level
  * image/cameras/.../fireAlarmDevices shape versions 1-6 used. The reader
  * still accepts 1-6 (`legacyFlatProjectFileSchema`, wrapped into one floor -
- * `project-file-legacy-flat-migration.ts`); the writer always emits 7, even
- * for a single-floor project (one writer path) - a v7 file will not open in
- * a pre-multi-floor build.
+ * `project-file-legacy-flat-migration.ts`); a v7 file will not open in a
+ * pre-multi-floor build.
+ *
+ * Schema v8 keeps the v7 shape and adds one thing: a cable's `device` may be
+ * `{ kind: 'fire-alarm', id }`. The bump exists only so a build from before
+ * that change refuses the file by its version number. The reader accepts 7
+ * and 8 through the same schema; the writer always emits 8, even for a
+ * single-floor project (one writer path).
  */
-export const PROJECT_SCHEMA_VERSION = 7 as const
+export const PROJECT_SCHEMA_VERSION = 8 as const
+/** Versions that share the `floors[]` shape (see above); everything lower is the legacy flat shape. */
+const FLOORS_SHAPE_SCHEMA_VERSIONS: readonly unknown[] = [7, PROJECT_SCHEMA_VERSION]
 
 /** What the file parser needs to know per model family, so callers (file I/O, tests) pass one object instead of a positional tail that grows with every new device family. */
 export interface ProjectFileLookups {
@@ -34,9 +41,9 @@ export interface ProjectFileLookups {
   fireAlarmModelIds: ReadonlySet<string>
 }
 
-const projectFileV7Schema = z.strictObject({
+const projectFileFloorsShapeSchema = z.strictObject({
   app: z.literal('camera-layout-tool'),
-  schemaVersion: z.literal(PROJECT_SCHEMA_VERSION),
+  schemaVersion: z.union([z.literal(7), z.literal(PROJECT_SCHEMA_VERSION)]),
   floors: floorsArraySchema,
   shafts: shaftsArraySchema.optional(),
   cableTypes: z.array(cableTypeSchema).max(MAX_CABLE_TYPES).optional(),
@@ -44,7 +51,7 @@ const projectFileV7Schema = z.strictObject({
   fireAlarmSettings: fireAlarmSettingsSchema.optional(),
 })
 
-/** Serialises a project to the on-disk v7 JSON shape (adds the `app`/`schemaVersion` envelope). */
+/** Serialises a project to the on-disk v8 JSON shape (adds the `app`/`schemaVersion` envelope). */
 export function serializeProject(project: Project): string {
   return JSON.stringify({
     app: 'camera-layout-tool',
@@ -67,14 +74,19 @@ export type ParseProjectResult =
   | { ok: true; project: Project; warnings: string[] }
   | { ok: false; error: string }
 
-/** `raw.schemaVersion === 7` picks the v7 schema; anything else (including non-numbers/missing) falls through to the legacy schema, so an unknown version fails there exactly as it always has. */
-function isV7Envelope(raw: unknown): boolean {
-  return typeof raw === 'object' && raw !== null && 'schemaVersion' in raw && (raw as { schemaVersion: unknown }).schemaVersion === PROJECT_SCHEMA_VERSION
+/** `raw.schemaVersion` 7 or 8 picks the `floors[]` schema; anything else (including non-numbers/missing) falls through to the legacy schema, so an unknown version fails there exactly as it always has. */
+function isFloorsShapeEnvelope(raw: unknown): boolean {
+  return (
+    typeof raw === 'object' &&
+    raw !== null &&
+    'schemaVersion' in raw &&
+    FLOORS_SHAPE_SCHEMA_VERSIONS.includes((raw as { schemaVersion: unknown }).schemaVersion)
+  )
 }
 
 /**
  * Parses untrusted project-file text. Single trust boundary for loaded JSON:
- * size cap, strict schema (v7's `floors[]` shape, or the legacy 1-6 flat
+ * size cap, strict schema (the v7 / v8 `floors[]` shape, or the legacy 1-6 flat
  * shape wrapped into one floor), image restricted to inline PNG/JPEG data
  * URLs, cameras/sensors/fire-alarm devices cross-checked and normalised
  * against `lookups` PER FLOOR, cable types normalised ONCE project-wide
@@ -105,8 +117,8 @@ export function parseProjectFile(text: string, lookups: ProjectFileLookups): Par
     let cableSettingsRaw: CableSettings | undefined
     let fireAlarmSettingsRaw: FireAlarmSettings | undefined
 
-    if (isV7Envelope(raw)) {
-      const result = projectFileV7Schema.safeParse(raw)
+    if (isFloorsShapeEnvelope(raw)) {
+      const result = projectFileFloorsShapeSchema.safeParse(raw)
       if (!result.success) return { ok: false, error: `Invalid project file: ${formatZodError(result.error)}` }
       floorsRaw = result.data.floors
       shaftsRaw = result.data.shafts ?? []

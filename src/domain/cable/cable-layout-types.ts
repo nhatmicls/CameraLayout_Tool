@@ -71,11 +71,15 @@ export interface HubRef {
 /**
  * The device end of a cable. Ids are unique only within a kind, so the ref
  * carries `kind`. A beam sensor is one sensor with two ends: `end` is
- * required for a beam and forbidden for every other sensor shape.
+ * required for a beam and forbidden for every other sensor shape. A
+ * fire-alarm device (any kind - panel, detector, module...) is one end.
  */
 export type CableEndRef =
   | { kind: 'camera'; id: string }
   | { kind: 'sensor'; id: string; end?: 'tx' | 'rx' }
+  | { kind: 'fire-alarm'; id: string }
+
+export type CableDeviceKind = CableEndRef['kind']
 
 export interface CablePoint {
   x: number

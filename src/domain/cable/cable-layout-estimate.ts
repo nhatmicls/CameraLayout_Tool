@@ -1,5 +1,7 @@
 import type { PlacedCamera, ScaleCalibration } from '../project-file/project-types'
 import type { PlacedSensor } from '../sensor/sensor-types'
+import type { FireAlarmKindByModelId } from '../fire-alarm/fire-alarm-device-designator'
+import type { PlacedFireAlarmDevice } from '../fire-alarm/fire-alarm-device-types'
 import { buildCableEndpointIndex, cableLabel } from './cable-endpoint-index'
 import type { HubBeyondLength } from './cross-floor-hub-beyond-length-resolver'
 import type { CableLayout, CableType } from './cable-layout-types'
@@ -70,6 +72,10 @@ export interface CableLayoutEstimateInput extends CableLayout {
   beyondByCableId?: ReadonlyMap<string, HubBeyondLength>
   /** The project's `shafts[]` ids, in order - so a shaft marker's label reads "T{n}" (project order), not a per-floor count. Absent on every pre-shaft test/caller - harmless unless this floor actually holds a shaft marker. */
   shaftIds?: readonly string[]
+  /** This floor's placed fire-alarm devices - cable ends like cameras and sensors. Absent = no cable can resolve to one (every pre-existing test). */
+  fireAlarmDevices?: readonly PlacedFireAlarmDevice[]
+  /** Catalog lookup for the fire-alarm designator labels ("S1-H1"); absent = "F{n}". */
+  fireAlarmModelById?: FireAlarmKindByModelId
 }
 
 export const SCALE_NOT_SET_CABLE_MESSAGE = 'Calibrate the scale to estimate cable lengths.'
@@ -143,7 +149,13 @@ export function computeCableLayoutEstimate(input: CableLayoutEstimateInput): Cab
   }
 
   const uncertainty = computeScaleUncertainty(scale, cableSettings.clickErrorPx)
-  const index = buildCableEndpointIndex(input.cameras, input.sensors, input.hubs, input.shaftIds)
+  const index = buildCableEndpointIndex(
+    input.cameras,
+    input.sensors,
+    input.hubs,
+    input.shaftIds,
+    input.fireAlarmDevices && { devices: input.fireAlarmDevices, modelById: input.fireAlarmModelById },
+  )
   const typeById = new Map(cableTypes.map((type): [string, CableType] => [type.id, type]))
   const estimates: CableLengthEstimate[] = []
   const warnings: CableEstimateWarning[] = cables.length > 0 ? scaleWarnings(uncertainty) : []
