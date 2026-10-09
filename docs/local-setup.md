@@ -28,6 +28,15 @@ is still running - stop it first.
 | `npm test` | Run unit tests (Vitest, pure logic only) |
 | `npm run test:e2e` | Run end-to-end smoke tests (Playwright, Chromium, starts the dev server on port 4173) |
 
+## Deploy (GitHub Pages)
+
+`.github/workflows/deploy-github-pages.yml` runs on every push to `main` (or manually from the
+Actions tab): `npm ci`, `npm test`, build, publish `dist/` to GitHub Pages. One-time repo
+setting: Settings -> Pages -> Source = "GitHub Actions".
+
+The Pages sub-path (`/<repo-name>/`) is passed to Vite only inside the workflow (`--base`), so
+`npm run dev` and a local `npm run build` still serve from `/`.
+
 ## Project layout
 
 | Path | Contents |

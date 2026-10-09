@@ -1,0 +1,55 @@
+name: Deploy to GitHub Pages
+
+# Builds the static app and publishes it to GitHub Pages.
+# Local `npm run dev` / `npm run build` are untouched: the Pages sub-path
+# (/<repo-name>/) is passed to Vite only here, through `--base`.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time; let a running deploy finish instead of cancelling it.
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm test
+
+      - id: pages
+        uses: actions/configure-pages@v5
+
+      # base_path is "/<repo-name>" for a project site, "" for a custom domain.
+      - run: npm run build -- --base="${{ steps.pages.outputs.base_path }}/"
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

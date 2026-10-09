@@ -1,5 +1,10 @@
 # Project Changelog
 
+## 2026-10-09
+
+- GitHub Pages deploy workflow (`.github/workflows/deploy-github-pages.yml`): test + build +
+  publish on push to `main` or manual run. Base path set only in CI; local dev unchanged.
+
 ## 2026-10-08
 
 **Wired 4-wire alarm devices (nhaantoan price list)**
