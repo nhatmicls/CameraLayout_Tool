@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import type { CableEndpointIndex } from '../../domain/cable/cable-endpoint-index'
 import { resolveCablePathPx } from '../../domain/cable/cable-endpoint-index'
 import type { CableLimitStatus } from '../../domain/cable/cable-length-estimate-calculator'
@@ -32,6 +33,8 @@ export interface HubAndSelectedCableNodesProps {
   viewportScale: number
   imageWidthPx: number
   imageHeightPx: number
+  /** The device markers (cameras, sensors, fire-alarm devices), painted AFTER the route editors and BEFORE the hub markers - see the paint-order note below. */
+  children?: ReactNode
 }
 
 /** `selectedHub`'s own trunk, narrowed once so neither caller nor JSX needs a `!` assertion. `null` when nothing qualifies (no selection, no trunk, or the target hub is gone). */
@@ -59,6 +62,13 @@ function resolveSelectedTrunkRoute(
  * clicked) and, once checked, the cable editor too (a selected cable ending
  * on a hub made that hub equally undraggable - same pattern, same fix, see
  * the phase report).
+ *
+ * The same holds at a cable's DEVICE end, so the device markers are passed in
+ * as `children` and painted between the editors and the hub markers: a click
+ * inside a device's hitbox selects the device, even when the selected cable
+ * ends there (before, the click stayed on the cable and Delete removed the
+ * cable instead of the device). Device markers still paint below hub markers,
+ * as they always have.
  */
 export function HubAndSelectedCableNodes({
   cabling,
@@ -72,6 +82,7 @@ export function HubAndSelectedCableNodes({
   viewportScale,
   imageWidthPx,
   imageHeightPx,
+  children,
 }: HubAndSelectedCableNodesProps) {
   const strokeWidthPx = computeCableStrokeWidthPx(iconRadiusPx)
 
@@ -122,6 +133,7 @@ export function HubAndSelectedCableNodes({
           onPointsChange={interaction.onCablePointsChange}
         />
       )}
+      {children}
       {(hubsVisible ? cabling.hubs : []).map((hub) => (
         <HubMarkerNode
           key={hub.id}

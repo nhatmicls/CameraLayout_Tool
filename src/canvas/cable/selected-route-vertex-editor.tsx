@@ -47,8 +47,10 @@ const stopClick = (e: KonvaEventObject<Event>) => {
  * the live device/hub positions the caller resolved into `startPx`/`endPx`.
  *
  * Nothing is written to the store mid-drag: the line is redrawn from a
- * local preview and the drop is one undo step. Mounted last in the markers
- * Layer, so it is never part of the PNG export.
+ * local preview and the drop is one undo step. Mounted first in the markers
+ * Layer (below every device and hub marker, so a marker at either end keeps
+ * its own clicks - see `HubAndSelectedCableNodes`), and only with an
+ * interaction, so it is never part of the PNG export.
  */
 export function SelectedRouteVertexEditor({
   routeId,

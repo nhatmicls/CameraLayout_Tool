@@ -88,55 +88,7 @@ export function PlanSceneMarkersLayer({
 }: PlanSceneMarkersLayerProps) {
   return (
     <Layer listening={listening}>
-      <CameraMarkerNodes
-        cameras={cameras}
-        hiddenIds={hiddenCameraIds}
-        iconRadiusPx={iconRadiusPx}
-        selectedCameraId={selectedCameraId}
-        interactive={interactive}
-        viewportScale={viewportScale}
-        imageWidthPx={imageWidthPx}
-        imageHeightPx={imageHeightPx}
-        onSelectCamera={onSelectCamera}
-        onDragMove={live.handleCameraDragMove}
-        onDragEnd={live.handleCameraDragEnd}
-        onRotateLive={live.handleCameraRotateLive}
-        onRotateEnd={live.handleCameraRotateEnd}
-      />
-
-      <SensorMarkerNodes
-        sensors={sensors}
-        hiddenIds={hiddenSensorIds}
-        walls={walls}
-        iconRadiusPx={iconRadiusPx}
-        planPxPerMeter={planPxPerMeter}
-        selectedSensorId={selectedSensorId}
-        interactive={interactive}
-        viewportScale={viewportScale}
-        imageWidthPx={imageWidthPx}
-        imageHeightPx={imageHeightPx}
-        wallClearancePx={wallClearancePx}
-        onSelectSensor={onSelectSensor}
-        onDragMove={live.handleSensorDragMove}
-        onDragEnd={live.handleSensorDragEnd}
-        onRotateLive={live.handleSensorRotateLive}
-        onRotateEnd={live.handleSensorRotateEnd}
-        onCommit={onSensorCommit}
-      />
-
-      <FireAlarmMarkerNodes
-        devices={fireAlarmDevices}
-        iconRadiusPx={iconRadiusPx}
-        selectedFireAlarmDeviceId={selectedFireAlarmDeviceId}
-        interactive={interactive}
-        viewportScale={viewportScale}
-        imageWidthPx={imageWidthPx}
-        imageHeightPx={imageHeightPx}
-        onSelectFireAlarmDevice={onSelectFireAlarmDevice}
-        onDragMove={live.handleFireAlarmDeviceDragMove}
-        onDragEnd={live.handleFireAlarmDeviceDragEnd}
-      />
-
+      {/* Device markers are children so they paint above the selected cable / trunk editor and below the hub markers. */}
       <HubAndSelectedCableNodes
         cabling={cabling}
         index={cableEndpointIndex}
@@ -149,7 +101,56 @@ export function PlanSceneMarkersLayer({
         viewportScale={viewportScale}
         imageWidthPx={imageWidthPx}
         imageHeightPx={imageHeightPx}
-      />
+      >
+        <CameraMarkerNodes
+          cameras={cameras}
+          hiddenIds={hiddenCameraIds}
+          iconRadiusPx={iconRadiusPx}
+          selectedCameraId={selectedCameraId}
+          interactive={interactive}
+          viewportScale={viewportScale}
+          imageWidthPx={imageWidthPx}
+          imageHeightPx={imageHeightPx}
+          onSelectCamera={onSelectCamera}
+          onDragMove={live.handleCameraDragMove}
+          onDragEnd={live.handleCameraDragEnd}
+          onRotateLive={live.handleCameraRotateLive}
+          onRotateEnd={live.handleCameraRotateEnd}
+        />
+
+        <SensorMarkerNodes
+          sensors={sensors}
+          hiddenIds={hiddenSensorIds}
+          walls={walls}
+          iconRadiusPx={iconRadiusPx}
+          planPxPerMeter={planPxPerMeter}
+          selectedSensorId={selectedSensorId}
+          interactive={interactive}
+          viewportScale={viewportScale}
+          imageWidthPx={imageWidthPx}
+          imageHeightPx={imageHeightPx}
+          wallClearancePx={wallClearancePx}
+          onSelectSensor={onSelectSensor}
+          onDragMove={live.handleSensorDragMove}
+          onDragEnd={live.handleSensorDragEnd}
+          onRotateLive={live.handleSensorRotateLive}
+          onRotateEnd={live.handleSensorRotateEnd}
+          onCommit={onSensorCommit}
+        />
+
+        <FireAlarmMarkerNodes
+          devices={fireAlarmDevices}
+          iconRadiusPx={iconRadiusPx}
+          selectedFireAlarmDeviceId={selectedFireAlarmDeviceId}
+          interactive={interactive}
+          viewportScale={viewportScale}
+          imageWidthPx={imageWidthPx}
+          imageHeightPx={imageHeightPx}
+          onSelectFireAlarmDevice={onSelectFireAlarmDevice}
+          onDragMove={live.handleFireAlarmDeviceDragMove}
+          onDragEnd={live.handleFireAlarmDeviceDragEnd}
+        />
+      </HubAndSelectedCableNodes>
     </Layer>
   )
 }
