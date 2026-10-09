@@ -86,3 +86,6 @@ release-manifest.json
 
 # throwaway verification scripts
 *.tmp.mjs
+
+#env files
+vcms.env
