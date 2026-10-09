@@ -10,6 +10,7 @@ import type { PlacedCamera, ScaleCalibration, Wall } from './domain/project-file
 import type { FireAlarmSettings, PlacedFireAlarmDevice } from './domain/fire-alarm/fire-alarm-device-types'
 import type { PlacedSensor } from './domain/sensor/sensor-types'
 import { buildCombinedBomRows } from './export/shared/build-combined-bom-rows'
+import { fireAlarmModelSpecById } from './export/shared/fire-alarm-compatibility-index-singleton'
 import { resolveCompatibilityWarningText } from './export/png/resolve-fire-alarm-export-legend'
 
 declare global {
@@ -159,7 +160,7 @@ export function installDevTestHooks(): void {
       if (!floor) return null
       const { fireAlarmWarnings } = buildCombinedBomRows(selectProject(store), { floorId })
       const deviceIds = new Set(floor.fireAlarmDevices.map((device) => device.id))
-      return resolveCompatibilityWarningText(floor.fireAlarmDevices, filterCompatibilityWarningsToDeviceIds(fireAlarmWarnings, deviceIds))
+      return resolveCompatibilityWarningText(floor.fireAlarmDevices, filterCompatibilityWarningsToDeviceIds(fireAlarmWarnings, deviceIds), fireAlarmModelSpecById)
     },
   }
 }

@@ -126,7 +126,12 @@ Project rules:
   `shafts`, `cableTypes`, `cableSettings`, `fireAlarmSettings`. A floor (`src/domain/floor/floor-types.ts`)
   owns `image` (nullable), `scale`, `cameras`, `sensors`, `walls`, `hubs`, `cables`,
   `fireAlarmDevices` and `floorHeightM` (floor-to-floor to the floor above, default 3.5). Ids and
-  labels (`C{n}`, `S{n}`, `F{n}`, `H{n}`...) are per floor.
+  labels (`C{n}`, `S{n}`, `F{n}`, `H{n}`...) are per floor. A fire-alarm device's label is a
+  per-kind designator from the one table `FIRE_ALARM_KIND_DESIGNATOR_PREFIX`
+  (`src/domain/fire-alarm/fire-alarm-device-designator.ts`; owner decision 2026-10-09; all 19
+  kinds, e.g. control panel `P`, wireless hub `PW`, smoke `S`, heat `H`; expander and call point
+  share `E`; `F` only for an unknown model) - numbered per prefix in `fireAlarmDevices[]` order,
+  never stored.
 - Store: `floors[]` + `activeFloorId`; existing actions act on the active floor. Read through
   `src/state/project-store-floor-selectors.ts`; write through `patchActiveFloor` / `patchFloorById`
   (`project-store-active-floor-update.ts`), which also run the cross-floor + shaft prune. Never

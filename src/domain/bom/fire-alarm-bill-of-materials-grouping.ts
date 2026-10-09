@@ -1,5 +1,6 @@
 import type { BomRow } from './bill-of-materials-grouping'
 import type { CompatibilityWarning } from '../fire-alarm/fire-alarm-compatibility-checker'
+import { buildFireAlarmDeviceLabels } from '../fire-alarm/fire-alarm-device-designator'
 import { FIRE_ALARM_KIND_DISPLAY_ORDER, FIRE_ALARM_KIND_LABELS, type FireAlarmKind, type FireAlarmModelSpec, type PlacedFireAlarmDevice } from '../fire-alarm/fire-alarm-device-types'
 
 /** Prefix of a "not listed" note - exported so `merge-bom-rows-across-floors.ts` can floor-prefix the device labels inside it and combine two floors' lists without re-parsing free text. */
@@ -53,8 +54,9 @@ export function combineFireAlarmNotes(a: string | undefined, b: string | undefin
 interface FireAlarmBomGroup {
   kind: FireAlarmKind
   model: FireAlarmModelSpec
-  deviceNumbers: number[]
-  /** `F{n}` labels of this group's own devices that are individually `not-listed-for-placed-controllers`. */
+  /** Designator labels (`S1`, `KP2`...) of this group's own devices, in `devices[]` order. */
+  labels: string[]
+  /** Labels of this group's own devices that are individually `not-listed-for-placed-controllers`. */
   warnedLabels: string[]
   /** True when at least one of this group's own devices is in a `no-controller-placed` warning. */
   hasNoControllerWarning: boolean
@@ -69,8 +71,9 @@ interface FireAlarmBomGroup {
  * - Grouping key is (kind, brand, model) - no lens variant exists here.
  * - Sorted by `FIRE_ALARM_KIND_DISPLAY_ORDER` (not alphabetically by label,
  *   unlike the sensor grouping), then brand, then model.
- * - Labels (`F1`, `F2`, ...) come from the device's position in `devices`,
- *   1-based, independent of camera/sensor numbering. Unknown `modelId`s are
+ * - Labels (`S1`, `H1`, `KP1`... or the generic `F1`) come from
+ *   `buildFireAlarmDeviceLabels` - numbered per designator prefix in
+ *   `devices` order, independent of camera/sensor numbering. Unknown `modelId`s are
  *   skipped, same as the other two families.
  * - `notes` carries a `checkFireAlarmCompatibility` warning for this row's
  *   own devices: "Not listed for a placed panel/hub: F3, F7" (only the
@@ -94,21 +97,22 @@ export function groupFireAlarmDevicesIntoBom(
 
   const groups = new Map<string, FireAlarmBomGroup>()
 
+  const deviceLabels = buildFireAlarmDeviceLabels(devices, modelById)
+
   devices.forEach((device, index) => {
     const model = modelById[device.modelId]
     if (!model) return
 
-    const deviceNumber = index + 1
-    const label = `F${deviceNumber}`
+    const label = deviceLabels[index]
     const key = `${model.kind}\u0000${model.brand}\u0000${model.model}`
-    const group = groups.get(key) ?? { kind: model.kind, model, deviceNumbers: [], warnedLabels: [], hasNoControllerWarning: false }
-    group.deviceNumbers.push(deviceNumber)
+    const group = groups.get(key) ?? { kind: model.kind, model, labels: [], warnedLabels: [], hasNoControllerWarning: false }
+    group.labels.push(label)
     if (notListedDeviceIds.has(device.id)) group.warnedLabels.push(label)
     if (noControllerDeviceIds.has(device.id)) group.hasNoControllerWarning = true
     groups.set(key, group)
   })
 
-  const rows: BomRow[] = Array.from(groups.values()).map(({ kind, model, deviceNumbers, warnedLabels, hasNoControllerWarning }) => {
+  const rows: BomRow[] = Array.from(groups.values()).map(({ kind, model, labels, warnedLabels, hasNoControllerWarning }) => {
     const unitPriceVnd = model.priceVn?.amountVnd ?? null
     const notes = hasNoControllerWarning ? NO_CONTROLLER_PLACED_NOTE : warnedLabels.length > 0 ? notListedNote(warnedLabels) : ''
     return {
@@ -118,11 +122,11 @@ export function groupFireAlarmDevicesIntoBom(
       formFactor: '',
       resolution: '',
       lens: '',
-      quantity: deviceNumbers.length,
+      quantity: labels.length,
       unit: 'pcs',
-      labels: deviceNumbers.map((n) => `F${n}`).join(', '),
+      labels: labels.join(', '),
       unitPriceVnd,
-      lineTotalVnd: unitPriceVnd === null ? null : unitPriceVnd * deviceNumbers.length,
+      lineTotalVnd: unitPriceVnd === null ? null : unitPriceVnd * labels.length,
       notes,
     }
   })

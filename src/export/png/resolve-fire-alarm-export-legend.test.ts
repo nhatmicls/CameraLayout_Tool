@@ -82,29 +82,29 @@ describe('resolveCompatibilityWarningText', () => {
   const devices = [device('d1', 'hik-hub'), device('d2', 'hik-smoke'), device('d3', 'hik-smoke'), device('d4', 'hik-smoke'), device('d5', 'hik-smoke')]
 
   it('is null with no warnings', () => {
-    expect(resolveCompatibilityWarningText(devices, [])).toBeNull()
+    expect(resolveCompatibilityWarningText(devices, [], modelById)).toBeNull()
   })
 
-  it('formats the no-controller-placed aggregated line with F-labels', () => {
+  it('formats the no-controller-placed aggregated line with designator labels', () => {
     const warnings: CompatibilityWarning[] = [{ code: 'no-controller-placed', deviceIds: ['d2', 'd3'] }]
-    expect(resolveCompatibilityWarningText(devices, warnings)).toBe('No panel/hub placed for: F2, F3')
+    expect(resolveCompatibilityWarningText(devices, warnings, modelById)).toBe('No panel/hub placed for: S1, S2')
   })
 
   it('formats the not-listed line with a count and the first two labels', () => {
     const warnings: CompatibilityWarning[] = [{ code: 'not-listed-for-placed-controllers', deviceId: 'd2', modelId: 'hik-smoke' }]
-    expect(resolveCompatibilityWarningText(devices, warnings)).toBe('Compatibility: 1 device(s) not listed for a placed panel/hub: F2')
+    expect(resolveCompatibilityWarningText(devices, warnings, modelById)).toBe('Compatibility: 1 device(s) not listed for a placed panel/hub: S1')
   })
 
   it('C1 fix: never falls back to a raw device id - drops a warning naming a device not in `devices`', () => {
     // Simulates what used to leak through before the caller pre-filtered: a warning for a device
     // that belongs to ANOTHER floor (not in this floor's own `devices` list).
     const warnings: CompatibilityWarning[] = [{ code: 'not-listed-for-placed-controllers', deviceId: 'device-on-another-floor', modelId: 'hik-smoke' }]
-    expect(resolveCompatibilityWarningText(devices, warnings)).toBeNull()
+    expect(resolveCompatibilityWarningText(devices, warnings, modelById)).toBeNull()
   })
 
   it('C1 fix: a no-controller-placed warning drops the ids not in `devices`, keeping the rest', () => {
     const warnings: CompatibilityWarning[] = [{ code: 'no-controller-placed', deviceIds: ['d2', 'device-on-another-floor'] }]
-    expect(resolveCompatibilityWarningText(devices, warnings)).toBe('No panel/hub placed for: F2')
+    expect(resolveCompatibilityWarningText(devices, warnings, modelById)).toBe('No panel/hub placed for: S1')
   })
 
   it('truncates the label list to "+N more" past two labels', () => {
@@ -114,8 +114,8 @@ describe('resolveCompatibilityWarningText', () => {
       { code: 'not-listed-for-placed-controllers', deviceId: 'd4', modelId: 'hik-smoke' },
       { code: 'not-listed-for-placed-controllers', deviceId: 'd5', modelId: 'hik-smoke' },
     ]
-    expect(resolveCompatibilityWarningText(devices, warnings)).toBe(
-      'Compatibility: 4 device(s) not listed for a placed panel/hub: F2, F3 +2 more',
+    expect(resolveCompatibilityWarningText(devices, warnings, modelById)).toBe(
+      'Compatibility: 4 device(s) not listed for a placed panel/hub: S1, S2 +2 more',
     )
   })
 })

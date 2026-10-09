@@ -1,5 +1,7 @@
 import { fireAlarmModelById } from '../../catalog/fire-alarm/fire-alarm-catalog-loader'
+import { buildFireAlarmDeviceLabels } from '../../domain/fire-alarm/fire-alarm-device-designator'
 import type { PlacedFireAlarmDevice } from '../../domain/fire-alarm/fire-alarm-device-types'
+import { fireAlarmModelSpecById } from '../../export/shared/fire-alarm-compatibility-index-singleton'
 import { FireAlarmMarkerNode } from './fire-alarm-marker-node'
 
 export interface FireAlarmMarkerNodesProps {
@@ -24,8 +26,8 @@ export interface FireAlarmMarkerNodesProps {
 /**
  * Markers for every placed fire-alarm device, in `devices[]` order (the
  * fire-alarm twin of `sensor-marker-nodes.tsx`/`camera-marker-nodes.tsx`).
- * Labels are `F{n}`, independent of camera (`C{n}`) and sensor (`S{n}`)
- * labels. No rotation handle: a `PlacedFireAlarmDevice` has no bearing field
+ * Labels are per-kind designators (`buildFireAlarmDeviceLabels`: `S{n}`,
+ * `KP{n}`... or the generic `F{n}`), numbered on their own. No rotation handle: a `PlacedFireAlarmDevice` has no bearing field
  * at all (CLAUDE.md - one placed shape, nothing to rotate or resize). A
  * device whose catalog model id is unknown (removed since save) is skipped.
  */
@@ -41,6 +43,8 @@ export function FireAlarmMarkerNodes({
   onDragMove,
   onDragEnd,
 }: FireAlarmMarkerNodesProps) {
+  const labels = buildFireAlarmDeviceLabels(devices, fireAlarmModelSpecById)
+
   return (
     <>
       {devices.map((device, index) => {
@@ -52,7 +56,7 @@ export function FireAlarmMarkerNodes({
             key={device.id}
             device={device}
             kind={spec.kind}
-            label={`F${index + 1}`}
+            label={labels[index]}
             iconRadiusPx={iconRadiusPx}
             selected={device.id === selectedFireAlarmDeviceId}
             interactive={interactive}

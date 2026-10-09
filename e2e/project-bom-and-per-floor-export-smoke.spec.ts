@@ -179,7 +179,7 @@ test.describe('project-bom-and-per-floor-export-smoke', () => {
       const f1Text = await page.evaluate((id) => window.__cameraLayoutToolTestHooks!.getFloorCompatibilityWarningText(id), floors[0].id)
       expect(f1Text).toBeNull() // F1's own device is the controller itself - never warned, and F2's warned device must never leak here
       const f2Text = await page.evaluate((id) => window.__cameraLayoutToolTestHooks!.getFloorCompatibilityWarningText(id), floors[1].id)
-      expect(f2Text).toBe('Compatibility: 1 device(s) not listed for a placed panel/hub: F2') // F2's own 2nd device, bare (per-floor view)
+      expect(f2Text).toBe('Compatibility: 1 device(s) not listed for a placed panel/hub: S2') // F2's own 2nd smoke detector, bare (per-floor view)
     })
 
     await test.step('Export all floors: exactly 2 downloads (F1, F2), F3 skipped and named', async () => {

@@ -73,7 +73,7 @@ describe('groupFireAlarmDevicesIntoBom', () => {
     const rows = groupFireAlarmDevicesIntoBom([device('d1', 'hik-smoke'), device('d2', 'hik-smoke')], modelById)
     expect(rows).toHaveLength(1)
     expect(rows[0].quantity).toBe(2)
-    expect(rows[0].labels).toBe('F1, F2')
+    expect(rows[0].labels).toBe('S1, S2')
     expect(rows[0].type).toBe('Smoke detector')
   })
 
@@ -84,13 +84,13 @@ describe('groupFireAlarmDevicesIntoBom', () => {
     expect(rows[0].lens).toBe('')
   })
 
-  it('numbers labels from position in devices[], skipping an unknown modelId', () => {
+  it('numbers labels per designator prefix in devices[] order, skipping an unknown modelId', () => {
     const rows = groupFireAlarmDevicesIntoBom(
       [device('d1', 'unknown-model'), device('d2', 'hik-smoke'), device('d3', 'unknown-model'), device('d4', 'hik-smoke')],
       modelById,
     )
     expect(rows).toHaveLength(1)
-    expect(rows[0].labels).toBe('F2, F4')
+    expect(rows[0].labels).toBe('S1, S2')
   })
 
   it('sorts rows by FIRE_ALARM_KIND_DISPLAY_ORDER, not alphabetically by label', () => {
@@ -132,7 +132,7 @@ describe('groupFireAlarmDevicesIntoBom', () => {
       modelById,
       warnings,
     )
-    expect(rows[0].notes).toBe('Not listed for a placed panel/hub: F1')
+    expect(rows[0].notes).toBe('Not listed for a placed panel/hub: S1')
   })
 
   it('notes "No panel/hub placed" for a device in the aggregated no-controller-placed warning', () => {
@@ -151,6 +151,6 @@ describe('groupFireAlarmDevicesIntoBom', () => {
     expect(hubRow?.notes).toBe('')
     expect(standaloneRow?.notes).toBe('')
     // d3 is placed with a controller (the hub), but the hub's compatibleDevices list is empty in this fixture.
-    expect(smokeRow?.notes).toBe('Not listed for a placed panel/hub: F3')
+    expect(smokeRow?.notes).toBe('Not listed for a placed panel/hub: S2')
   })
 })

@@ -66,7 +66,7 @@ describe('buildCombinedBomRows - single floor (regression: byte-identical to bef
     const result = buildCombinedBomRows(project([f]))
     expect(result.fireAlarmWarnings).toEqual([{ code: 'not-listed-for-placed-controllers', deviceId: 'fire-smoke', modelId: SMOKE_MODEL_ID }])
     const smokeRow = result.fireAlarmRows.find((r) => r.model === 'DS-PDSMK-S-WE')
-    expect(smokeRow?.notes).toBe('Not listed for a placed panel/hub: F2')
+    expect(smokeRow?.notes).toBe('Not listed for a placed panel/hub: S1')
   })
 
   it('has no fire-alarm rows or warnings without any fire-alarm devices', () => {
@@ -171,10 +171,10 @@ describe('buildCombinedBomRows - multi-floor merge (plan decision d/f)', () => {
     const result = buildCombinedBomRows(project([f1, f2]))
     expect(result.fireAlarmWarnings.some((w) => w.code === 'no-controller-placed')).toBe(false)
     const smokeRow = result.fireAlarmRows.find((r) => r.model === 'DS-PDSMK-S-WE')
-    expect(smokeRow?.notes).toBe('Not listed for a placed panel/hub: F2_F1')
+    expect(smokeRow?.notes).toBe('Not listed for a placed panel/hub: F2_S1')
 
     const singleFloorView = buildCombinedBomRows(project([f1, f2]), { floorId: 'f2' })
-    expect(singleFloorView.fireAlarmRows[0]?.notes).toBe('Not listed for a placed panel/hub: F1')
+    expect(singleFloorView.fireAlarmRows[0]?.notes).toBe('Not listed for a placed panel/hub: S1')
   })
 
   it('"No panel/hub placed" only when no floor has a controller', () => {

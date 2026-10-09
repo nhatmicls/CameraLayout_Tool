@@ -2,6 +2,12 @@
 
 ## 2026-10-09
 
+- **Fire-alarm designators**: placed devices are labelled by kind instead of the generic `F{n}` -
+  control panel `P`, wireless hub `PW`, expander `E`, keypad `KP`, keyfob `KF`, tag reader `TR`,
+  relay `R`, repeater `REP`, communicator `COM`, power supply `PS`, accessory `ACE`, smoke `S`,
+  heat `H`, CO `CO`, call point `E`, sounder `SO`, magnetic contact `MAG`, environment `ENV`,
+  intrusion detector `ID`. `F` remains only for a device whose model is unknown. Each prefix is
+  numbered on its own per floor (`S1`, `S2`, `H1`...); expander and call point share one `E` series. Applies to canvas markers, properties panel, BOM labels / notes, CSV and PNG legend.
 - GitHub Pages deploy workflow (`.github/workflows/deploy-github-pages.yml`): test + build +
   publish on push to `main` or manual run. Base path set only in CI; local dev unchanged.
 

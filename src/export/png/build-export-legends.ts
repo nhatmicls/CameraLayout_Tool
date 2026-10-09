@@ -105,7 +105,7 @@ export function buildExportLegends(
       options.floorPosition?.count,
     ),
     fireAlarmLegend: resolveFireAlarmLegend(options.fireAlarmDevices, fireAlarmModelSpecById, options.fireAlarmSettings, scaleIsSet),
-    compatibilityWarningText: resolveCompatibilityWarningText(options.fireAlarmDevices, ownFloorWarnings),
+    compatibilityWarningText: resolveCompatibilityWarningText(options.fireAlarmDevices, ownFloorWarnings, fireAlarmModelSpecById),
     viewFilterNoteLines: viewFilterNote
       ? wrapViewFilterNoteLines(viewFilterNote, fontPx, options.image.widthPx, sidePaddingPx)
       : [],

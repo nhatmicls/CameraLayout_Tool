@@ -1,6 +1,7 @@
 import { fireAlarmModelById, type FireAlarmModel } from '../../catalog/fire-alarm/fire-alarm-catalog-loader'
 import type { Floor } from '../../domain/floor/floor-types'
 import { checkFireAlarmCompatibility, type CompatibilityWarning } from '../../domain/fire-alarm/fire-alarm-compatibility-checker'
+import { buildFireAlarmDeviceLabels } from '../../domain/fire-alarm/fire-alarm-device-designator'
 import { FIRE_ALARM_KIND_LABELS, isFireAlarmControllerKind, isFireDetectorKind } from '../../domain/fire-alarm/fire-alarm-device-types'
 import type { PlacedFireAlarmDevice } from '../../domain/fire-alarm/fire-alarm-device-types'
 import { useEditorUiStore } from '../../state/editor-ui-store'
@@ -26,10 +27,10 @@ interface CompatibilityStatus {
 
 /**
  * First placed controller this device is listed as compatible with, as
- * "F{n} {model}" - null when none is placed or listed for. One panel/hub
+ * "{label} {model}" (e.g. "P1 DS-PHA64-LP") - null when none is placed or listed for. One panel/hub
  * can serve the whole building, so every floor's controllers count (drift
- * addendum); `n` is still that controller's own position among its OWN
- * floor's fire-alarm devices (marker numbering stays per floor).
+ * addendum); the label is still that controller's own designator on its OWN
+ * floor (marker numbering stays per floor).
  */
 function findCompatiblePlacedControllerLabel(device: PlacedFireAlarmDevice, floors: readonly Floor[]): string | null {
   const links = fireAlarmCompatibilityIndex.controllersByDeviceModelId.get(device.modelId) ?? []
@@ -38,7 +39,8 @@ function findCompatiblePlacedControllerLabel(device: PlacedFireAlarmDevice, floo
     for (let i = 0; i < floor.fireAlarmDevices.length; i++) {
       const candidateSpec = fireAlarmModelSpecById[floor.fireAlarmDevices[i].modelId]
       if (!candidateSpec || !isFireAlarmControllerKind(candidateSpec.kind)) continue
-      if (links.some((link) => link.controllerModelId === candidateSpec.id)) return `F${i + 1} ${candidateSpec.model}`
+      if (links.some((link) => link.controllerModelId === candidateSpec.id)) 
+        return `${buildFireAlarmDeviceLabels(floor.fireAlarmDevices, fireAlarmModelSpecById)[i]} ${candidateSpec.model}`
     }
   }
   return null
@@ -100,7 +102,7 @@ export function FireAlarmDevicePropertiesPanel() {
   if (!device) return null
 
   const model = fireAlarmModelById(device.modelId)
-  const label = `F${index + 1}`
+  const label = buildFireAlarmDeviceLabels(fireAlarmDevices, fireAlarmModelSpecById)[index]
 
   const handleDelete = () => {
     deleteFireAlarmDevice(device.id)

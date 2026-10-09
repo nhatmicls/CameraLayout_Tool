@@ -15,24 +15,24 @@ describe('resolveFireAlarmDeviceLabel', () => {
   const floors = [f1, f2]
 
   it('all-floors view: floor-prefixes by project order, matching the merged BOM row labels', () => {
-    expect(resolveFireAlarmDeviceLabel(floors, 'a')).toBe('F1_F1')
-    expect(resolveFireAlarmDeviceLabel(floors, 'b')).toBe('F1_F2')
-    expect(resolveFireAlarmDeviceLabel(floors, 'c')).toBe('F2_F1')
+    expect(resolveFireAlarmDeviceLabel(floors, 'a', {})).toBe('F1_F1')
+    expect(resolveFireAlarmDeviceLabel(floors, 'b', {})).toBe('F1_F2')
+    expect(resolveFireAlarmDeviceLabel(floors, 'c', {})).toBe('F2_F1')
   })
 
   it('single-floor view (`floorId` given): bare label, unprefixed - matches that floor\'s own rows', () => {
-    expect(resolveFireAlarmDeviceLabel(floors, 'c', 'f2')).toBe('F1')
+    expect(resolveFireAlarmDeviceLabel(floors, 'c', {}, 'f2')).toBe('F1')
   })
 
   it('single-floor view: null for a device on a DIFFERENT floor than the one in scope', () => {
-    expect(resolveFireAlarmDeviceLabel(floors, 'a', 'f2')).toBeNull()
+    expect(resolveFireAlarmDeviceLabel(floors, 'a', {}, 'f2')).toBeNull()
   })
 
   it('null for an unknown/deleted device id', () => {
-    expect(resolveFireAlarmDeviceLabel(floors, 'does-not-exist')).toBeNull()
+    expect(resolveFireAlarmDeviceLabel(floors, 'does-not-exist', {})).toBeNull()
   })
 
   it('a true one-floor project never prefixes', () => {
-    expect(resolveFireAlarmDeviceLabel([f1], 'a')).toBe('F1')
+    expect(resolveFireAlarmDeviceLabel([f1], 'a', {})).toBe('F1')
   })
 })

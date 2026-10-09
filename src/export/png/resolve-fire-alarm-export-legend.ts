@@ -5,6 +5,7 @@
  * `resolveSensorKindsPresent` in `export-plan-png.ts`.
  */
 import type { CompatibilityWarning } from '../../domain/fire-alarm/fire-alarm-compatibility-checker'
+import { buildFireAlarmDeviceLabels } from '../../domain/fire-alarm/fire-alarm-device-designator'
 import {
   FIRE_ALARM_KIND_DISPLAY_ORDER,
   type FireAlarmKind,
@@ -58,10 +59,10 @@ export function resolveFireAlarmLegend(
 
 const MAX_LABELS_SHOWN = 2
 
-/** `F{n}` label from a device's 1-based position in `devices`, or `null` when it is not in that list - C1 review fix: NEVER the raw id (not user-facing text). The caller must pre-filter `warnings` to `devices`' own ids (`filterCompatibilityWarningsToDeviceIds`), so this is defensive only. */
-function labelFor(deviceId: string, devices: readonly PlacedFireAlarmDevice[]): string | null {
+/** Designator label (`buildFireAlarmDeviceLabels`) of a device in `devices`, or `null` when it is not in that list - C1 review fix: NEVER the raw id (not user-facing text). The caller must pre-filter `warnings` to `devices`' own ids (`filterCompatibilityWarningsToDeviceIds`), so this is defensive only. */
+function labelFor(deviceId: string, devices: readonly PlacedFireAlarmDevice[], labels: readonly string[]): string | null {
   const index = devices.findIndex((d) => d.id === deviceId)
-  return index >= 0 ? `F${index + 1}` : null
+  return index >= 0 ? labels[index] : null
 }
 
 /** "F3, F7 +2 more" for > `MAX_LABELS_SHOWN` labels, else the plain joined list. */
@@ -84,18 +85,21 @@ function formatLabelList(labels: readonly string[]): string {
 export function resolveCompatibilityWarningText(
   devices: readonly PlacedFireAlarmDevice[],
   warnings: readonly CompatibilityWarning[],
+  modelById: Record<string, FireAlarmModelSpec>,
 ): string | null {
   if (warnings.length === 0) return null
 
+  const deviceLabels = buildFireAlarmDeviceLabels(devices, modelById)
+
   const noControllerWarning = warnings.find((w) => w.code === 'no-controller-placed')
   if (noControllerWarning) {
-    const labels = noControllerWarning.deviceIds.map((id) => labelFor(id, devices)).filter((label): label is string => label !== null)
+    const labels = noControllerWarning.deviceIds.map((id) => labelFor(id, devices, deviceLabels)).filter((label): label is string => label !== null)
     if (labels.length === 0) return null
     return `No panel/hub placed for: ${formatLabelList(labels)}`
   }
 
   const notListed = warnings.filter((w) => w.code === 'not-listed-for-placed-controllers')
-  const labels = notListed.map((w) => labelFor(w.deviceId, devices)).filter((label): label is string => label !== null)
+  const labels = notListed.map((w) => labelFor(w.deviceId, devices, deviceLabels)).filter((label): label is string => label !== null)
   if (labels.length === 0) return null
   return `Compatibility: ${labels.length} device(s) not listed for a placed panel/hub: ${formatLabelList(labels)}`
 }

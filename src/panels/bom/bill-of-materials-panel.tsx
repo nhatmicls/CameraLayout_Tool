@@ -5,6 +5,7 @@ import { describeUnestimatedCables } from '../../domain/cable/unestimated-cables
 import { describeFloorsWithoutCableScale } from '../../domain/floor/floors-without-cable-scale-note'
 import { resolveFireAlarmDeviceLabel } from '../../domain/fire-alarm/fire-alarm-device-label-by-id'
 import { buildCombinedBomRows } from '../../export/shared/build-combined-bom-rows'
+import { fireAlarmModelSpecById } from '../../export/shared/fire-alarm-compatibility-index-singleton'
 import { FireAlarmCompatibilityWarningsBlock } from '../fire-alarm/fire-alarm-compatibility-warnings-block'
 import { useProjectStore } from '../../state/project-store'
 import { selectProject } from '../../state/project-store-floor-selectors'
@@ -85,7 +86,7 @@ export function BillOfMaterialsPanel() {
   // is on the floor currently active on the CANVAS (switching floors first would be the fancier
   // option - this is the simpler one, see the component's own doc comment).
   const labelForFireAlarmDevice = useCallback(
-    (deviceId: string) => resolveFireAlarmDeviceLabel(floors, deviceId, effectiveFloorId === 'all' ? undefined : effectiveFloorId),
+    (deviceId: string) => resolveFireAlarmDeviceLabel(floors, deviceId, fireAlarmModelSpecById, effectiveFloorId === 'all' ? undefined : effectiveFloorId),
     [floors, effectiveFloorId],
   )
   const isFireAlarmDeviceOnActiveFloor = useCallback(
