@@ -50,6 +50,7 @@ describe('cable sizes', () => {
 
   it('takes the larger of the screen tolerance and the icon radius', () => {
     expect(resolveCableSnapTolerancePx(0.25, 12)).toBe(40) // zoomed out: 10 screen px = 40 image px
-    expect(resolveCableSnapTolerancePx(4, 12)).toBe(12) // zoomed in: the icon is the bigger target
+    expect(resolveCableSnapTolerancePx(0.28, 40)).toBe(40) // 11.2 screen px icon, under its cap: the icon is the bigger target
+    expect(resolveCableSnapTolerancePx(4, 12)).toBe(3) // zoomed in: the icon is drawn at its 12 screen px cap = 3 image px
   })
 })

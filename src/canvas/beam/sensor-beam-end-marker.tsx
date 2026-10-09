@@ -3,7 +3,7 @@ import type Konva from 'konva'
 import type { KonvaEventObject } from 'konva/lib/Node'
 import { Circle, Group, Text } from 'react-konva'
 import { SensorKindIconShape } from '../sensor/sensor-kind-icon-shape'
-import { SELECTION_RING_PADDING_PX } from '../shared/brand-and-dori-color-palette'
+import { SELECTION_RING_PADDING_PX, resolveMarkerZoomCapScale } from '../shared/brand-and-dori-color-palette'
 import { SENSOR_KIND_COLORS } from '../sensor/sensor-kind-color-palette'
 
 interface SensorBeamEndMarkerProps {
@@ -41,16 +41,31 @@ export function SensorBeamEndMarker({
   onDragEnd,
 }: SensorBeamEndMarkerProps) {
   const fontSize = Math.max(12, iconRadiusPx * 0.9)
+  // Zoomed in past the icon's screen-size cap, the whole marker is scaled down; the
+  // screen-constant selection ring then divides by the combined scale.
+  const zoomCapScale = resolveMarkerZoomCapScale(iconRadiusPx, viewportScale, interactive)
+  const localViewportScale = viewportScale * zoomCapScale
 
   return (
-    <Group ref={groupRef} x={x} y={y} draggable={interactive} onClick={onSelect} onTap={onSelect} onDragMove={onDragMove} onDragEnd={onDragEnd}>
+    <Group
+      ref={groupRef}
+      x={x}
+      y={y}
+      scaleX={zoomCapScale}
+      scaleY={zoomCapScale}
+      draggable={interactive}
+      onClick={onSelect}
+      onTap={onSelect}
+      onDragMove={onDragMove}
+      onDragEnd={onDragEnd}
+    >
       <SensorKindIconShape kind="beam" tint={SENSOR_KIND_COLORS.beam} radiusPx={iconRadiusPx} />
 
       {selected && (
         <Circle
-          radius={iconRadiusPx + SELECTION_RING_PADDING_PX / viewportScale}
+          radius={iconRadiusPx + SELECTION_RING_PADDING_PX / localViewportScale}
           stroke="#2563eb"
-          strokeWidth={2 / viewportScale}
+          strokeWidth={2 / localViewportScale}
           listening={false}
         />
       )}

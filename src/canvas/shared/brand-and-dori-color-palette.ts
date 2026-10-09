@@ -47,13 +47,32 @@ export function computeWallStrokeWidthPx(iconRadiusPx: number): number {
  * Marker icon radius, in *image* pixels - it must stay legible in a
  * native-resolution PNG export (phase 7), so it is never divided by the
  * viewport's zoom scale (unlike the selection ring / rotation handle, which
- * are screen-constant and excluded from export). Tuned once against a
+ * are screen-constant and excluded from export). The editor caps its
+ * on-screen size separately (`resolveMarkerZoomCapScale`). Tuned once against a
  * 1200px-long-edge image (floor at 12px) and a 6000px one (40px).
  */
 export function computeIconRadiusPx(longEdgePx: number): number {
   const MIN_ICON_RADIUS_PX = 12
   const ICON_RADIUS_DIVISOR = 150
   return Math.max(MIN_ICON_RADIUS_PX, longEdgePx / ICON_RADIUS_DIVISOR)
+}
+
+/** In the editor a marker icon never draws larger than this radius on screen, in CSS px. */
+export const MARKER_ICON_MAX_SCREEN_RADIUS_PX = 12
+
+/**
+ * Scale (0 < s <= 1) a marker's own Group gets so that zooming in stops
+ * enlarging the icon past `MARKER_ICON_MAX_SCREEN_RADIUS_PX` - markers placed
+ * close together stay separable at a high zoom. Below the cap (zoomed out)
+ * it is 1, so the icon still shrinks with the plan. Always 1 when not
+ * `interactive`: the PNG export keeps the image-px icon size.
+ *
+ * A child that is screen-constant (selection ring, rotation handle) must be
+ * given `viewportScale * thisScale` as its viewport scale.
+ */
+export function resolveMarkerZoomCapScale(iconRadiusPx: number, viewportScale: number, interactive: boolean): number {
+  if (!interactive) return 1
+  return Math.min(1, MARKER_ICON_MAX_SCREEN_RADIUS_PX / (iconRadiusPx * viewportScale))
 }
 
 /** Screen-constant rotation-handle distance from the camera centre, in CSS px before dividing by viewport scale. */

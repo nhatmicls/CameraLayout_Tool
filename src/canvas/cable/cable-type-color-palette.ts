@@ -4,6 +4,7 @@
  * Sizes are IMAGE px (plan content, so the PNG export matches the screen).
  * No React/Konva imports - plain data.
  */
+import { resolveMarkerZoomCapScale } from '../shared/brand-and-dori-color-palette'
 
 /**
  * One line colour per cable type, by the type's index in the project's type
@@ -58,9 +59,10 @@ export const CABLE_SNAP_TOLERANCE_SCREEN_PX = 10
 
 /**
  * Snap tolerance in image px: the screen-constant distance, but never less
- * than the icon itself (icons are image-px sized, so at a low zoom the icon
- * is the bigger target and a click anywhere on it must count).
+ * than the icon as drawn (icons are image-px sized up to their zoom cap, so
+ * the icon can be the bigger target and a click anywhere on it must count).
  */
 export function resolveCableSnapTolerancePx(viewportScale: number, iconRadiusPx: number): number {
-  return Math.max(CABLE_SNAP_TOLERANCE_SCREEN_PX / viewportScale, iconRadiusPx)
+  const drawnIconRadiusPx = iconRadiusPx * resolveMarkerZoomCapScale(iconRadiusPx, viewportScale, true)
+  return Math.max(CABLE_SNAP_TOLERANCE_SCREEN_PX / viewportScale, drawnIconRadiusPx)
 }

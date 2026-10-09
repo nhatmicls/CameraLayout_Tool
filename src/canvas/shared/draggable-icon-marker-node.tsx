@@ -3,7 +3,7 @@ import type { KonvaEventObject } from 'konva/lib/Node'
 import { Circle, Group, Text } from 'react-konva'
 import { clampPointToImageBounds } from '../../domain/shared/clamp'
 import { CameraRotationHandle } from '../camera/camera-rotation-handle'
-import { SELECTION_RING_PADDING_PX } from './brand-and-dori-color-palette'
+import { SELECTION_RING_PADDING_PX, resolveMarkerZoomCapScale } from './brand-and-dori-color-palette'
 
 export interface DraggableIconMarkerNodeItem {
   id: string
@@ -71,10 +71,17 @@ export const DraggableIconMarkerNode = memo(function DraggableIconMarkerNode({
     onSelect(item.id)
   }
 
+  // Zoomed in past the icon's screen-size cap, the whole marker is scaled down; its
+  // screen-constant children then divide by the combined scale.
+  const zoomCapScale = resolveMarkerZoomCapScale(iconRadiusPx, viewportScale, interactive)
+  const localViewportScale = viewportScale * zoomCapScale
+
   return (
     <Group
       x={item.x}
       y={item.y}
+      scaleX={zoomCapScale}
+      scaleY={zoomCapScale}
       draggable={interactive}
       onClick={handleSelect}
       onTap={handleSelect}
@@ -93,9 +100,9 @@ export const DraggableIconMarkerNode = memo(function DraggableIconMarkerNode({
 
       {selected && (
         <Circle
-          radius={iconRadiusPx + SELECTION_RING_PADDING_PX / viewportScale}
+          radius={iconRadiusPx + SELECTION_RING_PADDING_PX / localViewportScale}
           stroke="#2563eb"
-          strokeWidth={2 / viewportScale}
+          strokeWidth={2 / localViewportScale}
           listening={false}
         />
       )}
@@ -112,7 +119,7 @@ export const DraggableIconMarkerNode = memo(function DraggableIconMarkerNode({
       {selected && interactive && rotatable && onRotateLive && onRotateEnd && (
         <CameraRotationHandle
           rotationDeg={rotationDeg}
-          viewportScale={viewportScale}
+          viewportScale={localViewportScale}
           onRotateLive={(deg) => onRotateLive(item.id, deg)}
           onRotateEnd={(deg) => onRotateEnd(item.id, deg)}
         />

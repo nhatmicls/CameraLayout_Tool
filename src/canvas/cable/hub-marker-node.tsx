@@ -3,7 +3,7 @@ import type { KonvaEventObject } from 'konva/lib/Node'
 import { Circle, Group, Line, Rect, Text } from 'react-konva'
 import type { Hub } from '../../domain/cable/cable-layout-types'
 import { clampPointToImageBounds } from '../../domain/shared/clamp'
-import { SELECTION_RING_PADDING_PX } from '../shared/brand-and-dori-color-palette'
+import { SELECTION_RING_PADDING_PX, resolveMarkerZoomCapScale } from '../shared/brand-and-dori-color-palette'
 import { HUB_FILL_COLOR } from './cable-type-color-palette'
 
 interface HubMarkerNodeProps {
@@ -42,7 +42,11 @@ export const HubMarkerNode = memo(function HubMarkerNode({
 }: HubMarkerNodeProps) {
   const side = iconRadiusPx * 1.6
   const fontSize = Math.max(12, iconRadiusPx * 0.9)
-  const ringSide = side + (2 * SELECTION_RING_PADDING_PX) / viewportScale
+  // Zoomed in past the icon's screen-size cap, the whole marker is scaled down; the
+  // screen-constant selection ring then divides by the combined scale.
+  const zoomCapScale = resolveMarkerZoomCapScale(iconRadiusPx, viewportScale, interactive)
+  const localViewportScale = viewportScale * zoomCapScale
+  const ringSide = side + (2 * SELECTION_RING_PADDING_PX) / localViewportScale
 
   const handleSelect = (e: KonvaEventObject<Event>) => {
     e.cancelBubble = true // not a click on empty canvas (which would deselect)
@@ -53,6 +57,8 @@ export const HubMarkerNode = memo(function HubMarkerNode({
     <Group
       x={hub.x}
       y={hub.y}
+      scaleX={zoomCapScale}
+      scaleY={zoomCapScale}
       draggable={interactive}
       onClick={handleSelect}
       onTap={handleSelect}
@@ -97,7 +103,7 @@ export const HubMarkerNode = memo(function HubMarkerNode({
           width={ringSide}
           height={ringSide}
           stroke="#2563eb"
-          strokeWidth={2 / viewportScale}
+          strokeWidth={2 / localViewportScale}
           listening={false}
         />
       )}

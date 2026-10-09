@@ -6,7 +6,7 @@ import { clampPointToImageBounds } from '../../domain/shared/clamp'
 import type { PlacedCamera } from '../../domain/project-file/project-types'
 import { CameraFormFactorIconShape } from './camera-form-factor-icon-shape'
 import { CameraRotationHandle } from './camera-rotation-handle'
-import { SELECTION_RING_PADDING_PX } from '../shared/brand-and-dori-color-palette'
+import { SELECTION_RING_PADDING_PX, resolveMarkerZoomCapScale } from '../shared/brand-and-dori-color-palette'
 
 interface CameraMarkerNodeProps {
   camera: PlacedCamera
@@ -62,10 +62,17 @@ export const CameraMarkerNode = memo(function CameraMarkerNode({
     onSelect(camera.id)
   }
 
+  // Zoomed in past the icon's screen-size cap, the whole marker is scaled down; its
+  // screen-constant children then divide by the combined scale.
+  const zoomCapScale = resolveMarkerZoomCapScale(iconRadiusPx, viewportScale, interactive)
+  const localViewportScale = viewportScale * zoomCapScale
+
   return (
     <Group
       x={camera.x}
       y={camera.y}
+      scaleX={zoomCapScale}
+      scaleY={zoomCapScale}
       draggable={interactive}
       onClick={handleSelect}
       onTap={handleSelect}
@@ -91,9 +98,9 @@ export const CameraMarkerNode = memo(function CameraMarkerNode({
 
       {selected && (
         <Circle
-          radius={iconRadiusPx + SELECTION_RING_PADDING_PX / viewportScale}
+          radius={iconRadiusPx + SELECTION_RING_PADDING_PX / localViewportScale}
           stroke="#2563eb"
-          strokeWidth={2 / viewportScale}
+          strokeWidth={2 / localViewportScale}
           listening={false}
         />
       )}
@@ -110,7 +117,7 @@ export const CameraMarkerNode = memo(function CameraMarkerNode({
       {selected && interactive && (
         <CameraRotationHandle
           rotationDeg={camera.rotationDeg}
-          viewportScale={viewportScale}
+          viewportScale={localViewportScale}
           onRotateLive={(deg) => onRotateLive(camera.id, deg)}
           onRotateEnd={(deg) => onRotateEnd(camera.id, deg)}
         />

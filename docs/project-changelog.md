@@ -8,6 +8,11 @@
   heat `H`, CO `CO`, call point `E`, sounder `SO`, magnetic contact `MAG`, environment `ENV`,
   intrusion detector `ID`. `F` remains only for a device whose model is unknown. Each prefix is
   numbered on its own per floor (`S1`, `S2`, `H1`...); expander and call point share one `E` series. Applies to canvas markers, properties panel, BOM labels / notes, CSV and PNG legend.
+- **Marker size capped when zoomed in** (fix): camera, sensor, beam-end, fire-alarm and hub
+  markers (icon + label) stop growing once the icon reaches 12 px radius on screen, so devices
+  placed close together stay separable at a high zoom. Zoomed out they still shrink with the plan.
+  Editor only - the PNG export keeps the image-px icon size. The cable / trunk snap radius follows
+  the drawn icon.
 - GitHub Pages deploy workflow (`.github/workflows/deploy-github-pages.yml`): test + build +
   publish on push to `main` or manual run. Base path set only in CI; local dev unchanged.
 
