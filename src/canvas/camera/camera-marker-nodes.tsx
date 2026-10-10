@@ -5,7 +5,9 @@ import { CameraMarkerNode } from './camera-marker-node'
 
 export interface CameraMarkerNodesProps {
   cameras: PlacedCamera[]
-  /** Cameras whose marker the view config hides. Skipped by id - the array is never filtered, so `C{n}` labels do not renumber. */
+  /** Index-aligned with `cameras`, from the shared allocator (`floor-item-label-allocator.ts`) - the one source for every label on the floor. */
+  labels: readonly string[]
+  /** Cameras whose marker the view config hides. Skipped by id - the array is never filtered, so labels do not renumber. */
   hiddenIds?: ReadonlySet<string>
   iconRadiusPx: number
   selectedCameraId: string | null
@@ -22,11 +24,13 @@ export interface CameraMarkerNodesProps {
 
 /**
  * Markers for every placed camera, in `cameras[]` order (the camera twin of
- * `sensor-marker-nodes.tsx`). Labels are `C{n}` from the camera's position
- * in `cameras[]`. A camera whose catalog model id is unknown is skipped.
+ * `sensor-marker-nodes.tsx`). Labels come from `labels` (index-aligned with
+ * `cameras`) - the shared allocator, never computed here. A camera whose
+ * catalog model id is unknown is skipped.
  */
 export function CameraMarkerNodes({
   cameras,
+  labels,
   hiddenIds,
   iconRadiusPx,
   selectedCameraId,
@@ -49,7 +53,7 @@ export function CameraMarkerNodes({
           <CameraMarkerNode
             key={camera.id}
             camera={camera}
-            label={`C${index + 1}`}
+            label={labels[index]}
             formFactor={model.formFactor}
             tint={BRAND_TINTS[model.brand]}
             iconRadiusPx={iconRadiusPx}

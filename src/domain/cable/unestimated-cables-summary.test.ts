@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { describeUnestimatedCables } from './unestimated-cables-summary'
+import { describeUnestimatedCables, describeUnestimatedReason } from './unestimated-cables-summary'
 import type { CableEstimateWarning } from './cable-layout-estimate'
 
 describe('describeUnestimatedCables', () => {
@@ -30,4 +30,17 @@ describe('describeUnestimatedCables', () => {
     expect(describeUnestimatedCables(2, [])).toBe('2 cables not estimated.')
   })
 
+})
+
+describe('describeUnestimatedReason', () => {
+  it('reads the matching REASON_LABELS text for an exclusion code', () => {
+    expect(describeUnestimatedReason('linked-floor-scale-not-set')).toBe('a linked floor has no scale set')
+    expect(describeUnestimatedReason('link-cycle')).toBe('its cross-floor route forms a cycle')
+  })
+
+  it('null for a warning code that is never an exclusion reason', () => {
+    expect(describeUnestimatedReason('cable-over-limit')).toBeNull()
+    expect(describeUnestimatedReason('scale-not-set')).toBeNull()
+    expect(describeUnestimatedReason('shaft-cable-not-routed')).toBeNull()
+  })
 })

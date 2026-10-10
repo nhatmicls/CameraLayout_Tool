@@ -1,4 +1,4 @@
-import type { FireAlarmKindByModelId } from '../fire-alarm/fire-alarm-device-designator'
+import type { FloorItemLabelContext } from '../floor/floor-item-label-allocator'
 import type { Floor } from '../floor/floor-types'
 import { buildCableEndpointIndex, cableEndRefKey, resolveCableEnd, type CableEndPoint, type CableEndpointIndex } from './cable-endpoint-index'
 import type { Cable, CablePoint, Hub } from './cable-layout-types'
@@ -8,19 +8,22 @@ import type { Cable, CablePoint, Hub } from './cable-layout-types'
  * shaft (`Cable.beyondShaft`): on one floor (the exit floor), from that
  * floor's opening of the same shaft to a hub or a device there. This module
  * is the one place that resolves, validates and lists those legs - the
- * estimate, the labels ("C1-?" until routed, then "C1-H1"), the canvas, the
- * shaft panel, the store cascades and the loader all read through it.
+ * estimate, the cable's own end-to-end label ("F1_C1_?" until routed, then
+ * "F1_C1_F2_H1" - `cable-end-to-end-label.ts` walks this leg through
+ * `cross-floor-route-walker.ts`), the canvas, the shaft panel, the store
+ * cascades and the loader all read through it.
  *
  * The cable stays on (and is counted on) the floor of its start device; only
  * the leg's `floorId` names the exit floor.
  */
 
-/** Optional context for labels and speed. Positions never depend on any of it. */
-export interface ShaftLegLookups {
-  /** The project's `shafts[]` ids, in order - for a hub end's "T{n}"-aware labels. */
-  shaftIds?: readonly string[]
-  /** Catalog lookup behind a fire-alarm end's designator; omitted = "F{n}". */
-  fireAlarmModelById?: FireAlarmKindByModelId
+/**
+ * Optional context for labels and speed. Positions never depend on any of
+ * it. Extends `FloorItemLabelContext` (`floor-item-label-allocator.ts`) -
+ * the SAME `shaftIds`/`fireAlarmModelById` shape every label producer reads,
+ * plus the index cache below.
+ */
+export interface ShaftLegLookups extends FloorItemLabelContext {
   /** Filled as floors are indexed, so one pass over many cables indexes each floor once. Only valid for ONE `floors` array. */
   indexCache?: Map<string, CableEndpointIndex>
 }
@@ -161,16 +164,6 @@ export function listShaftCables(floors: readonly Floor[], shaftId: string, looku
     }
   })
   return entries
-}
-
-/** Label of the end a shaft cable finally reaches ("H1", "P1"), or undefined while it is not routed - `cableLabel` then prints "?". */
-export function resolveShaftCableEndLabel(
-  floors: readonly Floor[],
-  sourceFloorIndex: number,
-  cable: Cable,
-  lookups?: ShaftLegLookups,
-): string | undefined {
-  return resolveShaftLeg(floors, sourceFloorIndex, cable, lookups)?.end.label
 }
 
 /**

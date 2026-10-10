@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildCableEndpointIndex, cableEndRefKey, cableLabel, resolveCableEnd, resolveCablePathPx } from './cable-endpoint-index'
+import { buildCableEndpointIndex, cableEndRefKey, resolveCableEnd, resolveCablePathPx } from './cable-endpoint-index'
 import type { Cable } from './cable-layout-types'
 import { BEAM_S2, CABLE_A, CAMERA_C1, CAMERA_C2, HUB_H1, PIR_S1 } from './cable-worked-example.test-fixtures'
 
@@ -20,17 +20,18 @@ describe('buildCableEndpointIndex', () => {
       ],
       modelById: { smoke: { kind: 'smoke-detector' }, panel: { kind: 'control-panel' } },
     })
-    expect(withFireAlarm.devices.map((device) => device.label)).toEqual(['C1', 'S1', 'S1', 'P1', 'S2'])
+    // Shared numbering (phase 5): fire-alarm devices count BEFORE sensors in a shared prefix - fa-1
+    // (smoke) and fa-3 (smoke) take S1/S2 first, so the sensor (also "S") becomes S3, not S1.
+    expect(withFireAlarm.devices.map((device) => device.label)).toEqual(['C1', 'S3', 'S1', 'P1', 'S2'])
     expect(withFireAlarm.deviceByKey.get(cableEndRefKey({ kind: 'fire-alarm', id: 'fa-2' }))).toMatchObject({ x: 21, y: 22, mountHeightM: null })
     const cable: Cable = { id: 'k', device: { kind: 'fire-alarm', id: 'fa-2' }, hubId: HUB_H1.id, typeId: 't', points: [] }
-    expect(cableLabel(cable, withFireAlarm)).toBe('P1-H1')
     expect(resolveCablePathPx(cable, withFireAlarm)).toEqual([{ x: 21, y: 22 }, { x: HUB_H1.x, y: HUB_H1.y }])
   })
 
-  it('does not resolve a fire-alarm ref when no fire-alarm devices are passed, and falls back to "F{n}" without a catalog lookup', () => {
+  it('does not resolve a fire-alarm ref when no fire-alarm devices are passed, and falls back to "?{n}" without a catalog lookup', () => {
     expect(index.deviceByKey.get(cableEndRefKey({ kind: 'fire-alarm', id: 'fa-1' }))).toBeUndefined()
     const noCatalog = buildCableEndpointIndex([], [], [], undefined, { devices: [{ id: 'fa-1', modelId: 'smoke', x: 0, y: 0 }] })
-    expect(noCatalog.devices.map((device) => device.label)).toEqual(['F1'])
+    expect(noCatalog.devices.map((device) => device.label)).toEqual(['?1'])
   })
 
   it('yields two ends for a beam, at its transmitter and receiver', () => {
@@ -66,7 +67,7 @@ describe('buildCableEndpointIndex', () => {
   })
 })
 
-describe('resolveCablePathPx + cableLabel', () => {
+describe('resolveCablePathPx', () => {
   it('returns device, intermediate points, hub', () => {
     expect(resolveCablePathPx(CABLE_A, index)).toEqual([
       { x: 100, y: 100 },
@@ -74,46 +75,28 @@ describe('resolveCablePathPx + cableLabel', () => {
       { x: 400, y: 500 },
       { x: 700, y: 500 },
     ])
-    expect(cableLabel(CABLE_A, index)).toBe('C1-H1')
   })
 
-  it('labels a beam end', () => {
-    const cable: Cable = { ...CABLE_A, device: { kind: 'sensor', id: 'beam-1', end: 'tx' } }
-    expect(cableLabel(cable, index)).toBe('S2tx-H1')
-  })
-
-  it('returns null and a "?" label for a dangling end', () => {
+  it('returns null for a dangling end (gone hub or gone device)', () => {
     const noHub: Cable = { ...CABLE_A, hubId: 'gone' }
     const noDevice: Cable = { ...CABLE_A, device: { kind: 'camera', id: 'gone' } }
     expect(resolveCablePathPx(noHub, index)).toBeNull()
     expect(resolveCablePathPx(noDevice, index)).toBeNull()
-    expect(cableLabel(noHub, index)).toBe('C1-?')
-    expect(cableLabel(noDevice, index)).toBe('?-H1')
   })
 
-  it('ignores a shaft end label for a cable that ends on an ordinary hub', () => {
-    expect(cableLabel(CABLE_A, index)).toBe('C1-H1')
-    expect(cableLabel(CABLE_A, index, 'H9')).toBe('C1-H1')
+  it('resolves a cable that ends on another device: path, and null when that device is gone', () => {
+    const toCamera: Cable = { id: 'k', device: { kind: 'camera', id: 'cam-1' }, endDevice: { kind: 'camera', id: 'cam-2' }, typeId: 't', points: [{ x: 5, y: 5 }] }
+    expect(resolveCablePathPx(toCamera, index)).toEqual([{ x: 100, y: 100 }, { x: 5, y: 5 }, { x: 100, y: 300 }])
+    expect(resolveCableEnd(toCamera, index)).toMatchObject({ kind: 'device', label: 'C2' })
+    const gone: Cable = { ...toCamera, endDevice: { kind: 'camera', id: 'nope' } }
+    expect(resolveCablePathPx(gone, index)).toBeNull()
   })
 
-  it('labels a cable through a shaft by where it goes beyond it: "C1-?" until routed, then the far end, never the shaft', () => {
+  it('a cable ending on a shaft opening resolves to it, same as any other hub (the label beyond it is a separate concern)', () => {
     const withShaft = buildCableEndpointIndex([CAMERA_C1], [], [HUB_H1, { id: 'sm', kind: 'shaft', shaftId: 's1', x: 9, y: 9, mountHeightM: 0 }], ['s1'])
     const cable: Cable = { ...CABLE_A, hubId: 'sm' }
     expect(withShaft.hubById.get('sm')).toMatchObject({ label: 'T1', isShaft: true })
-    expect(cableLabel(cable, withShaft)).toBe('C1-?')
-    expect(cableLabel(cable, withShaft, 'H2')).toBe('C1-H2')
-  })
-
-  it('resolves a cable that ends on another device: path, label "C1-C2", and null when that device is gone', () => {
-    const toCamera: Cable = { id: 'k', device: { kind: 'camera', id: 'cam-1' }, endDevice: { kind: 'camera', id: 'cam-2' }, typeId: 't', points: [{ x: 5, y: 5 }] }
-    expect(resolveCablePathPx(toCamera, index)).toEqual([{ x: 100, y: 100 }, { x: 5, y: 5 }, { x: 100, y: 300 }])
-    expect(cableLabel(toCamera, index)).toBe('C1-C2')
-    expect(resolveCableEnd(toCamera, index)).toMatchObject({ kind: 'device', label: 'C2' })
-    const toBeamRx: Cable = { ...toCamera, endDevice: { kind: 'sensor', id: 'beam-1', end: 'rx' } }
-    expect(cableLabel(toBeamRx, index)).toBe('C1-S2rx')
-    const gone: Cable = { ...toCamera, endDevice: { kind: 'camera', id: 'nope' } }
-    expect(resolveCablePathPx(gone, index)).toBeNull()
-    expect(cableLabel(gone, index)).toBe('C1-?')
+    expect(resolveCableEnd(cable, withShaft)).toMatchObject({ kind: 'hub', label: 'T1' })
   })
 })
 

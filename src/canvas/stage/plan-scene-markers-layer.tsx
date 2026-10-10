@@ -1,9 +1,12 @@
+import { useMemo } from 'react'
 import { Layer } from 'react-konva'
 import type { ConeLiveHandlers } from '../camera/use-cone-live-handles'
 import { CameraMarkerNodes } from '../camera/camera-marker-nodes'
 import type { PlacedFireAlarmDevice } from '../../domain/fire-alarm/fire-alarm-device-types'
+import { buildFloorItemLabels } from '../../domain/floor/floor-item-label-allocator'
 import type { PlacedCamera, Wall } from '../../domain/project-file/project-types'
 import type { PlacedSensor, PlacedSensorPatch } from '../../domain/sensor/sensor-types'
+import { fireAlarmModelSpecById } from '../../export/shared/fire-alarm-compatibility-index-singleton'
 import { FireAlarmMarkerNodes } from '../fire-alarm/fire-alarm-marker-nodes'
 import { SensorMarkerNodes } from '../sensor/sensor-marker-nodes'
 import { HubAndSelectedCableNodes } from '../cable/hub-and-selected-cable-nodes'
@@ -86,6 +89,16 @@ export function PlanSceneMarkersLayer({
   onSensorCommit,
   live,
 }: PlanSceneMarkersLayerProps) {
+  // ONE allocator call for every marker label on this floor (`floor-item-label-allocator.ts`) -
+  // cameras, sensors, fire-alarm devices and hubs/risers/drops share their numbering, so no
+  // marker component may count its own array any more. `cableEndpointIndex` already carries the
+  // SAME hub labels (it goes through the same allocator) - only the device-kind labels are needed
+  // here.
+  const itemLabels = useMemo(
+    () => buildFloorItemLabels({ cameras, sensors, fireAlarmDevices, hubs: cabling.hubs }, { shaftIds: cabling.shaftIds, fireAlarmModelById: fireAlarmModelSpecById }),
+    [cameras, sensors, fireAlarmDevices, cabling.hubs, cabling.shaftIds],
+  )
+
   return (
     <Layer listening={listening}>
       {/* Device markers are children so they paint above the selected cable / trunk editor and below the hub markers. */}
@@ -104,6 +117,7 @@ export function PlanSceneMarkersLayer({
       >
         <CameraMarkerNodes
           cameras={cameras}
+          labels={itemLabels.cameras}
           hiddenIds={hiddenCameraIds}
           iconRadiusPx={iconRadiusPx}
           selectedCameraId={selectedCameraId}
@@ -120,6 +134,7 @@ export function PlanSceneMarkersLayer({
 
         <SensorMarkerNodes
           sensors={sensors}
+          labels={itemLabels.sensors}
           hiddenIds={hiddenSensorIds}
           walls={walls}
           iconRadiusPx={iconRadiusPx}
@@ -140,6 +155,7 @@ export function PlanSceneMarkersLayer({
 
         <FireAlarmMarkerNodes
           devices={fireAlarmDevices}
+          labels={itemLabels.fireAlarmDevices}
           iconRadiusPx={iconRadiusPx}
           selectedFireAlarmDeviceId={selectedFireAlarmDeviceId}
           interactive={interactive}

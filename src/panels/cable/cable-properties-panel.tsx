@@ -1,12 +1,12 @@
 import { useMemo } from 'react'
-import { buildCableEndpointIndex, cableLabel } from '../../domain/cable/cable-endpoint-index'
 import { SCALE_NOT_SET_CABLE_MESSAGE } from '../../domain/cable/cable-layout-estimate'
 import { formatMeters, formatMetersInterval } from '../../domain/cable/cable-length-format'
 import { resolveShaftLeg } from '../../domain/cable/shaft-cable-leg'
 import { fireAlarmModelSpecById } from '../../export/shared/fire-alarm-compatibility-index-singleton'
+import { useActiveFloorCableLabels } from '../../state/use-active-floor-cable-labels'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
-import { selectCables, selectCameras, selectFireAlarmDevices, selectHubs, selectSensors } from '../../state/project-store-floor-selectors'
+import { selectCables, selectHubs } from '../../state/project-store-floor-selectors'
 import { useCableLayoutEstimate } from '../../state/use-cable-layout-estimate'
 import { fieldLabelClass, inputClass } from '../camera/camera-properties-form-helpers'
 import { cableLimitStatusText } from './cable-limit-status-text'
@@ -22,9 +22,6 @@ const LIMIT_STATUS_CLASS = { ok: 'text-neutral-600', 'no-limit': 'text-neutral-4
  * prompt to calibrate.
  */
 export function CablePropertiesPanel() {
-  const cameras = useProjectStore(selectCameras)
-  const sensors = useProjectStore(selectSensors)
-  const fireAlarmDevices = useProjectStore(selectFireAlarmDevices)
   const hubs = useProjectStore(selectHubs)
   const cables = useProjectStore(selectCables)
   const cableTypes = useProjectStore((s) => s.cableTypes)
@@ -33,24 +30,21 @@ export function CablePropertiesPanel() {
   const selectedCableId = useEditorUiStore((s) => s.selectedCableId)
   const setSelectedCableId = useEditorUiStore((s) => s.setSelectedCableId)
   const layoutEstimate = useCableLayoutEstimate()
+  const cableLabels = useActiveFloorCableLabels()
   const floors = useProjectStore((s) => s.floors)
   const activeFloorId = useProjectStore((s) => s.activeFloorId)
   const shafts = useProjectStore((s) => s.shafts)
   // Stable identity (LOW fix, phase 6 review): a fresh `.map()` every render would give `useMemo`
   // below a NEW array on every call even when `shafts` itself hasn't changed, defeating the memo.
   const shaftIds = useMemo(() => shafts.map((shaft) => shaft.id), [shafts])
-  const index = useMemo(
-    () => buildCableEndpointIndex(cameras, sensors, hubs, shaftIds, { devices: fireAlarmDevices, modelById: fireAlarmModelSpecById }),
-    [cameras, sensors, fireAlarmDevices, hubs, shaftIds],
-  )
 
   // Looked up rather than trusted: an undo can remove the cable while its id is still selected.
   const cable = cables.find((candidate) => candidate.id === selectedCableId)
   if (!cable) return null
 
   const hub = hubs.find((candidate) => candidate.id === cable.hubId)
-  // A cable through a shaft is labelled by where its own route beyond the shaft ends ("C1-H1"),
-  // or "C1-?" while it has none - never by the shaft opening.
+  // A cable through a shaft is labelled (via `cableLabels` above) by where its own route beyond
+  // the shaft ends, or "?" while it has none - never by the shaft opening.
   const shaftLeg =
     hub?.kind === 'shaft'
       ? resolveShaftLeg(floors, floors.findIndex((floor) => floor.id === activeFloorId), cable, { shaftIds, fireAlarmModelById: fireAlarmModelSpecById })
@@ -82,7 +76,7 @@ export function CablePropertiesPanel() {
           : []),
         ['slack', 'End slack', formatMeters(estimate.slackM)],
         ['run', 'Run', formatMetersInterval(estimate.run)],
-        ['waste', 'Waste', formatMeters(estimate.wasteM)],
+        ['waste', 'Spare', formatMeters(estimate.wasteM)],
         ['purchase', 'To buy', formatMetersInterval(estimate.purchase)],
       ]
     : []
@@ -91,7 +85,7 @@ export function CablePropertiesPanel() {
     <div data-testid="properties-panel" className="text-sm">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-neutral-700">
-          Properties <span data-testid="properties-cable-label" className="text-neutral-400">({cableLabel(cable, index, shaftLeg?.end.label)})</span>
+          Properties <span data-testid="properties-cable-label" className="text-neutral-400">({cableLabels.get(cable.id)?.label ?? '?_?'})</span>
         </h2>
         <button
           type="button"

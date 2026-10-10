@@ -1,5 +1,6 @@
-import { hubLabels } from './cable-endpoint-index'
 import type { Hub, HubRef } from './cable-layout-types'
+import type { FireAlarmKindByModelId } from '../fire-alarm/fire-alarm-device-designator'
+import { buildFloorItemLabels } from '../floor/floor-item-label-allocator'
 import type { Floor } from '../floor/floor-types'
 
 /**
@@ -95,11 +96,21 @@ export function crossFloorTrunkProblem(floors: readonly Floor[], floorIndex: num
   return null
 }
 
-/** Candidates for `hub`'s link picker: opposite-kind points on the ONE legal adjacent floor, including `hub`'s current partner (if any) so a re-select of the same point still shows up. Empty for a plain hub, at the top/bottom floor for its kind, or an adjacent floor with no point of the right kind. */
+/**
+ * Candidates for `hub`'s link picker: opposite-kind points on the ONE legal
+ * adjacent floor, including `hub`'s current partner (if any) so a re-select
+ * of the same point still shows up. Empty for a plain hub, at the top/bottom
+ * floor for its kind, or an adjacent floor with no point of the right kind.
+ * `fireAlarmModelById` omitted = the partner floor's fire-alarm devices
+ * count as unknown models, so a heat detector / relay module there cannot
+ * shift the candidate labels' H/R numbers - fine for a caller that has no
+ * catalog lookup handy, wrong only if that floor actually holds one.
+ */
 export function listLinkCandidates(
   floors: readonly Floor[],
   floorIndex: number,
   hub: Hub,
+  fireAlarmModelById?: FireAlarmKindByModelId,
 ): Array<{ floorId: string; hubId: string; label: string }> {
   if (hub.kind !== 'riser' && hub.kind !== 'drop') return []
   const partnerFloorIndex = hub.kind === 'riser' ? floorIndex + 1 : floorIndex - 1
@@ -107,7 +118,7 @@ export function listLinkCandidates(
   if (!partnerFloor) return []
   const wantedKind = hub.kind === 'riser' ? 'drop' : 'riser'
   const floor = floors[floorIndex]
-  const labels = hubLabels(partnerFloor.hubs)
+  const labels = buildFloorItemLabels(partnerFloor, { fireAlarmModelById }).hubs
 
   return partnerFloor.hubs
     .map((candidate, i) => ({ candidate, label: labels[i] }))
@@ -129,16 +140,26 @@ export function listLinkCandidates(
  * wants them; the store's cascades do not). `shaftIds` (the project's
  * `shafts[]` ids, in order) is only for the warning text's own "T{n}" label -
  * omitted callers fall back to a per-floor count, wrong only when 2+ shafts
- * share one floor (review item M5).
+ * share one floor (review item M5). `fireAlarmModelById` is only for the
+ * SAME warning text's H/R numbers - omitted (every caller with no catalog
+ * lookup handy, e.g. the file loader) means a floor's fire-alarm devices
+ * cannot shift them, which is acceptable for load-time warning text only
+ * (never for what the canvas/panels show, which always have the lookup).
  */
-export function pruneInvalidCrossFloorLinks(floors: readonly Floor[], shaftIds?: readonly string[], warnings?: string[]): Floor[] {
+export function pruneInvalidCrossFloorLinks(
+  floors: readonly Floor[],
+  shaftIds?: readonly string[],
+  fireAlarmModelById?: FireAlarmKindByModelId,
+  warnings?: string[],
+): Floor[] {
   // Item 7 fix: name the floor + its R1/D1-style label, not the hub's raw (uuid) id - matches
   // `listLinkCandidates`'/the hub panel's own wording.
   const toClear: Array<{ ref: HubRef; trunkOnly: boolean; reason: string; label: string }> = []
   floors.forEach((floor, floorIndex) => {
-    const labels = hubLabels(floor.hubs, shaftIds)
+    // Labels feed the warning text only - the store's cascades pass no `warnings`, so they skip the count.
+    const labels = warnings ? buildFloorItemLabels(floor, { shaftIds, fireAlarmModelById }).hubs : null
     floor.hubs.forEach((hub, hubIndex) => {
-      const label = `${floor.name} ${labels[hubIndex]}`
+      const label = labels ? `${floor.name} ${labels[hubIndex]}` : ''
       const linkProblem = crossFloorLinkProblem(floors, floorIndex, hub)
       if (linkProblem) {
         toClear.push({ ref: { floorId: floor.id, hubId: hub.id }, trunkOnly: false, reason: linkProblem, label })

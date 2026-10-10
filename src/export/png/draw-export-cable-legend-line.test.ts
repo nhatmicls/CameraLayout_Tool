@@ -16,7 +16,7 @@ describe('buildCableLegend - unestimated note (HIGH fix)', () => {
       ...EMPTY_CABLE_LAYOUT_ESTIMATE,
       hasScale: true,
       unestimatedCableCount: 1,
-      warnings: [{ code: 'linked-floor-scale-not-set' as const, cableId: 'c1', message: 'C1-H1: the route continues on "Floor 2"...' }],
+      warnings: [{ code: 'linked-floor-scale-not-set' as const, cableId: 'c1', message: 'F1_C1_F2_H1: the route continues on "Floor 2"...' }],
     }
     const legend = buildCableLegend([CABLE], [TYPE], DEFAULT_CABLE_SETTINGS, estimate)
     expect(legend?.noteText).toContain('1 cable not estimated: a linked floor has no scale set (1).')
@@ -40,7 +40,7 @@ describe('buildCableLegend - unestimated note (HIGH fix)', () => {
         {
           type: TYPE,
           cableCount: 1,
-          labels: ['C1-H1'],
+          labels: ['F1_C1_F1_H1'],
           run: { nominal: 10, min: 10, max: 10 },
           purchase: { nominal: 11.5, min: 11.5, max: 11.5 },
           purchaseWholeM: 12,

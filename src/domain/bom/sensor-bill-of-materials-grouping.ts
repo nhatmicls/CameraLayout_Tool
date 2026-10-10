@@ -24,13 +24,14 @@ function thermalLens(model: ThermalModelSpec): string {
  * - Grouping key is (kind, brand, model), plus `focalMm` for thermal - each
  *   thermal lens is already its own catalog id, so this only guards against
  *   two different catalog ids printing the same brand+model text.
- * - Labels (`S1`, `S2`, ...) come from the sensor's position in `sensors[]`,
- *   1-based and independent of camera numbering. One placed beam (a single
+ * - `labels` is index-aligned with `sensors` (from the ONE shared allocator,
+ *   `floor-item-label-allocator.ts`'s `buildFloorItemLabels` - this function
+ *   no longer numbers anything itself). One placed beam (a single
  *   `PlacedBeamSensor`, already a TX+RX set) counts as quantity 1.
  * - Unknown `modelId`s are skipped, same as the camera grouping.
  */
-export function groupSensorsIntoBom(sensors: PlacedSensor[], modelById: Record<string, SensorModelSpec>): BomRow[] {
-  const groups = new Map<string, { model: SensorModelSpec; sensorNumbers: number[] }>()
+export function groupSensorsIntoBom(sensors: PlacedSensor[], modelById: Record<string, SensorModelSpec>, labels: readonly string[]): BomRow[] {
+  const groups = new Map<string, { model: SensorModelSpec; sensorLabels: string[] }>()
 
   sensors.forEach((sensor, index) => {
     const model = modelById[sensor.modelId]
@@ -40,13 +41,13 @@ export function groupSensorsIntoBom(sensors: PlacedSensor[], modelById: Record<s
     const key = `${model.kind}\u0000${model.brand}\u0000${model.model}${lensKey}`
     const group = groups.get(key)
     if (group) {
-      group.sensorNumbers.push(index + 1)
+      group.sensorLabels.push(labels[index])
     } else {
-      groups.set(key, { model, sensorNumbers: [index + 1] })
+      groups.set(key, { model, sensorLabels: [labels[index]] })
     }
   })
 
-  const rows: BomRow[] = Array.from(groups.values()).map(({ model, sensorNumbers }) => {
+  const rows: BomRow[] = Array.from(groups.values()).map(({ model, sensorLabels }) => {
     const unitPriceVnd = model.priceVn?.amountVnd ?? null
     return {
       type: SENSOR_KIND_LABELS[model.kind],
@@ -55,11 +56,11 @@ export function groupSensorsIntoBom(sensors: PlacedSensor[], modelById: Record<s
       formFactor: '',
       resolution: model.kind === 'thermal' ? thermalResolution(model) : '',
       lens: model.kind === 'thermal' ? thermalLens(model) : '',
-      quantity: sensorNumbers.length,
+      quantity: sensorLabels.length,
       unit: 'pcs',
-      labels: sensorNumbers.map((n) => `S${n}`).join(', '),
+      labels: sensorLabels.join(', '),
       unitPriceVnd,
-      lineTotalVnd: unitPriceVnd === null ? null : unitPriceVnd * sensorNumbers.length,
+      lineTotalVnd: unitPriceVnd === null ? null : unitPriceVnd * sensorLabels.length,
     }
   })
 

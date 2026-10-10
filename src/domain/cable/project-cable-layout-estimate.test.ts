@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { computeProjectCableEstimate } from './project-cable-layout-estimate'
 import { threeFloorChainProject, twoFloorLinkedProject } from './cross-floor-worked-example.test-fixtures'
+import { shaftCable, shaftFourFloorProject } from './shaft-worked-example.test-fixtures'
 
 describe('computeProjectCableEstimate', () => {
   it('byFloorId holds every floor\'s own estimate, cross-floor contributions resolved', () => {
@@ -13,25 +14,25 @@ describe('computeProjectCableEstimate', () => {
     expect(result.byFloorId.get('floor-1')!.cables).toEqual([]) // floor 1 has no cables of its own
   })
 
-  it('totals sum across floors, labels floor-prefixed when there is more than one floor', () => {
+  it('totals read the cable\'s own end-to-end label, both floors, never re-prefixed', () => {
     const project = twoFloorLinkedProject()
     const result = computeProjectCableEstimate(project)
     expect(result.totals).toHaveLength(1)
     const [total] = result.totals
     expect(total.type.id).toBe('cat6-utp')
     expect(total.cableCount).toBe(1)
-    expect(total.labels).toEqual(['F1_C1-R1']) // floor 1 (index 0) prefix + the cable's own label
+    expect(total.labels).toEqual(['F1_C1_F2_H1']) // reaches the plain hub on floor 2 (index 1)
     expect(total.run.nominal).toBeCloseTo(28.5, 6)
     expect(total.purchaseWholeM).toBe(Math.ceil(28.5 * 1.15))
   })
 
-  it('a single-floor project never prefixes labels', () => {
+  it('a single-floor project still carries F1_ on both ends; a typed (unlinked) riser is an open end', () => {
     const project = twoFloorLinkedProject()
     const singleFloor = { ...project, floors: [project.floors[0]] }
     const result = computeProjectCableEstimate(singleFloor)
-    // floor-0's own riser is now unlinked (its partner floor is gone) but the cable itself still
-    // resolves in typed mode - label stays bare (no `F1-` prefix) with exactly one floor.
-    expect(result.totals[0]?.labels).toEqual(['C1-R1'])
+    // floor-0's own riser is now unlinked (its partner floor is gone) - a typed riser is an open
+    // end, never guessed - but the start still carries its floor like every other label.
+    expect(result.totals[0]?.labels).toEqual(['F1_C1_?'])
   })
 
   it('floorsWithoutScale lists every floor with no scale, in floor order', () => {
@@ -65,6 +66,38 @@ describe('computeProjectCableEstimate', () => {
     expect(result.totals).toEqual([])
     expect(result.grandPurchase).toBeNull()
     expect(result.warnings).toEqual([])
+  })
+})
+
+describe('computeProjectCableEstimate - end-to-end labels', () => {
+  it('project totals labels deep-equal the per-floor labels concatenated, never double floor-prefixed', () => {
+    const project = threeFloorChainProject()
+    const result = computeProjectCableEstimate(project)
+    const perFloorLabels = project.floors.flatMap((floor) => result.byFloorId.get(floor.id)!.totals.flatMap((total) => total.labels))
+    expect(result.totals[0].labels).toEqual(perFloorLabels)
+    for (const label of result.totals[0].labels) expect(label).not.toMatch(/^F\d+_F\d+_/)
+  })
+
+  it('a one-floor project reaching a plain hub reads F1_C1_F1_H1 (not an open end)', () => {
+    const project = twoFloorLinkedProject()
+    const singleFloor = { ...project, floors: [{ ...project.floors[0], hubs: [{ id: 'h1', x: 0, y: 0, mountHeightM: 1.5 }], cables: [{ ...project.floors[0].cables[0], hubId: 'h1' }] }] }
+    const result = computeProjectCableEstimate(singleFloor)
+    expect(result.totals[0]?.labels).toEqual(['F1_C1_F1_H1'])
+  })
+
+  it('the "linked floor has no scale" warning message starts with the cable\'s own end-to-end label', () => {
+    const project = twoFloorLinkedProject({ floor1: { scale: null } })
+    const result = computeProjectCableEstimate(project)
+    const warning = result.warnings.find((w) => w.code === 'linked-floor-scale-not-set')
+    expect(warning?.message.startsWith('F1_C1_F2_H1:')).toBe(true)
+  })
+
+  it('the "not routed beyond its shaft" notice starts with the cable\'s own end-to-end label', () => {
+    const cam1 = { id: 'cam-c1', modelId: 'm', x: 1, y: 1, rotationDeg: 0, rangeM: 10 }
+    const project = shaftFourFloorProject([{}, { cameras: [cam1], cables: [shaftCable('c1', 'sm2')] }])
+    const result = computeProjectCableEstimate(project)
+    const notice = result.warnings.find((w) => w.code === 'shaft-cable-not-routed')
+    expect(notice?.message.startsWith('F2_C1_?:')).toBe(true)
   })
 })
 

@@ -126,12 +126,8 @@ Project rules:
   `shafts`, `cableTypes`, `cableSettings`, `fireAlarmSettings`. A floor (`src/domain/floor/floor-types.ts`)
   owns `image` (nullable), `scale`, `cameras`, `sensors`, `walls`, `hubs`, `cables`,
   `fireAlarmDevices` and `floorHeightM` (floor-to-floor to the floor above, default 3.5). Ids and
-  labels (`C{n}`, `S{n}`, `F{n}`, `H{n}`...) are per floor. A fire-alarm device's label is a
-  per-kind designator from the one table `FIRE_ALARM_KIND_DESIGNATOR_PREFIX`
-  (`src/domain/fire-alarm/fire-alarm-device-designator.ts`; owner decision 2026-10-09; all 19
-  kinds, e.g. control panel `P`, wireless hub `PW`, smoke `S`, heat `H`; expander and call point
-  share `E`; `F` only for an unknown model) - numbered per prefix in `fireAlarmDevices[]` order,
-  never stored.
+  labels are per floor; labels are derived, never stored. A fire-alarm device's prefix is its per-kind designator from the one table `FIRE_ALARM_KIND_DESIGNATOR_PREFIX`
+  (`src/domain/fire-alarm/fire-alarm-device-designator.ts`; all 19 kinds, e.g. control panel `P`, wireless hub `PW`, smoke `S`, heat `H`; an unknown model reads `?{n}`, e.g. `?1` - owner decision 2026-10-10). Item labels are numbered per floor PER PREFIX across all kinds that share it - one counter for sensor + smoke detector (`S`), plain hub + heat detector (`H`), riser + relay module (`R`), expander + call point (`E`); order inside a shared prefix: cameras, fire-alarm devices, sensors, then hubs, each in array order (owner decision 2026-10-09). Hub markers are `H{n}` / `R{n}` / `D{n}` (plain hub / riser / drop). A shaft marker's `T{n}` comes from `shafts[]` order, the same on every floor, and no fire-alarm designator may be `T` (tested). `buildFloorItemLabels` (`src/domain/floor/floor-item-label-allocator.ts`) is the one source for canvas, panels, BOM, PNG, CSV, cable labels and warnings; never count a label anywhere else. Placing / deleting an item renumbers later items sharing its prefix.
 - Store: `floors[]` + `activeFloorId`; existing actions act on the active floor. Read through
   `src/state/project-store-floor-selectors.ts`; write through `patchActiveFloor` / `patchFloorById`
   (`project-store-active-floor-update.ts`), which also run the cross-floor + shaft prune. Never
@@ -155,7 +151,8 @@ Project rules:
   `trunk` on a shaft opening + a cable's `exitFloorId`) are converted on load to one route per
   cable (`shaft-shared-exit-migration.ts`) and never written. The loader never rejects a file
   for bad cross-floor data: invalid links, trunks, shaft markers and routes beyond a shaft are
-  dropped with a warning.
+  dropped with a warning. Old `-camera-layout.json` files still open (the reader reads content, never the file name).
+- Export names: PNG `-device-layout.png`, project file `-device-layout.json`; the project-file `app` id stays `camera-layout-tool`.
 - Cables: a cable is `{ device, hubId? | endDevice?, typeId, points, beyondShaft? }` - `device`
   (the start) and `endDevice` are `{ kind, id, end? }` refs (`kind` = `camera` / `sensor` /
   `fire-alarm`; `end` = `tx` / `rx`, for a beam only; a fire-alarm end is labelled by its
@@ -169,9 +166,8 @@ Project rules:
   be deleted (>= 1 type always). The draw tool: start on a device -> end on a hub or any other
   device; start on a hub -> end on a device (no hub-to-hub cables). A `Hub` is
   `{ id, x, y, mountHeightM, kind?, extraLengthM?, link?, trunk?, shaftId? }`; no `kind` = plain
-  hub. Labels `H{n}` / `R{n}` / `D{n}` (per floor) and `T{n}` (shaft, from `shafts[]` order, same
-  on every floor) come from `hubLabels`. Cones + sensor coverage are hidden in cable and trunk
-  mode (`coverageVisible`).
+  hub. Item labels are numbered per floor PER PREFIX across all kinds that share it (see the Project rule above). Cones + sensor coverage are hidden in cable and trunk
+  mode (`coverageVisible`). A cable's label is derived, never stored: `<F{n}_device end>_<F{m}_final plain hub>` - both ends always carry their floor, same floor and one-floor project included (`F1_C3_F2_H1`, `F1_C3_F1_H1`; owner decision 2026-10-09); the second end is the FINAL plain hub or device the route reaches (`F1_C1_F2_P1`, `F1_C1_F1_C2`); riser / drop / shaft points are pass-through and never appear; an end that cannot be resolved (typed riser / drop, shaft cable not routed, cycle, missing start / end) is a bare `?` (`F1_C3_?`, `?_F2_H1`), never guessed. The label is never prefixed again. `buildProjectCableEndToEndLabels` (`src/domain/cable/cable-end-to-end-label.ts`) is the one source for panels, canvas, PNG, BOM, CSV and warnings. Labels are not unique: one device end may carry several cables (code keys on `cableId`, never on the label).
 - Riser / drop (`kind: 'riser' | 'drop'`): cables leave for the floor above / below. Typed mode
   (no partner route): `mountHeightM` (never negative) is the height it rises to / the depth below
   this floor (`hubEffectiveHeightM` negates a drop's) + optional `extraLengthM` = cable on the
@@ -187,37 +183,35 @@ Project rules:
   `Cable.beyondShaft { floorId, points, hubId? | endDevice? }` - on the exit floor `floorId`, from
   THAT floor's opening of the same shaft to a hub (never a shaft opening) or a device there
   (owner decision 2026-10-09). `src/domain/cable/shaft-cable-leg.ts` is the only place that
-  resolves, validates and lists these legs. Not routed = label `C1-?`, counted up to the shaft: 0 m
+  resolves, validates and lists these legs. Not routed = label `F1_C1_?` (unresolved end), counted up to the shaft: 0 m
   at the opening + the opening's typed `extraLengthM` (no vertical), with a named
-  `shaft-cable-not-routed` notice. Routed = labelled by the end it reaches (`C1-H1`, `S1-P1`; the
-  shaft never appears in a label); vertical = sum of `floorHeightM` between the cable's floor and
+  `shaft-cable-not-routed` notice. Routed = labelled by the end it reaches (`F1_C1_F1_H1`, `F1_S1_F2_P1`; the
+  shaft never appears in a label); the label follows riser / drop chains beyond the leg's end too; vertical = sum of `floorHeightM` between the cable's floor and
   the exit floor, the leg measured at the exit floor's scale (no scale there = NO metres, counted
   and named), then the end (a hub continues like any hub, incl. a riser / drop chain). The cable
   stays on, and is counted on, the floor of its start device. A leg whose opening, end or floor
   goes is cleared (the cable stays) and a shaft with no marker left is removed - each in the SAME
   `set()` as its cause. Legs are drawn / redrawn / removed from the shaft panel's cable list (the
   trunk tool with `shaftLegDrawCable` set) and drawn on the exit floor (`ShaftLegRouteLines`).
-  `cross-floor-exit-resolver.ts` knows where a riser / drop pair leads.
+  `walkCrossFloorRoute` (`cross-floor-route-walker.ts`) is the only chain walker (metres and labels both fold over it); `cross-floor-exit-resolver.ts` knows where a riser / drop pair leads and `shaft-cable-leg.ts` where a cable goes beyond a shaft.
 - Cable maths lives in `src/domain/cable/cable-length-estimate-calculator.ts`,
   `cable-layout-estimate.ts` (per-floor) and `project-cable-layout-estimate.ts`
   (`computeProjectCableEstimate` is the one entry point for panels, canvas, BOM and exports;
   returns per-floor estimates merged into project totals, cable metres summed and rounded once
   per type) - keep it out of components. The scale-error range applies to horizontal metres only
-  (vertical runs and slack are typed in metres); the length limit checks the run without waste.
+  (vertical runs and slack are typed in metres); the length limit checks the run without spare.
   No scale on any floor = no cable metres for that crossing: never use the `planPxPerMeter ?? 1`
   fallback for cables. Unestimated cables (a route crossing a scale-less floor, or a cycle)
   are counted and named, never guessed.
 - Cable lines and trunk lines render in the walls Layer's children slot (after wall lines, before
   wall node handles); hubs and the selected cable/trunk vertex editor are in the markers Layer;
-  the hub, cable and trunk tools share the one editor-overlay Layer - no sixth Konva Layer.
+  the hub, cable and trunk tools share the one editor-overlay Layer - no sixth Konva Layer. Cable labels render with the cable lines AND on shaft legs in the walls Layer's children slot, image-px font scaled by `resolveMarkerZoomCapScale` in the editor (PNG keeps image px), visible exactly when cable routes are - no `VIEW_TOGGLES` entry, no extra Layer.
 - Cable prices (VND/m per type) are user input: never invented, never prefilled. BOM rows
   carry `unit` (`pcs` / `m`); metres never count as unpriced items. BOM rows for the panel,
   CSV and PNG all come from `buildCombinedBomRows(project, { floorId? })` - one signature for
-  all three. Pass `floorId` for that floor's rows only (unprefixed); omit for project-wide rows
-  (floor-prefixed `F{n}_` when `floors.length > 1`; cable metres summed per type, rounded once on
-  the total). CSV is always whole project (12 columns: 11 as before + trailing `Notes` for
-  fire-alarm compatibility warnings); PNG can be current floor or all floors (fire-alarm rows
+  all three. Every BOM label always carries `F{n}_` (`floorPositionPrefix`), one-floor projects and floor-scoped rows included; canvas marker text and properties headings stay short (`C1`). Hub / riser / drop / shaft markers are BOM rows (`Cable hub`, `Riser`, `Drop`, `Shaft opening`; unit `pcs`; shaft counted per marker) with `priceTbd`: price cells print `TBD`, never a number; excluded from totals and from the unpriced-items count, named in the note as 'cabling points priced TBD'. CSV export is always the whole project, two files: `<stem>-bom.csv` (devices, cabling points and cable metres per type; 12 columns: the PNG table's 11 + trailing `Notes` for fire-alarm compatibility warnings) and, when the project has a cable, `<stem>-cable_length_estimate.csv` - one row per cable (`Cable, Type, Length (+N% spare) (m), Notes`) from `buildProjectCableListRows(project, { floorId? })`; lengths only from `computeProjectCableEstimate` (`purchase`); N is the live `cableSettings.wastePercent`, never a hard-coded number; an unestimated cable is listed with its reason and no length. PNG can be current floor or all floors (fire-alarm rows
   filtered per floor, legend checked for that floor's device ids).
+- The allowance is called 'spare' in every displayed string; the stored field stays `cableSettings.wastePercent` (no schema change).
 - Keyboard Delete / Backspace: acts only in select mode (a placed device is selected). When a
   catalog sidebar tab's drop-down (Brand, Type, "Works with") has focus, Delete / Backspace
   are ignored (no delete action).
@@ -330,17 +324,16 @@ This ensures packages installed by `install.sh` (google-genai, pypdf, etc.) are 
 
 ## Documentation Management
 
-We keep all important docs in `./docs` folder and keep updating them, structure like below:
+We keep all important docs in `./docs` folder and keep updating them. Three baseline docs establish standards:
+- `./docs/system-architecture.md` — layers, state, export, cable subsystem
+- `./docs/codebase-summary.md` — repo structure, key files, where to change X
+- `./docs/code-standards.md` — principles, patterns, file naming, testing, workflow
 
-```
-./docs
-├── project-overview-pdr.md
-├── code-standards.md
-├── codebase-summary.md
-├── design-guidelines.md
-├── deployment-guide.md
-├── system-architecture.md
-└── project-roadmap.md
-```
+Additional docs:
+- `./docs/project-changelog.md` — dated record of features and breaking changes
+- `./docs/development-roadmap.md` — progress and open items
+- `./docs/user-guide-*.md` — four user guides
+- `./docs/*-catalog-sources.md` — datasheet sources for all records
+- `./docs/tech-stack.md` — approved versions and decisions
 
 **IMPORTANT:** *MUST READ* and *MUST COMPLY* all *INSTRUCTIONS* in project `./CLAUDE.md`, especially *WORKFLOWS* section is *CRITICALLY IMPORTANT*, this rule is *MANDATORY. NON-NEGOTIABLE. NO EXCEPTIONS. MUST REMEMBER AT ALL TIMES!!!*

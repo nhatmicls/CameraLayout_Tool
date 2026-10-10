@@ -47,6 +47,9 @@ your supplier before ordering.
 - [`docs/user-guide-sensors-and-alarm-devices.md`](./docs/user-guide-sensors-and-alarm-devices.md) - sensors, fire alarm, control panels, compatibility
 - [`docs/user-guide-floors-and-cables.md`](./docs/user-guide-floors-and-cables.md) - floors, cables, risers / drops, shafts
 - [`docs/user-guide-bom-export-and-prices.md`](./docs/user-guide-bom-export-and-prices.md) - bill of materials, PNG / CSV export, prices
+- [`docs/system-architecture.md`](./docs/system-architecture.md) - layers, data model, state, canvas, cable subsystem, export pipeline
+- [`docs/codebase-summary.md`](./docs/codebase-summary.md) - repo structure, key files, where to change X
+- [`docs/code-standards.md`](./docs/code-standards.md) - principles, patterns, file naming, testing, workflow
 - [`docs/tech-stack.md`](./docs/tech-stack.md) - approved stack, versions, decisions
 - [`docs/camera-catalog-sources.md`](./docs/camera-catalog-sources.md) - datasheet and price provenance for every camera catalog record
 - [`docs/sensor-catalog-sources.md`](./docs/sensor-catalog-sources.md) - the same for the sensor catalog

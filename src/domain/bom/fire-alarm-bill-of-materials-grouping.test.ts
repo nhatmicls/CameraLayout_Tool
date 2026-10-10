@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { groupFireAlarmDevicesIntoBom } from './fire-alarm-bill-of-materials-grouping'
 import { buildFireAlarmCompatibilityIndex, checkFireAlarmCompatibility, type CompatibilityWarning } from '../fire-alarm/fire-alarm-compatibility-checker'
 import type { FireAlarmModelSpec, PlacedFireAlarmDevice } from '../fire-alarm/fire-alarm-device-types'
+import { buildFloorItemLabels } from '../floor/floor-item-label-allocator'
 
 const wirelessHub: FireAlarmModelSpec = {
   id: 'hik-hub',
@@ -68,9 +69,15 @@ function device(id: string, modelId: string): PlacedFireAlarmDevice {
   return { id, modelId, x: 0, y: 0 }
 }
 
+/** `groupFireAlarmDevicesIntoBom` takes labels from the shared allocator (`floor-item-label-allocator.ts`) - this grouper-only test asks the real thing for them, same as `buildCombinedBomRows` does. */
+function fireAlarmLabels(devices: readonly PlacedFireAlarmDevice[], modelById: Record<string, FireAlarmModelSpec>): string[] {
+  return buildFloorItemLabels({ cameras: [], sensors: [], fireAlarmDevices: devices, hubs: [] }, { fireAlarmModelById: modelById }).fireAlarmDevices
+}
+
 describe('groupFireAlarmDevicesIntoBom', () => {
   it('groups same kind+brand+model into one row with a quantity and label list', () => {
-    const rows = groupFireAlarmDevicesIntoBom([device('d1', 'hik-smoke'), device('d2', 'hik-smoke')], modelById)
+    const devices = [device('d1', 'hik-smoke'), device('d2', 'hik-smoke')]
+    const rows = groupFireAlarmDevicesIntoBom(devices, modelById, fireAlarmLabels(devices, modelById))
     expect(rows).toHaveLength(1)
     expect(rows[0].quantity).toBe(2)
     expect(rows[0].labels).toBe('S1, S2')
@@ -78,48 +85,48 @@ describe('groupFireAlarmDevicesIntoBom', () => {
   })
 
   it('leaves formFactor, resolution and lens empty', () => {
-    const rows = groupFireAlarmDevicesIntoBom([device('d1', 'hik-smoke')], modelById)
+    const devices = [device('d1', 'hik-smoke')]
+    const rows = groupFireAlarmDevicesIntoBom(devices, modelById, fireAlarmLabels(devices, modelById))
     expect(rows[0].formFactor).toBe('')
     expect(rows[0].resolution).toBe('')
     expect(rows[0].lens).toBe('')
   })
 
   it('numbers labels per designator prefix in devices[] order, skipping an unknown modelId', () => {
-    const rows = groupFireAlarmDevicesIntoBom(
-      [device('d1', 'unknown-model'), device('d2', 'hik-smoke'), device('d3', 'unknown-model'), device('d4', 'hik-smoke')],
-      modelById,
-    )
+    const devices = [device('d1', 'unknown-model'), device('d2', 'hik-smoke'), device('d3', 'unknown-model'), device('d4', 'hik-smoke')]
+    const rows = groupFireAlarmDevicesIntoBom(devices, modelById, fireAlarmLabels(devices, modelById))
     expect(rows).toHaveLength(1)
     expect(rows[0].labels).toBe('S1, S2')
   })
 
   it('sorts rows by FIRE_ALARM_KIND_DISPLAY_ORDER, not alphabetically by label', () => {
-    const rows = groupFireAlarmDevicesIntoBom(
-      [device('d1', 'hik-smoke'), device('d2', 'hik-hub'), device('d3', 'hik-heat')],
-      modelById,
-    )
+    const devices = [device('d1', 'hik-smoke'), device('d2', 'hik-hub'), device('d3', 'hik-heat')]
+    const rows = groupFireAlarmDevicesIntoBom(devices, modelById, fireAlarmLabels(devices, modelById))
     // Display order: control-panel, wireless-hub, expander-module, keypad, smoke-detector, heat-detector, ...
     expect(rows.map((r) => r.type)).toEqual(['Wireless hub', 'Smoke detector', 'Heat detector'])
   })
 
   it('treats a null price as unpriced (null unit + line total)', () => {
-    const rows = groupFireAlarmDevicesIntoBom([device('d1', 'hik-heat')], modelById)
+    const devices = [device('d1', 'hik-heat')]
+    const rows = groupFireAlarmDevicesIntoBom(devices, modelById, fireAlarmLabels(devices, modelById))
     expect(rows[0].unitPriceVnd).toBeNull()
     expect(rows[0].lineTotalVnd).toBeNull()
   })
 
   it('multiplies a known price by quantity', () => {
-    const rows = groupFireAlarmDevicesIntoBom([device('d1', 'hik-smoke'), device('d2', 'hik-smoke')], modelById)
+    const devices = [device('d1', 'hik-smoke'), device('d2', 'hik-smoke')]
+    const rows = groupFireAlarmDevicesIntoBom(devices, modelById, fireAlarmLabels(devices, modelById))
     expect(rows[0].unitPriceVnd).toBe(500_000)
     expect(rows[0].lineTotalVnd).toBe(1_000_000)
   })
 
   it('returns an empty array for no devices', () => {
-    expect(groupFireAlarmDevicesIntoBom([], modelById)).toEqual([])
+    expect(groupFireAlarmDevicesIntoBom([], modelById, [])).toEqual([])
   })
 
   it('leaves notes empty with no warnings', () => {
-    const rows = groupFireAlarmDevicesIntoBom([device('d1', 'hik-smoke')], modelById, [])
+    const devices = [device('d1', 'hik-smoke')]
+    const rows = groupFireAlarmDevicesIntoBom(devices, modelById, fireAlarmLabels(devices, modelById), [])
     expect(rows[0].notes).toBe('')
   })
 
@@ -127,24 +134,22 @@ describe('groupFireAlarmDevicesIntoBom', () => {
     const warnings: CompatibilityWarning[] = [
       { code: 'not-listed-for-placed-controllers', deviceId: 'd1', modelId: 'hik-smoke' },
     ]
-    const rows = groupFireAlarmDevicesIntoBom(
-      [device('d1', 'hik-smoke'), device('d2', 'hik-smoke')],
-      modelById,
-      warnings,
-    )
+    const devices = [device('d1', 'hik-smoke'), device('d2', 'hik-smoke')]
+    const rows = groupFireAlarmDevicesIntoBom(devices, modelById, fireAlarmLabels(devices, modelById), warnings)
     expect(rows[0].notes).toBe('Not listed for a placed panel/hub: S1')
   })
 
   it('notes "No panel/hub placed" for a device in the aggregated no-controller-placed warning', () => {
     const warnings: CompatibilityWarning[] = [{ code: 'no-controller-placed', deviceIds: ['d1'] }]
-    const rows = groupFireAlarmDevicesIntoBom([device('d1', 'hik-smoke')], modelById, warnings)
+    const devices = [device('d1', 'hik-smoke')]
+    const rows = groupFireAlarmDevicesIntoBom(devices, modelById, fireAlarmLabels(devices, modelById), warnings)
     expect(rows[0].notes).toBe('No panel/hub placed')
   })
 
   it('leaves a controller row and a standalone-device row without notes - the real checker never warns either', () => {
     const devices = [device('d1', 'hik-hub'), device('d2', 'hik-standalone-smoke'), device('d3', 'hik-smoke')]
     const warnings = checkFireAlarmCompatibility(devices, modelById, buildFireAlarmCompatibilityIndex(Object.values(modelById)))
-    const rows = groupFireAlarmDevicesIntoBom(devices, modelById, warnings)
+    const rows = groupFireAlarmDevicesIntoBom(devices, modelById, fireAlarmLabels(devices, modelById), warnings)
     const hubRow = rows.find((r) => r.type === 'Wireless hub')
     const standaloneRow = rows.find((r) => r.model === 'HF-S2')
     const smokeRow = rows.find((r) => r.model === 'DS-PDSMK-S-WE')

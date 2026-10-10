@@ -1,4 +1,5 @@
-import { bomToTable, formatVndNumber, type BomRow } from '../../domain/bom/bill-of-materials-grouping'
+import { bomToTable, type BomRow } from '../../domain/bom/bill-of-materials-grouping'
+import { formatVndNumber } from '../../domain/bom/bom-price-formatting'
 import { truncateCanvasTextToWidth } from './truncate-canvas-text-to-width'
 
 // Type, Brand, Model, Form Factor, Resolution, Lens, Quantity, Unit, Labels, Unit Price, Total - sums to 1, proportional to

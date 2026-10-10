@@ -17,7 +17,7 @@ describe('groupCablesIntoBom', () => {
         lens: '',
         quantity: 31,
         unit: 'm',
-        labels: 'C1-H1, C2-H1',
+        labels: 'F1_C1_F1_H1, F1_C2_F1_H1',
         unitPriceVnd: 8000,
         lineTotalVnd: 248000,
       },
@@ -43,7 +43,7 @@ describe('groupCablesIntoBom', () => {
 
   it('writes the metres and the unit into the shared table', () => {
     const table = bomToTable(groupCablesIntoBom(computeCableLayoutEstimate(workedExampleInput(8000))))
-    expect(table[1]).toEqual(['Cable', '', 'Cat6 UTP', '', '', '', '31', 'm', 'C1-H1, C2-H1', '8000', '248000'])
+    expect(table[1]).toEqual(['Cable', '', 'Cat6 UTP', '', '', '', '31', 'm', 'F1_C1_F1_H1, F1_C2_F1_H1', '8000', '248000'])
   })
 
   it('reaches the CSV with a formula-looking type name neutralised', () => {
@@ -74,18 +74,26 @@ describe('computeBomTotal with cable rows', () => {
 
   it('counts unpriced pieces and unpriced cable types apart (31 m is not 31 items)', () => {
     const total = computeBomTotal([camera(null, 2), unpricedCable])
-    expect(total).toEqual({ totalVnd: 0, unpricedQuantity: 2, unpricedCableTypeCount: 1 })
+    expect(total).toEqual({ totalVnd: 0, unpricedQuantity: 2, unpricedCableTypeCount: 1, tbdQuantity: 0 })
     expect(formatBomUnpricedNote(total)).toBe('excludes 2 items with no listed price and 1 cable type with no price')
   })
 
   it('adds a priced cable row to the total', () => {
     const total = computeBomTotal([camera(5_000_000, 2), pricedCable])
-    expect(total).toEqual({ totalVnd: 5_248_000, unpricedQuantity: 0, unpricedCableTypeCount: 0 })
+    expect(total).toEqual({ totalVnd: 5_248_000, unpricedQuantity: 0, unpricedCableTypeCount: 0, tbdQuantity: 0 })
     expect(formatBomUnpricedNote(total)).toBe('')
   })
 
   it('words a single unpriced item or cable type in the singular', () => {
-    expect(formatBomUnpricedNote({ totalVnd: 0, unpricedQuantity: 1, unpricedCableTypeCount: 0 })).toBe('excludes 1 item with no listed price')
-    expect(formatBomUnpricedNote({ totalVnd: 0, unpricedQuantity: 0, unpricedCableTypeCount: 2 })).toBe('excludes 2 cable types with no price')
+    expect(formatBomUnpricedNote({ totalVnd: 0, unpricedQuantity: 1, unpricedCableTypeCount: 0, tbdQuantity: 0 })).toBe('excludes 1 item with no listed price')
+    expect(formatBomUnpricedNote({ totalVnd: 0, unpricedQuantity: 0, unpricedCableTypeCount: 2, tbdQuantity: 0 })).toBe('excludes 2 cable types with no price')
+  })
+
+  it('names a TBD cabling-point count as its own note part, singular and combined with other parts (owner decision 2026-10-09)', () => {
+    expect(formatBomUnpricedNote({ totalVnd: 0, unpricedQuantity: 0, unpricedCableTypeCount: 0, tbdQuantity: 1 })).toBe('excludes 1 cabling point priced TBD')
+    expect(formatBomUnpricedNote({ totalVnd: 0, unpricedQuantity: 0, unpricedCableTypeCount: 0, tbdQuantity: 4 })).toBe('excludes 4 cabling points priced TBD')
+    expect(formatBomUnpricedNote({ totalVnd: 0, unpricedQuantity: 2, unpricedCableTypeCount: 0, tbdQuantity: 4 })).toBe(
+      'excludes 2 items with no listed price and 4 cabling points priced TBD',
+    )
   })
 })

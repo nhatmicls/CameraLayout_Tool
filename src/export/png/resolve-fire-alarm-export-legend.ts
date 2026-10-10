@@ -5,7 +5,6 @@
  * `resolveSensorKindsPresent` in `export-plan-png.ts`.
  */
 import type { CompatibilityWarning } from '../../domain/fire-alarm/fire-alarm-compatibility-checker'
-import { buildFireAlarmDeviceLabels } from '../../domain/fire-alarm/fire-alarm-device-designator'
 import {
   FIRE_ALARM_KIND_DISPLAY_ORDER,
   type FireAlarmKind,
@@ -59,7 +58,7 @@ export function resolveFireAlarmLegend(
 
 const MAX_LABELS_SHOWN = 2
 
-/** Designator label (`buildFireAlarmDeviceLabels`) of a device in `devices`, or `null` when it is not in that list - C1 review fix: NEVER the raw id (not user-facing text). The caller must pre-filter `warnings` to `devices`' own ids (`filterCompatibilityWarningsToDeviceIds`), so this is defensive only. */
+/** Designator label (from the shared allocator, `floor-item-label-allocator.ts`) of a device in `devices`, or `null` when it is not in that list - C1 review fix: NEVER the raw id (not user-facing text). The caller must pre-filter `warnings` to `devices`' own ids (`filterCompatibilityWarningsToDeviceIds`), so this is defensive only. */
 function labelFor(deviceId: string, devices: readonly PlacedFireAlarmDevice[], labels: readonly string[]): string | null {
   const index = devices.findIndex((d) => d.id === deviceId)
   return index >= 0 ? labels[index] : null
@@ -81,15 +80,15 @@ function formatLabelList(labels: readonly string[]): string {
  * a `no-controller-placed` warning only exists when zero controllers are
  * placed, in which case no `not-listed-for-placed-controllers` warning is
  * ever produced), so at most one of the two branches below ever applies.
+ * `deviceLabels` is index-aligned with `devices` - from the shared allocator
+ * (`floor-item-label-allocator.ts`), never recomputed here.
  */
 export function resolveCompatibilityWarningText(
   devices: readonly PlacedFireAlarmDevice[],
   warnings: readonly CompatibilityWarning[],
-  modelById: Record<string, FireAlarmModelSpec>,
+  deviceLabels: readonly string[],
 ): string | null {
   if (warnings.length === 0) return null
-
-  const deviceLabels = buildFireAlarmDeviceLabels(devices, modelById)
 
   const noControllerWarning = warnings.find((w) => w.code === 'no-controller-placed')
   if (noControllerWarning) {

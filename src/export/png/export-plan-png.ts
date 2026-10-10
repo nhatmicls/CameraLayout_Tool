@@ -43,6 +43,10 @@ export interface ExportPlanPngOptions extends CableLayout {
   shaftIds?: readonly string[]
   /** Cable legs that run on this floor beyond a shaft (`findShaftLegsOnFloor`) - drawn like on screen. Omitted = none. */
   shaftLegs?: readonly ResolvedShaftLeg[]
+  /** This floor's own cable id -> its end-to-end label, for the on-canvas cable text (phase 3) - same labels the screen shows. Omitted = none drawn. */
+  cableLabelByCableId?: ReadonlyMap<string, string>
+  /** Index-aligned with `shaftLegs` - the SAME label string as each leg's own cable. Omitted = none drawn. */
+  shaftLegLabels?: readonly string[]
   /** The project's `shafts[]` (id + name) - lets the strip name the shafts that have a marker on THIS floor ("Shafts: T1 Main riser"). Omitted on every pre-phase-7 caller/test (no note). */
   shafts?: readonly Shaft[]
   /** This floor's position in the project, for the "F2 of 3 - Level 2" strip note - `undefined` or `count <= 1` draws no note (one-floor regression). */
@@ -129,6 +133,8 @@ export async function exportPlanPng(options: ExportPlanPngOptions): Promise<void
         limitStatusById,
         shaftIds: options.shaftIds,
         shaftLegs: options.shaftLegs,
+        labelByCableId: options.cableLabelByCableId,
+        shaftLegLabels: options.shaftLegLabels,
       },
       viewConfig: options.viewConfig,
       pixelRatio: scale,
@@ -171,7 +177,7 @@ export async function exportPlanPng(options: ExportPlanPngOptions): Promise<void
     }
 
     const blob = await canvasToPngBlob(finalCanvas)
-    const fileName = options.fileName ?? `${sanitizeExportFileName(options.image.fileName)}-camera-layout.png`
+    const fileName = options.fileName ?? `${sanitizeExportFileName(options.image.fileName)}-device-layout.png`
     triggerBrowserFileDownload(blob, fileName)
 
     if (scale < 1) {

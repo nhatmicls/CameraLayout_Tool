@@ -161,11 +161,19 @@ test.describe('trunk-route-drawing-smoke', () => {
       // F2 otherwise has only 2 tiny hub icons + a thin dotted trunk line, all clustered near
       // y=10 - the PNG export's blank-image guard samples a sparse 3x3 grid across the WHOLE
       // canvas and can miss that thin a sliver of content entirely (a real false positive on
-      // this specific, deliberately-sparse test scene, not a rendering bug). A camera placed far
-      // from the pixel-probe window (see the PNG steps below) gives the export both a cone on the
-      // plan and a real BOM row, without affecting anything else this spec checks.
+      // this specific, deliberately-sparse test scene, not a rendering bug). A camera's CONE
+      // (a wide filled shape, unlike a thin line/small icon) is much more likely to land on one
+      // of those 9 sample points - centred on the canvas and pointed +x with a generous range so
+      // its cone is never clipped off an edge (phase 6 regression: the previous placement at
+      // (280,180) pointed its cone mostly off the right edge of this 300px-wide floor, and adding
+      // the new cabling-point BOM rows - this floor now has a drop + a plain hub, so the strip
+      // grew a "Drop" and a "Cable hub" row - shifted the sample grid onto an all-white patch,
+      // turning this already-marginal mitigation into a hard failure). Kept well clear of the
+      // pixel-probe window used by the trunk-line checks below (x 140-160, y 4-16): the cone's
+      // leading edge does not cross that window at this position/range. Also gives the export a
+      // real BOM row, without affecting anything else this spec checks.
       await page.evaluate(
-        ({ modelId }) => window.__cameraLayoutToolTestHooks!.seedCamera({ modelId, x: 280, y: 180, rotationDeg: 0, rangeM: 10 }),
+        ({ modelId }) => window.__cameraLayoutToolTestHooks!.seedCamera({ modelId, x: 150, y: 100, rotationDeg: 0, rangeM: 15 }),
         { modelId: CAMERA_MODEL_ID },
       )
 

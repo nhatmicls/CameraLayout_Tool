@@ -1,13 +1,14 @@
 import { sanitizeExportFileName, sanitizeFileNameFragment } from './sanitize-export-file-name'
 
 /**
- * The PNG export's download file name (plan decision g). A one-floor
- * project keeps today's name unchanged (`<image stem>-camera-layout.png`) -
- * required byte-for-byte by this plan's regression rule. A multi-floor
- * project's name leads with the floor part (`F2-<floor name>-<image file
- * name>`) so `sanitizeExportFileName`'s trailing-extension strip still hits
- * the IMAGE's own extension, not a floor name that happens to end in a
- * number (e.g. "Level 2.5").
+ * The PNG export's download file name. A one-floor project keeps
+ * `<image stem>-device-layout.png` (renamed from `-camera-layout.png` -
+ * owner decision 2026-10-09, phase 6; old project/export files keep
+ * loading/opening regardless of their own name). A multi-floor project's
+ * name leads with the floor part (`F2-<floor name>-<image file name>`) so
+ * `sanitizeExportFileName`'s trailing-extension strip still hits the
+ * IMAGE's own extension, not a floor name that happens to end in a number
+ * (e.g. "Level 2.5").
  *
  * Low review fix: the floor part and the image part are sanitised
  * SEPARATELY - the floor part with `sanitizeFileNameFragment` (character
@@ -23,9 +24,9 @@ import { sanitizeExportFileName, sanitizeFileNameFragment } from './sanitize-exp
  * needed for it.
  */
 export function buildFloorExportFileName(floorIndex: number, floorCount: number, floorName: string, imageFileName: string): string {
-  if (floorCount <= 1) return `${sanitizeExportFileName(imageFileName)}-camera-layout.png`
+  if (floorCount <= 1) return `${sanitizeExportFileName(imageFileName)}-device-layout.png`
   const floorPart = sanitizeFileNameFragment(`F${floorIndex + 1}-${floorName}`)
   const imagePart = sanitizeExportFileName(imageFileName)
   const stem = sanitizeFileNameFragment(`${floorPart}-${imagePart}`)
-  return `${stem}-camera-layout.png`
+  return `${stem}-device-layout.png`
 }

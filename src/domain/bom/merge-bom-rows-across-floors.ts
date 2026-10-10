@@ -2,7 +2,7 @@ import type { BomRow } from './bill-of-materials-grouping'
 import { combineFireAlarmNotes, prefixFireAlarmNoteLabels } from './fire-alarm-bill-of-materials-grouping'
 
 export interface FloorBomRows {
-  /** `floorLabelPrefix(floorIndex, floorCount)` - `''` for a one-floor project, else e.g. `'F2_'`. */
+  /** `floorPositionPrefix(floorIndex)` - always `'F{position}_'` (owner decision 2026-10-09), never empty, even for a one-floor project. */
   prefix: string
   rows: BomRow[]
 }
@@ -12,7 +12,7 @@ export type BomRowMergeKey = (row: BomRow) => string
 
 const defaultMergeKey: BomRowMergeKey = (row) => `${row.type}\u0000${row.brand}\u0000${row.model}\u0000${row.lens}`
 
-/** `'C1, C3'` -> `'F2_C1, F2_C3'`; unchanged when `prefix` is `''`. */
+/** `'C1, C3'` -> `'F2_C1, F2_C3'`. `prefix` is never empty in practice (`floorPositionPrefix` always returns `'F{n}_'`) - the guard only keeps this safe for a caller that ever passes one. */
 function prefixLabels(labels: string, prefix: string): string {
   if (!prefix) return labels
   return labels
@@ -29,16 +29,16 @@ function addLineTotals(a: number | null, b: number | null): number | null {
 export type BomRowCompare = (a: BomRow, b: BomRow) => number
 
 /**
- * Merges camera / sensor / fire-alarm BOM rows from several floors into one
- * project-wide list (plan decision f): the same model (by `mergeKey`) on two
+ * Merges camera / sensor / fire-alarm / cabling-point BOM rows from several
+ * floors into one project-wide list: the same model (by `mergeKey`) on two
  * floors becomes one row, quantity and line total summed, labels
  * concatenated in floor order with each floor's own `prefix` applied first -
- * empty for a one-floor project, so that project's rows come out
- * byte-identical to before this plan. A fire-alarm row's `notes` carries
- * floor-prefixed device labels too, combined the same way; every other
- * row's `notes` stays absent (`undefined`), matching today's camera/sensor
- * rows exactly. Cable rows never pass through here - the project cable
- * estimate already sums and floor-prefixes them (`project-cable-layout-estimate.ts`).
+ * always `F{n}_`, a one-floor project included (owner decision 2026-10-09,
+ * phase 6). A fire-alarm row's `notes` carries floor-prefixed device labels
+ * too, combined the same way; every other row's `notes` stays absent
+ * (`undefined`), matching today's camera/sensor rows exactly. Cable rows
+ * never pass through here - the project cable estimate already sums and
+ * floor-prefixes them (`project-cable-layout-estimate.ts`).
  *
  * `compare`, when given, re-sorts the merged result (H2 review fix: without
  * it, a merge keeps first-appearance order, which can silently differ from
@@ -46,8 +46,7 @@ export type BomRowCompare = (a: BomRow, b: BomRow) => number
  * appearing only on floor 2 would sort after a Hikvision row from floor 1
  * instead of before it alphabetically). Passing the exact comparator the
  * row's own family already sorts by means a ONE-floor merge is a no-op
- * re-sort (stable `Array.prototype.sort`), so the one-floor regression
- * still holds without a special case.
+ * re-sort (stable `Array.prototype.sort`).
  */
 export function mergeBomRowsAcrossFloors(
   perFloor: readonly FloorBomRows[],

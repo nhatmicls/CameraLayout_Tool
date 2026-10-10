@@ -15,10 +15,10 @@ import { sanitiseDownloadFileName, triggerBrowserFileDownload } from '../browser
 /** Guards against reading a huge file into memory at all; matches the schema's own text-length cap. */
 const MAX_LOAD_FILE_SIZE_BYTES = 80 * 1024 * 1024 // 80 MB
 
-/** `<image-base-name>-camera-layout.json`, per the phase spec. */
+/** `<image-base-name>-device-layout.json` (renamed from `-camera-layout.json` - owner decision 2026-10-09, phase 6; the `app` id inside the file stays `camera-layout-tool`, and a file saved under the old name still loads - the loader reads content, never the file name). */
 export function deriveProjectFileName(imageFileName: string): string {
   const base = imageFileName.replace(/\.[^./\\]+$/, '').trim()
-  return `${base.length > 0 ? base : 'project'}-camera-layout.json`
+  return `${base.length > 0 ? base : 'project'}-device-layout.json`
 }
 
 export type SaveProjectResult = { ok: true } | { ok: false; error: string }

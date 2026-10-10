@@ -15,7 +15,7 @@ interface DraggableIconMarkerNodeProps {
   item: DraggableIconMarkerNodeItem
   /** The kind-specific glyph (e.g. `SensorKindIconShape`/`FireAlarmKindIconShape`), rendered at the marker's local origin. */
   icon: ReactNode
-  /** "S{n}"/"F{n}", derived by the caller from the item's position in its own placed-items array. */
+  /** "S{n}"/"P{n}"..., derived by the caller from the floor item label allocator. */
   label: string
   iconRadiusPx: number
   selected: boolean

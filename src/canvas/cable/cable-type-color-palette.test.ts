@@ -3,6 +3,7 @@ import { SENSOR_MARKER_TINT } from '../sensor/sensor-kind-color-palette'
 import {
   BRAND_TINTS,
   DORI_BAND_COLORS,
+  resolveMarkerZoomCapScale,
   WALL_GLASS_COLOR,
   WALL_OPAQUE_COLOR,
   WALL_SELECTED_COLOR,
@@ -11,6 +12,7 @@ import {
   CABLE_OVER_LIMIT_COLOR,
   CABLE_TYPE_COLORS,
   cableTypeColor,
+  computeCableLabelFontSizePx,
   computeCableStrokeWidthPx,
   resolveCableSnapTolerancePx,
 } from './cable-type-color-palette'
@@ -52,5 +54,24 @@ describe('cable sizes', () => {
     expect(resolveCableSnapTolerancePx(0.25, 12)).toBe(40) // zoomed out: 10 screen px = 40 image px
     expect(resolveCableSnapTolerancePx(0.28, 40)).toBe(40) // 11.2 screen px icon, under its cap: the icon is the bigger target
     expect(resolveCableSnapTolerancePx(4, 12)).toBe(3) // zoomed in: the icon is drawn at its 12 screen px cap = 3 image px
+  })
+})
+
+describe('computeCableLabelFontSizePx', () => {
+  const BASE = Math.max(9, 12 * 0.6) // iconRadiusPx = 12 -> 9 (the floor, since 12*0.6 = 7.2)
+
+  it('not interactive: base size regardless of zoom (the PNG never caps)', () => {
+    expect(computeCableLabelFontSizePx(12, 0.1, false)).toBe(BASE)
+    expect(computeCableLabelFontSizePx(12, 10, false)).toBe(BASE)
+  })
+
+  it('interactive but below the zoom cap: base size', () => {
+    expect(computeCableLabelFontSizePx(12, 0.5, true)).toBeCloseTo(BASE)
+  })
+
+  it('interactive and zoomed in past the cap: shrinks so the on-screen size stays constant', () => {
+    const cappedScale = resolveMarkerZoomCapScale(12, 4, true)
+    expect(cappedScale).toBeLessThan(1)
+    expect(computeCableLabelFontSizePx(12, 4, true)).toBeCloseTo(BASE * cappedScale)
   })
 })

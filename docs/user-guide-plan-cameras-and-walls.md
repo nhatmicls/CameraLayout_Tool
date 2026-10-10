@@ -20,7 +20,7 @@ human / vehicle detection.
 ## Placement
 
 Drag from the catalog, move, rotate with the handle, adjust range and (for
-varifocal lenses) HFOV in the properties panel. Undo/redo.
+varifocal lenses) HFOV in the properties panel. Cameras are numbered C1, C2... per floor in array order (first placed is C1). Labels renumber when you delete an earlier camera. Undo/redo.
 
 ## DORI coverage
 

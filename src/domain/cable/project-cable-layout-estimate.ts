@@ -1,10 +1,10 @@
+import type { FireAlarmKindByModelId } from '../fire-alarm/fire-alarm-device-designator'
+import type { Project } from '../project-file/project-types'
+import { buildProjectCableEndToEndLabels, selectCableLabelStrings } from './cable-end-to-end-label'
 import { computeCableLayoutEstimate, type CableEstimateWarning, type CableLayoutEstimate, type CableTypeTotal } from './cable-layout-estimate'
 import { sumMetersIntervals, type MetersInterval } from './cable-length-estimate-calculator'
 import { ceilMeters } from './cable-length-format'
 import { resolveCableBeyondLengths } from './cross-floor-hub-beyond-length-resolver'
-import type { FireAlarmKindByModelId } from '../fire-alarm/fire-alarm-device-designator'
-import { floorLabelPrefix } from '../floor/floor-label-prefix'
-import type { Project } from '../project-file/project-types'
 
 /**
  * THE entry point for cable estimates once a project has more than one
@@ -17,7 +17,7 @@ import type { Project } from '../project-file/project-types'
 export interface ProjectCableEstimate {
   /** Every floor's own estimate (cross-floor contributions already resolved) - exactly `useCableLayoutEstimate()`'s shape, per floor. */
   byFloorId: ReadonlyMap<string, CableLayoutEstimate>
-  /** Summed across every floor, per type; whole metres rounded up ONCE on the sum (a per-floor strip can therefore read up to `floors.length - 1` m higher - noted in README). Labels floor-prefixed `F{position}_` only when the project has more than one floor. */
+  /** Summed across every floor, per type; whole metres rounded up ONCE on the sum (a per-floor strip can therefore read up to `floors.length - 1` m higher - noted in README). Labels are each cable's own end-to-end label (`F1_C3_F2_H1`) - already floor-aware on both ends, identical to that cable's own per-floor label, never re-prefixed here. */
   totals: CableTypeTotal[]
   grandPurchase: MetersInterval | null
   grandTotalVnd: number
@@ -49,7 +49,7 @@ export interface ProjectCableEstimate {
 let cachedKey: (Pick<Project, 'floors' | 'shafts' | 'cableTypes' | 'cableSettings'> & { fireAlarmModelById: FireAlarmKindByModelId | undefined }) | null = null
 let cachedResult: ProjectCableEstimate | null = null
 
-/** `fireAlarmModelById` only feeds the labels of cables that start on a fire-alarm device; omitted = those read "F{n}". Metres never depend on it. */
+/** `fireAlarmModelById` only feeds the labels of cables that start on a fire-alarm device; omitted = those read "?{n}". Metres never depend on it. */
 export function computeProjectCableEstimate(project: Project, fireAlarmModelById?: FireAlarmKindByModelId): ProjectCableEstimate {
   if (
     cachedKey &&
@@ -70,8 +70,13 @@ export function computeProjectCableEstimate(project: Project, fireAlarmModelById
 function computeProjectCableEstimateUncached(project: Project, fireAlarmModelById: FireAlarmKindByModelId | undefined): ProjectCableEstimate {
   const beyondByFloorId = resolveCableBeyondLengths(project, fireAlarmModelById)
   const shaftIds = project.shafts.map((shaft) => shaft.id)
+  // Built ONCE for the whole project - every floor's `labelByCableId` is a view into this same map,
+  // so a floor's own estimate and the project totals below always show the identical string.
+  const labelsByFloorId = buildProjectCableEndToEndLabels(project, fireAlarmModelById)
   const byFloorId = new Map<string, CableLayoutEstimate>()
   for (const floor of project.floors) {
+    const floorLabels = labelsByFloorId.get(floor.id)
+    const labelByCableId = floorLabels && selectCableLabelStrings(floorLabels)
     byFloorId.set(
       floor.id,
       computeCableLayoutEstimate({
@@ -86,6 +91,7 @@ function computeProjectCableEstimateUncached(project: Project, fireAlarmModelByI
         shaftIds,
         fireAlarmDevices: floor.fireAlarmDevices,
         fireAlarmModelById,
+        labelByCableId,
       }),
     )
   }
@@ -93,20 +99,18 @@ function computeProjectCableEstimateUncached(project: Project, fireAlarmModelByI
   const totals: CableTypeTotal[] = []
   for (const type of project.cableTypes) {
     const perFloor = project.floors
-      .map((floor, floorIndex) => ({ floorIndex, total: byFloorId.get(floor.id)!.totals.find((candidate) => candidate.type.id === type.id) }))
-      .filter((entry): entry is { floorIndex: number; total: CableTypeTotal } => entry.total !== undefined)
+      .map((floor) => byFloorId.get(floor.id)!.totals.find((candidate) => candidate.type.id === type.id))
+      .filter((total): total is CableTypeTotal => total !== undefined)
     if (perFloor.length === 0) continue
 
-    const purchase = sumMetersIntervals(perFloor.map((entry) => entry.total.purchase))
+    const purchase = sumMetersIntervals(perFloor.map((total) => total.purchase))
     const purchaseWholeM = ceilMeters(purchase.nominal)
     totals.push({
       type,
-      cableCount: perFloor.reduce((sum, entry) => sum + entry.total.cableCount, 0),
-      labels: perFloor.flatMap((entry) => {
-        const prefix = floorLabelPrefix(entry.floorIndex, project.floors.length)
-        return entry.total.labels.map((label) => `${prefix}${label}`)
-      }),
-      run: sumMetersIntervals(perFloor.map((entry) => entry.total.run)),
+      cableCount: perFloor.reduce((sum, total) => sum + total.cableCount, 0),
+      // Every cable's own label already carries both its floors (`F1_C3_F2_H1`) - stop re-prefixing.
+      labels: perFloor.flatMap((total) => total.labels),
+      run: sumMetersIntervals(perFloor.map((total) => total.run)),
       purchase,
       purchaseWholeM,
       lineTotalVnd: type.pricePerMeterVnd === null ? null : purchaseWholeM * type.pricePerMeterVnd,

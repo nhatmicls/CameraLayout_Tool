@@ -23,10 +23,10 @@ import {
  * (150,50). Route height 3 m = default device height 3 m (no device rise).
  *
  * C1 on F2: camera (50,10) -> T1 (50,50) = 40 px = 4 m.
- *   Not routed ("C1-?"): 4 + rise 0 + slack (0.5 + 3) + 0 beyond = 7.5 m.
- *   Routed on F1 to H1 ("C1-H1"): beyond = F1 height 3 + route 100 px = 10 m
+ *   Not routed ("F2_C1_?"): 4 + rise 0 + slack (0.5 + 3) + 0 beyond = 7.5 m.
+ *   Routed on F1 to H1 ("F2_C1_F1_H1"): beyond = F1 height 3 + route 100 px = 10 m
  *     + H1 drop |3 - 1.5| = 1.5 -> 14.5; run = 4 + 0 + 3.5 + 14.5 = 22.0 m.
- * C2 on F2: camera (10,50) -> T1 (50,50) = 4 m, routed on F3 to P1 ("C2-P1"):
+ * C2 on F2: camera (10,50) -> T1 (50,50) = 4 m, routed on F3 to P1 ("F2_C2_F3_P1"):
  *   beyond = F2 height 3.5 + route 10 m + panel rise |3 - 3| = 0 -> 13.5;
  *   a DEVICE end takes the device slack: 0.5 + 0.5 = 1.
  *   run = 4 + 0 + 1 + 13.5 = 18.5 m.
@@ -43,7 +43,7 @@ async function goToFloor(page: Page, index: number): Promise<void> {
 const getFloors = (page: Page) => page.evaluate(() => window.__cameraLayoutToolTestHooks!.getFloors())
 
 test.describe('shaft-per-cable-route-smoke', () => {
-  test('C1-? until routed, route each cable from the exit floor\'s shaft opening to a hub / a device, cascade + undo, save/reload', async ({ page }) => {
+  test('F2_C1_? until routed, route each cable from the exit floor\'s shaft opening to a hub / a device, cascade + undo, save/reload', async ({ page }) => {
     test.setTimeout(150_000)
 
     const errors: string[] = []
@@ -90,7 +90,7 @@ test.describe('shaft-per-cable-route-smoke', () => {
 
     let cable1Id = ''
     let cable2Id = ''
-    await test.step('3. F2: draw C1 and C2 onto the shaft with the real cable tool - each reads "C?-?" and is counted up to the shaft', async () => {
+    await test.step('3. F2: draw C1 and C2 onto the shaft with the real cable tool - each reads "F2_C?_?" and is counted up to the shaft', async () => {
       await goToFloor(page, 1)
       await page.evaluate(({ modelId }) => window.__cameraLayoutToolTestHooks!.seedCamera({ modelId, x: 50, y: 10, rotationDeg: 0, rangeM: 10 }), {
         modelId: CAMERA_MODEL_ID,
@@ -103,7 +103,7 @@ test.describe('shaft-per-cable-route-smoke', () => {
       await clearNotifications(page)
       await clickImagePx(page, 50, 10) // C1
       await clickImagePx(page, 50, 50) // T1 - commits
-      await expect(page.locator('[data-testid="notification-banner"]')).toContainText('C1-? enters the shaft')
+      await expect(page.locator('[data-testid="notification-banner"]')).toContainText('F2_C1_? enters the shaft')
       await clickImagePx(page, 10, 50) // C2
       await clickImagePx(page, 50, 50) // T1 - commits
       await page.locator('[data-testid="draw-cable-button"]').click() // back to select
@@ -115,12 +115,12 @@ test.describe('shaft-per-cable-route-smoke', () => {
       cable2Id = cables[1].id
 
       await page.evaluate((id) => window.__cameraLayoutToolTestHooks!.selectCable(id), cable1Id)
-      await expect(page.locator('[data-testid="properties-cable-label"]')).toContainText('C1-?')
+      await expect(page.locator('[data-testid="properties-cable-label"]')).toContainText('F2_C1_?')
       await expect(page.locator('[data-testid="properties-cable-run"]')).toContainText('7.5 m')
       await expect(page.locator('[data-testid="properties-cable-shaft-route"]')).toContainText('Not routed beyond the shaft yet')
     })
 
-    await test.step('4. F1: the shaft opening lists the incoming cables by device; route C1 to H1 with real clicks -> "C1-H1", 22.0 m', async () => {
+    await test.step('4. F1: the shaft opening lists the incoming cables by device; route C1 to H1 with real clicks -> "F2_C1_F1_H1", 22.0 m', async () => {
       await goToFloor(page, 0)
       await clickImagePx(page, 50, 50) // select T1 on F1 by clicking it
       await expect(page.locator('[data-testid="shaft-cables-in"]')).toContainText('Cables in: 2')
@@ -151,12 +151,12 @@ test.describe('shaft-per-cable-route-smoke', () => {
 
       await goToFloor(page, 1)
       await page.evaluate((id) => window.__cameraLayoutToolTestHooks!.selectCable(id), cable1Id)
-      await expect(page.locator('[data-testid="properties-cable-label"]')).toContainText('C1-H1')
+      await expect(page.locator('[data-testid="properties-cable-label"]')).toContainText('F2_C1_F1_H1')
       await expect(page.locator('[data-testid="properties-cable-run"]')).toContainText('22.0 m')
       await expect(page.locator('[data-testid="properties-cable-shaft-route"]')).toContainText('H1')
     })
 
-    await test.step('5. F3: route C2 to the fire-alarm panel (a DEVICE end) -> "C2-P1", 18.5 m', async () => {
+    await test.step('5. F3: route C2 to the fire-alarm panel (a DEVICE end) -> "F2_C2_F3_P1", 18.5 m', async () => {
       await goToFloor(page, 2)
       await clickImagePx(page, 50, 50) // select T1 on F3
       await page.locator(`[data-testid="shaft-cable-route-button-${cable2Id}"]`).click()
@@ -171,11 +171,11 @@ test.describe('shaft-per-cable-route-smoke', () => {
 
       await goToFloor(page, 1)
       await page.evaluate((id) => window.__cameraLayoutToolTestHooks!.selectCable(id), cable2Id)
-      await expect(page.locator('[data-testid="properties-cable-label"]')).toContainText('C2-P1')
+      await expect(page.locator('[data-testid="properties-cable-label"]')).toContainText('F2_C2_F3_P1')
       await expect(page.locator('[data-testid="properties-cable-run"]')).toContainText('18.5 m')
     })
 
-    await test.step('6. F2: a cable drawn from one camera to ANOTHER camera ends on that device -> "C1-C2"', async () => {
+    await test.step('6. F2: a cable drawn from one camera to ANOTHER camera ends on that device -> "F2_C1_F2_C2"', async () => {
       await page.locator('[data-testid="draw-cable-button"]').click()
       await clearNotifications(page)
       await clickImagePx(page, 50, 10) // C1
@@ -187,10 +187,10 @@ test.describe('shaft-per-cable-route-smoke', () => {
       expect(cables[2].hubId).toBeUndefined()
       expect(cables[2].endDevice?.kind).toBe('camera')
       await page.evaluate((id) => window.__cameraLayoutToolTestHooks!.selectCable(id), cables[2].id)
-      await expect(page.locator('[data-testid="properties-cable-label"]')).toContainText('C1-C2')
+      await expect(page.locator('[data-testid="properties-cable-label"]')).toContainText('F2_C1_F2_C2')
     })
 
-    await test.step('7. deleting H1 on F1 clears C1\'s route in the same step (back to "C1-?", 7.5 m); undo restores it', async () => {
+    await test.step('7. deleting H1 on F1 clears C1\'s route in the same step (back to "F2_C1_?", 7.5 m); undo restores it', async () => {
       await goToFloor(page, 0)
       await clearNotifications(page)
       await clickImagePx(page, 150, 50) // select H1

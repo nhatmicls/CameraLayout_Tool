@@ -1,3 +1,9 @@
+import {
+  buildProjectCableEndToEndLabels,
+  resolveShaftLegLabels,
+  selectCableLabelStrings,
+  type CableEndToEndLabel,
+} from '../../domain/cable/cable-end-to-end-label'
 import { findShaftLegsOnFloor } from '../../domain/cable/shaft-cable-leg'
 import { useCallback, useState } from 'react'
 import { describeUnestimatedCables } from '../../domain/cable/unestimated-cables-summary'
@@ -10,8 +16,12 @@ import { describeExportAllFloorsOutcome } from './describe-export-all-floors-out
 import { exportAllFloorPlansPng } from '../png/export-all-floor-plans-png'
 import { exportPlanPng } from '../png/export-plan-png'
 import { exportBomCsv } from '../csv/export-bom-csv'
+import { exportCableLengthEstimateCsv } from '../csv/export-cable-length-estimate-csv'
+import { fireAlarmModelSpecById } from './fire-alarm-compatibility-index-singleton'
 import { buildCombinedBomRows } from './build-combined-bom-rows'
 import { buildFloorExportFileName } from './build-floor-export-file-name'
+
+const NO_CABLE_LABEL_ENTRIES: ReadonlyMap<string, CableEndToEndLabel> = new Map()
 
 /**
  * PNG/CSV export handlers, pulled out of `app.tsx` (pure move, no behaviour
@@ -54,6 +64,9 @@ export function usePlanExportActions() {
       const project = selectProject(store)
       const floorIndex = project.floors.indexOf(activeFloor)
       const { allRows, cableEstimate, fireAlarmWarnings } = buildCombinedBomRows(project, { floorId: activeFloor.id })
+      // Same label source the screen reads (`use-stage-cabling-scene-props.ts`).
+      const allCableLabels = buildProjectCableEndToEndLabels(project, fireAlarmModelSpecById)
+      const shaftLegs = findShaftLegsOnFloor(project.floors, activeFloor.id)
       // The drawing shows what is on screen: the stored view config with the active tool's layers forced on.
       const { viewConfig, toolMode } = useEditorUiStore.getState()
       await exportPlanPng({
@@ -73,7 +86,9 @@ export function usePlanExportActions() {
         rows: allRows,
         fireAlarmWarnings,
         shaftIds: project.shafts.map((shaft) => shaft.id),
-        shaftLegs: findShaftLegsOnFloor(project.floors, activeFloor.id),
+        shaftLegs,
+        cableLabelByCableId: selectCableLabelStrings(allCableLabels.get(activeFloor.id) ?? NO_CABLE_LABEL_ENTRIES),
+        shaftLegLabels: resolveShaftLegLabels(shaftLegs, project.floors, allCableLabels),
         shafts: project.shafts,
         floorPosition: { index: floorIndex, count: project.floors.length, name: activeFloor.name },
         fileName: buildFloorExportFileName(floorIndex, project.floors.length, activeFloor.name, image.fileName),
@@ -100,6 +115,9 @@ export function usePlanExportActions() {
       if (!firstFloorWithImage?.image) return
 
       exportBomCsv({ project, imageFileName: firstFloorWithImage.image.fileName })
+      // Second download, same click: the per-cable length CSV (phase 4) - BOM first, so the first
+      // `waitForEvent('download')`/browser-prompt result is always the BOM.
+      exportCableLengthEstimateCsv({ project, imageFileName: firstFloorWithImage.image.fileName })
 
       const { cableEstimate, floorsWithoutScale } = buildCombinedBomRows(project)
       if (project.floors.length > 1) {

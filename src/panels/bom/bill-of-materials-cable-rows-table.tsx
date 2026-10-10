@@ -1,4 +1,5 @@
-import { formatVndNumber, type BomRow } from '../../domain/bom/bill-of-materials-grouping'
+import type { BomRow } from '../../domain/bom/bill-of-materials-grouping'
+import { formatVndNumber } from '../../domain/bom/bom-price-formatting'
 
 interface BillOfMaterialsCableRowsTableProps {
   /** One row per cable type in use (`groupCablesIntoBom`): quantity is whole metres to buy. */

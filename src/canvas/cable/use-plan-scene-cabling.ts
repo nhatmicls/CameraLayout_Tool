@@ -1,5 +1,5 @@
 import { createElement, Fragment, useMemo, type ReactNode } from 'react'
-import { buildCableEndpointIndex, type CableEndpointIndex } from '../../domain/cable/cable-endpoint-index'
+import { buildCableEndpointIndex, resolveCablePathPx, type CableEndpointIndex } from '../../domain/cable/cable-endpoint-index'
 import type { CableLayout, CablePoint } from '../../domain/cable/cable-layout-types'
 import type { CableLimitStatus } from '../../domain/cable/cable-length-estimate-calculator'
 import type { ResolvedShaftLeg } from '../../domain/cable/shaft-cable-leg'
@@ -7,12 +7,14 @@ import type { PlacedFireAlarmDevice } from '../../domain/fire-alarm/fire-alarm-d
 import type { PlacedCamera, ScaleCalibration } from '../../domain/project-file/project-types'
 import type { PlacedSensor } from '../../domain/sensor/sensor-types'
 import { fireAlarmModelSpecById } from '../../export/shared/fire-alarm-compatibility-index-singleton'
+import { CableRouteLabels, type CableRouteLabelItem } from './cable-route-labels'
 import { CableRouteLines } from './cable-route-lines'
-import { computeCableStrokeWidthPx } from './cable-type-color-palette'
+import { computeCableLabelFontSizePx, computeCableStrokeWidthPx } from './cable-type-color-palette'
 import { HubTrunkRouteLines } from './hub-trunk-route-lines'
 import { ShaftLegRouteLines } from './shaft-leg-route-lines'
 
 const NO_LIMIT_STATUSES: ReadonlyMap<string, CableLimitStatus> = new Map()
+const NO_LABEL_ITEMS: readonly CableRouteLabelItem[] = []
 
 /**
  * The cable data `PlanSceneLayers` draws. `scale` is the real calibration
@@ -31,6 +33,10 @@ export interface PlanSceneCabling extends CableLayout {
   shaftIds?: readonly string[]
   /** Cable legs that run on THIS floor beyond a shaft (`findShaftLegsOnFloor`) - their cables may belong to other floors, so the caller resolves them from the whole project. Omitted = none drawn. */
   shaftLegs?: readonly ResolvedShaftLeg[]
+  /** This floor's own cable id -> its end-to-end label ("F1_C3_F2_H1"), for the on-canvas text beside each cable line. Omitted = no cable labels drawn (dev spike, pre-phase-3 tests/callers). */
+  labelByCableId?: ReadonlyMap<string, string>
+  /** Index-aligned with `shaftLegs`: the SAME label string as the leg's own cable. Omitted = no leg labels drawn. */
+  shaftLegLabels?: readonly string[]
 }
 
 /** Editor-only wiring; omitted in the PNG export and the dev spike, where hubs and cables are a static render. */
@@ -106,6 +112,39 @@ export function usePlanSceneCabling({
   const hasTrunks = cabling.hubs.some((hub) => hub.trunk)
   const shaftLegs = cabling.shaftLegs
   const hasShaftLegs = shaftLegs !== undefined && shaftLegs.length > 0
+  // The PNG passes no `interaction` at all (`interactive` false) - the editor always does, even
+  // outside select mode - so this mirrors the top-level `interactive` flag without a new prop.
+  const fontSizePx = computeCableLabelFontSizePx(iconRadiusPx, viewportScale, interaction !== undefined)
+
+  // Built INSIDE the cable-lines memo below (not its own `useMemo`): a label is drawn for the
+  // SELECTED cable too (unlike its line, hidden while the vertex editor draws it instead), so this
+  // never depends on `hiddenCableId`.
+  const cableLabelItems = useMemo(() => {
+    const labelByCableId = cabling.labelByCableId
+    if (!labelByCableId) return NO_LABEL_ITEMS
+    const items: CableRouteLabelItem[] = []
+    for (const cable of cabling.cables) {
+      const text = labelByCableId.get(cable.id)
+      if (!text) continue
+      const path = resolveCablePathPx(cable, index)
+      if (!path) continue
+      items.push({ key: cable.id, name: `cable-label-${cable.id}`, pathPx: path, text })
+    }
+    return items.length > 0 ? items : NO_LABEL_ITEMS
+  }, [cabling.cables, cabling.labelByCableId, index])
+
+  const shaftLegLabelItems = useMemo(() => {
+    const legLabels = cabling.shaftLegLabels
+    if (!shaftLegs || !legLabels) return NO_LABEL_ITEMS
+    const items: CableRouteLabelItem[] = []
+    shaftLegs.forEach((leg, i) => {
+      const text = legLabels[i]
+      if (!text) return
+      items.push({ key: `${leg.sourceFloorIndex}:${leg.cable.id}`, name: `shaft-leg-label-${leg.cable.id}`, pathPx: leg.pathPx, text })
+    })
+    return items.length > 0 ? items : NO_LABEL_ITEMS
+  }, [shaftLegs, cabling.shaftLegLabels])
+
   const cableLines = useMemo(
     () =>
       cabling.cables.length === 0 && !hasTrunks && !hasShaftLegs
@@ -127,8 +166,28 @@ export function usePlanSceneCabling({
                   viewportScale,
                   onSelectCable,
                 }),
+            cableLabelItems.length === 0 && shaftLegLabelItems.length === 0
+              ? null
+              : createElement(CableRouteLabels, { items: [...cableLabelItems, ...shaftLegLabelItems], fontSizePx, strokeWidthPx }),
           ),
-    [cabling.cables, cabling.cableTypes, cabling.hubs, hasTrunks, hasShaftLegs, shaftLegs, index, limitStatusById, hiddenCableId, hiddenHubId, strokeWidthPx, viewportScale, onSelectCable],
+    [
+      cabling.cables,
+      cabling.cableTypes,
+      cabling.hubs,
+      hasTrunks,
+      hasShaftLegs,
+      shaftLegs,
+      index,
+      limitStatusById,
+      hiddenCableId,
+      hiddenHubId,
+      strokeWidthPx,
+      viewportScale,
+      onSelectCable,
+      cableLabelItems,
+      shaftLegLabelItems,
+      fontSizePx,
+    ],
   )
 
   return { index, limitStatusById, cableLines }

@@ -23,7 +23,20 @@ export interface BomRow {
   lineTotalVnd: number | null
   /** CSV-only extra column (Validation Session 1): a fire-alarm compatibility-warning note for this grouped row, e.g. "Not listed for a placed panel/hub: F3, F7" or "No panel/hub placed". Undefined/empty for every camera, sensor and cable row, and for a fire row with no warning. Never shown in the PNG table (`bomToTable`) - only `bomToCsvTable` reads it. */
   notes?: string
+  /**
+   * Owner decision 2026-10-09 (phase 6): a hub/riser/drop/shaft-opening
+   * marker row has no catalog model, so no price can exist by design - its
+   * price cells print the literal `BOM_PRICE_TBD_TEXT` ("TBD") instead of a
+   * number. `unitPriceVnd`/`lineTotalVnd` stay `null` on these rows (every
+   * existing sum already skips `null`); `computeBomTotal` counts their
+   * quantity into `BomTotal.tbdQuantity`, NEVER into `unpricedQuantity`
+   * (that field means "a catalog model with no listed price").
+   */
+  priceTbd?: true
 }
+
+/** The literal price-cell text for a row whose price is unknown by design (`BomRow.priceTbd`) - never a number, never invented. */
+export const BOM_PRICE_TBD_TEXT = 'TBD'
 
 function lensLabel(lens: CameraModelSpec['lens']): string {
   return lens.kind === 'fixed' ? `${lens.focalMm} mm` : `${lens.focalMinMm}-${lens.focalMaxMm} mm`
@@ -32,15 +45,18 @@ function lensLabel(lens: CameraModelSpec['lens']): string {
 /**
  * Groups placed cameras into BOM rows by (brand, model, lens) - the same
  * printed model name with a different lens option is a separate row, since
- * it is a separate purchasable part. Camera numbers (`C1`, `C2`, ...) come
- * from placement order in `cameras`, 1-based; unknown `modelId`s are skipped
- * (the project schema already reports those as warnings on load).
+ * it is a separate purchasable part. `labels` is index-aligned with
+ * `cameras` (from the ONE shared allocator, `floor-item-label-allocator.ts`'s
+ * `buildFloorItemLabels` - this function no longer numbers anything itself);
+ * unknown `modelId`s are skipped (the project schema already reports those
+ * as warnings on load).
  */
 export function groupCamerasIntoBom(
   cameras: PlacedCamera[],
   modelById: Record<string, CameraModelSpec>,
+  labels: readonly string[],
 ): BomRow[] {
-  const groups = new Map<string, { model: CameraModelSpec; cameraNumbers: number[] }>()
+  const groups = new Map<string, { model: CameraModelSpec; cameraLabels: string[] }>()
 
   cameras.forEach((camera, index) => {
     const model = modelById[camera.modelId]
@@ -49,13 +65,13 @@ export function groupCamerasIntoBom(
     const key = `${model.brand}\u0000${model.model}\u0000${lensLabel(model.lens)}`
     const group = groups.get(key)
     if (group) {
-      group.cameraNumbers.push(index + 1)
+      group.cameraLabels.push(labels[index])
     } else {
-      groups.set(key, { model, cameraNumbers: [index + 1] })
+      groups.set(key, { model, cameraLabels: [labels[index]] })
     }
   })
 
-  const rows: BomRow[] = Array.from(groups.values()).map(({ model, cameraNumbers }) => {
+  const rows: BomRow[] = Array.from(groups.values()).map(({ model, cameraLabels }) => {
     const unitPriceVnd = model.priceVn?.amountVnd ?? null
     return {
       type: 'Camera',
@@ -64,11 +80,11 @@ export function groupCamerasIntoBom(
       formFactor: model.formFactor,
       resolution: `${model.pixelWidth}x${model.pixelHeight} (${model.resolutionMp} MP)`,
       lens: lensLabel(model.lens),
-      quantity: cameraNumbers.length,
+      quantity: cameraLabels.length,
       unit: 'pcs',
-      labels: cameraNumbers.map((n) => `C${n}`).join(', '),
+      labels: cameraLabels.join(', '),
       unitPriceVnd,
-      lineTotalVnd: unitPriceVnd === null ? null : unitPriceVnd * cameraNumbers.length,
+      lineTotalVnd: unitPriceVnd === null ? null : unitPriceVnd * cameraLabels.length,
     }
   })
 
@@ -88,6 +104,8 @@ export interface BomTotal {
   unpricedQuantity: number
   /** Number of cable rows (unit `m`) with no price - excluded from `totalVnd`. */
   unpricedCableTypeCount: number
+  /** Number of placed cabling-point markers (hub/riser/drop/shaft-opening, `row.priceTbd`) - excluded from `totalVnd` AND from `unpricedQuantity` (owner decision 2026-10-09, phase 6: "TBD by design" is not "missing a catalog price"). */
+  tbdQuantity: number
 }
 
 /**
@@ -95,30 +113,26 @@ export interface BomTotal {
  * partial total is never shown as complete). Works on rows, not cameras -
  * camera and sensor rows join the total identically. Unpriced rows are
  * split by unit: a cable row's quantity is metres, which must not be added
- * to the count of unpriced items.
+ * to the count of unpriced items. A `priceTbd` row (a cabling-point marker)
+ * is counted apart from both - it was never going to have a catalog price.
  */
 export function computeBomTotal(rows: BomRow[]): BomTotal {
   let totalVnd = 0
   let unpricedQuantity = 0
   let unpricedCableTypeCount = 0
+  let tbdQuantity = 0
   for (const row of rows) {
-    if (row.lineTotalVnd !== null) totalVnd += row.lineTotalVnd
-    else if (row.unit === 'm') unpricedCableTypeCount += 1
-    else unpricedQuantity += row.quantity
+    if (row.priceTbd) {
+      tbdQuantity += row.quantity
+    } else if (row.lineTotalVnd !== null) {
+      totalVnd += row.lineTotalVnd
+    } else if (row.unit === 'm') {
+      unpricedCableTypeCount += 1
+    } else {
+      unpricedQuantity += row.quantity
+    }
   }
-  return { totalVnd, unpricedQuantity, unpricedCableTypeCount }
-}
-
-const VND_NUMBER_FORMAT = new Intl.NumberFormat('vi-VN')
-
-/** VND amount with vi-VN digit grouping and no currency sign, e.g. "1.250.000" - for cells under a header that already says VND. */
-export function formatVndNumber(amountVnd: number): string {
-  return VND_NUMBER_FORMAT.format(amountVnd)
-}
-
-/** Human-readable VND amount, e.g. "1.250.000 ₫". */
-export function formatVnd(amountVnd: number): string {
-  return `${formatVndNumber(amountVnd)} ₫`
+  return { totalVnd, unpricedQuantity, unpricedCableTypeCount, tbdQuantity }
 }
 
 const BOM_HEADER = [
@@ -138,8 +152,9 @@ const BOM_HEADER = [
 /** CSV-only header (Validation Session 1): the PNG table's 11 columns plus a trailing `Notes` column - the strip has no width to spare, but the CSV carries the compatibility-warning note. */
 const BOM_CSV_HEADER = [...BOM_HEADER, 'Notes']
 
-/** The 11 cells shared by every row rendering, before any CSV-only `Notes` cell is appended. */
+/** The 11 cells shared by every row rendering, before any CSV-only `Notes` cell is appended. A `priceTbd` row prints the literal `BOM_PRICE_TBD_TEXT` in both price cells instead of running them through `price()`. */
 function bomRowCells(r: BomRow, price: (amountVnd: number | null) => string): string[] {
+  const priceCell = (amountVnd: number | null) => (r.priceTbd ? BOM_PRICE_TBD_TEXT : price(amountVnd))
   return [
     r.type,
     r.brand,
@@ -150,8 +165,8 @@ function bomRowCells(r: BomRow, price: (amountVnd: number | null) => string): st
     String(r.quantity),
     r.unit,
     r.labels,
-    price(r.unitPriceVnd),
-    price(r.lineTotalVnd),
+    priceCell(r.unitPriceVnd),
+    priceCell(r.lineTotalVnd),
   ]
 }
 

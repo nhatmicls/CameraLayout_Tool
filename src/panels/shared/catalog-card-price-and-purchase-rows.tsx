@@ -1,5 +1,5 @@
 import type { PriceVn, PurchaseChannel } from '../../catalog/shared/catalog-shared-price-and-provenance-schema'
-import { formatVnd } from '../../domain/bom/bill-of-materials-grouping'
+import { formatVnd } from '../../domain/bom/bom-price-formatting'
 
 interface IndicativePriceProps {
   testId: string

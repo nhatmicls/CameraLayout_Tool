@@ -1,10 +1,19 @@
+import {
+  buildProjectCableEndToEndLabels,
+  resolveShaftLegLabels,
+  selectCableLabelStrings,
+  type CableEndToEndLabel,
+} from '../../domain/cable/cable-end-to-end-label'
 import { findShaftLegsOnFloor } from '../../domain/cable/shaft-cable-leg'
 import { decodeEmbeddedImage } from '../../file-io/browser/decode-image-data-url'
 import type { Project } from '../../domain/project-file/project-types'
 import type { ViewConfig } from '../../domain/view/view-config-types'
 import { buildCombinedBomRows } from '../shared/build-combined-bom-rows'
 import { buildFloorExportFileName } from '../shared/build-floor-export-file-name'
+import { fireAlarmModelSpecById } from '../shared/fire-alarm-compatibility-index-singleton'
 import { exportPlanPng, type ExportPlanPngOptions } from './export-plan-png'
+
+const NO_CABLE_LABEL_ENTRIES: ReadonlyMap<string, CableEndToEndLabel> = new Map()
 
 /** One floor's position in the project (1-based) + name - the common shape every outcome list below shares, so the caller can always say "F{position} {name}". */
 export interface FloorExportOutcome {
@@ -80,6 +89,11 @@ export async function exportAllFloorPlansPng(options: ExportAllFloorPlansPngOpti
     let decodedImage: HTMLImageElement | null = null
     try {
       const { allRows, cableEstimate, fireAlarmWarnings } = buildCombinedBomRows(project, { floorId: floor.id })
+      // Same label source the screen reads (`use-stage-cabling-scene-props.ts`): the whole
+      // project's end-to-end labels, this floor's own slice for its cable lines, index-aligned
+      // leg labels for whatever runs on this floor beyond a shaft from another floor.
+      const allCableLabels = buildProjectCableEndToEndLabels(project, fireAlarmModelSpecById)
+      const shaftLegs = findShaftLegsOnFloor(project.floors, floor.id)
       decodedImage = await decodeEmbeddedImage(floor.image.dataUrl)
       await exportPlanPng({
         decodedImage,
@@ -98,7 +112,9 @@ export async function exportAllFloorPlansPng(options: ExportAllFloorPlansPngOpti
         rows: allRows,
         fireAlarmWarnings,
         shaftIds: project.shafts.map((shaft) => shaft.id),
-        shaftLegs: findShaftLegsOnFloor(project.floors, floor.id),
+        shaftLegs,
+        cableLabelByCableId: selectCableLabelStrings(allCableLabels.get(floor.id) ?? NO_CABLE_LABEL_ENTRIES),
+        shaftLegLabels: resolveShaftLegLabels(shaftLegs, project.floors, allCableLabels),
         shafts: project.shafts,
         floorPosition: { index: floorIndex, count: floorCount, name: floor.name },
         fileName: buildFloorExportFileName(floorIndex, floorCount, floor.name, floor.image.fileName),

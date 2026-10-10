@@ -1,6 +1,5 @@
 import type { BomRow } from './bill-of-materials-grouping'
 import type { CompatibilityWarning } from '../fire-alarm/fire-alarm-compatibility-checker'
-import { buildFireAlarmDeviceLabels } from '../fire-alarm/fire-alarm-device-designator'
 import { FIRE_ALARM_KIND_DISPLAY_ORDER, FIRE_ALARM_KIND_LABELS, type FireAlarmKind, type FireAlarmModelSpec, type PlacedFireAlarmDevice } from '../fire-alarm/fire-alarm-device-types'
 
 /** Prefix of a "not listed" note - exported so `merge-bom-rows-across-floors.ts` can floor-prefix the device labels inside it and combine two floors' lists without re-parsing free text. */
@@ -17,8 +16,9 @@ export const NO_CONTROLLER_PLACED_NOTE = 'No panel/hub placed'
  * Floor-prefixes the device labels inside a "not listed" note (`F3` ->
  * `F2_F3`); every other note shape (`''`, `NO_CONTROLLER_PLACED_NOTE`, or
  * already-undefined) carries no per-device label, so it is returned
- * unchanged. `prefix === ''` (a one-floor project) is always a no-op -
- * required for this plan's byte-identical one-floor regression.
+ * unchanged. `prefix` is never empty in practice (`floorPositionPrefix`
+ * always returns `'F{n}_'`, even for a one-floor project) - the `!prefix`
+ * guard only keeps this safe for a caller that ever passes one.
  */
 export function prefixFireAlarmNoteLabels(notes: string, prefix: string): string {
   if (!prefix || !notes.startsWith(NOT_LISTED_NOTE_PREFIX)) return notes
@@ -71,10 +71,10 @@ interface FireAlarmBomGroup {
  * - Grouping key is (kind, brand, model) - no lens variant exists here.
  * - Sorted by `FIRE_ALARM_KIND_DISPLAY_ORDER` (not alphabetically by label,
  *   unlike the sensor grouping), then brand, then model.
- * - Labels (`S1`, `H1`, `KP1`... or the generic `F1`) come from
- *   `buildFireAlarmDeviceLabels` - numbered per designator prefix in
- *   `devices` order, independent of camera/sensor numbering. Unknown `modelId`s are
- *   skipped, same as the other two families.
+ * - `labels` is index-aligned with `devices` (from the ONE shared allocator,
+ *   `floor-item-label-allocator.ts`'s `buildFloorItemLabels` - this function
+ *   no longer numbers anything itself). Unknown `modelId`s are skipped, same
+ *   as the other two families.
  * - `notes` carries a `checkFireAlarmCompatibility` warning for this row's
  *   own devices: "Not listed for a placed panel/hub: F3, F7" (only the
  *   warned labels of this row) when at least one of them is individually
@@ -88,6 +88,7 @@ interface FireAlarmBomGroup {
 export function groupFireAlarmDevicesIntoBom(
   devices: readonly PlacedFireAlarmDevice[],
   modelById: Record<string, FireAlarmModelSpec>,
+  labels: readonly string[],
   warnings: readonly CompatibilityWarning[] = [],
 ): BomRow[] {
   const notListedDeviceIds = new Set(
@@ -97,13 +98,11 @@ export function groupFireAlarmDevicesIntoBom(
 
   const groups = new Map<string, FireAlarmBomGroup>()
 
-  const deviceLabels = buildFireAlarmDeviceLabels(devices, modelById)
-
   devices.forEach((device, index) => {
     const model = modelById[device.modelId]
     if (!model) return
 
-    const label = deviceLabels[index]
+    const label = labels[index]
     const key = `${model.kind}\u0000${model.brand}\u0000${model.model}`
     const group = groups.get(key) ?? { kind: model.kind, model, labels: [], warnedLabels: [], hasNoControllerWarning: false }
     group.labels.push(label)

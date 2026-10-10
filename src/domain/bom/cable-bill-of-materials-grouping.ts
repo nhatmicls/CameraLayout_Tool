@@ -28,12 +28,15 @@ const plural = (count: number, noun: string) => `${count} ${noun}${count === 1 ?
 /**
  * What the grand total leaves out, e.g. "excludes 2 items with no listed
  * price and 1 cable type with no price"; empty when everything is priced.
- * Items (pieces) and cable types (metres) are counted apart - metres must
- * never be added to an item count.
+ * Items (pieces), cable types (metres) and cabling-point markers (priced
+ * `TBD` by design, owner decision 2026-10-09 phase 6) are counted apart -
+ * metres must never be added to an item count, and a `TBD` marker is never
+ * described as "no listed price" (it was never going to have one).
  */
 export function formatBomUnpricedNote(total: BomTotal): string {
   const parts: string[] = []
   if (total.unpricedQuantity > 0) parts.push(`${plural(total.unpricedQuantity, 'item')} with no listed price`)
   if (total.unpricedCableTypeCount > 0) parts.push(`${plural(total.unpricedCableTypeCount, 'cable type')} with no price`)
+  if (total.tbdQuantity > 0) parts.push(`${plural(total.tbdQuantity, 'cabling point')} priced TBD`)
   return parts.length > 0 ? `excludes ${parts.join(' and ')}` : ''
 }

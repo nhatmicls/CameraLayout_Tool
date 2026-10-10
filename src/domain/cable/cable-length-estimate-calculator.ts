@@ -1,6 +1,6 @@
 import { planPxToMeters } from '../shared/scale-calibration-calculator'
 import type { ScaleUncertainty } from './cable-scale-uncertainty'
-import { cableEndRefKey, cableLabel, resolveCableEnd, resolveCablePathPx, type CableEndpointIndex } from './cable-endpoint-index'
+import { cableEndRefKey, resolveCableEnd, resolveCablePathPx, type CableEndpointIndex } from './cable-endpoint-index'
 import type { HubBeyondLength } from './cross-floor-hub-beyond-length-resolver'
 import type { Cable, CablePoint, CableSettings, CableType } from './cable-layout-types'
 
@@ -108,8 +108,10 @@ export function estimateCableLength(input: {
   planPxPerMeter: number
   uncertainty: ScaleUncertainty
   beyond?: HubBeyondLength
+  /** The cable's end-to-end label (`buildProjectCableEndToEndLabels`) - just echoed into the result, never computed here. */
+  label: string
 }): CableLengthEstimate | null {
-  const { cable, index, type, settings, planPxPerMeter, uncertainty, beyond } = input
+  const { cable, index, type, settings, planPxPerMeter, uncertainty, beyond, label } = input
   const path = resolveCablePathPx(cable, index)
   const device = index.deviceByKey.get(cableEndRefKey(cable.device))
   const end = resolveCableEnd(cable, index)
@@ -169,7 +171,7 @@ export function estimateCableLength(input: {
   return {
     cableId: cable.id,
     typeId: cable.typeId,
-    label: cableLabel(cable, index, beyond?.source === 'route' ? beyond.endLabel : undefined),
+    label,
     horizPx,
     horizM,
     deviceRiseM,

@@ -1,11 +1,12 @@
 import { findShaftLegsOnFloor } from '../../domain/cable/shaft-cable-leg'
 import { useMemo } from 'react'
-import { hubLabels } from '../../domain/cable/cable-endpoint-index'
 import { HUB_EXTRA_LENGTH_BOUNDS, HUB_MOUNT_HEIGHT_BOUNDS } from '../../domain/cable/cable-layout-types'
 import { resolveHubBeyondLength } from '../../domain/cable/cross-floor-hub-beyond-length-resolver'
+import { buildFloorItemLabels } from '../../domain/floor/floor-item-label-allocator'
+import { fireAlarmModelSpecById } from '../../export/shared/fire-alarm-compatibility-index-singleton'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
-import { selectCables, selectHubs } from '../../state/project-store-floor-selectors'
+import { selectActiveFloor, selectCables, selectHubs } from '../../state/project-store-floor-selectors'
 import { fieldLabelClass, inputClass } from '../camera/camera-properties-form-helpers'
 import { HubCrossFloorLinkSection } from './hub-cross-floor-link-section'
 import { ShaftPropertiesSection } from './shaft-properties-section'
@@ -38,6 +39,12 @@ export function HubPropertiesPanel() {
   const cableTypes = useProjectStore((s) => s.cableTypes)
   const cableSettings = useProjectStore((s) => s.cableSettings)
   const fireAlarmSettings = useProjectStore((s) => s.fireAlarmSettings)
+  const activeFloor = useProjectStore(selectActiveFloor)
+  const shaftIds = useMemo(() => shafts.map((shaft) => shaft.id), [shafts])
+  const itemLabels = useMemo(
+    () => buildFloorItemLabels(activeFloor, { shaftIds, fireAlarmModelById: fireAlarmModelSpecById }),
+    [activeFloor, shaftIds],
+  )
 
   // Looked up rather than trusted: an undo can remove the hub while its id is still selected.
   const index = hubs.findIndex((hub) => hub.id === selectedHubId)
@@ -57,7 +64,7 @@ export function HubPropertiesPanel() {
         <h2 className="text-sm font-semibold text-neutral-700">
           Properties{' '}
           <span data-testid="properties-hub-number" className="text-neutral-400">
-            ({hubLabels(hubs, shafts.map((shaft) => shaft.id))[index]})
+            ({itemLabels.hubs[index]})
           </span>
         </h2>
         <ShaftPropertiesSection floors={floors} floorIndex={floorIndex} hub={hub} />
@@ -66,7 +73,7 @@ export function HubPropertiesPanel() {
   }
 
   const showCrossFloorSection = (hub.kind === 'riser' || hub.kind === 'drop') && floors.length > 1
-  const beyond = showCrossFloorSection ? resolveHubBeyondLength(project, { floorId: activeFloorId, hubId: hub.id }) : null
+  const beyond = showCrossFloorSection ? resolveHubBeyondLength(project, { floorId: activeFloorId, hubId: hub.id }, undefined, fireAlarmModelSpecById) : null
   const isComputedMode = beyond?.source === 'route'
 
   // Cables that end here, plus cables of other floors whose own route beyond a shaft ends here
@@ -85,7 +92,7 @@ export function HubPropertiesPanel() {
         <h2 className="text-sm font-semibold text-neutral-700">
           Properties{' '}
           <span data-testid="properties-hub-number" className="text-neutral-400">
-            ({hubLabels(hubs, shafts.map((shaft) => shaft.id))[index]})
+            ({itemLabels.hubs[index]})
           </span>
         </h2>
         <button

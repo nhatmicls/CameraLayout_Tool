@@ -11,9 +11,9 @@ DS-PDCL12-EG2, from the specification table of its official hikvision.com produc
 three marker-only kinds from the alarm catalog - magnetic contacts (8), an environment
 (temperature) detector (1) and intrusion detectors (2: a glass-break and an outdoor motion
 detector for which no datasheet exists, so no range can be drawn): they are placed as a
-marker with no coverage shape and are numbered F1, F2... like the other alarm devices. Thermal cameras live here, not in the
-camera catalog. Drag a card onto the plan like a camera; sensors are numbered S1, S2... and
-have their own properties panel. Filters: Brand, Type and "Works with" drop-downs (see
+marker with no coverage shape and numbered with the other alarm devices under shared prefixes (S for smoke detector and sensor, H for heat detector and plain hub, E for call point and expander, etc.). Thermal cameras live here, not in the
+camera catalog. Drag a card onto the plan like a camera; sensors are numbered per the shared prefix counter (S1, S2...) and
+have their own properties panel. Labels are numbered per floor, per prefix, across all kinds that share it - placing / deleting an item renumbers later items with the same prefix. Filters: Brand, Type and "Works with" drop-downs (see
 Control panel tab).
 - PIR: a sector at the datasheet range and angle (a ceiling PIR is a full 360° circle).
   Range and angle can be reduced, never raised above the datasheet.
@@ -45,7 +45,7 @@ link. Specs copied from the official Hikvision datasheet or the
 AX PRO user manual. The AX lines are intrusion alarm systems (the AX PRO manual lists
 detectors as peripherals), not certified fire-alarm control panels; emergency buttons are
 portable panic buttons, not fire call points. Drag a card onto the plan (scale required);
-devices are numbered F1, F2... Placement: select, drag, delete, undo/redo.
+devices are numbered by kind (S for smoke, H for heat, etc.), shared with sensor numbering (S for sensors and smoke, H for heat detectors and plain hubs, etc.). A device whose model is no longer in the catalog is labelled `?1`, `?2`... Labels are numbered per floor per shared prefix, and placing / deleting an item renumbers later items with the same prefix. Placement: select, drag, delete, undo/redo.
 - **Coverage modes** (toolbar control, shown when the Fire alarm tab is active or a device
   is placed): "Datasheet" draws markers only (no detector prints a protection area). "TCVN
   5738" mode (Vietnam standard, clause 6.13 Bảng 1 for smoke up to 12 m, clause 6.15.1 Bảng 2

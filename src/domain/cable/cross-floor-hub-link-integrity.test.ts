@@ -124,7 +124,7 @@ describe('pruneInvalidCrossFloorLinks', () => {
     // drop-1 carries its usual trunk but no link back - two independent problems, caught from each side.
     const floors = floorsOf({ floor1: { hubs: [{ id: 'drop-1', kind: 'drop', x: 700, y: 500, mountHeightM: 0, trunk: { hubId: 'plain-hub-2', points: [] } }, PLAIN_HUB] } })
     const warnings: string[] = []
-    const next = pruneInvalidCrossFloorLinks(floors, undefined, warnings)
+    const next = pruneInvalidCrossFloorLinks(floors, undefined, undefined, warnings)
     expect(next[0].hubs[0].link).toBeUndefined() // riser-1's link pruned (partner doesn't point back)
     const drop = next[1].hubs.find((h) => h.id === 'drop-1')!
     expect(drop.trunk).toBeUndefined() // drop-1's own orphaned trunk pruned (it was never actually linked)
@@ -138,7 +138,7 @@ describe('pruneInvalidCrossFloorLinks', () => {
     const floors = floorsOf()
     const hubDeleted: Floor[] = [floors[0], { ...floors[1], hubs: [floors[1].hubs[0]] }] // plain-hub-2 deleted; drop-1's trunk now dangles
     const warnings: string[] = []
-    const next = pruneInvalidCrossFloorLinks(hubDeleted, undefined, warnings)
+    const next = pruneInvalidCrossFloorLinks(hubDeleted, undefined, undefined, warnings)
     expect(next[1].hubs[0].trunk).toBeUndefined()
     expect(next[1].hubs[0].link).toEqual({ floorId: 'floor-0', hubId: 'riser-1' }) // link itself stays valid
     expect(next[0].hubs[0].link).toEqual({ floorId: 'floor-1', hubId: 'drop-1' })
@@ -160,7 +160,7 @@ describe('pruneInvalidCrossFloorLinks', () => {
     }
     const floors = floorsOf({ floor1: { hubs: [markerA, markerB] } })
     const warnings: string[] = []
-    pruneInvalidCrossFloorLinks(floors, ['shaft-b', 'shaft-a'], warnings)
+    pruneInvalidCrossFloorLinks(floors, ['shaft-b', 'shaft-a'], undefined, warnings)
     expect(warnings.some((w) => w.includes('T1') && w.includes('shaft opening'))).toBe(true)
   })
 })

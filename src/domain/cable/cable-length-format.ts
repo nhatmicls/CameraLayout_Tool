@@ -21,12 +21,14 @@ export function formatMetersInterval(interval: MetersInterval): string {
 
 /**
  * The PNG's provisional-estimate note, in whole metres (nominal rounded up,
- * min down, max up): "Cable lengths are provisional estimates: 44 m (43-45 m) incl. 15% waste".
+ * min down, max up): "Cable lengths are provisional estimates: 44 m (43-45 m) incl. 15% spare".
+ * Displayed term "spare" (owner decision 2026-10-09) - `wastePercent` is still the field's
+ * stored name, unchanged by this phase.
  */
 export function formatCableEstimateNote(grandPurchase: MetersInterval, wastePercent: number): string {
   const range =
     grandPurchase.min === null || grandPurchase.max === null
       ? ''
       : ` (${Math.floor(grandPurchase.min + 1e-9)}-${ceilMeters(grandPurchase.max)} m)`
-  return `Cable lengths are provisional estimates: ${ceilMeters(grandPurchase.nominal)} m${range} incl. ${wastePercent}% waste`
+  return `Cable lengths are provisional estimates: ${ceilMeters(grandPurchase.nominal)} m${range} incl. ${wastePercent}% spare`
 }

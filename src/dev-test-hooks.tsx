@@ -5,6 +5,7 @@ import { useEditorUiStore, type UiNotification, type Viewport } from './state/ed
 import { runExportSpike } from './dev-test-hooks-export-spike'
 import type { Cable, Hub } from './domain/cable/cable-layout-types'
 import { filterCompatibilityWarningsToDeviceIds } from './domain/fire-alarm/fire-alarm-compatibility-checker'
+import { buildFloorItemLabels } from './domain/floor/floor-item-label-allocator'
 import type { Floor } from './domain/floor/floor-types'
 import type { PlacedCamera, ScaleCalibration, Wall } from './domain/project-file/project-types'
 import type { FireAlarmSettings, PlacedFireAlarmDevice } from './domain/fire-alarm/fire-alarm-device-types'
@@ -165,7 +166,8 @@ export function installDevTestHooks(): void {
       if (!floor) return null
       const { fireAlarmWarnings } = buildCombinedBomRows(selectProject(store), { floorId })
       const deviceIds = new Set(floor.fireAlarmDevices.map((device) => device.id))
-      return resolveCompatibilityWarningText(floor.fireAlarmDevices, filterCompatibilityWarningsToDeviceIds(fireAlarmWarnings, deviceIds), fireAlarmModelSpecById)
+      const labels = buildFloorItemLabels(floor, { fireAlarmModelById: fireAlarmModelSpecById }).fireAlarmDevices
+      return resolveCompatibilityWarningText(floor.fireAlarmDevices, filterCompatibilityWarningsToDeviceIds(fireAlarmWarnings, deviceIds), labels)
     },
   }
 }

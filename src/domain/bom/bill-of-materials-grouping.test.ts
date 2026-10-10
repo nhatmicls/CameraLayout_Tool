@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { bomToCsvTable, bomToTable, computeBomTotal, formatVnd, groupCamerasIntoBom } from './bill-of-materials-grouping'
+import { bomToCsvTable, bomToTable, computeBomTotal, groupCamerasIntoBom, type BomRow } from './bill-of-materials-grouping'
+import { formatVnd } from './bom-price-formatting'
 import type { CameraModelSpec, PlacedCamera } from '../project-file/project-types'
 
 const domeFixed: CameraModelSpec = {
@@ -40,10 +41,15 @@ function camera(modelId: string): PlacedCamera {
   return { id: `cam-${modelId}`, modelId, x: 0, y: 0, rotationDeg: 0, rangeM: 10 }
 }
 
+/** `groupCamerasIntoBom` takes labels from the shared allocator - a simple "C{n}" series is all this grouper-only test needs. */
+function cameraLabels(cameras: readonly PlacedCamera[]): string[] {
+  return cameras.map((_, i) => `C${i + 1}`)
+}
+
 describe('groupCamerasIntoBom', () => {
   it('groups same model+lens into one row with a quantity and camera list', () => {
     const cameras = [camera('hik-dome-2.8'), camera('hik-dome-2.8')]
-    const rows = groupCamerasIntoBom(cameras, modelById)
+    const rows = groupCamerasIntoBom(cameras, modelById, cameraLabels(cameras))
     expect(rows).toHaveLength(1)
     expect(rows[0].quantity).toBe(2)
     expect(rows[0].labels).toBe('C1, C2')
@@ -52,33 +58,34 @@ describe('groupCamerasIntoBom', () => {
 
   it('treats the same printed model with a different lens as a separate row', () => {
     const cameras = [camera('hik-dome-2.8'), camera('hik-dome-4')]
-    const rows = groupCamerasIntoBom(cameras, modelById)
+    const rows = groupCamerasIntoBom(cameras, modelById, cameraLabels(cameras))
     expect(rows).toHaveLength(2)
     expect(rows.map((r) => r.lens).sort()).toEqual(['2.8 mm', '4 mm'])
   })
 
   it('formats fixed and varifocal lens labels correctly', () => {
-    const rows = groupCamerasIntoBom([camera('axis-bullet')], modelById)
+    const cameras = [camera('axis-bullet')]
+    const rows = groupCamerasIntoBom(cameras, modelById, cameraLabels(cameras))
     expect(rows[0].lens).toBe('2.8-12 mm')
     expect(rows[0].resolution).toBe('1920x1080 (2 MP)')
   })
 
   it('sorts rows by brand then model', () => {
     const cameras = [camera('axis-bullet'), camera('hik-dome-2.8')]
-    const rows = groupCamerasIntoBom(cameras, modelById)
+    const rows = groupCamerasIntoBom(cameras, modelById, cameraLabels(cameras))
     expect(rows.map((r) => r.brand)).toEqual(['axis', 'hikvision'])
   })
 
   it('derives camera numbers from placement order, skipping cameras with unknown models', () => {
     const cameras = [camera('unknown-model'), camera('hik-dome-2.8'), camera('unknown-model'), camera('hik-dome-2.8')]
-    const rows = groupCamerasIntoBom(cameras, modelById)
+    const rows = groupCamerasIntoBom(cameras, modelById, cameraLabels(cameras))
     expect(rows).toHaveLength(1)
     // Indices 2 and 4 (1-based) survive; the unknown-model slots keep their position numbering.
     expect(rows[0].labels).toBe('C2, C4')
   })
 
   it('returns an empty array for no cameras', () => {
-    expect(groupCamerasIntoBom([], modelById)).toEqual([])
+    expect(groupCamerasIntoBom([], modelById, [])).toEqual([])
   })
 })
 
@@ -102,7 +109,8 @@ describe('bomToTable', () => {
   })
 
   it('includes a leading Type column and the Unit + Labels columns after Quantity, matching the header', () => {
-    const rows = groupCamerasIntoBom([camera('hik-dome-2.8'), camera('hik-dome-2.8')], modelById)
+    const cameras = [camera('hik-dome-2.8'), camera('hik-dome-2.8')]
+    const rows = groupCamerasIntoBom(cameras, modelById, cameraLabels(cameras))
     const table = bomToTable(rows)
     expect(table[0][0]).toBe('Type')
     expect(table[1][0]).toBe('Camera')
@@ -115,14 +123,15 @@ describe('bomToTable', () => {
   })
 
   it('appends unit price and line total as plain integers, blank when the model has no price', () => {
-    const rows = groupCamerasIntoBom([camera('axis-bullet'), camera('hik-dome-2.8'), camera('hik-dome-2.8')], modelById)
+    const cameras = [camera('axis-bullet'), camera('hik-dome-2.8'), camera('hik-dome-2.8')]
+    const rows = groupCamerasIntoBom(cameras, modelById, cameraLabels(cameras))
     const table = bomToTable(rows)
     expect(table[1].slice(9)).toEqual(['', '']) // axis: no price
     expect(table[2].slice(9)).toEqual(['2500000', '5000000'])
   })
 
   it('uses the supplied price formatter', () => {
-    const rows = groupCamerasIntoBom([camera('hik-dome-2.8')], modelById)
+    const rows = groupCamerasIntoBom([camera('hik-dome-2.8')], modelById, ['C1'])
     expect(bomToTable(rows, () => 'X')[1].slice(9)).toEqual(['X', 'X'])
   })
 })
@@ -135,21 +144,21 @@ describe('bomToCsvTable', () => {
   })
 
   it('leaves Notes empty for a row with no notes set', () => {
-    const rows = groupCamerasIntoBom([camera('hik-dome-2.8')], modelById)
+    const rows = groupCamerasIntoBom([camera('hik-dome-2.8')], modelById, ['C1'])
     const table = bomToCsvTable(rows)
     expect(table[1]).toHaveLength(12)
     expect(table[1][11]).toBe('')
   })
 
   it('writes a row-supplied notes string into the 12th column', () => {
-    const rows = groupCamerasIntoBom([camera('hik-dome-2.8')], modelById)
+    const rows = groupCamerasIntoBom([camera('hik-dome-2.8')], modelById, ['C1'])
     rows[0].notes = 'Not listed for a placed panel/hub: F3, F7'
     const table = bomToCsvTable(rows)
     expect(table[1][11]).toBe('Not listed for a placed panel/hub: F3, F7')
   })
 
   it('does not add a Notes column to the PNG table (bomToTable stays 11 columns)', () => {
-    const rows = groupCamerasIntoBom([camera('hik-dome-2.8')], modelById)
+    const rows = groupCamerasIntoBom([camera('hik-dome-2.8')], modelById, ['C1'])
     rows[0].notes = 'should never reach the PNG table'
     expect(bomToTable(rows)[1]).toHaveLength(11)
   })
@@ -157,15 +166,66 @@ describe('bomToCsvTable', () => {
 
 describe('computeBomTotal', () => {
   it('sums priced rows and counts cameras left out for lack of a price', () => {
-    const rows = groupCamerasIntoBom(
-      [camera('hik-dome-2.8'), camera('hik-dome-4'), camera('axis-bullet'), camera('axis-bullet')],
-      modelById,
-    )
-    expect(computeBomTotal(rows)).toEqual({ totalVnd: 5_000_000, unpricedQuantity: 2, unpricedCableTypeCount: 0 })
+    const cameras = [camera('hik-dome-2.8'), camera('hik-dome-4'), camera('axis-bullet'), camera('axis-bullet')]
+    const rows = groupCamerasIntoBom(cameras, modelById, cameraLabels(cameras))
+    expect(computeBomTotal(rows)).toEqual({ totalVnd: 5_000_000, unpricedQuantity: 2, unpricedCableTypeCount: 0, tbdQuantity: 0 })
   })
 
   it('is zero for an empty BOM', () => {
-    expect(computeBomTotal([])).toEqual({ totalVnd: 0, unpricedQuantity: 0, unpricedCableTypeCount: 0 })
+    expect(computeBomTotal([])).toEqual({ totalVnd: 0, unpricedQuantity: 0, unpricedCableTypeCount: 0, tbdQuantity: 0 })
+  })
+
+  it('counts a priceTbd row\'s quantity into tbdQuantity, never into unpricedQuantity or totalVnd (owner decision 2026-10-09)', () => {
+    const tbdRow: BomRow = {
+      type: 'Cable hub',
+      brand: '',
+      model: '',
+      formFactor: '',
+      resolution: '',
+      lens: '',
+      quantity: 4,
+      unit: 'pcs',
+      labels: 'F1_H1, F1_H2, F2_H1, F2_H2',
+      unitPriceVnd: null,
+      lineTotalVnd: null,
+      priceTbd: true,
+    }
+    expect(computeBomTotal([tbdRow])).toEqual({ totalVnd: 0, unpricedQuantity: 0, unpricedCableTypeCount: 0, tbdQuantity: 4 })
+
+    // Combined with a genuinely unpriced camera, the two counts stay apart.
+    const cameras = [camera('axis-bullet')]
+    const cameraRows = groupCamerasIntoBom(cameras, modelById, cameraLabels(cameras))
+    expect(computeBomTotal([...cameraRows, tbdRow])).toEqual({ totalVnd: 0, unpricedQuantity: 1, unpricedCableTypeCount: 0, tbdQuantity: 4 })
+  })
+})
+
+describe('bomToTable / bomToCsvTable with a priceTbd row', () => {
+  const tbdRow: BomRow = {
+    type: 'Cable hub',
+    brand: '',
+    model: '',
+    formFactor: '',
+    resolution: '',
+    lens: '',
+    quantity: 2,
+    unit: 'pcs',
+    labels: 'F1_H1, F1_H2',
+    unitPriceVnd: null,
+    lineTotalVnd: null,
+    priceTbd: true,
+  }
+
+  it('prints the literal TBD in both price cells (PNG table, 11 columns)', () => {
+    const table = bomToTable([tbdRow])
+    expect(table[1]).toHaveLength(11)
+    expect(table[1].slice(9)).toEqual(['TBD', 'TBD'])
+  })
+
+  it('prints TBD in cells 10 and 11 of the CSV row too (12 columns)', () => {
+    const table = bomToCsvTable([tbdRow])
+    expect(table[1]).toHaveLength(12)
+    expect(table[1][9]).toBe('TBD')
+    expect(table[1][10]).toBe('TBD')
   })
 })
 

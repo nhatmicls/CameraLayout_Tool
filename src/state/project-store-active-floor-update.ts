@@ -31,7 +31,7 @@ export type FloorContent = Omit<Floor, 'id' | 'name'>
  */
 export function pruneCrossFloorAndShaftState(floors: Floor[], shafts: Shaft[]): { floors: Floor[]; shafts: Shaft[] } {
   const { floors: shaftPrunedFloors, shafts: prunedShafts } = pruneShafts(floors, shafts)
-  const linked = pruneInvalidCrossFloorLinks(shaftPrunedFloors, prunedShafts.map((shaft) => shaft.id))
+  const linked = pruneInvalidCrossFloorLinks(shaftPrunedFloors)
   return { floors: pruneInvalidShaftLegs(linked), shafts: prunedShafts }
 }
 

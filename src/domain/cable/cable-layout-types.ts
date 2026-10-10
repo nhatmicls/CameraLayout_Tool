@@ -114,8 +114,8 @@ export interface Cable {
   points: CablePoint[]
   /**
    * Only when the cable ends on a shaft opening: its own route on the exit
-   * floor. Unset = not routed beyond the shaft yet (label "C1-?", counted up
-   * to the shaft only).
+   * floor. Unset = not routed beyond the shaft yet (label "F1_C1_?", counted
+   * up to the shaft only).
    */
   beyondShaft?: CableShaftLeg
 }

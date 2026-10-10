@@ -1,10 +1,11 @@
-import type { PlacedCamera, ScaleCalibration } from '../project-file/project-types'
-import type { PlacedSensor } from '../sensor/sensor-types'
 import type { FireAlarmKindByModelId } from '../fire-alarm/fire-alarm-device-designator'
 import type { PlacedFireAlarmDevice } from '../fire-alarm/fire-alarm-device-types'
-import { buildCableEndpointIndex, cableLabel } from './cable-endpoint-index'
-import type { HubBeyondLength } from './cross-floor-hub-beyond-length-resolver'
-import type { CableLayout, CableType } from './cable-layout-types'
+import type { PlacedCamera, ScaleCalibration } from '../project-file/project-types'
+import type { PlacedSensor } from '../sensor/sensor-types'
+import { formatCableEndToEndLabel } from './cable-end-to-end-label'
+import { buildCableEndpointIndex, cableEndRefKey, resolveCableEnd, type CableEndpointIndex } from './cable-endpoint-index'
+import { limitWarning, scaleWarnings, shaftNotRoutedWarning, unavailableWarning, type CableEstimateWarning } from './cable-estimate-warnings'
+import type { Cable, CableLayout, CableType, Hub } from './cable-layout-types'
 import {
   computeScaleUncertainty,
   estimateCableLength,
@@ -13,7 +14,10 @@ import {
   type MetersInterval,
   type ScaleUncertainty,
 } from './cable-length-estimate-calculator'
-import { ceilMeters, formatMeters } from './cable-length-format'
+import { ceilMeters } from './cable-length-format'
+import type { HubBeyondLength } from './cross-floor-hub-beyond-length-resolver'
+
+export type { CableEstimateWarning } from './cable-estimate-warnings'
 
 /**
  * The one entry point for cable lengths: panels, the canvas (over-length
@@ -31,20 +35,6 @@ export interface CableTypeTotal {
   /** Purchase metres rounded up to a whole metre: the BOM quantity. */
   purchaseWholeM: number
   lineTotalVnd: number | null
-}
-
-export interface CableEstimateWarning {
-  code:
-    | 'scale-not-set'
-    | 'ref-line-too-short'
-    | 'scale-uncertain'
-    | 'cable-over-limit'
-    | 'cable-maybe-over-limit'
-    | 'linked-floor-scale-not-set'
-    | 'link-cycle'
-    | 'shaft-cable-not-routed'
-  message: string
-  cableId?: string
 }
 
 export interface CableLayoutEstimate {
@@ -73,8 +63,16 @@ export interface CableLayoutEstimateInput extends CableLayout {
   shaftIds?: readonly string[]
   /** This floor's placed fire-alarm devices - cable ends like cameras and sensors. Absent = no cable can resolve to one (every pre-existing test). */
   fireAlarmDevices?: readonly PlacedFireAlarmDevice[]
-  /** Catalog lookup for the fire-alarm designator labels ("S1-H1"); absent = "F{n}". */
+  /** Catalog lookup for the fire-alarm designator labels; absent = "?{n}". */
   fireAlarmModelById?: FireAlarmKindByModelId
+  /**
+   * Every cable's end-to-end label (`buildProjectCableEndToEndLabels`), built
+   * once by the caller. Absent (every per-floor unit test that calls this
+   * function directly) falls back to `fallbackCableLabel` below - a
+   * project-less call IS a one-floor project, so the fallback reads exactly
+   * like `buildProjectCableEndToEndLabels` would for one floor.
+   */
+  labelByCableId?: ReadonlyMap<string, string>
 }
 
 export const SCALE_NOT_SET_CABLE_MESSAGE = 'Calibrate the scale to estimate cable lengths.'
@@ -93,43 +91,31 @@ export const EMPTY_CABLE_LAYOUT_ESTIMATE: CableLayoutEstimate = {
   warnings: [],
 }
 
-function scaleWarnings(uncertainty: ScaleUncertainty): CableEstimateWarning[] {
-  if (uncertainty.minFactor === null) {
-    return [{ code: 'ref-line-too-short', message: 'Reference line is shorter than the click error - no min-max range.' }]
+/**
+ * `labelByCableId` fallback for a project-less call: a one-floor label,
+ * reached only through `index` (this floor's own device/hub labels) and
+ * `hubs` (for the plain-vs-riser/drop/shaft check `CableHubEndpoint` itself
+ * cannot make - it carries only `isShaft`). Mirrors
+ * `cable-end-to-end-label.ts`'s own "final end reached" rule: a device, or a
+ * hub whose own `kind` is a plain hub, counts as reached - a riser / drop /
+ * shaft opening does not (unresolved -> bare "?").
+ */
+function fallbackCableLabel(cable: Cable, index: CableEndpointIndex, hubs: readonly Hub[]): string {
+  const device = index.deviceByKey.get(cableEndRefKey(cable.device))
+  const start = device ? { floorIndex: 0, label: device.label } : null
+  const end = resolveCableEnd(cable, index)
+  let finalEnd: { floorIndex: number; label: string } | null = null
+  if (end?.kind === 'device') {
+    finalEnd = { floorIndex: 0, label: end.device.label }
+  } else if (end?.kind === 'hub' && !end.hub.isShaft) {
+    const hub = hubs.find((candidate) => candidate.id === end.hub.hubId)
+    if ((hub?.kind ?? 'hub') === 'hub') finalEnd = { floorIndex: 0, label: end.hub.label }
   }
-  if (!uncertainty.isUnreliable) return []
-  const percent = (uncertainty.relativeError * 100).toFixed(1)
-  return [{ code: 'scale-uncertain', message: `Reference line too short for a reliable estimate (scale error up to ${percent}%).` }]
-}
-
-function limitWarning(cable: CableLengthEstimate, type: CableType): CableEstimateWarning | null {
-  if (type.lengthLimitM === null) return null
-  const prefix = `${cable.label} (${type.name}):`
-  const limit = `${type.lengthLimitM} m limit`
-  if (cable.limitStatus === 'over') {
-    return { code: 'cable-over-limit', cableId: cable.cableId, message: `${prefix} ${formatMeters(cable.run.nominal)} run exceeds the ${limit}.` }
-  }
-  if (cable.limitStatus === 'maybe-over') {
-    const upTo = formatMeters(cable.run.max ?? cable.run.nominal)
-    return { code: 'cable-maybe-over-limit', cableId: cable.cableId, message: `${prefix} may exceed the ${limit} (up to ${upTo}).` }
-  }
-  return null
-}
-
-/** Human text for the "could not estimate" reasons, named by the cable's own label. */
-function unavailableWarning(label: string, cableId: string, beyond: Extract<HubBeyondLength, { source: 'unavailable' }>): CableEstimateWarning {
-  if (beyond.reason === 'link-cycle') {
-    return { code: 'link-cycle', cableId, message: `${label}: its cross-floor route forms a cycle - excluded from the estimate.` }
-  }
-  return {
-    code: 'linked-floor-scale-not-set',
-    cableId,
-    message: `${label}: the route continues on "${beyond.floorName}", which has no scale set - excluded from the estimate.`,
-  }
+  return formatCableEndToEndLabel(start, finalEnd)
 }
 
 export function computeCableLayoutEstimate(input: CableLayoutEstimateInput): CableLayoutEstimate {
-  const { cables, cableTypes, cableSettings, scale, beyondByCableId } = input
+  const { cables, cableTypes, cableSettings, scale, beyondByCableId, labelByCableId } = input
   const empty = {
     cables: [],
     byCableId: new Map(),
@@ -160,22 +146,17 @@ export function computeCableLayoutEstimate(input: CableLayoutEstimateInput): Cab
   for (const cable of cables) {
     const type = typeById.get(cable.typeId)
     if (!type) continue
+    const label = labelByCableId?.get(cable.id) ?? fallbackCableLabel(cable, index, input.hubs)
     const beyond = beyondByCableId?.get(cable.id)
     if (beyond?.source === 'unavailable') {
       unestimatedCableCount += 1
-      warnings.push(unavailableWarning(cableLabel(cable, index, beyond.endLabel), cable.id, beyond))
+      warnings.push(unavailableWarning(label, cable.id, beyond))
       continue
     }
-    const estimate = estimateCableLength({ cable, index, type, settings: cableSettings, planPxPerMeter: scale.planPxPerMeter, uncertainty, beyond })
+    const estimate = estimateCableLength({ cable, index, type, settings: cableSettings, planPxPerMeter: scale.planPxPerMeter, uncertainty, beyond, label })
     if (!estimate) continue
     estimates.push(estimate)
-    if (beyond?.source === 'typed' && beyond.shaftNotRouted) {
-      warnings.push({
-        code: 'shaft-cable-not-routed',
-        cableId: cable.id,
-        message: `${estimate.label}: not routed beyond its shaft yet - counted up to the shaft only.`,
-      })
-    }
+    if (beyond?.source === 'typed' && beyond.shaftNotRouted) warnings.push(shaftNotRoutedWarning(label, cable.id))
     const warning = limitWarning(estimate, type)
     if (warning) warnings.push(warning)
   }

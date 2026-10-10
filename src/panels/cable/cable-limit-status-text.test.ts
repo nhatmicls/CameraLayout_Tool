@@ -6,7 +6,7 @@ function estimateWith(limitStatus: CableLimitStatus, max: number | null = 90.779
   return {
     cableId: 'k',
     typeId: 't',
-    label: 'C1-H1',
+    label: 'F1_C1_F1_H1',
     horizPx: 0,
     horizM: 0,
     deviceRiseM: 0,

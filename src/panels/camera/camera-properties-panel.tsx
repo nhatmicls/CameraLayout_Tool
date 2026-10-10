@@ -1,4 +1,4 @@
-import type { ChangeEvent } from 'react'
+import { useMemo, type ChangeEvent } from 'react'
 import { cameraModelById } from '../../catalog/camera/camera-catalog-loader'
 import {
   resolveDefaultRangeM,
@@ -6,6 +6,7 @@ import {
   resolveEffectiveVfovDeg,
 } from '../../domain/camera/camera-coverage-resolver'
 import { computeDoriDistancesM, isApproximateDoriModel } from '../../domain/camera/dori-zone-distance-calculator'
+import { buildFloorItemLabels } from '../../domain/floor/floor-item-label-allocator'
 import { normalizeDegrees } from '../../domain/shared/fov-cone-sector-geometry'
 import {
   computeMountedGroundCoverage,
@@ -13,9 +14,10 @@ import {
   suggestTiltDegForFarEdgeM,
   TILT_MAX_DEG,
 } from '../../domain/camera/mounted-camera-ground-coverage-calculator'
+import { fireAlarmModelSpecById } from '../../export/shared/fire-alarm-compatibility-index-singleton'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
-import { selectCameras, selectScale } from '../../state/project-store-floor-selectors'
+import { selectActiveFloor, selectScale } from '../../state/project-store-floor-selectors'
 import { CameraDoriDistanceTable } from './camera-dori-distance-table'
 import { CameraGroundCoverageReadout } from './camera-ground-coverage-readout'
 import { CameraMountingHeightTiltInputs } from './camera-mounting-height-tilt-inputs'
@@ -33,13 +35,22 @@ import { CameraVarifocalHfovSlider } from './camera-varifocal-hfov-slider'
  * `dori-zone-distance-calculator.ts`, `mounted-camera-ground-coverage-calculator.ts`).
  */
 export function CameraPropertiesPanel() {
-  const cameras = useProjectStore(selectCameras)
+  const floor = useProjectStore(selectActiveFloor)
   const scale = useProjectStore(selectScale)
+  const shafts = useProjectStore((s) => s.shafts)
   const updateCamera = useProjectStore((s) => s.updateCamera)
   const deleteCamera = useProjectStore((s) => s.deleteCamera)
   const selectedCameraId = useEditorUiStore((s) => s.selectedCameraId)
   const setSelectedCameraId = useEditorUiStore((s) => s.setSelectedCameraId)
+  // Stable identity across renders (same discipline as every other `shaftIds` call site) so the
+  // allocator's own memo can hit while nothing relevant has changed.
+  const shaftIds = useMemo(() => shafts.map((shaft) => shaft.id), [shafts])
+  const itemLabels = useMemo(
+    () => buildFloorItemLabels(floor, { shaftIds, fireAlarmModelById: fireAlarmModelSpecById }),
+    [floor, shaftIds],
+  )
 
+  const cameras = floor.cameras
   const index = cameras.findIndex((c) => c.id === selectedCameraId)
   const camera = index >= 0 ? cameras[index] : null
 
@@ -55,7 +66,7 @@ export function CameraPropertiesPanel() {
   }
 
   const model = cameraModelById(camera.modelId)
-  const label = `C${index + 1}`
+  const label = itemLabels.cameras[index]
 
   const handleDelete = () => {
     deleteCamera(camera.id)

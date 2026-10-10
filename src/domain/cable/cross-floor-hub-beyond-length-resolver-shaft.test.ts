@@ -70,14 +70,14 @@ describe('resolveHubBeyondLength - shaft markers', () => {
   it('the exit floor has no scale -> unavailable "linked-floor-scale-not-set", other floors unaffected', () => {
     const project = shaftFourFloorProject([{ scale: null }])
     const toF1 = resolveHubBeyondLength(project, { floorId: 'sf1', hubId: 'sm2' }, shaftCable('c1', 'sm2', 'sf0'))
-    expect(toF1).toEqual({ source: 'unavailable', reason: 'linked-floor-scale-not-set', floorName: 'F1', endLabel: 'H1' })
+    expect(toF1).toEqual({ source: 'unavailable', reason: 'linked-floor-scale-not-set', floorName: 'F1' })
     const toF3 = resolveHubBeyondLength(project, { floorId: 'sf3', hubId: 'sm4' }, shaftCable('c2', 'sm4', 'sf2'))
     expect(toF3.source).toBe('route') // F3 still has its scale
   })
 
   it('names where the route ends: "via" and the end label read the END on the exit floor, never the shaft', () => {
     const beyond = resolveHubBeyondLength(shaftFourFloorProject(), { floorId: 'sf1', hubId: 'sm2' }, shaftCable('c1', 'sm2', 'sf0'))
-    expect(beyond).toMatchObject({ source: 'route', viaLabel: 'F1 H1', endLabel: 'H1', endsOnDevice: false })
+    expect(beyond).toMatchObject({ source: 'route', viaLabel: 'F1 H1', endsOnDevice: false })
   })
 
   it('a route that ends on a DEVICE: floor crossing + route + the rise to that device, flagged endsOnDevice', () => {
@@ -87,7 +87,7 @@ describe('resolveHubBeyondLength - shaft markers', () => {
     const project = shaftFourFloorProject([{ cameras: [camera] }])
     const cable: Cable = { ...shaftCable('c1', 'sm2'), beyondShaft: { floorId: 'sf0', points: [], endDevice: { kind: 'camera', id: 'cam-end' } } }
     const beyond = resolveHubBeyondLength(project, { floorId: 'sf1', hubId: 'sm2' }, cable)
-    expect(beyond).toMatchObject({ source: 'route', crossingVerticalM: 3, viaLabel: 'F1 C1', endLabel: 'C1', endsOnDevice: true })
+    expect(beyond).toMatchObject({ source: 'route', crossingVerticalM: 3, viaLabel: 'F1 C1', endsOnDevice: true })
     expect(beyond.source === 'route' && beyond.run.nominal).toBeCloseTo(6.5, 9)
   })
 })

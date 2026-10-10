@@ -30,12 +30,12 @@ describe('describeShaftsOnFloor', () => {
   ]
 
   it('is null when shafts is omitted (every pre-phase-7 caller)', () => {
-    expect(describeShaftsOnFloor([], ['shaft-1'], undefined, 3)).toBeNull()
+    expect(describeShaftsOnFloor([], [], undefined, 3)).toBeNull()
   })
 
   it('is null when shafts exist project-wide but none have a marker on this floor', () => {
     const hubs: Hub[] = [{ id: 'hub-1', x: 0, y: 0, mountHeightM: 1.5 }]
-    expect(describeShaftsOnFloor(hubs, ['shaft-1'], shafts, 3)).toBeNull()
+    expect(describeShaftsOnFloor(hubs, ['H1'], shafts, 3)).toBeNull()
   })
 
   it('names the shaft(s) with a marker on this floor, by project-order label and name', () => {
@@ -43,7 +43,7 @@ describe('describeShaftsOnFloor', () => {
       { id: 'hub-1', x: 0, y: 0, mountHeightM: 1.5 },
       { id: 'hub-2', kind: 'shaft', shaftId: 'shaft-1', x: 10, y: 10, mountHeightM: 0 },
     ]
-    expect(describeShaftsOnFloor(hubs, ['shaft-1', 'shaft-2'], shafts, 3)).toBe('Shafts: T1 Main riser')
+    expect(describeShaftsOnFloor(hubs, ['H1', 'T1'], shafts, 3)).toBe('Shafts: T1 Main riser')
   })
 
   it('lists several shaft markers on the same floor in hub order', () => {
@@ -51,13 +51,13 @@ describe('describeShaftsOnFloor', () => {
       { id: 'hub-2', kind: 'shaft', shaftId: 'shaft-2', x: 10, y: 10, mountHeightM: 0 },
       { id: 'hub-1', kind: 'shaft', shaftId: 'shaft-1', x: 0, y: 0, mountHeightM: 0 },
     ]
-    expect(describeShaftsOnFloor(hubs, ['shaft-1', 'shaft-2'], shafts, 3)).toBe('Shafts: T2 Back shaft, T1 Main riser')
+    expect(describeShaftsOnFloor(hubs, ['T2', 'T1'], shafts, 3)).toBe('Shafts: T2 Back shaft, T1 Main riser')
   })
 
   it('M5: is null for a one-floor project even with a marker on this floor (plan: strip notes only apply when floors > 1)', () => {
     const hubs: Hub[] = [{ id: 'hub-2', kind: 'shaft', shaftId: 'shaft-1', x: 10, y: 10, mountHeightM: 0 }]
-    expect(describeShaftsOnFloor(hubs, ['shaft-1'], shafts, 1)).toBeNull()
-    expect(describeShaftsOnFloor(hubs, ['shaft-1'], shafts, undefined)).toBeNull()
+    expect(describeShaftsOnFloor(hubs, ['T1'], shafts, 1)).toBeNull()
+    expect(describeShaftsOnFloor(hubs, ['T1'], shafts, undefined)).toBeNull()
   })
 })
 
@@ -101,7 +101,7 @@ describe('buildExportLegends - C1 review fix: a floor\'s strip never shows anoth
     expect(f1Legends.compatibilityWarningText).toBeNull()
 
     const f2Legends = buildExportLegends(baseOptions({ fireAlarmDevices: [smokeOnF2] }), projectWideWarnings, {}, 16)
-    expect(f2Legends.compatibilityWarningText).toBe('Compatibility: 1 device(s) not listed for a placed panel/hub: F1')
+    expect(f2Legends.compatibilityWarningText).toBe('Compatibility: 1 device(s) not listed for a placed panel/hub: ?1')
   })
 
   it('no controller anywhere + F1 has only a camera (no fire-alarm device): F1 strip has no fire legend line and no compatibility line', () => {

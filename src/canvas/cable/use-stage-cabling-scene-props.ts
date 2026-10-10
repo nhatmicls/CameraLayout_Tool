@@ -1,8 +1,11 @@
 import { useCallback, useMemo } from 'react'
+import { buildProjectCableEndToEndLabels, resolveShaftLegLabels, selectCableLabelStrings } from '../../domain/cable/cable-end-to-end-label'
 import type { CableLimitStatus } from '../../domain/cable/cable-length-estimate-calculator'
 import type { CablePoint } from '../../domain/cable/cable-layout-types'
 import { findShaftLegsOnFloor, type ResolvedShaftLeg } from '../../domain/cable/shaft-cable-leg'
+import { fireAlarmModelSpecById } from '../../export/shared/fire-alarm-compatibility-index-singleton'
 import { useEditorUiStore } from '../../state/editor-ui-store'
+import { useActiveFloorCableLabels } from '../../state/use-active-floor-cable-labels'
 import { useCableLayoutEstimate } from '../../state/use-cable-layout-estimate'
 import { useProjectStore } from '../../state/project-store'
 import { selectCables, selectHubs, selectScale } from '../../state/project-store-floor-selectors'
@@ -48,9 +51,16 @@ export function useStageCablingSceneProps(): { cabling: PlanSceneCabling; cablin
     // needlessly invalidate `cabling` (and the cable lines) on a floor with no leg at all.
     return legs.length > 0 ? legs : NO_SHAFT_LEGS
   }, [floors, activeFloorId])
+  // Active floor's own cable labels (`labelByCableId`, stable identity via `selectCableLabelStrings`'s
+  // own cache) plus every leg's label, read from the SAME project-wide label map (a leg's cable may
+  // belong to another floor) so the canvas text always matches the properties panel's.
+  const activeFloorLabels = useActiveFloorCableLabels()
+  const labelByCableId = selectCableLabelStrings(activeFloorLabels)
+  const allCableLabels = buildProjectCableEndToEndLabels({ floors, shafts }, fireAlarmModelSpecById)
+  const shaftLegLabels = useMemo(() => resolveShaftLegLabels(shaftLegs, floors, allCableLabels), [shaftLegs, floors, allCableLabels])
   const cabling = useMemo(
-    () => ({ hubs, cables, cableTypes, cableSettings, scale, limitStatusById, shaftIds, shaftLegs }),
-    [hubs, cables, cableTypes, cableSettings, scale, limitStatusById, shaftIds, shaftLegs],
+    () => ({ hubs, cables, cableTypes, cableSettings, scale, limitStatusById, shaftIds, shaftLegs, labelByCableId, shaftLegLabels }),
+    [hubs, cables, cableTypes, cableSettings, scale, limitStatusById, shaftIds, shaftLegs, labelByCableId, shaftLegLabels],
   )
 
   const onHubDragEnd = useCallback((id: string, x: number, y: number) => updateHub(id, { x, y }), [updateHub])

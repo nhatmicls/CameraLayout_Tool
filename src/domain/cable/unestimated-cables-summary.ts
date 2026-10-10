@@ -31,6 +31,11 @@ function isUnavailableReasonCode(code: CableEstimateWarning['code']): code is Un
   return code in REASON_LABELS
 }
 
+/** The human text behind one `REASON_LABELS` entry - `null` for any other warning code (e.g. `cable-over-limit`), which is never an exclusion reason. Used by `project-cable-list-rows.ts` to name a cable excluded by its own cross-floor warning. */
+export function describeUnestimatedReason(code: CableEstimateWarning['code']): string | null {
+  return isUnavailableReasonCode(code) ? REASON_LABELS[code] : null
+}
+
 /**
  * "N cable(s) not estimated: <reason> (<n>); <reason> (<n>)." - counts are
  * broken down by reason for every `warnings` entry carrying a `cableId` and

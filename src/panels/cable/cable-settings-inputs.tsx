@@ -9,7 +9,7 @@ interface CableSettingsInputsProps {
 }
 
 const FIELDS: Array<{ key: keyof CableSettings; label: string; unit: string; step: number; help: string }> = [
-  { key: 'wastePercent', label: 'Waste', unit: '%', step: 1, help: 'Added on top of every run (offcuts, re-terminations).' },
+  { key: 'wastePercent', label: 'Spare', unit: '%', step: 1, help: 'Added on top of every run (offcuts, re-terminations).' },
   { key: 'routeHeightM', label: 'Route height', unit: 'm', step: 0.1, help: 'Height the cables run at (ceiling or tray).' },
   { key: 'defaultDeviceHeightM', label: 'Device height', unit: 'm', step: 0.1, help: 'Used for sensors and for cameras without a mounting height.' },
   { key: 'deviceEndSlackM', label: 'Slack at device', unit: 'm', step: 0.1, help: 'Service loop left at each device.' },

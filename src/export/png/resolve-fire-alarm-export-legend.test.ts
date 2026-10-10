@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { resolveCompatibilityWarningText, resolveFireAlarmLegend } from './resolve-fire-alarm-export-legend'
 import type { CompatibilityWarning } from '../../domain/fire-alarm/fire-alarm-compatibility-checker'
 import { DEFAULT_FIRE_ALARM_SETTINGS, type FireAlarmModelSpec, type FireAlarmSettings, type PlacedFireAlarmDevice } from '../../domain/fire-alarm/fire-alarm-device-types'
+import { buildFloorItemLabels } from '../../domain/floor/floor-item-label-allocator'
 
 const smokeDetector: FireAlarmModelSpec = {
   id: 'hik-smoke',
@@ -80,31 +81,34 @@ describe('resolveFireAlarmLegend', () => {
 
 describe('resolveCompatibilityWarningText', () => {
   const devices = [device('d1', 'hik-hub'), device('d2', 'hik-smoke'), device('d3', 'hik-smoke'), device('d4', 'hik-smoke'), device('d5', 'hik-smoke')]
+  // Same allocator call the real caller (`build-export-legends.ts`) makes - this function takes
+  // labels, it no longer computes them.
+  const labels = buildFloorItemLabels({ cameras: [], sensors: [], fireAlarmDevices: devices, hubs: [] }, { fireAlarmModelById: modelById }).fireAlarmDevices
 
   it('is null with no warnings', () => {
-    expect(resolveCompatibilityWarningText(devices, [], modelById)).toBeNull()
+    expect(resolveCompatibilityWarningText(devices, [], labels)).toBeNull()
   })
 
   it('formats the no-controller-placed aggregated line with designator labels', () => {
     const warnings: CompatibilityWarning[] = [{ code: 'no-controller-placed', deviceIds: ['d2', 'd3'] }]
-    expect(resolveCompatibilityWarningText(devices, warnings, modelById)).toBe('No panel/hub placed for: S1, S2')
+    expect(resolveCompatibilityWarningText(devices, warnings, labels)).toBe('No panel/hub placed for: S1, S2')
   })
 
   it('formats the not-listed line with a count and the first two labels', () => {
     const warnings: CompatibilityWarning[] = [{ code: 'not-listed-for-placed-controllers', deviceId: 'd2', modelId: 'hik-smoke' }]
-    expect(resolveCompatibilityWarningText(devices, warnings, modelById)).toBe('Compatibility: 1 device(s) not listed for a placed panel/hub: S1')
+    expect(resolveCompatibilityWarningText(devices, warnings, labels)).toBe('Compatibility: 1 device(s) not listed for a placed panel/hub: S1')
   })
 
   it('C1 fix: never falls back to a raw device id - drops a warning naming a device not in `devices`', () => {
     // Simulates what used to leak through before the caller pre-filtered: a warning for a device
     // that belongs to ANOTHER floor (not in this floor's own `devices` list).
     const warnings: CompatibilityWarning[] = [{ code: 'not-listed-for-placed-controllers', deviceId: 'device-on-another-floor', modelId: 'hik-smoke' }]
-    expect(resolveCompatibilityWarningText(devices, warnings, modelById)).toBeNull()
+    expect(resolveCompatibilityWarningText(devices, warnings, labels)).toBeNull()
   })
 
   it('C1 fix: a no-controller-placed warning drops the ids not in `devices`, keeping the rest', () => {
     const warnings: CompatibilityWarning[] = [{ code: 'no-controller-placed', deviceIds: ['d2', 'device-on-another-floor'] }]
-    expect(resolveCompatibilityWarningText(devices, warnings, modelById)).toBe('No panel/hub placed for: S1')
+    expect(resolveCompatibilityWarningText(devices, warnings, labels)).toBe('No panel/hub placed for: S1')
   })
 
   it('truncates the label list to "+N more" past two labels', () => {
@@ -114,7 +118,7 @@ describe('resolveCompatibilityWarningText', () => {
       { code: 'not-listed-for-placed-controllers', deviceId: 'd4', modelId: 'hik-smoke' },
       { code: 'not-listed-for-placed-controllers', deviceId: 'd5', modelId: 'hik-smoke' },
     ]
-    expect(resolveCompatibilityWarningText(devices, warnings, modelById)).toBe(
+    expect(resolveCompatibilityWarningText(devices, warnings, labels)).toBe(
       'Compatibility: 4 device(s) not listed for a placed panel/hub: S1, S2 +2 more',
     )
   })

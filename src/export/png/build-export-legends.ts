@@ -1,6 +1,6 @@
-import { hubLabels } from '../../domain/cable/cable-endpoint-index'
-import type { Hub, Shaft } from '../../domain/cable/cable-layout-types'
+import type { Shaft } from '../../domain/cable/cable-layout-types'
 import { filterCompatibilityWarningsToDeviceIds, type CompatibilityWarning } from '../../domain/fire-alarm/fire-alarm-compatibility-checker'
+import { buildFloorItemLabels } from '../../domain/floor/floor-item-label-allocator'
 import { SENSOR_KIND_DISPLAY_ORDER, type PlacedSensor, type SensorKind, type SensorModelSpec } from '../../domain/sensor/sensor-types'
 import { buildViewFilterNote } from '../../domain/view/view-config-toggle-table'
 import { fireAlarmModelSpecById } from '../shared/fire-alarm-compatibility-index-singleton'
@@ -45,19 +45,20 @@ export function describeFloorPosition(context: FloorPositionContext | undefined)
  * project has only one floor (M5 review fix: plan decision g - strip notes
  * only apply once there is more than one floor; a shaft cannot exist on a
  * true one-floor project, but this keeps the rule explicit rather than
- * relying on that incidental fact). Exported for direct testing.
+ * relying on that incidental fact). `hubLabels` is index-aligned with `hubs`,
+ * from the shared allocator (`floor-item-label-allocator.ts`). Exported for
+ * direct testing.
  */
 export function describeShaftsOnFloor(
-  hubs: readonly Hub[],
-  shaftIds: readonly string[] | undefined,
+  hubs: readonly { kind?: string; shaftId?: string }[],
+  hubLabels: readonly string[],
   shafts: readonly Shaft[] | undefined,
   floorCount: number | undefined,
 ): string | null {
   if (!shafts || shafts.length === 0 || !floorCount || floorCount <= 1) return null
   const nameById = new Map(shafts.map((shaft) => [shaft.id, shaft.name]))
-  const labels = hubLabels(hubs, shaftIds)
   const entries = hubs
-    .map((hub, i) => (hub.kind === 'shaft' && hub.shaftId ? `${labels[i]} ${nameById.get(hub.shaftId) ?? ''}`.trim() : null))
+    .map((hub, i) => (hub.kind === 'shaft' && hub.shaftId ? `${hubLabels[i]} ${nameById.get(hub.shaftId) ?? ''}`.trim() : null))
     .filter((entry): entry is string => entry !== null)
   return entries.length > 0 ? `Shafts: ${entries.join(', ')}` : null
 }
@@ -92,6 +93,13 @@ export function buildExportLegends(
   const deviceIdsOnThisFloor = new Set(options.fireAlarmDevices.map((device) => device.id))
   const ownFloorWarnings = filterCompatibilityWarningsToDeviceIds(fireAlarmWarnings, deviceIdsOnThisFloor)
 
+  // ONE allocator call for every label this strip shows (`floor-item-label-allocator.ts`) - the
+  // fire-alarm legend's device labels and the shaft note's hub labels must agree with the canvas.
+  const itemLabels = buildFloorItemLabels(
+    { cameras: options.cameras, sensors: options.sensors, fireAlarmDevices: options.fireAlarmDevices, hubs: options.hubs },
+    { shaftIds: options.shaftIds, fireAlarmModelById: fireAlarmModelSpecById },
+  )
+
   return {
     sensorKindsPresent: resolveSensorKindsPresent(options.sensors, sensorModelById),
     cableLegend: withRoundingNote(
@@ -105,12 +113,12 @@ export function buildExportLegends(
       options.floorPosition?.count,
     ),
     fireAlarmLegend: resolveFireAlarmLegend(options.fireAlarmDevices, fireAlarmModelSpecById, options.fireAlarmSettings, scaleIsSet),
-    compatibilityWarningText: resolveCompatibilityWarningText(options.fireAlarmDevices, ownFloorWarnings, fireAlarmModelSpecById),
+    compatibilityWarningText: resolveCompatibilityWarningText(options.fireAlarmDevices, ownFloorWarnings, itemLabels.fireAlarmDevices),
     viewFilterNoteLines: viewFilterNote
       ? wrapViewFilterNoteLines(viewFilterNote, fontPx, options.image.widthPx, sidePaddingPx)
       : [],
     // M3 review fix: wrapped (never truncated), same routine the view-filter note uses.
     floorNoteLines: wrapLine(describeFloorPosition(options.floorPosition)),
-    shaftsOnFloorLines: wrapLine(describeShaftsOnFloor(options.hubs, options.shaftIds, options.shafts, options.floorPosition?.count)),
+    shaftsOnFloorLines: wrapLine(describeShaftsOnFloor(options.hubs, itemLabels.hubs, options.shafts, options.floorPosition?.count)),
   }
 }

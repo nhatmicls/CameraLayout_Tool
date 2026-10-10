@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { hubLabels } from './cable-endpoint-index'
 import type { Hub, Shaft } from './cable-layout-types'
 import { findShaftMarkers, pruneShafts } from './shaft-integrity'
 import { SHAFT_ID, SHAFT_MARKER_F1, shaftCable, shaftFourFloorProject } from './shaft-worked-example.test-fixtures'
+import { buildFloorItemLabels } from '../floor/floor-item-label-allocator'
+import { createEmptyFloor } from '../floor/floor-types'
 
 describe('findShaftMarkers', () => {
   it('finds all four markers in floor order', () => {
@@ -16,7 +17,7 @@ describe('findShaftMarkers', () => {
     const { floors, shafts } = shaftFourFloorProject()
     const shaftIds = shafts.map((s) => s.id)
     for (const floor of floors) {
-      const labels = hubLabels(floor.hubs, shaftIds)
+      const labels = buildFloorItemLabels(floor, { shaftIds }).hubs
       const markerIndex = floor.hubs.findIndex((h) => h.kind === 'shaft')
       expect(labels[markerIndex]).toBe('T1')
     }
@@ -28,7 +29,8 @@ describe('findShaftMarkers', () => {
     const secondShaftMarker: Hub = { id: 'other-shaft-marker', kind: 'shaft', shaftId: 'shaft-2', x: 3, y: 3, mountHeightM: 0 }
     const hubs = [plainHub, riser, SHAFT_MARKER_F1, secondShaftMarker]
     const shaftIds = [SHAFT_ID, 'shaft-2']
-    expect(hubLabels(hubs, shaftIds)).toEqual(['H1', 'R1', 'T1', 'T2'])
+    const floor = { ...createEmptyFloor('f', 'F'), hubs }
+    expect(buildFloorItemLabels(floor, { shaftIds }).hubs).toEqual(['H1', 'R1', 'T1', 'T2'])
   })
 
   it('returns empty for a shaft with no markers', () => {

@@ -10,7 +10,9 @@ import { SensorMarkerNode } from './sensor-marker-node'
 
 export interface SensorMarkerNodesProps {
   sensors: PlacedSensor[]
-  /** Sensors whose marker (for a beam: the whole line + both ends) the view config hides. Skipped by id - the array is never filtered, so `S{n}` labels do not renumber. */
+  /** Index-aligned with `sensors` - base label ("S3"), from the shared allocator (`floor-item-label-allocator.ts`); a beam's tx/rx suffix is appended below, as before. */
+  labels: readonly string[]
+  /** Sensors whose marker (for a beam: the whole line + both ends) the view config hides. Skipped by id - the array is never filtered, so labels do not renumber. */
   hiddenIds?: ReadonlySet<string>
   walls: Wall[]
   /**
@@ -40,13 +42,14 @@ export interface SensorMarkerNodesProps {
  * Markers for every placed sensor, in `sensors[]` order: sector/circle
  * sensors get `SensorMarkerNode` (drives the shared live-handle registry,
  * exactly like a camera marker), beams get `SensorBeamNode` (self-contained,
- * no registry - see that file). Labels are `S{n}` from the sensor's position
- * in `sensors[]`, independent of camera labels; a beam's receiver is always
- * "RX" (drawn by `SensorBeamNode` itself). A sensor whose catalog model id
- * is unknown (removed since save) is skipped.
+ * no registry - see that file). Labels come from `labels` (index-aligned
+ * with `sensors`) - the shared allocator, never computed here; a beam's
+ * receiver is always "RX" (drawn by `SensorBeamNode` itself). A sensor
+ * whose catalog model id is unknown (removed since save) is skipped.
  */
 export function SensorMarkerNodes({
   sensors,
+  labels,
   hiddenIds,
   walls,
   iconRadiusPx,
@@ -76,7 +79,7 @@ export function SensorMarkerNodes({
       {sensors.map((sensor, index) => {
         const spec = sensorModelById(sensor.modelId)
         if (!spec || hiddenIds?.has(sensor.id)) return null
-        const label = `S${index + 1}`
+        const label = labels[index]
         const selected = sensor.id === selectedSensorId
 
         if (sensor.shape === 'beam') {

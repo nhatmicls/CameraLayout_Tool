@@ -1,5 +1,5 @@
 import { cableTypeColor } from '../../canvas/cable/cable-type-color-palette'
-import { formatVnd } from '../../domain/bom/bill-of-materials-grouping'
+import { formatVnd } from '../../domain/bom/bom-price-formatting'
 import { SCALE_NOT_SET_CABLE_MESSAGE, type CableLayoutEstimate } from '../../domain/cable/cable-layout-estimate'
 import type { CableType } from '../../domain/cable/cable-layout-types'
 import { formatMetersInterval } from '../../domain/cable/cable-length-format'
@@ -66,7 +66,7 @@ export function CableEstimateTotalsTable({ estimate, cableTypes, cableCount }: C
           </span>
         )}
       </p>
-      <p className="mt-0.5 text-right text-[10px] text-neutral-400">Provisional estimate incl. waste - measure on site before ordering.</p>
+      <p className="mt-0.5 text-right text-[10px] text-neutral-400">Provisional estimate incl. spare - measure on site before ordering.</p>
 
       {estimate.warnings.length > 0 && (
         <ul data-testid="cable-estimate-warnings" className="mt-2 list-disc space-y-0.5 pl-4 text-amber-700">

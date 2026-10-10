@@ -1,11 +1,11 @@
 import { fireAlarmModelById } from '../../catalog/fire-alarm/fire-alarm-catalog-loader'
-import { buildFireAlarmDeviceLabels } from '../../domain/fire-alarm/fire-alarm-device-designator'
 import type { PlacedFireAlarmDevice } from '../../domain/fire-alarm/fire-alarm-device-types'
-import { fireAlarmModelSpecById } from '../../export/shared/fire-alarm-compatibility-index-singleton'
 import { FireAlarmMarkerNode } from './fire-alarm-marker-node'
 
 export interface FireAlarmMarkerNodesProps {
   devices: PlacedFireAlarmDevice[]
+  /** Index-aligned with `devices`, from the shared allocator (`floor-item-label-allocator.ts`) - the one source for every label on the floor. */
+  labels: readonly string[]
   iconRadiusPx: number
   selectedFireAlarmDeviceId: string | null
   interactive: boolean
@@ -26,13 +26,15 @@ export interface FireAlarmMarkerNodesProps {
 /**
  * Markers for every placed fire-alarm device, in `devices[]` order (the
  * fire-alarm twin of `sensor-marker-nodes.tsx`/`camera-marker-nodes.tsx`).
- * Labels are per-kind designators (`buildFireAlarmDeviceLabels`: `S{n}`,
- * `KP{n}`... or the generic `F{n}`), numbered on their own. No rotation handle: a `PlacedFireAlarmDevice` has no bearing field
- * at all (CLAUDE.md - one placed shape, nothing to rotate or resize). A
- * device whose catalog model id is unknown (removed since save) is skipped.
+ * Labels come from `labels` (index-aligned with `devices`) - the shared
+ * allocator, never computed here. No rotation handle: a `PlacedFireAlarmDevice`
+ * has no bearing field at all (CLAUDE.md - one placed shape, nothing to
+ * rotate or resize). A device whose catalog model id is unknown (removed
+ * since save) is skipped.
  */
 export function FireAlarmMarkerNodes({
   devices,
+  labels,
   iconRadiusPx,
   selectedFireAlarmDeviceId,
   interactive,
@@ -43,8 +45,6 @@ export function FireAlarmMarkerNodes({
   onDragMove,
   onDragEnd,
 }: FireAlarmMarkerNodesProps) {
-  const labels = buildFireAlarmDeviceLabels(devices, fireAlarmModelSpecById)
-
   return (
     <>
       {devices.map((device, index) => {

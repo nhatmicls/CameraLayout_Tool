@@ -65,10 +65,10 @@ describe('cable length formatting', () => {
 
   it('builds the PNG note in whole metres', () => {
     expect(formatCableEstimateNote({ nominal: 43.2, min: 43.01, max: 44.4 }, 15)).toBe(
-      'Cable lengths are provisional estimates: 44 m (43-45 m) incl. 15% waste',
+      'Cable lengths are provisional estimates: 44 m (43-45 m) incl. 15% spare',
     )
     expect(formatCableEstimateNote({ nominal: 43.2, min: null, max: null }, 0)).toBe(
-      'Cable lengths are provisional estimates: 44 m incl. 0% waste',
+      'Cable lengths are provisional estimates: 44 m incl. 0% spare',
     )
   })
 })

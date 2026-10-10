@@ -1,12 +1,13 @@
+import { useMemo } from 'react'
 import { fireAlarmModelById, type FireAlarmModel } from '../../catalog/fire-alarm/fire-alarm-catalog-loader'
 import type { Floor } from '../../domain/floor/floor-types'
 import { checkFireAlarmCompatibility, type CompatibilityWarning } from '../../domain/fire-alarm/fire-alarm-compatibility-checker'
-import { buildFireAlarmDeviceLabels } from '../../domain/fire-alarm/fire-alarm-device-designator'
 import { FIRE_ALARM_KIND_LABELS, isFireAlarmControllerKind, isFireDetectorKind } from '../../domain/fire-alarm/fire-alarm-device-types'
 import type { PlacedFireAlarmDevice } from '../../domain/fire-alarm/fire-alarm-device-types'
+import { buildFloorItemLabels } from '../../domain/floor/floor-item-label-allocator'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
-import { selectFireAlarmDevices, selectScale } from '../../state/project-store-floor-selectors'
+import { selectActiveFloor, selectScale } from '../../state/project-store-floor-selectors'
 import { CameraUnknownModelNotice } from '../camera/camera-unknown-model-notice'
 import { brandDisplayLabel } from '../shared/brand-display-label'
 import { fireAlarmCompatibilityIndex, fireAlarmModelSpecById } from '../../export/shared/fire-alarm-compatibility-index-singleton'
@@ -39,8 +40,8 @@ function findCompatiblePlacedControllerLabel(device: PlacedFireAlarmDevice, floo
     for (let i = 0; i < floor.fireAlarmDevices.length; i++) {
       const candidateSpec = fireAlarmModelSpecById[floor.fireAlarmDevices[i].modelId]
       if (!candidateSpec || !isFireAlarmControllerKind(candidateSpec.kind)) continue
-      if (links.some((link) => link.controllerModelId === candidateSpec.id)) 
-        return `${buildFireAlarmDeviceLabels(floor.fireAlarmDevices, fireAlarmModelSpecById)[i]} ${candidateSpec.model}`
+      if (links.some((link) => link.controllerModelId === candidateSpec.id))
+        return `${buildFloorItemLabels(floor, { fireAlarmModelById: fireAlarmModelSpecById }).fireAlarmDevices[i]} ${candidateSpec.model}`
     }
   }
   return null
@@ -86,14 +87,21 @@ function resolveCompatibilityStatus(
  * (`fire-alarm-device-types.ts`).
  */
 export function FireAlarmDevicePropertiesPanel() {
-  const fireAlarmDevices = useProjectStore(selectFireAlarmDevices)
+  const floor = useProjectStore(selectActiveFloor)
   const floors = useProjectStore((s) => s.floors)
   const fireAlarmSettings = useProjectStore((s) => s.fireAlarmSettings)
   const scale = useProjectStore(selectScale)
+  const shafts = useProjectStore((s) => s.shafts)
   const deleteFireAlarmDevice = useProjectStore((s) => s.deleteFireAlarmDevice)
   const selectedFireAlarmDeviceId = useEditorUiStore((s) => s.selectedFireAlarmDeviceId)
   const setSelectedFireAlarmDeviceId = useEditorUiStore((s) => s.setSelectedFireAlarmDeviceId)
+  const shaftIds = useMemo(() => shafts.map((shaft) => shaft.id), [shafts])
+  const itemLabels = useMemo(
+    () => buildFloorItemLabels(floor, { shaftIds, fireAlarmModelById: fireAlarmModelSpecById }),
+    [floor, shaftIds],
+  )
 
+  const fireAlarmDevices = floor.fireAlarmDevices
   const index = fireAlarmDevices.findIndex((d) => d.id === selectedFireAlarmDeviceId)
   const device = index >= 0 ? fireAlarmDevices[index] : null
 
@@ -102,7 +110,7 @@ export function FireAlarmDevicePropertiesPanel() {
   if (!device) return null
 
   const model = fireAlarmModelById(device.modelId)
-  const label = buildFireAlarmDeviceLabels(fireAlarmDevices, fireAlarmModelSpecById)[index]
+  const label = itemLabels.fireAlarmDevices[index]
 
   const handleDelete = () => {
     deleteFireAlarmDevice(device.id)

@@ -28,12 +28,12 @@ types, cable allowances, the fire-detector coverage mode and shafts belong to th
 - Shafts: a vertical tube through several floors. Click "Shaft", click the plan, name it and
   choose the floor range: an opening (T1, T2... - the same label on every floor) is placed on
   each of those floors that has a plan, at the same position; drag each one to where the tube
-  really is. A cable ending on an opening is labelled `C1-?` (not routed) until you specify
+  really is. A cable ending on an opening is labelled `F{n}_device_?` (not routed) until you specify
   where it exits. On the floor where it should leave, select that floor's shaft opening, open
-  its panel list of incoming cables ("From Floor 2 C1"), click "Route on <floor>" and draw the
+  its panel list of incoming cables ("From Floor 2 F2_C1"), click "Route on <floor>" and draw the
   route points, finishing on a hub or a device of that floor (never on the opening itself). The
-  cable is then labelled by what it reaches (`C1-H1`, `C2-P1`; the shaft never appears in a
-  label). Length is measured as: route on the entry floor + sum of floor-to-floor heights +
+  cable is then labelled by what it reaches (`F1_C1_F1_H1`, `F2_S1_F3_P1`; the shaft never appears in a
+  label, and the label follows riser / drop chains beyond the cable's final end). Length is measured as: route on the entry floor + sum of floor-to-floor heights +
   route on the exit floor (that floor's scale) + the end + slack. Remove or redraw a route from
   the same panel list. If the exit floor, the hub or device a route ends on, or the shaft
   opening is deleted, the route clears in the same undo step. A route that is not drawn yet is
@@ -81,15 +81,15 @@ A provisional cable-length estimate from routes you draw by hand.
   A type in use on any floor, or the last remaining type, cannot be deleted.
 - How the estimate is built, per cable: horizontal route length (drawn route / scale) +
   the vertical run at each end (route height vs the device's and the hub's height) + the
-  length on the other floor (riser / drop only) + slack at each end = the run; the run + waste % = what to buy. Per type the metres are summed
-  and rounded up to a whole metre. Defaults (the "Allowances" section): waste 15 %, route
+  length on the other floor (riser / drop only) + slack at each end = the run; the run + spare % = what to buy. Per type the metres are summed
+  and rounded up to a whole metre. Defaults (the "Allowances" section): spare 15 %, route
   height 3 m, device height 3 m (used for sensors and for cameras with no mounting height),
   slack 0.5 m at the device and 3 m at the hub.
 - Range: every length is shown with a min-max range, e.g. `30.8 m (30.6-31.1 m)`. It is
   the worst case of the scale's click error only: each of the two scale clicks may be off
   by the "scale click error" (default 3 image px), which stretches or shrinks every
   horizontal length by the same factor. A very short reference line gives a warning.
-- Length limit: a cable whose run (without waste) exceeds its type's limit is drawn red
+- Length limit: a cable whose run (without spare) exceeds its type's limit is drawn red
   and dashed and listed as a warning; one that exceeds it only at the top of the range is
   dashed and listed as "may exceed".
 - Limits: the route is 2D with straight segments - no conduit bends, no obstacles. The

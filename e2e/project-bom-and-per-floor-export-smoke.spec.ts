@@ -137,22 +137,26 @@ test.describe('project-bom-and-per-floor-export-smoke', () => {
       await expect(page.locator('[data-testid="properties-cable-run"]')).toContainText('10.0 m')
     })
 
-    await test.step('BOM panel: "All floors" merges the camera row; the per-floor filter shows unprefixed rows', async () => {
+    await test.step('BOM panel: "All floors" merges the camera row; the per-floor filter still shows floor-prefixed rows (owner decision 2026-10-09)', async () => {
       const cameraLabelsCell = page.locator('[data-testid^="bom-cameras-"]').first()
       await expect(cameraLabelsCell).toHaveText('F1_C1, F2_C1')
 
       const floors = await page.evaluate(() => window.__cameraLayoutToolTestHooks!.getFloors())
       await page.locator('[data-testid="bom-floor-filter"]').selectOption(floors[1].id) // F2 alone
-      await expect(cameraLabelsCell).toHaveText('C1')
+      await expect(cameraLabelsCell).toHaveText('F2_C1')
       await page.locator('[data-testid="bom-floor-filter"]').selectOption('all')
     })
 
     let csvText = ''
-    await test.step('Export CSV: whole project, 12 columns, prefixed labels, project cable total, no false "no panel/hub" note', async () => {
-      const downloadPromise = page.waitForEvent('download')
+    await test.step('Export CSV: two downloads (BOM first, then the per-cable length CSV)', async () => {
+      const downloads: Download[] = []
+      page.on('download', (d) => downloads.push(d))
+
       await page.locator('[data-testid="export-csv-button"]').click()
-      const download = await downloadPromise
-      csvText = await readDownloadText(download)
+      await expect.poll(() => downloads.length, { timeout: 15_000 }).toBe(2)
+
+      const [bomDownload, cableDownload] = downloads
+      csvText = await readDownloadText(bomDownload)
 
       const withoutBom = csvText.charCodeAt(0) === 0xfeff ? csvText.slice(1) : csvText
       const [headerLine] = withoutBom.split('\r\n')
@@ -164,6 +168,11 @@ test.describe('project-bom-and-per-floor-export-smoke', () => {
       const cableRowMatch = csvText.match(/Cable,,Cat6 UTP,,,,(\d+),m,/)
       expect(cableRowMatch).not.toBeNull()
       expect(cableRowMatch?.[1]).toBe('44') // ceil(28.0*1.15 + 10.0*1.15) = ceil(32.2 + 11.5) = ceil(43.7) = 44
+
+      const cableCsvText = await readDownloadText(cableDownload)
+      expect(cableDownload.suggestedFilename()).toMatch(/-cable_length_estimate\.csv$/)
+      expect(cableCsvText).toContain('Length (+15% spare) (m)')
+      expect(cableCsvText).toMatch(/F1_C1_/)
     })
 
     await test.step('Export PNG: current floor, multi-floor file name', async () => {
@@ -171,7 +180,7 @@ test.describe('project-bom-and-per-floor-export-smoke', () => {
       const downloadPromise = page.waitForEvent('download')
       await page.locator('[data-testid="export-png-button"]').click()
       const download = await downloadPromise
-      expect(download.suggestedFilename()).toBe('F1-Floor-1-floor-1-camera-layout.png')
+      expect(download.suggestedFilename()).toBe('F1-Floor-1-floor-1-device-layout.png')
     })
 
     await test.step('C1 test gap: F2\'s unlisted smoke warns by its OWN per-floor label; F1\'s strip never shows it', async () => {
@@ -190,7 +199,7 @@ test.describe('project-bom-and-per-floor-export-smoke', () => {
       await expect.poll(() => downloads.length, { timeout: 15_000 }).toBe(2)
 
       const names = downloads.map((d) => d.suggestedFilename()).sort()
-      expect(names).toEqual(['F1-Floor-1-floor-1-camera-layout.png', 'F2-Floor-2-floor-2-camera-layout.png'])
+      expect(names).toEqual(['F1-Floor-1-floor-1-device-layout.png', 'F2-Floor-2-floor-2-device-layout.png'])
 
       await expect(page.locator('[data-testid="notification-banner"]')).toContainText('Floor 3')
       await expect(page.locator('[data-testid="notification-banner"]')).toContainText('Floor 1') // M2: the one final notification also names what WAS exported

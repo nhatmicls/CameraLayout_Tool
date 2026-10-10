@@ -1,20 +1,23 @@
-import { buildFireAlarmDeviceLabels, type FireAlarmKindByModelId } from '../fire-alarm/fire-alarm-device-designator'
+import { buildFloorItemLabels, type FloorItemLabelContext } from '../floor/floor-item-label-allocator'
+import type { FireAlarmKindByModelId } from '../fire-alarm/fire-alarm-device-designator'
 import type { PlacedFireAlarmDevice } from '../fire-alarm/fire-alarm-device-types'
 import type { PlacedCamera } from '../project-file/project-types'
 import type { PlacedSensor } from '../sensor/sensor-types'
 import { hubEffectiveHeightM, type Cable, type CableEndRef, type CablePoint, type Hub } from './cable-layout-types'
 
 /**
- * The one place cable labels and cable end positions are derived. A cable
- * stores only references; this index resolves them against the live
- * cameras / sensors / fire-alarm devices / hubs, so a moved device moves its
- * cable end.
+ * The one place device/hub labels ("C3", "H1") and cable end positions are
+ * derived. A cable stores only references; this index resolves them against
+ * the live cameras / sensors / fire-alarm devices / hubs, so a moved device
+ * moves its cable end. A cable's own end-to-end label ("F1_C3_F2_H1") is a
+ * different thing, built once per project by `cable-end-to-end-label.ts`,
+ * which reads this index for the bare device/hub labels it carries.
  */
 
 /**
  * The floor's placed fire-alarm devices plus the catalog lookup their
  * designator labels ("S1", "P1", "KP2"...) are built from. `modelById`
- * omitted = every device is labelled as an unknown model ("F{n}").
+ * omitted = every device is labelled as an unknown model ("?{n}").
  */
 export interface CableFireAlarmEnds {
   devices: readonly PlacedFireAlarmDevice[]
@@ -74,34 +77,14 @@ function firstWinsMap<T>(items: readonly T[], keyOf: (item: T) => string): Map<s
   return map
 }
 
-const HUB_LABEL_PREFIX = { hub: 'H', riser: 'R', drop: 'D' }
-
 /**
- * Label of every hub, by position: plain hubs are "H1", "H2"..., risers
- * "R1"..., drops "D1"... - each kind counted on its own. A shaft marker is
- * "T{n}", n = that shaft's 1-based position in the PROJECT'S `shafts[]`
- * list (passed in as `shaftIds`, in order) - NOT a local per-floor count,
- * so the same shaft reads identically on every floor it opens onto.
- * `shaftIds` omitted (every call site before phase 6, plus any that never
- * sees a shaft marker) falls back to counting shaft markers by floor-local
- * position - only ever wrong if that floor actually holds one, which no
- * pre-phase-6 caller's hubs ever did.
+ * Labels every end from the ONE shared allocator (`floor-item-label-allocator.ts`):
+ * cameras, sensors, fire-alarm devices and hubs/risers/drops may share a
+ * prefix letter (a smoke detector and a sensor are both "S") and are
+ * numbered together across those four families - never independently per
+ * family, as this function did before phase 5. `fireAlarm` omitted = no
+ * fire-alarm devices counted at all (every pre-fire-alarm caller/test).
  */
-export function hubLabels(hubs: readonly Hub[], shaftIds?: readonly string[]): string[] {
-  const counts = { hub: 0, riser: 0, drop: 0, shaft: 0 }
-  return hubs.map((hub) => {
-    const kind = hub.kind ?? 'hub'
-    if (kind === 'shaft') {
-      const projectIndex = hub.shaftId ? shaftIds?.indexOf(hub.shaftId) : undefined
-      if (projectIndex !== undefined && projectIndex >= 0) return `T${projectIndex + 1}`
-      counts.shaft += 1
-      return `T${counts.shaft}`
-    }
-    counts[kind] += 1
-    return `${HUB_LABEL_PREFIX[kind]}${counts[kind]}`
-  })
-}
-
 export function buildCableEndpointIndex(
   cameras: readonly PlacedCamera[],
   sensors: readonly PlacedSensor[],
@@ -109,16 +92,20 @@ export function buildCableEndpointIndex(
   shaftIds?: readonly string[],
   fireAlarm?: CableFireAlarmEnds,
 ): CableEndpointIndex {
+  const fireAlarmDevices = fireAlarm?.devices ?? []
+  const ctx: FloorItemLabelContext = { shaftIds, fireAlarmModelById: fireAlarm?.modelById }
+  const itemLabels = buildFloorItemLabels({ cameras, sensors, fireAlarmDevices, hubs }, ctx)
+
   const devices: CableDeviceEndpoint[] = cameras.map((camera, i) => ({
     ref: { kind: 'camera', id: camera.id },
     x: camera.x,
     y: camera.y,
-    label: `C${i + 1}`,
+    label: itemLabels.cameras[i],
     mountHeightM: camera.mountHeightM ?? null,
   }))
 
   sensors.forEach((sensor, i) => {
-    const label = `S${i + 1}`
+    const label = itemLabels.sensors[i]
     if (sensor.shape === 'beam') {
       devices.push(
         { ref: { kind: 'sensor', id: sensor.id, end: 'tx' }, x: sensor.x, y: sensor.y, label: `${label}tx`, mountHeightM: null },
@@ -130,18 +117,16 @@ export function buildCableEndpointIndex(
   })
 
   if (fireAlarm) {
-    const fireAlarmLabels = buildFireAlarmDeviceLabels(fireAlarm.devices, fireAlarm.modelById ?? {})
-    fireAlarm.devices.forEach((device, i) => {
-      devices.push({ ref: { kind: 'fire-alarm', id: device.id }, x: device.x, y: device.y, label: fireAlarmLabels[i], mountHeightM: null })
+    fireAlarmDevices.forEach((device, i) => {
+      devices.push({ ref: { kind: 'fire-alarm', id: device.id }, x: device.x, y: device.y, label: itemLabels.fireAlarmDevices[i], mountHeightM: null })
     })
   }
 
-  const labels = hubLabels(hubs, shaftIds)
   const hubEndpoints: CableHubEndpoint[] = hubs.map((hub, i) => ({
     hubId: hub.id,
     x: hub.x,
     y: hub.y,
-    label: labels[i],
+    label: itemLabels.hubs[i],
     mountHeightM: hubEffectiveHeightM(hub),
     extraLengthM: hub.extraLengthM ?? 0,
     isShaft: hub.kind === 'shaft',
@@ -171,19 +156,4 @@ export function resolveCablePathPx(cable: Cable, index: CableEndpointIndex): Cab
   const end = resolveCableEnd(cable, index)
   if (!device || !end) return null
   return [{ x: device.x, y: device.y }, ...cable.points, { x: end.x, y: end.y }]
-}
-
-/**
- * "C3-H1", "S2-H1", "S4tx-H1", "P1-H1", "S1-P1" (device to device); "?"
- * stands in for an end that no longer exists. A cable ending on a shaft
- * opening is labelled by where it goes BEYOND the shaft: `shaftEndLabel`
- * (the end of its own leg, resolved by the caller - it lives on another
- * floor, see `resolveShaftCableEndLabel`) gives "C1-H1"; without it the
- * cable is not routed yet and reads "C1-?". The shaft itself never appears.
- */
-export function cableLabel(cable: Cable, index: CableEndpointIndex, shaftEndLabel?: string): string {
-  const device = index.deviceByKey.get(cableEndRefKey(cable.device))
-  const end = resolveCableEnd(cable, index)
-  const endLabel = end?.kind === 'hub' && end.hub.isShaft ? shaftEndLabel : end?.label
-  return `${device?.label ?? '?'}-${endLabel ?? '?'}`
 }

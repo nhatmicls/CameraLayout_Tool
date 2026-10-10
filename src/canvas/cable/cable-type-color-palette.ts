@@ -54,6 +54,18 @@ export function computeCableStrokeWidthPx(iconRadiusPx: number): number {
   return Math.max(1.5, iconRadiusPx * 0.1)
 }
 
+/**
+ * Cable label text size in image px, from the icon radius (same base as a
+ * hub/device label's `Math.max(12, iconRadiusPx * 0.9)`, slightly smaller
+ * since a cable label sits beside a thin line, not inside an icon) -
+ * additionally capped together with the marker icons when zoomed in
+ * (`resolveMarkerZoomCapScale`), so it never dwarfs them on screen. The PNG
+ * (`interactive` false) always draws at the plain image-px size.
+ */
+export function computeCableLabelFontSizePx(iconRadiusPx: number, viewportScale: number, interactive: boolean): number {
+  return Math.max(9, iconRadiusPx * 0.6) * resolveMarkerZoomCapScale(iconRadiusPx, viewportScale, interactive)
+}
+
 /** While drawing a cable, a click this close to a device or hub lands on it. CSS px before dividing by viewport scale. */
 export const CABLE_SNAP_TOLERANCE_SCREEN_PX = 10
 

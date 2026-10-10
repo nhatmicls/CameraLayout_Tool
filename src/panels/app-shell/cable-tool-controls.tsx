@@ -1,7 +1,9 @@
-import { hubLabels } from '../../domain/cable/cable-endpoint-index'
+import { useMemo } from 'react'
+import { buildFloorItemLabels } from '../../domain/floor/floor-item-label-allocator'
+import { fireAlarmModelSpecById } from '../../export/shared/fire-alarm-compatibility-index-singleton'
 import { useEditorUiStore, type ToolMode } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
-import { selectHubs } from '../../state/project-store-floor-selectors'
+import { selectActiveFloor, selectHubs } from '../../state/project-store-floor-selectors'
 
 interface CableToolControlsProps {
   hasImage: boolean
@@ -32,11 +34,17 @@ export function CableToolControls({ hasImage, buttonClass }: CableToolControlsPr
   const selectedHubId = useEditorUiStore((s) => s.selectedHubId)
   const hubs = useProjectStore(selectHubs)
   const shafts = useProjectStore((s) => s.shafts)
+  const activeFloor = useProjectStore(selectActiveFloor)
+  const shaftIds = useMemo(() => shafts.map((shaft) => shaft.id), [shafts])
+  const itemLabels = useMemo(
+    () => buildFloorItemLabels(activeFloor, { shaftIds, fireAlarmModelById: fireAlarmModelSpecById }),
+    [activeFloor, shaftIds],
+  )
 
   // The trunk tool (`ToolMode 'trunk'`) is entered from the hub/shaft panel, not a toolbar toggle -
   // this is a status readout + a way out, not a mode button like the others.
   const startHubIndex = hubs.findIndex((hub) => hub.id === selectedHubId)
-  const startHubLabel = startHubIndex >= 0 ? hubLabels(hubs, shafts.map((shaft) => shaft.id))[startHubIndex] : 'this point'
+  const startHubLabel = startHubIndex >= 0 ? itemLabels.hubs[startHubIndex] : 'this point'
 
   // The remembered id can be stale (type deleted, project replaced): fall back to the first type.
   const drawType = cableTypes.find((type) => type.id === cableDrawTypeId) ?? cableTypes[0]

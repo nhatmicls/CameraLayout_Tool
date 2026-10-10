@@ -1,7 +1,10 @@
+import { useMemo } from 'react'
 import { sensorModelById } from '../../catalog/sensor/sensor-catalog-loader'
+import { buildFloorItemLabels } from '../../domain/floor/floor-item-label-allocator'
+import { fireAlarmModelSpecById } from '../../export/shared/fire-alarm-compatibility-index-singleton'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
-import { selectImage, selectScale, selectSensors, selectWalls } from '../../state/project-store-floor-selectors'
+import { selectActiveFloor, selectImage, selectScale, selectWalls } from '../../state/project-store-floor-selectors'
 import { CameraUnknownModelNotice } from '../camera/camera-unknown-model-notice'
 import { SensorBeamStatusReadout } from './sensor-beam-status-readout'
 import { SensorCircleCoverageInputs } from './sensor-circle-coverage-inputs'
@@ -20,15 +23,22 @@ import { ThermalDetectionRangeTable } from './thermal-detection-range-table'
  * which of the two is mounted.
  */
 export function SensorPropertiesPanel() {
-  const sensors = useProjectStore(selectSensors)
+  const floor = useProjectStore(selectActiveFloor)
   const walls = useProjectStore(selectWalls)
   const scale = useProjectStore(selectScale)
   const image = useProjectStore(selectImage)
+  const shafts = useProjectStore((s) => s.shafts)
   const updateSensor = useProjectStore((s) => s.updateSensor)
   const deleteSensor = useProjectStore((s) => s.deleteSensor)
   const selectedSensorId = useEditorUiStore((s) => s.selectedSensorId)
   const setSelectedSensorId = useEditorUiStore((s) => s.setSelectedSensorId)
+  const shaftIds = useMemo(() => shafts.map((shaft) => shaft.id), [shafts])
+  const itemLabels = useMemo(
+    () => buildFloorItemLabels(floor, { shaftIds, fireAlarmModelById: fireAlarmModelSpecById }),
+    [floor, shaftIds],
+  )
 
+  const sensors = floor.sensors
   const index = sensors.findIndex((s) => s.id === selectedSensorId)
   const sensor = index >= 0 ? sensors[index] : null
 
@@ -37,7 +47,7 @@ export function SensorPropertiesPanel() {
   if (!sensor) return null
 
   const model = sensorModelById(sensor.modelId)
-  const label = `S${index + 1}`
+  const label = itemLabels.sensors[index]
 
   const handleDelete = () => {
     deleteSensor(sensor.id)

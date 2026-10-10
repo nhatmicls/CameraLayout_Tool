@@ -36,7 +36,12 @@ function fireRow(labels: string, quantity: number, notes = ''): BomRow {
 }
 
 describe('mergeBomRowsAcrossFloors', () => {
-  it('returns a single floor\'s rows unchanged when the prefix is empty (one-floor regression)', () => {
+  it('a single floor\'s rows pass through with that floor\'s own prefix applied to the labels', () => {
+    const rows = [cameraRow('C1', 1)]
+    expect(mergeBomRowsAcrossFloors([{ prefix: 'F1_', rows }])).toEqual([{ ...rows[0], labels: 'F1_C1' }])
+  })
+
+  it('an empty prefix (defensive) is a no-op on the labels', () => {
     const rows = [cameraRow('C1', 1)]
     expect(mergeBomRowsAcrossFloors([{ prefix: '', rows }])).toEqual(rows)
   })

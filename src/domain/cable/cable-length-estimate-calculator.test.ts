@@ -10,7 +10,7 @@ const CAT6: CableType = { id: 'cat6-utp', name: 'Cat6 UTP', lengthLimitM: 90, pr
 const index = buildCableEndpointIndex([CAMERA_C1, CAMERA_C2], [], [HUB_H1])
 const uncertainty = computeScaleUncertainty(SCALE_100_PX_PER_M, 3)
 
-function estimate(cable: Cable, overrides: { type?: CableType; settings?: Partial<CableSettings>; clickErrorPx?: number } = {}) {
+function estimate(cable: Cable, overrides: { type?: CableType; settings?: Partial<CableSettings>; clickErrorPx?: number; label?: string } = {}) {
   const settings = { ...DEFAULT_CABLE_SETTINGS, ...overrides.settings }
   const result = estimateCableLength({
     cable,
@@ -19,6 +19,9 @@ function estimate(cable: Cable, overrides: { type?: CableType; settings?: Partia
     settings,
     planPxPerMeter: 100,
     uncertainty: computeScaleUncertainty(SCALE_100_PX_PER_M, overrides.clickErrorPx ?? settings.clickErrorPx),
+    // `label` is just echoed by `estimateCableLength` - a placeholder is enough when a test does
+    // not itself assert the label; the few that do pass their own.
+    label: overrides.label ?? 'L',
   })
   if (!result) throw new Error('expected an estimate')
   return result
@@ -63,8 +66,8 @@ describe('computeScaleUncertainty', () => {
 
 describe('estimateCableLength - worked example', () => {
   it('cable A: mounted camera, two vertices', () => {
-    const a = estimate(CABLE_A)
-    expect(a.label).toBe('C1-H1')
+    const a = estimate(CABLE_A, { label: 'F1_C1_F1_H1' })
+    expect(a.label).toBe('F1_C1_F1_H1')
     expect(a.horizPx).toBeCloseTo(1000, 4)
     expect(a.horizM).toBeCloseTo(10, 4)
     expect(a.deviceRiseM).toBeCloseTo(0.5, 4)
@@ -129,6 +132,7 @@ describe('estimateCableLength - worked example', () => {
       settings: DEFAULT_CABLE_SETTINGS,
       planPxPerMeter: 100,
       uncertainty,
+      label: 'L',
     })
     expect(dangling).toBeNull()
   })
@@ -143,6 +147,7 @@ describe('estimateCableLength - riser and drop', () => {
       settings: DEFAULT_CABLE_SETTINGS,
       planPxPerMeter: 100,
       uncertainty,
+      label: 'L',
     })
     if (!result) throw new Error('expected an estimate')
     return result
@@ -198,6 +203,7 @@ describe('estimateCableLength - limit status (limit 90, fixed 5.5)', () => {
       settings: DEFAULT_CABLE_SETTINGS,
       planPxPerMeter: 100,
       uncertainty: noInterval,
+      label: 'L',
     })
     expect(result?.run).toMatchObject({ min: null, max: null })
     expect(result?.limitStatus).toBe('ok')
@@ -219,6 +225,7 @@ describe('estimateCableLength - beyond (cross-floor), the two-floor worked examp
       planPxPerMeter: 100,
       uncertainty: crossFloorUncertainty,
       beyond: beyondInput,
+      label: 'L',
     })
     if (!result) throw new Error('expected an estimate')
     return result
@@ -257,20 +264,28 @@ describe('estimateCableLength - a cable that ends on a device', () => {
 
   it('C1 (2.5 m) -> C2 (default 3 m): rises at each end to that device, device slack at BOTH ends, nothing beyond', () => {
     // 200 px = 2 m; start rise |3 - 2.5| = 0.5; end rise |3 - 3| = 0; slack 0.5 + 0.5 = 1. run = 3.5 m.
-    const result = estimate(toDevice('cam-1', 'cam-2'))
-    expect(result).toMatchObject({ label: 'C1-C2', horizM: 2, deviceRiseM: 0.5, hubDropM: 0, hubExtraM: 0, slackM: 1, fixedM: 1.5 })
+    const result = estimate(toDevice('cam-1', 'cam-2'), { label: 'F1_C1_F1_C2' })
+    expect(result).toMatchObject({ label: 'F1_C1_F1_C2', horizM: 2, deviceRiseM: 0.5, hubDropM: 0, hubExtraM: 0, slackM: 1, fixedM: 1.5 })
     expect(result.run.nominal).toBeCloseTo(3.5, 9)
   })
 
   it('the reverse direction swaps the two rises and gives the same run', () => {
-    const result = estimate(toDevice('cam-2', 'cam-1'))
-    expect(result).toMatchObject({ label: 'C2-C1', deviceRiseM: 0, hubDropM: 0.5, slackM: 1 })
+    const result = estimate(toDevice('cam-2', 'cam-1'), { label: 'F1_C2_F1_C1' })
+    expect(result).toMatchObject({ label: 'F1_C2_F1_C1', deviceRiseM: 0, hubDropM: 0.5, slackM: 1 })
     expect(result.run.nominal).toBeCloseTo(3.5, 9)
   })
 
   it('returns null when the end device no longer exists', () => {
     expect(
-      estimateCableLength({ cable: toDevice('cam-1', 'gone'), index, type: CAT6, settings: DEFAULT_CABLE_SETTINGS, planPxPerMeter: 100, uncertainty }),
+      estimateCableLength({
+        cable: toDevice('cam-1', 'gone'),
+        index,
+        type: CAT6,
+        settings: DEFAULT_CABLE_SETTINGS,
+        planPxPerMeter: 100,
+        uncertainty,
+        label: 'L',
+      }),
     ).toBeNull()
   })
 })
@@ -279,25 +294,25 @@ describe('estimateCableLength - a cable through a shaft', () => {
   const shaftIndex = buildCableEndpointIndex([CAMERA_C1], [], [{ id: 'sm', kind: 'shaft', shaftId: 's1', x: 100, y: 400, mountHeightM: 0 }], ['s1'])
   const cable: Cable = { id: 'k', device: { kind: 'camera', id: 'cam-1' }, hubId: 'sm', typeId: 'cat6-utp', points: [] }
   const flat = (m: number) => ({ nominal: m, min: m, max: m })
-  const run = (beyond: Parameters<typeof estimateCableLength>[0]['beyond']) =>
-    estimateCableLength({ cable, index: shaftIndex, type: CAT6, settings: DEFAULT_CABLE_SETTINGS, planPxPerMeter: 100, uncertainty, beyond })!
+  const run = (beyond: Parameters<typeof estimateCableLength>[0]['beyond'], label: string) =>
+    estimateCableLength({ cable, index: shaftIndex, type: CAT6, settings: DEFAULT_CABLE_SETTINGS, planPxPerMeter: 100, uncertainty, beyond, label })!
 
-  it('not routed: label "C1-?", 0 m at the opening + the typed length, hub slack - no routeHeightM term', () => {
+  it('not routed: echoes the given label, 0 m at the opening + the typed length, hub slack - no routeHeightM term', () => {
     // 300 px = 3 m; start rise 0.5; slack 0.5 + 3 = 3.5; beyond 4. run = 3 + 0.5 + 3.5 + 4 = 11.
-    const result = run({ source: 'typed', run: flat(4), shaftNotRouted: true })
-    expect(result).toMatchObject({ label: 'C1-?', hubDropM: 0, hubExtraM: 4, slackM: 3.5 })
+    const result = run({ source: 'typed', run: flat(4), shaftNotRouted: true }, 'F2_C1_?')
+    expect(result).toMatchObject({ label: 'F2_C1_?', hubDropM: 0, hubExtraM: 4, slackM: 3.5 })
     expect(result.run.nominal).toBeCloseTo(11, 9)
   })
 
-  it('routed to a hub: labelled by that hub, crossing + the rest beyond, hub slack', () => {
-    const result = run({ source: 'route', crossingVerticalM: 3, run: flat(10), viaLabel: 'F1 H2', endLabel: 'H2', endsOnDevice: false })
-    expect(result).toMatchObject({ label: 'C1-H2', hubDropM: 3, hubExtraM: 7, beyondVia: 'F1 H2', slackM: 3.5 })
+  it('routed to a hub: echoes the given label, crossing + the rest beyond, hub slack', () => {
+    const result = run({ source: 'route', crossingVerticalM: 3, run: flat(10), viaLabel: 'F1 H2', endsOnDevice: false }, 'F2_C1_F1_H2')
+    expect(result).toMatchObject({ label: 'F2_C1_F1_H2', hubDropM: 3, hubExtraM: 7, beyondVia: 'F1 H2', slackM: 3.5 })
     expect(result.run.nominal).toBeCloseTo(3 + 0.5 + 3.5 + 10, 9)
   })
 
-  it('routed to a device: labelled by that device and the far end takes the DEVICE slack', () => {
-    const result = run({ source: 'route', crossingVerticalM: 3, run: flat(10), viaLabel: 'F1 P1', endLabel: 'P1', endsOnDevice: true })
-    expect(result).toMatchObject({ label: 'C1-P1', slackM: 1 })
+  it('routed to a device: echoes the given label, and the far end takes the DEVICE slack', () => {
+    const result = run({ source: 'route', crossingVerticalM: 3, run: flat(10), viaLabel: 'F1 P1', endsOnDevice: true }, 'F2_C1_F1_P1')
+    expect(result).toMatchObject({ label: 'F2_C1_F1_P1', slackM: 1 })
     expect(result.run.nominal).toBeCloseTo(3 + 0.5 + 1 + 10, 9)
   })
 })

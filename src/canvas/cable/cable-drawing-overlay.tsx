@@ -9,7 +9,7 @@ import {
   removeLastCableDrawingPoint,
   type CableDrawingChain,
 } from '../../domain/cable/cable-drawing-chain'
-import { buildCableEndpointIndex, cableLabel } from '../../domain/cable/cable-endpoint-index'
+import { buildCableEndpointIndex } from '../../domain/cable/cable-endpoint-index'
 import { MAX_CABLES } from '../../domain/cable/cable-layout-types'
 import { findNearestCableSnapTarget, type CableSnapTarget } from '../../domain/cable/cable-snap-target-lookup'
 import { clampPointToImageBounds } from '../../domain/shared/clamp'
@@ -18,6 +18,7 @@ import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
 import { getActiveFloor, selectCameras, selectFireAlarmDevices, selectHubs, selectImage, selectSensors } from '../../state/project-store-floor-selectors'
 import { WALL_SELECTED_COLOR, computeIconRadiusPx } from '../shared/brand-and-dori-color-palette'
+import { buildCableDrawnNotification } from './cable-drawn-notification'
 import { cableTypeColor, resolveCableSnapTolerancePx } from './cable-type-color-palette'
 
 interface CableDrawingOverlayProps {
@@ -109,36 +110,23 @@ export function CableDrawingOverlay({ stageRef, viewportScale, imageWidthPx, ima
       } else if (step.kind === 'commit') {
         const store = useProjectStore.getState()
         const { cables, hubs } = getActiveFloor(store)
-        const { cableTypes: types, addCable, shafts } = store
+        const { cableTypes: types, addCable } = store
         const type = types.find((candidate) => candidate.id === typeId) ?? types[0]
         if (cables.length >= MAX_CABLES) {
           pushNotification('error', `A project can hold at most ${MAX_CABLES} cables.`)
         } else if (type) {
           const newCableId = crypto.randomUUID()
           addCable({ id: newCableId, ...step.cable, typeId: type.id })
-          // A cable drawn onto a shaft opening is not routed beyond it yet ("C1-?"): say where to
+          // A cable drawn onto a shaft opening is not routed beyond it yet ("?"): say where to
           // finish it, rather than leaving the "?" unexplained.
           const endHub = hubs.find((candidate) => candidate.id === step.cable.hubId)
-          const afterFloor = getActiveFloor(useProjectStore.getState())
+          const afterStore = useProjectStore.getState()
+          const afterFloor = getActiveFloor(afterStore)
           const newCable = afterFloor.cables.find((candidate) => candidate.id === newCableId)
-          if (newCable && (endHub?.kind === 'shaft' || newCable.endDevice)) {
-            const newIndex = buildCableEndpointIndex(
-              afterFloor.cameras,
-              afterFloor.sensors,
-              afterFloor.hubs,
-              shafts.map((shaft) => shaft.id),
-              { devices: afterFloor.fireAlarmDevices, modelById: fireAlarmModelSpecById },
-            )
-            const label = cableLabel(newCable, newIndex)
-            // A click near another device now ENDS the cable on it - name what was drawn, so a
-            // cable that was only meant to pass by is noticed and undone at once.
-            pushNotification(
-              'info',
-              newCable.endDevice
-                ? `${label} drawn to a device. Undo (Ctrl+Z) if the route was only meant to pass it.`
-                : `${label} enters the shaft. Open the floor it leaves on, select the shaft opening and route it from there.`,
-            )
-          }
+          const message = newCable
+            ? buildCableDrawnNotification(afterStore, afterFloor.id, newCableId, endHub?.kind === 'shaft', Boolean(newCable.endDevice))
+            : null
+          if (message) pushNotification('info', message)
         }
         moveChain(null)
       } else if (step.reason === 'start-needs-target' && !startHintShown) {

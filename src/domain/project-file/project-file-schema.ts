@@ -197,7 +197,7 @@ export function parseProjectFile(text: string, lookups: ProjectFileLookups): Par
     const linkWarnings: string[] = []
     // M5 fix: the prune's own warning text labels a shaft marker "T{n}" - needs the PROJECT shaft
     // order (`prunedShafts`, the authoritative post-prune list), not a per-floor count.
-    const linkedFloors = pruneInvalidCrossFloorLinks(shaftPrunedFloors, prunedShafts.map((shaft) => shaft.id), linkWarnings)
+    const linkedFloors = pruneInvalidCrossFloorLinks(shaftPrunedFloors, prunedShafts.map((shaft) => shaft.id), undefined, linkWarnings)
     warnings.push(...linkWarnings)
 
     const legWarnings: string[] = []

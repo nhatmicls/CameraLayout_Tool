@@ -36,7 +36,7 @@ test('draws a cable from a fire-alarm device to a hub, labelled by its designato
   expect(cables[0].device).toEqual({ kind: 'fire-alarm', id: deviceId })
 
   await page.evaluate((id) => window.__cameraLayoutToolTestHooks!.selectCable(id), cables[0].id)
-  await expect(page.locator('[data-testid="properties-cable-label"]')).toContainText('P1-H1')
+  await expect(page.locator('[data-testid="properties-cable-label"]')).toContainText('F1_P1_F1_H1')
   await expect(page.locator('[data-testid="properties-cable-run"]')).toContainText('15.0 m')
 
   // The cable is still selected and ends on the device: a click inside the device's hitbox must

@@ -23,6 +23,6 @@ export interface ExportBomCsvOptions {
  */
 export function exportBomCsv({ project, imageFileName }: ExportBomCsvOptions): void {
   const csv = serializeCsv(bomToCsvTable(buildCombinedBomRows(project).allRows))
-  const fileName = `${sanitizeExportFileName(imageFileName)}-camera-bom.csv`
+  const fileName = `${sanitizeExportFileName(imageFileName)}-bom.csv`
   triggerBrowserFileDownload(csv, fileName, 'text/csv;charset=utf-8')
 }

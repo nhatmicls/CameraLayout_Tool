@@ -14,7 +14,7 @@ describe('computeCableLayoutEstimate - worked example', () => {
     const [total] = estimate.totals
     expect(total.type.id).toBe('cat6-utp')
     expect(total.cableCount).toBe(2)
-    expect(total.labels).toEqual(['C1-H1', 'C2-H1'])
+    expect(total.labels).toEqual(['F1_C1_F1_H1', 'F1_C2_F1_H1'])
     expect(total.purchase.nominal).toBeCloseTo(30.848239, 4)
     expect(total.run.nominal).toBeCloseTo(26.824555, 4)
     expect(total.purchaseWholeM).toBe(31)
@@ -33,7 +33,7 @@ describe('computeCableLayoutEstimate - worked example', () => {
     expect(estimate.grandTotalVnd).toBe(248000)
     expect(estimate.unpricedTypeCount).toBe(0)
     expect(estimate.warnings).toEqual([])
-    expect(estimate.byCableId.get('cable-a')?.label).toBe('C1-H1')
+    expect(estimate.byCableId.get('cable-a')?.label).toBe('F1_C1_F1_H1')
   })
 
   it('leaves an unpriced type out of the total', () => {
@@ -101,8 +101,8 @@ describe('computeCableLayoutEstimate - warnings and edges', () => {
     const limit10 = input.cableTypes.map((type) => (type.id === 'cat6-utp' ? { ...type, lengthLimitM: 15.6 } : type))
     const estimate = computeCableLayoutEstimate({ ...input, cables: [CABLE_A, over], cableTypes: limit10 })
     expect(estimate.warnings).toEqual([
-      { code: 'cable-maybe-over-limit', cableId: 'cable-a', message: 'C1-H1 (Cat6 UTP): may exceed the 15.6 m limit (up to 15.7 m).' },
-      { code: 'cable-over-limit', cableId: 'over', message: 'C2-H1 (Cat6 UTP): 87.4 m run exceeds the 15.6 m limit.' },
+      { code: 'cable-maybe-over-limit', cableId: 'cable-a', message: 'F1_C1_F1_H1 (Cat6 UTP): may exceed the 15.6 m limit (up to 15.7 m).' },
+      { code: 'cable-over-limit', cableId: 'over', message: 'F1_C2_F1_H1 (Cat6 UTP): 87.4 m run exceeds the 15.6 m limit.' },
     ])
   })
 

@@ -6,7 +6,6 @@ import {
   isOnlyShaftLegChangeOnFloor,
   listShaftCables,
   pruneInvalidShaftLegs,
-  resolveShaftCableEndLabel,
   resolveShaftLeg,
 } from './shaft-cable-leg'
 import { HUB_H1, LEG_TO_F1, SHAFT_ID, SHAFT_MARKER_F1, SHAFT_MARKER_F2, shaftCable, shaftFourFloorProject } from './shaft-worked-example.test-fixtures'
@@ -85,7 +84,7 @@ describe('pruneInvalidShaftLegs', () => {
   })
 })
 
-describe('findShaftLegsOnFloor / listShaftCables / resolveShaftCableEndLabel', () => {
+describe('findShaftLegsOnFloor / listShaftCables', () => {
   const routedToF1 = shaftCable('c1', 'sm2', 'sf0')
   const notRouted = shaftCable('c2', 'sm2')
   const fromF4 = shaftCable('c3', 'sm4', 'sf0')
@@ -107,11 +106,6 @@ describe('findShaftLegsOnFloor / listShaftCables / resolveShaftCableEndLabel', (
       [3, 'C1', 'H1'],
     ])
     expect(listShaftCables(project.floors, 'unknown-shaft')).toEqual([])
-  })
-
-  it('gives the far end\'s label for a routed cable and undefined for one that is not', () => {
-    expect(resolveShaftCableEndLabel(project.floors, 1, routedToF1)).toBe('H1')
-    expect(resolveShaftCableEndLabel(project.floors, 1, notRouted)).toBeUndefined()
   })
 
   it('ignores a cable on the same floor that ends on a different hub', () => {

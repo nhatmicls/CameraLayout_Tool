@@ -1,22 +1,23 @@
 import { useMemo } from 'react'
-import { hubLabels } from '../../domain/cable/cable-endpoint-index'
 import { formatMeters, formatMetersInterval } from '../../domain/cable/cable-length-format'
 import type { Hub, HubRef } from '../../domain/cable/cable-layout-types'
 import { listLinkCandidates } from '../../domain/cable/cross-floor-hub-link-integrity'
 import { pairedHubRefusalReason } from '../../domain/cable/cross-floor-paired-hub-creator'
 import type { HubBeyondLength } from '../../domain/cable/cross-floor-hub-beyond-length-resolver'
+import { buildFloorItemLabels } from '../../domain/floor/floor-item-label-allocator'
 import type { Floor } from '../../domain/floor/floor-types'
+import { fireAlarmModelSpecById } from '../../export/shared/fire-alarm-compatibility-index-singleton'
 import { useEditorUiStore } from '../../state/editor-ui-store'
 import { useProjectStore } from '../../state/project-store'
 import { fieldLabelClass, inputClass, secondaryButtonClass } from '../camera/camera-properties-form-helpers'
 
 const DRAW_TRUNK_HINT = 'Click to add route points, then click a hub to finish. Backspace undoes a point, Esc cancels.'
 
-/** The label of `trunk`'s target hub on `hubs`, or `null` if it no longer exists (pruning should prevent this on a live project). */
-function resolveTrunkTargetLabel(hubs: Hub[], trunk: { hubId: string } | undefined): string | null {
+/** The label of `trunk`'s target hub on `floor`, or `null` if it no longer exists (pruning should prevent this on a live project). A trunk target is never a shaft marker, so `shaftIds` is not needed here. */
+function resolveTrunkTargetLabel(floor: Floor, trunk: { hubId: string } | undefined): string | null {
   if (!trunk) return null
-  const index = hubs.findIndex((candidate) => candidate.id === trunk.hubId)
-  return index === -1 ? null : hubLabels(hubs)[index]
+  const index = floor.hubs.findIndex((candidate) => candidate.id === trunk.hubId)
+  return index === -1 ? null : buildFloorItemLabels(floor, { fireAlarmModelById: fireAlarmModelSpecById }).hubs[index]
 }
 
 interface HubCrossFloorLinkSectionProps {
@@ -44,7 +45,10 @@ export function HubCrossFloorLinkSection({ floors, floorIndex, hub, beyond }: Hu
 
   const floor = floors[floorIndex]
   const ref: HubRef = { floorId: floor.id, hubId: hub.id }
-  const candidates = useMemo(() => listLinkCandidates(floors, floorIndex, hub), [floors, floorIndex, hub])
+  const candidates = useMemo(
+    () => listLinkCandidates(floors, floorIndex, hub, fireAlarmModelSpecById),
+    [floors, floorIndex, hub],
+  )
   const refusal = hub.link ? null : pairedHubRefusalReason(floors, ref)
   const partnerFloorName = (hub.kind === 'riser' ? floors[floorIndex + 1] : floors[floorIndex - 1])?.name
   const linkedCandidateLabel = candidates.find((c) => c.floorId === hub.link?.floorId && c.hubId === hub.link?.hubId)?.label
@@ -54,7 +58,7 @@ export function HubCrossFloorLinkSection({ floors, floorIndex, hub, beyond }: Hu
   const crossingFloorName = hub.kind === 'riser' ? floor.name : floors.find((f) => f.id === hub.link?.floorId)?.name ?? 'the floor below'
   // "Draw route to hub" needs a SECOND hub on this floor to route to.
   const hasOtherHub = floor.hubs.some((candidate) => candidate.id !== hub.id)
-  const targetLabel = resolveTrunkTargetLabel(floor.hubs, hub.trunk)
+  const targetLabel = resolveTrunkTargetLabel(floor, hub.trunk)
 
   const currentValue = hub.link ? `${hub.link.floorId}${LINK_KEY_SEPARATOR}${hub.link.hubId}` : ''
 
